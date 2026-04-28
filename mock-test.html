@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polytechnic Entrance Mock Test</title>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Poppins',sans-serif;
+    margin:0;
+    background:#0f172a;
+    color:#fff;
+}
+
+header{
+    background:#1e293b;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    font-weight:600;
+}
+
+.container{
+    max-width:900px;
+    margin:20px auto;
+    background:#1e293b;
+    padding:20px;
+    border-radius:10px;
+}
+
+input{
+    width:90%;
+    padding:10px;
+    margin:10px;
+    border-radius:5px;
+    border:none;
+}
+
+button{
+    padding:12px 20px;
+    background:#22c55e;
+    border:none;
+    color:#fff;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.timer{
+    color:#f87171;
+    font-size:18px;
+    font-weight:bold;
+    text-align:right;
+}
+
+.question{
+    margin:15px 0;
+    padding:10px;
+    border-bottom:1px solid #334155;
+}
+
+.correct{color:#22c55e;}
+.wrong{color:#ef4444;}
+</style>
+</head>
+
+<body>
+
+<header>Polytechnic Entrance Mock Test</header>
+
+<!-- LOGIN -->
+<div class="container" id="login">
+<h2>Start Test</h2>
+<input id="name" placeholder="Enter Name">
+<input id="mobile" placeholder="Mobile Number">
+<br>
+<button onclick="startTest()">Start Test</button>
+</div>
+
+<!-- QUIZ -->
+<div class="container" id="quiz" style="display:none;">
+<div class="timer">Time Left: <span id="time">1200</span> sec</div>
+<div id="questions"></div>
+<button onclick="submitTest()">Submit</button>
+</div>
+
+<!-- RESULT -->
+<div class="container" id="result" style="display:none;">
+<h2>Result</h2>
+<h3 id="score"></h3>
+<div id="review"></div>
+<button onclick="downloadPDF()">Download PDF</button>
+</div>
+
+<script>
+// 🔥 EmailJS init
+emailjs.init("0v2VDjb1-LCLKMAaA");
+
+let user={}, time=1200, timer;
+
+// 🎯 20 Polytechnic Questions
+let questions = [
+{q:"2x+3=11, x=?", opt:["2","3","4","5"], ans:2},
+{q:"Unit of Force?", opt:["Newton","Joule","Watt","Pascal"], ans:0},
+{q:"H2O is?", opt:["Acid","Base","Water","Salt"], ans:2},
+{q:"√81=?", opt:["7","8","9","6"], ans:2},
+{q:"Speed formula?", opt:["d/t","t/d","m/v","v/m"], ans:0},
+{q:"Na symbol?", opt:["So","Na","S","Sn"], ans:1},
+{q:"5×6=?", opt:["20","25","30","35"], ans:2},
+{q:"pH neutral?", opt:["7","0","14","1"], ans:0},
+{q:"Voltage unit?", opt:["Volt","Amp","Ohm","Watt"], ans:0},
+{q:"Triangle sum?", opt:["90","180","360","270"], ans:1},
+{q:"Gas used in breathing?", opt:["O2","CO2","N2","H2"], ans:0},
+{q:"3²=?", opt:["6","9","12","3"], ans:1},
+{q:"Ohm’s law?", opt:["V=IR","F=ma","E=mc²","P=VI"], ans:0},
+{q:"CO2 is?", opt:["Acid","Gas","Metal","Salt"], ans:1},
+{q:"7+8=?", opt:["13","14","15","16"], ans:2},
+{q:"Light speed?", opt:["3×10^8","1×10^6","5×10^7","2×10^5"], ans:0},
+{q:"Water boiling point?", opt:["50","100","150","200"], ans:1},
+{q:"Angle in right triangle?", opt:["60","90","120","180"], ans:1},
+{q:"Energy unit?", opt:["Joule","Newton","Volt","Pascal"], ans:0},
+{q:"Atomic number of H?", opt:["1","2","3","4"], ans:0}
+];
+
+function startTest(){
+ user.name=name.value;
+ user.mobile=mobile.value;
+
+ if(!user.name || !user.mobile){
+   alert("Enter details!");
+   return;
+ }
+
+ // 📧 Send Email
+ emailjs.send("service_7tu7wrc","template_dv8cb7o",{
+   name:user.name,
+   mobile:user.mobile
+ });
+
+ login.style.display="none";
+ quiz.style.display="block";
+
+ loadQuestions();
+
+ timer=setInterval(()=>{
+   time--;
+   timeSpan.innerText=time;
+   if(time<=0) submitTest();
+ },1000);
+}
+
+function loadQuestions(){
+ let html="";
+ questions.forEach((q,i)=>{
+   html+=`<div class="question"><p>${i+1}. ${q.q}</p>`;
+   q.opt.forEach((o,j)=>{
+     html+=`<input type="radio" name="q${i}" value="${j}"> ${o}<br>`;
+   });
+   html+="</div>";
+ });
+ questionsDiv.innerHTML=html;
+}
+
+function submitTest(){
+ clearInterval(timer);
+
+ let score=0,neg=0,reviewHTML="";
+
+ questions.forEach((q,i)=>{
+   let ans=document.querySelector(`input[name=q${i}]:checked`);
+   let userAns=ans?parseInt(ans.value):-1;
+
+   if(userAns===q.ans){
+     score++;
+     reviewHTML+=`<p class="correct">Q${i+1} ✔ Correct</p>`;
+   }else{
+     neg+=0.25;
+     reviewHTML+=`<p class="wrong">Q${i+1} ✘ Wrong (Ans: ${q.opt[q.ans]})</p>`;
+   }
+ });
+
+ let final=(score-neg).toFixed(2);
+
+ quiz.style.display="none";
+ result.style.display="block";
+
+ scoreBox.innerText="Score: "+final;
+ review.innerHTML=reviewHTML;
+}
+
+// 📄 PDF
+function downloadPDF(){
+ const {jsPDF}=window.jspdf;
+ let doc=new jsPDF();
+
+ doc.text("Polytechnic Mock Test Result",10,10);
+ doc.text(scoreBox.innerText,10,20);
+
+ let y=30;
+ questions.forEach((q,i)=>{
+   doc.text(`Q${i+1}: ${q.q}`,10,y);
+   y+=6;
+ });
+
+ doc.save("result.pdf");
+}
+
+// elements
+const name=document.getElementById("name");
+const mobile=document.getElementById("mobile");
+const login=document.getElementById("login");
+const quiz=document.getElementById("quiz");
+const result=document.getElementById("result");
+const questionsDiv=document.getElementById("questions");
+const timeSpan=document.getElementById("time");
+const scoreBox=document.getElementById("score");
+const review=document.getElementById("review");
+</script>
+
+</body>
+</html>

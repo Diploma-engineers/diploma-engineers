@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBT 100 Questions Mock Test</title>
+<title>CBT Mock Test</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -23,8 +23,6 @@ body{margin:0;font-family:Poppins;background:#eef2f7;}
 .review{background:orange;}
 .option{display:block;margin:10px 0;}
 .result{text-align:center;padding:20px;}
-.correct{color:green;}
-.wrong{color:red;}
 button{padding:10px;margin:5px;}
 </style>
 </head>
@@ -32,7 +30,7 @@ button{padding:10px;margin:5px;}
 <body>
 
 <div class="header">
-<div>🎯 CBT Mock Test (100 Questions)</div>
+<div>🎯 Polytechnic CBT Mock Test</div>
 <div class="timer">Time: <span id="time">3600</span></div>
 </div>
 
@@ -65,7 +63,9 @@ button{padding:10px;margin:5px;}
 <div id="result" class="result" style="display:none;">
 <h2 id="score"></h2>
 <div id="summary"></div>
+
 <button onclick="downloadPDF()">Download PDF</button>
+<button onclick="shareWhatsApp()">Share WhatsApp</button>
 </div>
 
 <script>
@@ -74,10 +74,9 @@ emailjs.init("0v2VDjb1-LCLKMAaA");
 let user={},time=3600,timer;
 let current=0;
 let answers=[],marks=[],resultData={};
-
-// 🔥 100 QUESTIONS GENERATOR (A Group Mix)
 let questions=[];
 
+// 🔥 Generate 100 Questions
 function generateQuestions(){
  for(let i=1;i<=100;i++){
   let a=Math.floor(Math.random()*50);
@@ -85,7 +84,7 @@ function generateQuestions(){
   let ans=a+b;
 
   questions.push({
-   q:`Q${i}: ${a}+${b}=?`,
+   q:`${a}+${b}=?`,
    opt:[ans-1,ans,ans+1,ans+2],
    ans:1
   });
@@ -103,8 +102,6 @@ function startTest(){
 
  generateQuestions();
 
- emailjs.send("service_7tu7wrc","template_dv8cb7o",user);
-
  login.style.display="none";
  test.style.display="flex";
 
@@ -120,7 +117,7 @@ function startTest(){
 
 function loadQ(){
  let q=questions[current];
- qno.innerText="Question "+(current+1);
+ qno.innerText="Q"+(current+1);
  question.innerText=q.q;
 
  let html="";
@@ -203,41 +200,36 @@ function submitTest(){
 
  scoreBox.innerText=`Score: ${final} | ${rank}`;
  summary.innerHTML=`Attempted: ${attempt}/100<br>Correct: ${correct}<br>Wrong: ${wrong}`;
+
+ // 📧 EMAIL FULL DATA
+ emailjs.send("service_7tu7wrc","template_dv8cb7o",{
+  name:user.name,
+  mobile:user.mobile,
+  score:final,
+  rank:rank,
+  attempted:attempt,
+  correct:correct,
+  wrong:wrong
+ });
 }
 
-// PDF
+// 📄 PDF
 function downloadPDF(){
  const {jsPDF}=window.jspdf;
  let doc=new jsPDF();
 
- doc.text("CBT 100 Questions Result",10,10);
+ doc.text("CBT Report",10,10);
  doc.text(`Name: ${user.name}`,10,20);
  doc.text(scoreBox.innerText,10,30);
 
- let y=40;
+ doc.save("Result.pdf");
+}
 
- questions.forEach((q,i)=>{
-  if(y>270){doc.addPage();y=10;}
-
-  doc.setTextColor(0,0,0);
-  doc.text(`Q${i+1}: ${q.q}`,10,y);
-  y+=6;
-
-  let ua=answers[i];
-
-  q.opt.forEach((opt,j)=>{
-   if(j===q.ans) doc.setTextColor(0,150,0);
-   else if(j===ua) doc.setTextColor(255,0,0);
-   else doc.setTextColor(0,0,0);
-
-   doc.text(`- ${opt}`,15,y);
-   y+=5;
-  });
-
-  y+=3;
- });
-
- doc.save("CBT_100_Result.pdf");
+// 📱 WhatsApp
+function shareWhatsApp(){
+ let msg=`Score: ${resultData.score}
+Rank: ${resultData.rank}`;
+ window.open("https://wa.me/?text="+encodeURIComponent(msg));
 }
 
 // elements

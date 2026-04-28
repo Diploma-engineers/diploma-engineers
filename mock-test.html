@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBT Mock Test</title>
+<title>CBT 100 Questions Mock Test</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -17,7 +17,7 @@ body{margin:0;font-family:Poppins;background:#eef2f7;}
 .left{flex:3;padding:20px;background:#fff;}
 .right{flex:1;background:#f1f5f9;padding:10px;overflow:auto;}
 .timer{color:red;font-weight:bold;}
-.palette button{width:40px;height:40px;margin:5px;border:none;border-radius:5px;}
+.palette button{width:35px;height:35px;margin:4px;border:none;border-radius:5px;font-size:12px;}
 .attempted{background:green;color:#fff;}
 .notattempted{background:#ddd;}
 .review{background:orange;}
@@ -32,8 +32,8 @@ button{padding:10px;margin:5px;}
 <body>
 
 <div class="header">
-<div>🎯 CBT Mock Test</div>
-<div class="timer">Time: <span id="time">1200</span></div>
+<div>🎯 CBT Mock Test (100 Questions)</div>
+<div class="timer">Time: <span id="time">3600</span></div>
 </div>
 
 <!-- LOGIN -->
@@ -66,29 +66,30 @@ button{padding:10px;margin:5px;}
 <h2 id="score"></h2>
 <div id="summary"></div>
 <button onclick="downloadPDF()">Download PDF</button>
-<button onclick="shareWhatsApp()">Share WhatsApp</button>
 </div>
 
 <script>
 emailjs.init("0v2VDjb1-LCLKMAaA");
 
-let user={},time=1200,timer;
+let user={},time=3600,timer;
 let current=0;
-let answers=[],marks=[];
-let resultData={};
+let answers=[],marks=[],resultData={};
 
-// Questions
+// 🔥 100 QUESTIONS GENERATOR (A Group Mix)
 let questions=[];
-for(let i=0;i<20;i++){
- let a=Math.floor(Math.random()*20);
- let b=Math.floor(Math.random()*20);
- let ans=a+b;
 
- questions.push({
-  q:`${a}+${b}=?`,
-  opt:[ans-1,ans,ans+1,ans+2],
-  ans:1
- });
+function generateQuestions(){
+ for(let i=1;i<=100;i++){
+  let a=Math.floor(Math.random()*50);
+  let b=Math.floor(Math.random()*50);
+  let ans=a+b;
+
+  questions.push({
+   q:`Q${i}: ${a}+${b}=?`,
+   opt:[ans-1,ans,ans+1,ans+2],
+   ans:1
+  });
+ }
 }
 
 function startTest(){
@@ -100,13 +101,15 @@ function startTest(){
   return;
  }
 
+ generateQuestions();
+
  emailjs.send("service_7tu7wrc","template_dv8cb7o",user);
 
  login.style.display="none";
  test.style.display="flex";
 
- loadQ();
  buildPalette();
+ loadQ();
 
  timer=setInterval(()=>{
   time--;
@@ -117,7 +120,7 @@ function startTest(){
 
 function loadQ(){
  let q=questions[current];
- qno.innerText="Q"+(current+1);
+ qno.innerText="Question "+(current+1);
  question.innerText=q.q;
 
  let html="";
@@ -181,16 +184,16 @@ function submitTest(){
   if(ua===q.ans){
    score++; correct++;
   }else{
-   if(ua!=null){ neg+=0.25; wrong++; }
+   if(ua!=null){neg+=0.25; wrong++;}
   }
  });
 
  let final=(score-neg).toFixed(2);
 
  let rank;
- if(final>=18) rank="Topper 🏆";
- else if(final>=15) rank="Excellent ⭐";
- else if(final>=10) rank="Good 👍";
+ if(final>=90) rank="Topper 🏆";
+ else if(final>=70) rank="Excellent ⭐";
+ else if(final>=50) rank="Good 👍";
  else rank="Needs Improvement";
 
  resultData={score:final,attempt,correct,wrong,rank};
@@ -199,7 +202,7 @@ function submitTest(){
  result.style.display="block";
 
  scoreBox.innerText=`Score: ${final} | ${rank}`;
- summary.innerHTML=`Attempted: ${attempt}<br>Correct: ${correct}<br>Wrong: ${wrong}`;
+ summary.innerHTML=`Attempted: ${attempt}/100<br>Correct: ${correct}<br>Wrong: ${wrong}`;
 }
 
 // PDF
@@ -207,13 +210,11 @@ function downloadPDF(){
  const {jsPDF}=window.jspdf;
  let doc=new jsPDF();
 
- doc.text("CBT Report Card",10,10);
+ doc.text("CBT 100 Questions Result",10,10);
  doc.text(`Name: ${user.name}`,10,20);
- doc.text(`Mobile: ${user.mobile}`,10,27);
- doc.text(`Score: ${resultData.score}`,10,35);
- doc.text(`Rank: ${resultData.rank}`,10,42);
+ doc.text(scoreBox.innerText,10,30);
 
- let y=55;
+ let y=40;
 
  questions.forEach((q,i)=>{
   if(y>270){doc.addPage();y=10;}
@@ -236,21 +237,7 @@ function downloadPDF(){
   y+=3;
  });
 
- doc.save("CBT_Result.pdf");
-
- // email result
- emailjs.send("service_7tu7wrc","template_dv8cb7o",{
-  name:user.name,
-  mobile:user.mobile,
-  score:resultData.score,
-  rank:resultData.rank
- });
-}
-
-// WhatsApp
-function shareWhatsApp(){
- let msg=`My Score: ${resultData.score} | Rank: ${resultData.rank}`;
- window.open("https://wa.me/?text="+encodeURIComponent(msg));
+ doc.save("CBT_100_Result.pdf");
 }
 
 // elements

@@ -1,251 +1,945 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBT Mock Test</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<title>Polytechnic CBT Mock Test</title>
 
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-body{margin:0;font-family:Poppins;background:#eef2f7;}
-.header{background:#1e293b;color:#fff;padding:10px;display:flex;justify-content:space-between;}
-.container{display:flex;height:90vh;}
-.left{flex:3;padding:20px;background:#fff;}
-.right{flex:1;background:#f1f5f9;padding:10px;overflow:auto;}
-.timer{color:red;font-weight:bold;}
-.palette button{width:35px;height:35px;margin:4px;border:none;border-radius:5px;font-size:12px;}
-.attempted{background:green;color:#fff;}
-.notattempted{background:#ddd;}
-.review{background:orange;}
-.option{display:block;margin:10px 0;}
-.result{text-align:center;padding:20px;}
-button{padding:10px;margin:5px;}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#eef2f7;
+}
+
+/* HEADER */
+
+.header{
+background:#0f172a;
+color:#fff;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-size:18px;
+font-weight:600;
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.timer{
+color:#facc15;
+font-size:20px;
+}
+
+/* LOGIN */
+
+.login-box{
+width:90%;
+max-width:400px;
+background:#fff;
+margin:40px auto;
+padding:25px;
+border-radius:15px;
+box-shadow:0 5px 20px rgba(0,0,0,.1);
+text-align:center;
+}
+
+.login-box h2{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.login-box input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:10px;
+font-size:16px;
+outline:none;
+}
+
+.login-box button{
+width:100%;
+padding:12px;
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:10px;
+font-size:17px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.login-box button:hover{
+background:#1d4ed8;
+}
+
+/* MAIN CONTAINER */
+
+.container{
+display:none;
+height:calc(100vh - 65px);
+}
+
+/* LEFT */
+
+.left{
+flex:3;
+padding:20px;
+overflow:auto;
+background:#fff;
+}
+
+/* RIGHT */
+
+.right{
+flex:1;
+background:#f8fafc;
+padding:15px;
+overflow:auto;
+border-left:2px solid #ddd;
+}
+
+.question-box{
+font-size:20px;
+font-weight:600;
+margin-bottom:20px;
+line-height:1.6;
+}
+
+.question-box img{
+width:100%;
+max-width:350px;
+margin-top:15px;
+border-radius:12px;
+border:1px solid #ddd;
+}
+
+/* OPTIONS */
+
+.option{
+display:block;
+background:#f1f5f9;
+padding:14px;
+margin:12px 0;
+border-radius:12px;
+cursor:pointer;
+transition:.3s;
+font-size:16px;
+}
+
+.option:hover{
+background:#dbeafe;
+transform:scale(1.01);
+}
+
+.option input{
+margin-right:10px;
+}
+
+/* BUTTONS */
+
+.buttons{
+margin-top:20px;
+}
+
+.buttons button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-size:15px;
+font-weight:600;
+transition:.3s;
+}
+
+.next{
+background:#2563eb;
+color:#fff;
+}
+
+.review{
+background:#f97316;
+color:#fff;
+}
+
+.submit{
+background:#dc2626;
+color:#fff;
+}
+
+.buttons button:hover{
+opacity:.9;
+transform:translateY(-2px);
+}
+
+/* PALETTE */
+
+.palette{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-top:15px;
+}
+
+.palette button{
+width:42px;
+height:42px;
+border:none;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+transition:.3s;
+}
+
+.palette button:hover{
+transform:scale(1.05);
+}
+
+.notattempted{
+background:#cbd5e1;
+}
+
+.attempted{
+background:#16a34a;
+color:#fff;
+}
+
+.marked{
+background:#f97316;
+color:#fff;
+}
+
+/* RESULT */
+
+.result{
+display:none;
+padding:30px;
+text-align:center;
+}
+
+.result h1{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.result button{
+padding:12px 20px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:#fff;
+margin:10px;
+cursor:pointer;
+font-weight:600;
+transition:.3s;
+}
+
+.result button:hover{
+background:#1d4ed8;
+}
+
+.result table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+background:#fff;
+border-radius:15px;
+overflow:hidden;
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.result th{
+background:#2563eb;
+color:#fff;
+padding:14px;
+border:1px solid #ddd;
+}
+
+.result td{
+padding:12px;
+border:1px solid #ddd;
+font-size:14px;
+}
+
+.correct{
+color:green;
+font-weight:bold;
+}
+
+.wrong{
+color:red;
+font-weight:bold;
+}
+
+.notdone{
+color:#555;
+font-weight:bold;
+}
+
+/* PERFORMANCE */
+
+#performanceBox{
+margin-top:20px;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.container{
+flex-direction:column;
+height:auto;
+}
+
+.right{
+border-left:none;
+border-top:2px solid #ddd;
+}
+
+.question-box{
+font-size:18px;
+}
+
+}
+
+/* PRINT */
+
+@media print{
+
+.header,
+.buttons,
+.right,
+.login-box,
+.result button{
+display:none;
+}
+
+.result{
+display:block;
+}
+
+body{
+background:#fff;
+}
+
+}
+
 </style>
+
 </head>
 
 <body>
 
+<!-- HEADER -->
+
 <div class="header">
+
 <div>🎯 Polytechnic CBT Mock Test</div>
-<div class="timer">Time: <span id="time">3600</span></div>
+
+<div class="timer">
+⏰ <span id="time">3600</span>s
+</div>
+
 </div>
 
 <!-- LOGIN -->
-<div id="login" style="text-align:center;padding:20px;">
-<input id="name" placeholder="Name"><br>
-<input id="mobile" placeholder="Mobile"><br>
-<button onclick="startTest()">Start Test</button>
+
+<div class="login-box" id="loginBox">
+
+<h2>Start Mock Test</h2>
+
+<input type="text"
+id="name"
+placeholder="Enter Name">
+
+<input type="number"
+id="mobile"
+placeholder="Enter Mobile Number">
+
+<button onclick="startTest()">
+🚀 Start Test
+</button>
+
 </div>
 
 <!-- TEST -->
-<div class="container" id="test" style="display:none;">
+
+<div class="container" id="testBox">
+
+<!-- LEFT -->
+
 <div class="left">
-<h3 id="qno"></h3>
-<div id="question"></div>
+
+<div id="qno"></div>
+
+<div class="question-box" id="question"></div>
+
 <div id="options"></div>
 
-<button onclick="markReview()">Mark Review</button>
-<button onclick="nextQ()">Next</button>
-<button onclick="submitTest()">Submit</button>
+<div class="buttons">
+
+<button class="review"
+onclick="markReview()">
+📌 Mark Review
+</button>
+
+<button class="next"
+onclick="nextQ()">
+➡ Next
+</button>
+
+<button class="submit"
+onclick="submitTest()">
+✅ Submit
+</button>
+
 </div>
 
-<div class="right">
-<h4>Questions</h4>
-<div id="palette"></div>
 </div>
+
+<!-- RIGHT -->
+
+<div class="right">
+
+<h3>📋 Questions</h3>
+
+<div class="palette" id="palette"></div>
+
+</div>
+
 </div>
 
 <!-- RESULT -->
-<div id="result" class="result" style="display:none;">
-<h2 id="score"></h2>
+
+<div class="result" id="resultBox">
+
+<h1 id="scoreBox"></h1>
+
 <div id="summary"></div>
 
-<button onclick="downloadPDF()">Download PDF</button>
-<button onclick="shareWhatsApp()">Share WhatsApp</button>
+<div id="performanceBox"></div>
+
+<div style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Q.No</th>
+<th>Your Answer</th>
+<th>Correct Answer</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="resultTable"></tbody>
+
+</table>
+
+</div>
+
+<button onclick="downloadPDF()">
+📄 Download PDF
+</button>
+
+<button onclick="shareResult()">
+📤 Share Result
+</button>
+
+<button onclick="location.reload()">
+🔄 Restart Test
+</button>
+
 </div>
 
 <script>
-emailjs.init("0v2VDjb1-LCLKMAaA");
 
-let user={},time=3600,timer;
-let current=0;
-let answers=[],marks=[],resultData={};
-let questions=[];
+/* QUESTIONS */
 
-// 🔥 Generate 100 Questions
-function generateQuestions(){
- for(let i=1;i<=100;i++){
-  let a=Math.floor(Math.random()*50);
-  let b=Math.floor(Math.random()*50);
-  let ans=a+b;
+let questions=[
 
-  questions.push({
-   q:`${a}+${b}=?`,
-   opt:[ans-1,ans,ans+1,ans+2],
-   ans:1
-  });
- }
+{
+q:"समबाहु त्रिभुज का क्षेत्रफल 4√3 cm² हो, तो उसका परिमाप होगा -",
+opt:["20 सेमी","10 सेमी","15 सेमी","12 सेमी"],
+ans:3
+},
+
+{
+q:"tan 15° का मान है -",
+opt:[
+"2 − √3",
+"2/√3",
+"1/(2√3)",
+"2 + √3"
+],
+ans:0
+},
+
+{
+q:"यदि दो संख्याओं का योग 11 और गुणनफल 30 हो, तो संख्याएँ होंगी -",
+opt:["8,3","7,4","6,5","9,2"],
+ans:2
+},
+
+{
+q:"दिए गए चित्र में x° और y° के मान हैं -",
+
+img:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/screenshot_2026-05-24-00-31-19-241_com7066332570487767154.jpg",
+
+opt:[
+"x = 50°, y = 30°",
+"x = 30°, y = 50°",
+"x = 50°, y = 60°",
+"x = 55°, y = 65°"
+],
+
+ans:0
+},
+
+{
+q:"चित्र में ∠BAP = 80° और ∠ABC = 30° हो, तो ∠AQC का मान होगा -",
+
+img:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/screenshot_2026-05-24-00-36-44-544_com7066332570487767154.jpg",
+
+opt:["55°","110°","50°","65°"],
+
+ans:0
+},
+
+{
+q:"दो सरल रेखाएँ 3x − 2y = 5 और 2x + ky + 7 = 0 एक दूसरे पर लम्ब हैं, तो k का मान है -",
+
+opt:["1/3","-4/3","3/2","3"],
+
+ans:1
 }
+
+];
+
+/* VARIABLES */
+
+let current=0;
+let answers=[];
+let marked=[];
+let time=3600;
+let timer;
+
+/* START TEST */
 
 function startTest(){
- user.name=name.value;
- user.mobile=mobile.value;
 
- if(!user.name || !user.mobile){
-  alert("Fill details");
-  return;
- }
+let name=document.getElementById("name").value.trim();
 
- generateQuestions();
+let mobile=document.getElementById("mobile").value.trim();
 
- login.style.display="none";
- test.style.display="flex";
+if(name=="" || mobile==""){
 
- buildPalette();
- loadQ();
+alert("Please Fill Details");
+return;
 
- timer=setInterval(()=>{
-  time--;
-  timeSpan.innerText=time;
-  if(time<=0) submitTest();
- },1000);
 }
+
+/* MOBILE VALIDATION */
+
+if(!/^[6-9]\d{9}$/.test(mobile)){
+
+alert("Enter Valid 10 Digit Mobile Number");
+return;
+
+}
+
+document.getElementById("loginBox").style.display="none";
+
+document.getElementById("testBox").style.display="flex";
+
+buildPalette();
+
+loadQ();
+
+timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("time").innerText=time;
+
+if(time<=0){
+
+submitTest();
+
+}
+
+},1000);
+
+}
+
+/* LOAD QUESTION */
 
 function loadQ(){
- let q=questions[current];
- qno.innerText="Q"+(current+1);
- question.innerText=q.q;
 
- let html="";
- q.opt.forEach((o,i)=>{
-  html+=`<label class="option">
-  <input type="radio" name="opt" value="${i}" ${answers[current]==i?"checked":""}> ${o}</label>`;
- });
+let q=questions[current];
 
- options.innerHTML=html;
+document.getElementById("qno").innerHTML=
+`<h2>Question ${current+1}</h2>`;
+
+document.getElementById("question").innerHTML=`
+
+<div>${q.q}</div>
+
+${q.img ? `<img src="${q.img}">` : ""}
+
+`;
+
+let html="";
+
+q.opt.forEach((o,i)=>{
+
+html+=`
+
+<label class="option">
+
+<input type="radio"
+name="opt"
+value="${i}"
+${answers[current]==i ? "checked" : ""}>
+
+${o}
+
+</label>
+
+`;
+
+});
+
+document.getElementById("options").innerHTML=html;
+
 }
+
+/* NEXT QUESTION */
 
 function nextQ(){
- let sel=document.querySelector("input[name=opt]:checked");
- if(sel) answers[current]=parseInt(sel.value);
 
- current++;
- if(current>=questions.length) current=0;
+let sel=document.querySelector("input[name=opt]:checked");
 
- updatePalette();
- loadQ();
+if(sel){
+
+answers[current]=parseInt(sel.value);
+
 }
+
+updatePalette();
+
+current++;
+
+if(current>=questions.length){
+
+current=0;
+
+}
+
+loadQ();
+
+}
+
+/* REVIEW */
 
 function markReview(){
- marks[current]=true;
- updatePalette();
+
+marked[current]=true;
+
+updatePalette();
+
 }
+
+/* BUILD PALETTE */
 
 function buildPalette(){
- let html="";
- for(let i=0;i<questions.length;i++){
-  html+=`<button onclick="goQ(${i})" id="p${i}" class="notattempted">${i+1}</button>`;
- }
- palette.innerHTML=html;
+
+let html="";
+
+for(let i=0;i<questions.length;i++){
+
+html+=`
+
+<button
+onclick="goQ(${i})"
+id="p${i}"
+class="notattempted">
+
+${i+1}
+
+</button>
+
+`;
+
 }
+
+document.getElementById("palette").innerHTML=html;
+
+}
+
+/* UPDATE PALETTE */
 
 function updatePalette(){
- for(let i=0;i<questions.length;i++){
-  let btn=document.getElementById("p"+i);
 
-  if(marks[i]) btn.className="review";
-  else if(answers[i]!=null) btn.className="attempted";
-  else btn.className="notattempted";
- }
+for(let i=0;i<questions.length;i++){
+
+let btn=document.getElementById("p"+i);
+
+if(marked[i]){
+
+btn.className="marked";
+
 }
+else if(answers[i]!=null){
+
+btn.className="attempted";
+
+}
+else{
+
+btn.className="notattempted";
+
+}
+
+}
+
+}
+
+/* GO QUESTION */
 
 function goQ(i){
- current=i;
- loadQ();
+
+current=i;
+
+loadQ();
+
 }
+
+/* SUBMIT TEST */
 
 function submitTest(){
- clearInterval(timer);
 
- let score=0,neg=0,attempt=0,correct=0,wrong=0;
+clearInterval(timer);
 
- questions.forEach((q,i)=>{
-  let ua=answers[i];
+let correct=0;
+let wrong=0;
+let attempted=0;
 
-  if(ua!=null) attempt++;
+questions.forEach((q,i)=>{
 
-  if(ua===q.ans){
-   score++; correct++;
-  }else{
-   if(ua!=null){neg+=0.25; wrong++;}
-  }
- });
+if(answers[i]!=null){
 
- let final=(score-neg).toFixed(2);
+attempted++;
 
- let rank;
- if(final>=90) rank="Topper 🏆";
- else if(final>=70) rank="Excellent ⭐";
- else if(final>=50) rank="Good 👍";
- else rank="Needs Improvement";
+if(answers[i]==q.ans){
 
- resultData={score:final,attempt,correct,wrong,rank};
+correct++;
 
- test.style.display="none";
- result.style.display="block";
+}else{
 
- scoreBox.innerText=`Score: ${final} | ${rank}`;
- summary.innerHTML=`Attempted: ${attempt}/100<br>Correct: ${correct}<br>Wrong: ${wrong}`;
+wrong++;
 
- // 📧 EMAIL FULL DATA
- emailjs.send("service_7tu7wrc","template_dv8cb7o",{
-  name:user.name,
-  mobile:user.mobile,
-  score:final,
-  rank:rank,
-  attempted:attempt,
-  correct:correct,
-  wrong:wrong
- });
 }
 
-// 📄 PDF
+}
+
+});
+
+let score=(correct-(wrong*0.25)).toFixed(2);
+
+document.getElementById("testBox").style.display="none";
+
+document.getElementById("resultBox").style.display="block";
+
+document.getElementById("scoreBox").innerHTML=
+`🏆 Score : ${score}`;
+
+/* SUMMARY */
+
+document.getElementById("summary").innerHTML=`
+
+<h2 style="margin-bottom:15px;">
+📊 Result Summary
+</h2>
+
+<p><b>Total Questions :</b> ${questions.length}</p>
+
+<p><b>Attempted :</b> ${attempted}</p>
+
+<p><b>Correct :</b> ${correct}</p>
+
+<p><b>Wrong :</b> ${wrong}</p>
+
+`;
+
+/* PERFORMANCE */
+
+let percentage=(correct/questions.length)*100;
+
+let performance="";
+let bg="";
+
+if(percentage>=85){
+
+performance="🏆 EXCELLENT PERFORMANCE";
+bg="#bbf7d0";
+
+}
+else if(percentage>=60){
+
+performance="👍 GOOD PERFORMANCE";
+bg="#fde68a";
+
+}
+else{
+
+performance="📚 NEED RANK IMPROVEMENT";
+bg="#fecaca";
+
+}
+
+document.getElementById("performanceBox").innerHTML=`
+
+<div style="
+background:${bg};
+padding:20px;
+border-radius:15px;
+font-size:18px;
+font-weight:600;
+">
+
+${performance}
+
+<br><br>
+
+📈 Percentage : ${percentage.toFixed(2)}%
+
+</div>
+
+`;
+
+/* TABLE */
+
+let table="";
+
+questions.forEach((q,i)=>{
+
+let userAns=
+answers[i]!=null
+? q.opt[answers[i]]
+: "Not Attempted";
+
+let correctAns=q.opt[q.ans];
+
+let status="";
+
+if(answers[i]==null){
+
+status=`<span class="notdone">
+⚪ Not Attempted
+</span>`;
+
+}
+else if(answers[i]==q.ans){
+
+status=`<span class="correct">
+✅ Correct
+</span>`;
+
+}
+else{
+
+status=`<span class="wrong">
+❌ Wrong
+</span>`;
+
+}
+
+table+=`
+
+<tr>
+
+<td>${i+1}</td>
+
+<td>${userAns}</td>
+
+<td>${correctAns}</td>
+
+<td>${status}</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("resultTable").innerHTML=table;
+
+}
+
+/* PDF */
+
 function downloadPDF(){
- const {jsPDF}=window.jspdf;
- let doc=new jsPDF();
 
- doc.text("CBT Report",10,10);
- doc.text(`Name: ${user.name}`,10,20);
- doc.text(scoreBox.innerText,10,30);
+window.print();
 
- doc.save("Result.pdf");
 }
 
-// 📱 WhatsApp
-function shareWhatsApp(){
- let msg=`Score: ${resultData.score}
-Rank: ${resultData.rank}`;
- window.open("https://wa.me/?text="+encodeURIComponent(msg));
+/* SHARE */
+
+function shareResult(){
+
+let score=document.getElementById("scoreBox").innerText;
+
+let text=`
+🎯 Polytechnic CBT Mock Test Result
+
+${score}
+
+🚀 Powered By Diploma Engineers
+`;
+
+if(navigator.share){
+
+navigator.share({
+
+title:"CBT Result",
+
+text:text
+
+});
+
+}else{
+
+alert("Sharing Not Supported");
+
 }
 
-// elements
-const name=document.getElementById("name");
-const mobile=document.getElementById("mobile");
-const login=document.getElementById("login");
-const test=document.getElementById("test");
-const result=document.getElementById("result");
-const qno=document.getElementById("qno");
-const question=document.getElementById("question");
-const options=document.getElementById("options");
-const palette=document.getElementById("palette");
-const timeSpan=document.getElementById("time");
-const scoreBox=document.getElementById("score");
-const summary=document.getElementById("summary");
+}
+
 </script>
 
 </body>
+
 </html>

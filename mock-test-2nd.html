@@ -126,14 +126,6 @@ line-height:1.7;
 margin-bottom:20px;
 }
 
-.question-box img{
-width:100%;
-max-width:350px;
-margin-top:15px;
-border-radius:12px;
-border:1px solid #ddd;
-}
-
 /* OPTIONS */
 
 .option{
@@ -192,6 +184,7 @@ color:#fff;
 .submit{
 background:#dc2626;
 color:#fff;
+display:none;
 }
 
 .buttons button:hover{
@@ -248,17 +241,6 @@ margin-bottom:20px;
 color:#0f172a;
 }
 
-.result button{
-padding:12px 20px;
-margin:10px;
-border:none;
-border-radius:10px;
-background:#2563eb;
-color:#fff;
-font-weight:600;
-cursor:pointer;
-}
-
 .result table{
 width:100%;
 border-collapse:collapse;
@@ -293,10 +275,6 @@ font-weight:bold;
 .notdone{
 color:#555;
 font-weight:bold;
-}
-
-#performanceBox{
-margin-top:20px;
 }
 
 /* MOBILE */
@@ -349,28 +327,6 @@ font-size:15px;
 
 }
 
-/* PRINT */
-
-@media print{
-
-.header,
-.buttons,
-.right,
-.login-box,
-.result button{
-display:none;
-}
-
-body{
-background:#fff;
-}
-
-.result{
-display:block;
-}
-
-}
-
 </style>
 </head>
 
@@ -396,7 +352,7 @@ display:block;
 
 <input type="text" id="name" placeholder="Enter Name">
 
-<input type="number" id="mobile" placeholder="Enter Mobile Number">
+<input type="tel" id="mobile" maxlength="10" placeholder="Enter 10 Digit Mobile Number">
 
 <button onclick="startTest()">
 Start Test
@@ -407,8 +363,6 @@ Start Test
 <!-- TEST -->
 
 <div class="container" id="testBox">
-
-<!-- LEFT -->
 
 <div class="left">
 
@@ -424,19 +378,17 @@ Start Test
 📌 Mark Review
 </button>
 
-<button class="next" onclick="nextQ()">
+<button class="next" id="nextBtn" onclick="nextQ()">
 ➡ Next
 </button>
 
-<button class="submit" onclick="submitTest()">
+<button class="submit" id="submitBtn" onclick="submitTest()">
 ✅ Submit
 </button>
 
 </div>
 
 </div>
-
-<!-- RIGHT -->
 
 <div class="right">
 
@@ -456,8 +408,6 @@ Start Test
 
 <div id="summary"></div>
 
-<div id="performanceBox"></div>
-
 <div style="overflow-x:auto;">
 
 <table>
@@ -465,12 +415,10 @@ Start Test
 <thead>
 
 <tr>
-
 <th>Q.No</th>
 <th>Your Answer</th>
 <th>Correct Answer</th>
 <th>Status</th>
-
 </tr>
 
 </thead>
@@ -481,21 +429,12 @@ Start Test
 
 </div>
 
-<button onclick="downloadPDF()">
-📄 Download PDF
-</button>
-
-<button onclick="shareResult()">
-📤 Share Result
-</button>
-
-<button onclick="location.reload()">
-🔄 Restart Test
-</button>
-
 </div>
 
 <script>
+
+
+
 
 /* QUESTIONS */
 
@@ -1605,6 +1544,7 @@ ans:2
 
 ];
 
+
 /* VARIABLES */
 
 let current=0;
@@ -1620,13 +1560,15 @@ function startTest(){
 let name=document.getElementById("name").value.trim();
 let mobile=document.getElementById("mobile").value.trim();
 
-if(name=="" || mobile==""){
-alert("Please Fill Details");
+if(name==""){
+alert("Please Enter Name");
 return;
 }
 
-if(!/^[6-9]\d{9}$/.test(mobile)){
-alert("Enter Valid Mobile Number");
+/* VALID MOBILE */
+
+if(!/^[6-9][0-9]{9}$/.test(mobile)){
+alert("Enter Valid 10 Digit Mobile Number");
 return;
 }
 
@@ -1663,13 +1605,7 @@ let q=questions[current];
 document.getElementById("qno").innerHTML=
 `<h2>Question ${current+1}</h2>`;
 
-document.getElementById("question").innerHTML=`
-
-<div>${q.q}</div>
-
-${q.img ? `<img src="${q.img}">` : ""}
-
-`;
+document.getElementById("question").innerHTML=q.q;
 
 let html="";
 
@@ -1681,7 +1617,6 @@ html+=`
 
 <input type="radio"
 name="opt"
-value="${i}"
 ${answers[current]==i ? "checked" : ""}
 onclick="selectOption(${i})">
 
@@ -1695,9 +1630,24 @@ ${o}
 
 document.getElementById("options").innerHTML=html;
 
+/* SHOW SUBMIT ONLY LAST QUESTION */
+
+if(current==questions.length-1){
+
+document.getElementById("submitBtn").style.display="inline-block";
+document.getElementById("nextBtn").style.display="none";
+
+}
+else{
+
+document.getElementById("submitBtn").style.display="none";
+document.getElementById("nextBtn").style.display="inline-block";
+
 }
 
-/* SELECT */
+}
+
+/* SELECT OPTION */
 
 function selectOption(i){
 
@@ -1717,14 +1667,9 @@ if(current<questions.length-1){
 
 current++;
 
-}
-else{
-
-current=0;
-
-}
-
 loadQ();
+
+}
 
 }
 
@@ -1744,7 +1689,7 @@ function buildPalette(){
 
 let html="";
 
-for(let i=0;i<100;i++){
+for(let i=0;i<questions.length;i++){
 
 html+=`
 
@@ -1763,24 +1708,15 @@ ${i+1}
 
 document.getElementById("palette").innerHTML=html;
 
-updatePalette();
-
 }
 
-/* UPDATE */
+/* UPDATE PALETTE */
 
 function updatePalette(){
 
-for(let i=0;i<100;i++){
+for(let i=0;i<questions.length;i++){
 
 let btn=document.getElementById("p"+i);
-
-if(i>=questions.length){
-
-btn.style.display="none";
-continue;
-
-}
 
 if(marked[i]){
 
@@ -1802,17 +1738,13 @@ btn.className="notattempted";
 
 }
 
-/* GO QUESTION */
+/* GOTO QUESTION */
 
 function goQ(i){
-
-if(i<questions.length){
 
 current=i;
 
 loadQ();
-
-}
 
 }
 
@@ -1826,191 +1758,1849 @@ let correct=0;
 let wrong=0;
 let attempted=0;
 
+let table="";
+
 questions.forEach((q,i)=>{
+
+let status="";
+let userAns="Not Attempted";
 
 if(answers[i]!=null){
 
 attempted++;
 
+userAns=q.opt[answers[i]];
+
+if(answers[i]==q.ans){<!DOCTYPE html>
+<html lang="hi">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hindi TGT CBT Mock Test</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#eef2f7;
+}
+
+/* HEADER */
+
+.header{
+background:#0f172a;
+color:#fff;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.header h1{
+font-size:20px;
+}
+
+.timer{
+font-size:20px;
+font-weight:700;
+color:#facc15;
+}
+
+/* LOGIN */
+
+.login-box{
+width:90%;
+max-width:420px;
+background:#fff;
+margin:40px auto;
+padding:30px;
+border-radius:18px;
+box-shadow:0 5px 20px rgba(0,0,0,.1);
+text-align:center;
+}
+
+.login-box h2{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.login-box input{
+width:100%;
+padding:14px;
+margin:10px 0;
+border-radius:12px;
+border:1px solid #ccc;
+font-size:16px;
+outline:none;
+}
+
+.login-box button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#2563eb;
+color:#fff;
+font-size:17px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.login-box button:hover{
+background:#1d4ed8;
+}
+
+/* MAIN */
+
+.container{
+display:none;
+height:calc(100vh - 70px);
+}
+
+/* LEFT */
+
+.left{
+flex:1;
+background:#fff;
+padding:20px;
+overflow:auto;
+}
+
+/* RIGHT */
+
+.right{
+width:210px;
+background:#f8fafc;
+padding:15px;
+border-left:2px solid #ddd;
+overflow:auto;
+}
+
+/* QUESTION */
+
+.question-box{
+font-size:20px;
+font-weight:600;
+line-height:1.7;
+margin-bottom:20px;
+}
+
+/* OPTIONS */
+
+.option{
+display:block;
+background:#f1f5f9;
+padding:15px;
+margin:12px 0;
+border-radius:12px;
+cursor:pointer;
+transition:.3s;
+font-size:16px;
+border:2px solid transparent;
+}
+
+.option:hover{
+background:#dbeafe;
+transform:translateY(-2px);
+}
+
+.option.selected{
+border-color:#2563eb;
+background:#dbeafe;
+}
+
+.option input{
+margin-right:10px;
+}
+
+/* BUTTONS */
+
+.buttons{
+margin-top:20px;
+}
+
+.buttons button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:10px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.next{
+background:#2563eb;
+color:#fff;
+}
+
+.review{
+background:#f97316;
+color:#fff;
+}
+
+.submit{
+background:#dc2626;
+color:#fff;
+display:none;
+}
+
+.buttons button:hover{
+opacity:.9;
+}
+
+/* PALETTE */
+
+.palette{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:15px;
+}
+
+.palette button{
+width:42px;
+height:42px;
+border:none;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+transition:.3s;
+}
+
+.palette button:hover{
+transform:scale(1.05);
+}
+
+.notattempted{
+background:#cbd5e1;
+}
+
+.attempted{
+background:#16a34a;
+color:#fff;
+}
+
+.marked{
+background:#f97316;
+color:#fff;
+}
+
+/* RESULT */
+
+.result{
+display:none;
+padding:25px;
+text-align:center;
+}
+
+.result h1{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.result table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+background:#fff;
+overflow:hidden;
+border-radius:15px;
+}
+
+.result th{
+background:#2563eb;
+color:#fff;
+padding:14px;
+border:1px solid #ddd;
+}
+
+.result td{
+padding:12px;
+border:1px solid #ddd;
+}
+
+.correct{
+color:green;
+font-weight:bold;
+}
+
+.wrong{
+color:red;
+font-weight:bold;
+}
+
+.notdone{
+color:#555;
+font-weight:bold;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.container{
+flex-direction:row;
+height:auto;
+}
+
+.left{
+width:72%;
+padding:10px;
+}
+
+.right{
+width:28%;
+padding:10px;
+}
+
+.palette{
+grid-template-columns:repeat(2,1fr);
+gap:6px;
+}
+
+.palette button{
+width:100%;
+height:34px;
+font-size:12px;
+}
+
+.question-box{
+font-size:18px;
+}
+
+.buttons button{
+padding:10px 12px;
+font-size:12px;
+margin:3px;
+}
+
+.header h1{
+font-size:14px;
+}
+
+.timer{
+font-size:15px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<div class="header">
+
+<h1>🎯 Hindi TGT CBT Mock Test</h1>
+
+<div class="timer">
+⏰ <span id="time">3600</span>s
+</div>
+
+</div>
+
+<!-- LOGIN -->
+
+<div class="login-box" id="loginBox">
+
+<h2>Start Mock Test 🚀</h2>
+
+<input type="text" id="name" placeholder="Enter Name">
+
+<input type="tel" id="mobile" maxlength="10" placeholder="Enter 10 Digit Mobile Number">
+
+<button onclick="startTest()">
+Start Test
+</button>
+
+</div>
+
+<!-- TEST -->
+
+<div class="container" id="testBox">
+
+<div class="left">
+
+<div id="qno"></div>
+
+<div class="question-box" id="question"></div>
+
+<div id="options"></div>
+
+<div class="buttons">
+
+<button class="review" onclick="markReview()">
+📌 Mark Review
+</button>
+
+<button class="next" id="nextBtn" onclick="nextQ()">
+➡ Next
+</button>
+
+<button class="submit" id="submitBtn" onclick="submitTest()">
+✅ Submit
+</button>
+
+</div>
+
+</div>
+
+<div class="right">
+
+<h3>📋 Questions</h3>
+
+<div class="palette" id="palette"></div>
+
+</div>
+
+</div>
+
+<!-- RESULT -->
+
+<div class="result" id="resultBox">
+
+<h1 id="scoreBox"></h1>
+
+<div id="summary"></div>
+
+<div style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Q.No</th>
+<th>Your Answer</th>
+<th>Correct Answer</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody id="resultTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+
+
+
+/* QUESTIONS */
+
+let questions=[
+
+{
+q:"'वह पथ बंधु था' उपन्यास के लेखक हैं -",
+opt:[
+"नरेश मेहता",
+"प्रभाकर माचवे",
+"भैरव प्रसाद गुप्त",
+"रांगेय राघव"
+],
+ans:0
+},
+
+{
+q:"पाप और पुण्य के चिरंतन नैतिक प्रश्न को किस उपन्यास में प्रस्तुत किया गया है?",
+opt:[
+"सामर्थ्य और सीमा",
+"चित्रलेखा",
+"भूले बिसरे चित्र",
+"आखिरी दाँव"
+],
+ans:1
+},
+
+{
+q:"'दुक्खम-सुक्खम' उपन्यास की लेखिका हैं?",
+opt:[
+"चित्रा मुद्गल",
+"प्रभा खेतान",
+"ममता कालिया",
+"नासिरा शर्मा"
+],
+ans:2
+},
+
+{
+q:"मध्यवर्ग की पारिवारिक समस्या को दर्शाने वाला नाटक है -",
+opt:[
+"जनमेजय का नागयज्ञ",
+"अंधायुग",
+"आधे-अधूरे",
+"तमस"
+],
+ans:2
+},
+
+{
+q:"'नाटक के लिए रंगमंच होना चाहिए, रंगमंच के लिए नाटक नहीं' यह कथन किसका है?",
+opt:[
+"मोहन राकेश",
+"मुद्राराक्षस",
+"डॉ. राम कुमार वर्मा",
+"जयशंकर प्रसाद"
+],
+ans:3
+},
+
+{
+q:"'सूर्य की अंतिम किरण से सूर्य की पहली किरण तक' किसकी नाट्य कृति है?",
+opt:[
+"सुरेन्द्र वर्मा",
+"रामकुमार वर्मा",
+"महादेवी वर्मा",
+"भगवती चरण वर्मा"
+],
+ans:0
+},
+
+{
+q:"'दूसरी परम्परा की खोज' किस विधा की रचना है?",
+opt:[
+"आलोचना",
+"खोज एवं सर्वेक्षण",
+"कहानी",
+"ललित निबन्ध"
+],
+ans:0
+},
+
+{
+q:"'भक्ति आंदोलन भारतीय चिंताधारा का स्वाभाविक विकास है।' यह कथन किसका है?",
+opt:[
+"आचार्य रामचन्द्र शुक्ल",
+"आचार्य हजारी प्रसाद द्विवेदी",
+"डॉ. रामस्वरूप चतुर्वेदी",
+"डॉ. भगीरथ मिश्र"
+],
+ans:1
+},
+
+{
+q:"'अल्मोड़े का बाजार' किस विधा की रचना है?",
+opt:[
+"जीवनी",
+"रिपोर्ताज",
+"प्रगीत",
+"यात्रावृत्त"
+],
+ans:1
+},
+
+{
+q:"निम्न में से कौन रेखाचित्र विधा की रचना नहीं है?",
+opt:[
+"कठगुलाब",
+"क्षण बोले कण मुस्काए",
+"पुरानी स्मृतियाँ",
+"रेखाएँ बोल उठीं"
+],
+ans:0
+},
+
+{
+q:"निम्न में से दलित आत्मकथा नहीं है?",
+opt:[
+"अपने-अपने पिंजरे",
+"जूठन",
+"तिरस्कृत",
+"मेरी असफलताएँ"
+],
+ans:3
+},
+
+{
+q:"निम्न में से 'मनोवैज्ञानिक उपन्यासकार' किसे कहा जा सकता है?",
+opt:[
+"जैनेन्द्र कुमार",
+"प्रेमचन्द",
+"यशपाल",
+"भगवतीचरण वर्मा"
+],
+ans:0
+},
+
+ {
+q:"'बिन्दु पद चले सुते बिन्दु काना' इसमें कौन सा अलंकार है?",
+opt:[
+"असंगति",
+"श्लेष",
+"रूपक",
+"वक्रोक्ति"
+],
+ans:0
+},
+
+{
+q:"'पंचवटी' शब्द में कौन सा समास है?",
+opt:[
+"कर्मधारय",
+"द्विगु",
+"अव्ययीभाव",
+"तत्पुरुष"
+],
+ans:1
+},
+
+{
+q:"'समरस थे जड़ या चेतन सुंदर साकार बना था। चेतनता एक विलसती आनंद अखंड घना था।।' इन पंक्तियों में कौन सा रस है?",
+opt:[
+"श्रृंगार रस",
+"करुण रस",
+"शांत रस",
+"भयानक रस"
+],
+ans:2
+},
+
+{
+q:"वीर रस का स्थायीभाव है -",
+opt:[
+"शोक",
+"भय",
+"उत्साह",
+"निर्वेद"
+],
+ans:2
+},
+
+{
+q:"भाषा की सार्थक लघुतम इकाई है -",
+opt:[
+"शब्द",
+"पद",
+"ध्वनि",
+"वाक्य"
+],
+ans:0
+},
+
+{
+q:"संविधान के किस अनुच्छेद के अंतर्गत हिन्दी को संघ की राजभाषा का दर्जा मिला?",
+opt:[
+"अनुच्छेद 343",
+"अनुच्छेद 344",
+"अनुच्छेद 345",
+"अनुच्छेद 346"
+],
+ans:0
+},
+
+{
+q:"राजभाषा आयोग के प्रथम अध्यक्ष कौन थे?",
+opt:[
+"बालगंगाधर तिलक",
+"मुंशी आयंगर",
+"बालगंगाधर खेर",
+"काका साहेब कालेलकर"
+],
+ans:2
+},
+
+{
+q:"पश्चिमी हिन्दी में कौन बोली है?",
+opt:[
+"मगही",
+"कन्नौजी",
+"मैथिली",
+"अवधी"
+],
+ans:1
+},
+
+{
+q:"बिहारी हिन्दी की बोली का नाम है -",
+opt:[
+"मगही",
+"बघेली",
+"छत्तीसगढ़ी",
+"बुंदेली"
+],
+ans:0
+},
+
+{
+q:"'जगनाथ' में कौन संधि है?",
+opt:[
+"वृद्धि संधि",
+"यण संधि",
+"स्वर संधि",
+"व्यंजन संधि"
+],
+ans:3
+},
+
+{
+q:"किस शब्द में 'आ' उपसर्ग नहीं है -",
+opt:[
+"आजन्म",
+"आगमन",
+"आकर्षक",
+"आदरणीय"
+],
+ans:3
+},
+
+{
+q:"अहेतूकी का शुद्ध रूप है -",
+opt:[
+"अहितुकी",
+"अहेतुकी",
+"हेतुकी",
+"अभीमुकी"
+],
+ans:1
+},
+
+{
+q:"ब्रजभाषा का क्षेत्र कौन नहीं है?",
+opt:[
+"धौलपुर",
+"आगरा",
+"मथुरा",
+"झांसी"
+],
+ans:3
+},
+
+ {
+q:"'जो अधिक बोलता है' उसे कहते हैं -",
+opt:[
+"मितभाषी",
+"मुखभाषी",
+"वक्ता",
+"वाचाल"
+],
+ans:3
+},
+
+{
+q:"'स्वप्न' का विलोम है -",
+opt:[
+"दिवास्वप्न",
+"खुमारी",
+"निद्रा",
+"जागरण"
+],
+ans:3
+},
+
+{
+q:"'अतीन्द्रिय' शब्द का आशय है?",
+opt:[
+"इन्द्रियों की पहुँच से बाहर",
+"इन्द्रियों की रचना करने वाला",
+"इन्द्रियों का स्वामी",
+"इन्द्रियों के वश में रहने वाला"
+],
+ans:0
+},
+
+{
+q:"कौन तद्धित प्रत्यय का उदाहरण नहीं है?",
+opt:[
+"पराठेदार",
+"अड़ियल",
+"उच्चार",
+"चमकाऊ"
+],
+ans:2
+},
+
+{
+q:"किस शब्द में 'अ' उपसर्ग है?",
+opt:[
+"अभिमान",
+"अनजान",
+"अभाव",
+"अनमान"
+],
+ans:2
+},
+
+{
+q:"'उजाड़' का विलोम है -",
+opt:[
+"सिंचित",
+"खाद",
+"उपजाऊ",
+"बंजर"
+],
+ans:2
+},
+
+{
+q:"'जो शीघ्र ही किसी बात या युक्ति को सोच ले' उसे कहते हैं -",
+opt:[
+"सहमत",
+"वैयाकरण",
+"प्रत्युत्पन्नमति",
+"कर्मठ"
+],
+ans:2
+},
+
+{
+q:"'चन्द्रिका' का पर्याय है -",
+opt:[
+"चन्द्रहार",
+"रजत",
+"कौमुदी",
+"स्वर्णकिरण"
+],
+ans:2
+},
+
+{
+q:"'जलाशय' का पर्याय है -",
+opt:[
+"जल",
+"कूप",
+"गंग",
+"जलकर"
+],
+ans:1
+},
+
+{
+q:"'विन्दु पड़ा चले सूते विन्दु काना' इसमें कौन सा अलंकार है?",
+opt:[
+"असंगति",
+"श्लेष",
+"रूपक",
+"वक्रोक्ति"
+],
+ans:0
+},
+
+{
+q:"'पंचवटी' शब्द में कौन सा समास है?",
+opt:[
+"कर्मधारय",
+"द्विगु",
+"अव्ययीभाव",
+"तत्पुरुष"
+],
+ans:1
+},
+
+{
+q:"'समरस थे जड़ या चेतन सुंदर साकार बना था। चेतना एक विलसती आनंद अखंड घना था।।' इन पंक्तियों में कौन सा रस है?",
+opt:[
+"श्रृंगार रस",
+"करुण रस",
+"शांत रस",
+"भयानक रस"
+],
+ans:2
+},
+
+{
+q:"वीर रस का स्थायीभाव है -",
+opt:[
+"शोक",
+"भय",
+"उत्साह",
+"निर्वेद"
+],
+ans:2
+},
+
+{
+q:"भाषा की सार्थक लघुतम इकाई है -",
+opt:[
+"शब्द",
+"पद",
+"ध्वनि",
+"वाक्य"
+],
+ans:0
+},
+
+{
+q:"संविधान के किस अनुच्छेद के अंतर्गत हिन्दी को संघ की राजभाषा का दर्जा मिला?",
+opt:[
+"अनुच्छेद 343",
+"अनुच्छेद 344",
+"अनुच्छेद 345",
+"अनुच्छेद 346"
+],
+ans:0
+},
+
+{
+q:"राजभाषा आयोग के प्रथम अध्यक्ष कौन थे?",
+opt:[
+"बालगंगाधर तिलक",
+"मुंशी आयंगर",
+"बालगंगाधर खेर",
+"काका साहेब कालेकर"
+],
+ans:2
+},
+
+{
+q:"पश्चिमी हिन्दी में कौन बोली है?",
+opt:[
+"मगही",
+"कन्नौजी",
+"मैथिली",
+"अवधी"
+],
+ans:1
+},
+
+{
+q:"बिहारी हिन्दी की बोली का नाम है -",
+opt:[
+"मगही",
+"बघेली",
+"छत्तीसगढ़ी",
+"बुंदेली"
+],
+ans:0
+},
+
+{
+q:"'जगन्नाथ' में कौन संधि है?",
+opt:[
+"वृद्धि संधि",
+"यण संधि",
+"स्वर संधि",
+"व्यंजन संधि"
+],
+ans:3
+},
+
+{
+q:"किस शब्द में 'आ' उपसर्ग नहीं है -",
+opt:[
+"आजन्म",
+"आगमन",
+"आकर्षक",
+"आदरणीय"
+],
+ans:3
+},
+
+{
+q:"अहेतुकि का शुद्ध रूप है -",
+opt:[
+"अहितुकी",
+"अहेतुकी",
+"वेतुकी",
+"अभीतुकी"
+],
+ans:1
+},
+
+{
+q:"ब्रजभाषा का क्षेत्र कौन नहीं है?",
+opt:[
+"धौलपुर",
+"मथुरा",
+"आगरा",
+"गोरखपुर"
+],
+ans:3
+},
+
+{
+q:"महाप्राण ध्वनियाँ व्यंजन वर्ग में किससे सम्बंधित हैं?",
+opt:[
+"पहला, दूसरा",
+"दूसरा, तीसरा",
+"तीसरा, चौथा",
+"पहला, चौथा"
+],
+ans:2
+},
+
+{
+q:"'घोटक' का तत्सम रूप क्या है?",
+opt:[
+"घोड़ा",
+"अश्व",
+"वाजी",
+"तुरंग"
+],
+ans:2
+},
+
+{
+q:"'प्रत्येक' का सन्धि विच्छेद होगा -",
+opt:[
+"प्रति + एक",
+"प्रति + एक",
+"प्रति + ऐक",
+"प्र + त्येक"
+],
+ans:0
+},
+
+{
+q:"'अव्यय' व्याकरण की दृष्टि है?",
+opt:[
+"संधि",
+"उपसर्ग",
+"अन्वय",
+"अव्यय"
+],
+ans:3
+},
+
+{
+q:"निम्न में से प्रत्यय रहित शब्द है -",
+opt:[
+"दर्शनीय",
+"दुर्गुण",
+"मिथ्युक",
+"कर्तव्य"
+],
+ans:1
+},
+
+{
+q:"'उद्योग' का संधि होगा -",
+opt:[
+"उद् + योग",
+"उद + योग",
+"उप + योग",
+"उत् + अयोग"
+],
+ans:0
+},
+
+{
+q:"'कनुप्रिया' किसकी काव्यकृति है?",
+opt:[
+"धर्मवीर भारती",
+"अज्ञेय",
+"नागार्जुन",
+"मुक्तिबोध"
+],
+ans:0
+},
+
+{
+q:"'अंधेरे में' कविता के रचनाकार हैं -",
+opt:[
+"रघुवीर सहाय",
+"मुक्तिबोध",
+"धूमिल",
+"त्रिलोचन"
+],
+ans:1
+},
+
+{
+q:"'मैला आँचल' किस आंचलिक क्षेत्र पर आधारित उपन्यास है?",
+opt:[
+"मिथिला",
+"पूर्णिया",
+"मगध",
+"बुंदेलखंड"
+],
+ans:1
+},
+
+{
+q:"'कविता क्या है' निबंध के लेखक कौन हैं?",
+opt:[
+"रामचन्द्र शुक्ल",
+"हजारी प्रसाद द्विवेदी",
+"नंददुलारे वाजपेयी",
+"महावीर प्रसाद द्विवेदी"
+],
+ans:0
+},
+
+{
+q:"'वोल्गा से गंगा' के लेखक हैं -",
+opt:[
+"राहुल सांकृत्यायन",
+"यशपाल",
+"रामविलास शर्मा",
+"अज्ञेय"
+],
+ans:0
+},
+
+{
+q:"'उर्वशी' महाकाव्य के रचनाकार कौन हैं?",
+opt:[
+"जयशंकर प्रसाद",
+"रामधारी सिंह दिनकर",
+"सुमित्रानंदन पंत",
+"निराला"
+],
+ans:1
+},
+
+{
+q:"'परिमल' किस कवि का काव्य संग्रह है?",
+opt:[
+"महादेवी वर्मा",
+"निराला",
+"पंत",
+"प्रसाद"
+],
+ans:1
+},
+
+{
+q:"'नयी कविता' का प्रवर्तक किसे माना जाता है?",
+opt:[
+"अज्ञेय",
+"धूमिल",
+"मुक्तिबोध",
+"रघुवीर सहाय"
+],
+ans:0
+},
+
+{
+q:"'आषाढ़ का एक दिन' नाटक के लेखक हैं -",
+opt:[
+"मोहन राकेश",
+"धर्मवीर भारती",
+"भीष्म साहनी",
+"लक्ष्मीनारायण लाल"
+],
+ans:0
+},
+
+{
+q:"'तमस' उपन्यास का मुख्य विषय क्या है?",
+opt:[
+"ग्रामीण जीवन",
+"साम्प्रदायिकता",
+"प्रेम कथा",
+"राजनीति"
+],
+ans:1
+},
+
+{
+q:"'कामायनी' का कौन सा सर्ग ज्ञान का प्रतीक माना जाता है?",
+opt:[
+"श्रद्धा",
+"इड़ा",
+"लज्जा",
+"कर्म"
+],
+ans:1
+},
+
+{
+q:"'साकेत' महाकाव्य में मुख्य पात्र कौन है?",
+opt:[
+"सीता",
+"उर्मिला",
+"कैकेयी",
+"मांडवी"
+],
+ans:1
+},
+
+{
+q:"'शेखर : एक जीवनी' किस प्रकार का उपन्यास है?",
+opt:[
+"ऐतिहासिक",
+"मनोवैज्ञानिक",
+"आंचलिक",
+"सामाजिक"
+],
+ans:1
+},
+
+{
+q:"'रश्मिरथी' में कर्ण को किस रूप में प्रस्तुत किया गया है?",
+opt:[
+"अहंकारी",
+"दानवीर",
+"स्वार्थी",
+"कायर"
+],
+ans:1
+},
+
+{
+q:"'कुकुरमुत्ता' कविता किस कवि की है?",
+opt:[
+"निराला",
+"पंत",
+"प्रसाद",
+"महादेवी"
+],
+ans:0
+},
+
+{
+q:"'गोदान' का नायक कौन है?",
+opt:[
+"होरी",
+"गोबर",
+"धनिया",
+"झुनिया"
+],
+ans:0
+},
+
+{
+q:"'झूठा सच' उपन्यास के लेखक हैं -",
+opt:[
+"भीष्म साहनी",
+"कमलेश्वर",
+"यशपाल",
+"अज्ञेय"
+],
+ans:2
+},
+
+{
+q:"'तार सप्तक' का संपादन किसने किया?",
+opt:[
+"रामविलास शर्मा",
+"अज्ञेय",
+"धर्मवीर भारती",
+"दिनकर"
+],
+ans:1
+},
+
+{
+q:"'कविता के नए प्रतिमान' के लेखक कौन हैं?",
+opt:[
+"नामवर सिंह",
+"रामविलास शर्मा",
+"नगेन्द्र",
+"हजारी प्रसाद द्विवेदी"
+],
+ans:0
+},
+
+{
+q:"'आत्मनेपद' किस लेखक की रचना है?",
+opt:[
+"अज्ञेय",
+"मुक्तिबोध",
+"निराला",
+"धर्मवीर भारती"
+],
+ans:0
+},
+
+{
+q:"'पल्लव' काव्य संग्रह किसका है?",
+opt:[
+"महादेवी वर्मा",
+"सुमित्रानंदन पंत",
+"प्रसाद",
+"निराला"
+],
+ans:1
+},
+
+{
+q:"'एक साहित्यिक की डायरी' के लेखक हैं -",
+opt:[
+"मुक्तिबोध",
+"अज्ञेय",
+"निराला",
+"धूमिल"
+],
+ans:0
+},
+
+{
+q:"'चन्द्रगुप्त' नाटक किसने लिखा?",
+opt:[
+"मोहन राकेश",
+"जयशंकर प्रसाद",
+"भारतेंदु हरिश्चन्द्र",
+"लक्ष्मीनारायण मिश्र"
+],
+ans:1
+},
+
+{
+q:"'नीरजा' किसकी काव्यकृति है?",
+opt:[
+"महादेवी वर्मा",
+"निराला",
+"पंत",
+"प्रसाद"
+],
+ans:0
+},
+
+{
+q:"'भेड़िए' कहानी के लेखक कौन हैं?",
+opt:[
+"भीष्म साहनी",
+"कमलेश्वर",
+"दूधनाथ सिंह",
+"अमरकांत"
+],
+ans:0
+ },
+
+ {
+q:"'खेट कौतुकम्' किसकी रचना है?",
+opt:[
+"हेम",
+"रस्तवेल",
+"कवि गंग",
+"वल्लभदास"
+],
+ans:0
+},
+
+{
+q:"'हिततरंगिणी' की रचना किसने की?",
+opt:[
+"व्यास जी",
+"बालगंगाधर तिलक",
+"केशवदास",
+"चिंतामणि"
+],
+ans:2
+},
+
+{
+q:"वल्लभाचार्य द्वारा रचित ग्रंथ का नाम है -",
+opt:[
+"सिद्धान्त संग्रह",
+"अष्टयाम सारायण",
+"सहस्रनाम",
+"अनुभाष्य"
+],
+ans:3
+},
+
+{
+q:"'भवप्रकाश' के रचयिता का नाम है -",
+opt:[
+"दामोदर पंडित",
+"कवि आयुष",
+"रोड़ा कवि",
+"महेन्द्र"
+],
+ans:3
+},
+
+{
+q:"निम्न में से कौन सी रचना व्याकरण ग्रंथ है?",
+opt:[
+"कीर्तिलता",
+"चर्चपद",
+"उक्तिव्यक्ति प्रकरण",
+"कुवलयमाला"
+],
+ans:2
+},
+
+{
+q:"'अंगदर्पण' की रचना किसने की है?",
+opt:[
+"नागार्जुन",
+"जगनिक",
+"ईश्वरदास",
+"मधुकरदास"
+],
+ans:2
+},
+
+{
+q:"'केशव कहि न जाइ का कहिए' यह पंक्ति किस कवि की है?",
+opt:[
+"केशवदास",
+"कबीरदास",
+"तुलसीदास",
+"नरहरिदास"
+],
+ans:2
+},
+
+{
+q:"'प्रभु जी तुम चंदन हम पानी' इस पंक्ति के रचनाकार हैं?",
+opt:[
+"चंदबरदाई",
+"मलूकदास",
+"नानक",
+"संत रैदास"
+],
+ans:3
+},
+
+{
+q:"'रुद्र सम्प्रदाय' की स्थापना किसने की?",
+opt:[
+"छत्र स्वामी",
+"श्रीस्वामी",
+"विष्णुस्वामी",
+"निम्बार्काचार्य"
+],
+ans:2
+},
+
+{
+q:"गोस्वामी तुलसीदास की रचना का नाम है?",
+opt:[
+"चौरासी वैष्णव की वार्ता",
+"भक्तमाल",
+"छिताईवार्ता",
+"गोराबदलचरित"
+],
+ans:0
+},
+
+{
+q:"'शिवराजभूषण' ग्रंथ में किसका विवेचन मिलता है?",
+opt:[
+"रस",
+"ध्वनि",
+"अलंकार",
+"औचित्य"
+],
+ans:2
+},
+
+{
+q:"'प्रेम को पंथ कराल महा, तरवारि की धार पै धावनो है।' इस पंक्ति के रचयिता हैं -",
+opt:[
+"आलम",
+"मतिराम",
+"घनानंद",
+"बोधा"
+],
+ans:3
+},
+
+{
+q:"कबीर किस शासक के समकालीन थे?",
+opt:[
+"हुुमायूँ",
+"अकबर",
+"सिकन्दर लोदी",
+"बहादुरशाह जफर"
+],
+ans:2
+},
+
+{
+q:"'राधावल्लभ सम्प्रदाय' का प्रवर्तन किसने किया?",
+opt:[
+"वल्लभाचार्य",
+"मध्वाचार्य",
+"हितहरिवंश",
+"सूरदास"
+],
+ans:2
+},
+
+{
+q:"समाजाचार्य ने किस दर्शन का प्रतिपादन किया?",
+opt:[
+"अद्वैतवाद",
+"शुद्धाद्वैतवाद",
+"विशिष्टाद्वैतवाद",
+"दैतवाद"
+],
+ans:2
+},
+
+{
+q:"'धन्य भारत भूमि सब रतननि की उपजावनी' इस पंक्ति के रचयिता हैं -",
+opt:[
+"प्राण नारायण मिश्र",
+"बद्रीनारायण चौधरी 'प्रेमघन'",
+"भारतेन्दु हरिश्चन्द्र",
+"मैथिलीशरण गुप्त"
+],
+ans:1
+},
+
+{
+q:"'प्रबोधचन्द्रोदय' ग्रंथ के रचयिता कौन हैं?",
+opt:[
+"सामन्त",
+"कबीर",
+"मतिराम",
+"पद्माकर"
+],
+ans:3
+},
+
+{
+q:"निम्न में से कौन सी रचना एवं रचनाकार का युग्म सही नहीं है?",
+opt:[
+"काव्यनिर्णय - भिखारीदास",
+"सरस्वतीकंठाभरण - कुलपति मिश्र",
+"रसविलास - चिंतामणि",
+"भावविलास - केशवदास"
+],
+ans:1
+},
+
+{
+q:"अधिकार खोकर बैठना यह महादुष्कर्म है।' इस पंक्ति के रचयिता हैं -",
+opt:[
+"रामधारी सिंह दिनकर",
+"मैथिलीशरण गुप्त",
+"निराला",
+"सुभद्रा कुमारी चौहान"
+],
+ans:1
+},
+
+{
+q:"निम्न में से कौन सी रचना एवं उसके रचनाकार का युग्म सही नहीं है?",
+opt:[
+"कविता-कौमुदी - रामनरेश त्रिपाठी",
+"हिमकिरीटिनी - माखनलाल चतुर्वेदी",
+"हल्दीघाटी - श्यामनारायण पांडेय",
+"संध्यागीत - बच्चन"
+],
+ans:3
+},
+
+/* RANDOM HARD QUESTIONS */
+
+{
+q:"'रामचरितमानस' का प्रथम कांड कौन सा है?",
+opt:[
+"अयोध्याकांड",
+"बालकांड",
+"उत्तरकांड",
+"अरण्यकांड"
+],
+ans:1
+},
+
+{
+q:"'सूरसागर' के रचयिता कौन हैं?",
+opt:[
+"तुलसीदास",
+"कबीरदास",
+"सूरदास",
+"रसखान"
+],
+ans:2
+}
+
+];
+
+
+/* VARIABLES */
+
+let current=0;
+let answers=[];
+let marked=[];
+let time=3600;
+let timer;
+
+/* START TEST */
+
+function startTest(){
+
+let name=document.getElementById("name").value.trim();
+let mobile=document.getElementById("mobile").value.trim();
+
+if(name==""){
+alert("Please Enter Name");
+return;
+}
+
+/* VALID MOBILE */
+
+if(!/^[6-9][0-9]{9}$/.test(mobile)){
+alert("Enter Valid 10 Digit Mobile Number");
+return;
+}
+
+document.getElementById("loginBox").style.display="none";
+
+document.getElementById("testBox").style.display="flex";
+
+buildPalette();
+
+loadQ();
+
+timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("time").innerText=time;
+
+if(time<=0){
+
+submitTest();
+
+}
+
+},1000);
+
+}
+
+/* LOAD QUESTION */
+
+function loadQ(){
+
+let q=questions[current];
+
+document.getElementById("qno").innerHTML=
+`<h2>Question ${current+1}</h2>`;
+
+document.getElementById("question").innerHTML=q.q;
+
+let html="";
+
+q.opt.forEach((o,i)=>{
+
+html+=`
+
+<label class="option ${answers[current]==i ? 'selected' : ''}">
+
+<input type="radio"
+name="opt"
+${answers[current]==i ? "checked" : ""}
+onclick="selectOption(${i})">
+
+${o}
+
+</label>
+
+`;
+
+});
+
+document.getElementById("options").innerHTML=html;
+
+/* SHOW SUBMIT ONLY LAST QUESTION */
+
+if(current==questions.length-1){
+
+document.getElementById("submitBtn").style.display="inline-block";
+document.getElementById("nextBtn").style.display="none";
+
+}
+else{
+
+document.getElementById("submitBtn").style.display="none";
+document.getElementById("nextBtn").style.display="inline-block";
+
+}
+
+}
+
+/* SELECT OPTION */
+
+function selectOption(i){
+
+answers[current]=i;
+
+updatePalette();
+
+loadQ();
+
+}
+
+/* NEXT */
+
+function nextQ(){
+
+if(current<questions.length-1){
+
+current++;
+
+loadQ();
+
+}
+
+}
+
+/* REVIEW */
+
+function markReview(){
+
+marked[current]=true;
+
+updatePalette();
+
+}
+
+/* BUILD PALETTE */
+
+function buildPalette(){
+
+let html="";
+
+for(let i=0;i<questions.length;i++){
+
+html+=`
+
+<button
+onclick="goQ(${i})"
+id="p${i}"
+class="notattempted">
+
+${i+1}
+
+</button>
+
+`;
+
+}
+
+document.getElementById("palette").innerHTML=html;
+
+}
+
+/* UPDATE PALETTE */
+
+function updatePalette(){
+
+for(let i=0;i<questions.length;i++){
+
+let btn=document.getElementById("p"+i);
+
+if(marked[i]){
+
+btn.className="marked";
+
+}
+else if(answers[i]!=null){
+
+btn.className="attempted";
+
+}
+else{
+
+btn.className="notattempted";
+
+}
+
+}
+
+}
+
+/* GOTO QUESTION */
+
+function goQ(i){
+
+current=i;
+
+loadQ();
+
+}
+
+/* SUBMIT */
+
+function submitTest(){
+
+clearInterval(timer);
+
+let correct=0;
+let wrong=0;
+let attempted=0;
+
+let table="";
+
+questions.forEach((q,i)=>{
+
+let status="";
+let userAns="Not Attempted";
+
+if(answers[i]!=null){
+
+attempted++;
+
+userAns=q.opt[answers[i]];
+
 if(answers[i]==q.ans){
 
 correct++;
+
+status=`<span class="correct">✅ Correct</span>`;
 
 }
 else{
 
 wrong++;
 
-}
+status=`<span class="wrong">❌ Wrong</span>`;
 
 }
-
-});
-
-let score=(correct-(wrong*0.25)).toFixed(2);
-
-document.getElementById("testBox").style.display="none";
-
-document.getElementById("resultBox").style.display="block";
-
-document.getElementById("scoreBox").innerHTML=
-`🏆 Score : ${score}`;
-
-/* SUMMARY */
-
-document.getElementById("summary").innerHTML=`
-
-<h2 style="margin-bottom:15px;">
-📊 Result Summary
-</h2>
-
-<p><b>Total Questions :</b> ${questions.length}</p>
-
-<p><b>Attempted :</b> ${attempted}</p>
-
-<p><b>Correct :</b> ${correct}</p>
-
-<p><b>Wrong :</b> ${wrong}</p>
-
-`;
-
-/* PERFORMANCE */
-
-let percentage=(correct/questions.length)*100;
-
-let performance="";
-let bg="";
-
-if(percentage>=85){
-
-performance="🏆 EXCELLENT PERFORMANCE";
-bg="#bbf7d0";
-
-}
-else if(percentage>=60){
-
-performance="👍 GOOD PERFORMANCE";
-bg="#fde68a";
 
 }
 else{
 
-performance="📚 NEED IMPROVEMENT";
-bg="#fecaca";
-
-}
-
-document.getElementById("performanceBox").innerHTML=`
-
-<div style="
-background:${bg};
-padding:20px;
-border-radius:15px;
-font-size:18px;
-font-weight:600;
-">
-
-${performance}
-
-<br><br>
-
-📈 Percentage : ${percentage.toFixed(2)}%
-
-</div>
-
-`;
-
-/* RESULT TABLE */
-
-let table="";
-
-questions.forEach((q,i)=>{
-
-let userAns=
-answers[i]!=null
-? q.opt[answers[i]]
-: "Not Attempted";
-
-let correctAns=q.opt[q.ans];
-
-let status="";
-
-if(answers[i]==null){
-
-status=`<span class="notdone">
-⚪ Not Attempted
-</span>`;
-
-}
-else if(answers[i]==q.ans){
-
-status=`<span class="correct">
-✅ Correct
-</span>`;
-
-}
-else{
-
-status=`<span class="wrong">
-❌ Wrong
-</span>`;
+status=`<span class="notdone">⚪ Not Attempted</span>`;
 
 }
 
 table+=`
 
 <tr>
-
 <td>${i+1}</td>
 <td>${userAns}</td>
-<td>${correctAns}</td>
+<td>${q.opt[q.ans]}</td>
 <td>${status}</td>
-
 </tr>
 
 `;
 
 });
 
-document.getElementById("resultTable").innerHTML=table;
+let score=(correct*4)-(wrong);
 
-}
+document.getElementById("testBox").style.display="none";
 
-/* PDF */
+document.getElementById("resultBox").style.display="block";
 
-function downloadPDF(){
+document.getElementById("scoreBox").innerHTML=
+`🏆 Your Score : ${score}`;
 
-window.print();
+document.getElementById("summary").innerHTML=`
 
-}
+<h2>Total Questions : ${questions.length}</h2>
 
-/* SHARE */
+<h2>Attempted : ${attempted}</h2>
 
-function shareResult(){
+<h2>Correct : ${correct}</h2>
 
-let score=document.getElementById("scoreBox").innerText;
+<h2>Wrong : ${wrong}</h2>
 
-let text=`
-🎯 Hindi TGT CBT Mock Test Result
-
-${score}
-
-🚀 Powered By Diploma Engineers
 `;
 
-if(navigator.share){
-
-navigator.share({
-title:"CBT Result",
-text:text
-});
-
-}
-else{
-
-alert("Sharing Not Supported");
-
-}
+document.getElementById("resultTable").innerHTML=table;
 
 }
 
@@ -2018,3 +3608,29 @@ alert("Sharing Not Supported");
 
 </body>
 </html>
+
+correct++;
+
+status=`<span class="correct">✅ Correct</span>`;
+
+}
+else{
+
+wrong++;
+
+status=`<span class="wrong">❌ Wrong</span>`;
+
+}
+
+}
+else{
+
+status=`<span class="notdone">⚪ Not Attempted</span>`;
+
+}
+
+table+=`
+
+<tr>
+<td>${i+1}</td>
+<td>${u

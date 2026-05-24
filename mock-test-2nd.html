@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polytechnic CBT Mock Test</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#eef2f7;
+}
+
+.header{
+background:#0f172a;
+color:#fff;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.header h1{
+font-size:20px;
+}
+
+.timer{
+font-size:20px;
+font-weight:700;
+color:#facc15;
+}
+
+.login-box{
+width:90%;
+max-width:420px;
+background:#fff;
+margin:40px auto;
+padding:30px;
+border-radius:18px;
+box-shadow:0 5px 20px rgba(0,0,0,.1);
+text-align:center;
+}
+
+.login-box h2{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.login-box input{
+width:100%;
+padding:14px;
+margin:10px 0;
+border-radius:12px;
+border:1px solid #ccc;
+font-size:16px;
+outline:none;
+}
+
+.login-box button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#2563eb;
+color:#fff;
+font-size:17px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.login-box button:hover{
+background:#1d4ed8;
+}
+
+.container{
+display:none;
+height:calc(100vh - 70px);
+}
+
+.left{
+flex:3;
+background:#fff;
+padding:20px;
+overflow:auto;
+}
+
+.right{
+flex:1;
+background:#f8fafc;
+padding:15px;
+border-left:2px solid #ddd;
+overflow:auto;
+}
+
+.question-box{
+font-size:20px;
+font-weight:600;
+line-height:1.7;
+margin-bottom:20px;
+}
+
+.question-box img{
+width:100%;
+max-width:350px;
+margin-top:15px;
+border-radius:12px;
+border:1px solid #ddd;
+}
+
+.option{
+display:block;
+background:#f1f5f9;
+padding:15px;
+margin:12px 0;
+border-radius:12px;
+cursor:pointer;
+transition:.3s;
+font-size:16px;
+}
+
+.option:hover{
+background:#dbeafe;
+transform:translateY(-2px);
+}
+
+.option input{
+margin-right:10px;
+}
+
+.buttons{
+margin-top:20px;
+}
+
+.buttons button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:10px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.next{
+background:#2563eb;
+color:#fff;
+}
+
+.review{
+background:#f97316;
+color:#fff;
+}
+
+.submit{
+background:#dc2626;
+color:#fff;
+}
+
+.palette{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:15px;
+}
+
+.palette button{
+width:42px;
+height:42px;
+border:none;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+}
+
+.notattempted{
+background:#cbd5e1;
+}
+
+.attempted{
+background:#16a34a;
+color:#fff;
+}
+
+.marked{
+background:#f97316;
+color:#fff;
+}
+
+.result{
+display:none;
+padding:25px;
+text-align:center;
+}
+
+.result h1{
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.result table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+background:#fff;
+}
+
+.result th{
+background:#2563eb;
+color:#fff;
+padding:14px;
+border:1px solid #ddd;
+}
+
+.result td{
+padding:12px;
+border:1px solid #ddd;
+}
+
+.correct{
+color:green;
+font-weight:bold;
+}
+
+.wrong{
+color:red;
+font-weight:bold;
+}
+
+.notdone{
+color:#555;
+font-weight:bold;
+}
+
+@media(max-width:768px){
+.container{
+flex-direction:column;
+height:auto;
+}
+
+.right{
+border-left:none;
+border-top:2px solid #ddd;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>🎯 Polytechnic CBT Mock Test</h1>
+<div class="timer">⏰ <span id="time">3600</span>s</div>
+</div>
+
+<div class="login-box" id="loginBox">
+<h2>Start Mock Test 🚀</h2>
+<input type="text" id="name" placeholder="Enter Name">
+<input type="number" id="mobile" placeholder="Enter Mobile Number">
+<button onclick="startTest()">Start Test</button>
+</div>
+
+<div class="container" id="testBox">
+
+<div class="left">
+<div id="qno"></div>
+<div class="question-box" id="question"></div>
+<div id="options"></div>
+
+<div class="buttons">
+<button class="review" onclick="markReview()">📌 Mark Review</button>
+<button class="next" onclick="nextQ()">➡ Next</button>
+<button class="submit" onclick="submitTest()">✅ Submit</button>
+</div>
+</div>
+
+<div class="right">
+<h3>📋 Questions</h3>
+<div class="palette" id="palette"></div>
+</div>
+
+</div>
+
+<div class="result" id="resultBox">
+<h1 id="scoreBox"></h1>
+<div style="overflow-x:auto;">
+<table>
+<thead>
+<tr>
+<th>Q.No</th>
+<th>Your Answer</th>
+<th>Correct Answer</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="resultTable"></tbody>
+</table>
+</div>
+</div>
+
+<script>
+
+let questions=[
+{
+q:"यदि x + 1/x = 5, तो x² + 1/x² का मान होगा -",
+opt:["21","23","25","27"],
+ans:1
+},
+{
+q:"यदि tan θ = 3/4 हो, तो sec θ का मान होगा -",
+opt:["5/3","4/3","5/4","3/5"],
+ans:0
+},
+{
+q:"यदि किसी वृत्त की त्रिज्या दुगुनी कर दी जाये, तो उसका क्षेत्रफल हो जाएगा -",
+opt:["दुगुना","तीन गुना","चार गुना","आधा"],
+ans:2
+},
+{
+q:"5 ओम तथा 20 ओम के प्रतिरोध समान्तर क्रम में जुड़े हैं। तुल्य प्रतिरोध होगा -",
+opt:["4 ओम","5 ओम","10 ओम","25 ओम"],
+ans:0
+},
+{
+q:"एक वस्तु 20 m/s के वेग से ऊपर फेंकी जाती है। अधिकतम ऊँचाई होगी -",
+opt:["10 मी","15 मी","20 मी","25 मी"],
+ans:2
+},
+
+{
+ q:"यदि x + 1/x = 3, तो x³ + 1/x³ का मान होगा -",
+ opt:[
+  "9",
+  "18",
+  "21",
+  "27"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि sin θ + cos θ = √2, तो θ का मान होगा -",
+ opt:[
+  "30°",
+  "45°",
+  "60°",
+  "90°"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी त्रिभुज के कोणों का अनुपात 2 : 3 : 7 है, तो सबसे बड़ा कोण होगा -",
+ opt:[
+  "90°",
+  "105°",
+  "120°",
+  "135°"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि tan θ = 4/3, तो sec θ का मान होगा -",
+ opt:[
+  "3/5",
+  "4/5",
+  "5/3",
+  "5/4"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि log₂(x) = 5, तो x का मान होगा -",
+ opt:[
+  "16",
+  "25",
+  "32",
+  "64"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि x - 1/x = 5, तो x² + 1/x² का मान होगा -",
+ opt:[
+  "23",
+  "25",
+  "27",
+  "29"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि sec θ + tan θ = 5, तो sec θ - tan θ का मान होगा -",
+ opt:[
+  "1/5",
+  "1/4",
+  "1/3",
+  "1/2"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी वृत्त का क्षेत्रफल 154 cm² है, तो उसकी त्रिज्या होगी -",
+ opt:[
+  "5 सेमी",
+  "6 सेमी",
+  "7 सेमी",
+  "8 सेमी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी संख्या का 75% = 225 है, तो संख्या होगी -",
+ opt:[
+  "250",
+  "275",
+  "300",
+  "325"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि cos A = 4/5, तो tan A का मान होगा -",
+ opt:[
+  "3/4",
+  "4/3",
+  "5/3",
+  "1/5"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी समांतर श्रेणी का प्रथम पद 4 और अंतर 5 है, तो 10वाँ पद होगा -",
+ opt:[
+  "45",
+  "49",
+  "54",
+  "59"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि x² - 9x + 20 = 0, तो x का मान होगा -",
+ opt:[
+  "4, 5",
+  "2, 10",
+  "1, 20",
+  "−4, −5"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि sin²θ = 3/4, तो cos²θ का मान होगा -",
+ opt:[
+  "1/4",
+  "1/2",
+  "3/4",
+  "1"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी घन का आयतन 216 cm³ है, तो उसकी भुजा होगी -",
+ opt:[
+  "4 सेमी",
+  "5 सेमी",
+  "6 सेमी",
+  "7 सेमी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि √576 का मान है -",
+ opt:[
+  "22",
+  "24",
+  "26",
+  "28"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि 5x - 3 = 22, तो x का मान होगा -",
+ opt:[
+  "3",
+  "4",
+  "5",
+  "6"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी आयत का विकर्ण 13 सेमी और चौड़ाई 5 सेमी है, तो लंबाई होगी -",
+ opt:[
+  "10 सेमी",
+  "11 सेमी",
+  "12 सेमी",
+  "13 सेमी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि cosec²θ - cot²θ = ?",
+ opt:[
+  "0",
+  "1",
+  "2",
+  "cot²θ"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी वृत्त की परिधि 44 सेमी है, तो त्रिज्या होगी -",
+ opt:[
+  "5 सेमी",
+  "6 सेमी",
+  "7 सेमी",
+  "8 सेमी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी संख्या का घनमूल 5 है, तो संख्या होगी -",
+ opt:[
+  "25",
+  "75",
+  "100",
+  "125"
+ ],
+ ans:3
+},
+
+{
+ q:"यदि x³ - 27 = 0, तो x का मान होगा -",
+ opt:[
+  "2",
+  "3",
+  "6",
+  "9"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी बेलन की त्रिज्या 3 सेमी और ऊँचाई 7 सेमी है, तो आयतन होगा -",
+ opt:[
+  "198 cm³",
+  "154 cm³",
+  "176 cm³",
+  "188 cm³"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि tan A × cot A = ?",
+ opt:[
+  "0",
+  "1",
+  "2",
+  "tan²A"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी संख्या का वर्गमूल 13 है, तो संख्या होगी -",
+ opt:[
+  "139",
+  "149",
+  "169",
+  "196"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि x² + 5x + 6 = 0, तो x का मान होगा -",
+ opt:[
+  "2, 3",
+  "−2, −3",
+  "1, 6",
+  "−1, −6"
+ ],
+ ans:1
+  },
+
+  {
+ q:"यदि x + 1/x = 5, तो x⁴ + 1/x⁴ का मान होगा -",
+ opt:[
+  "527",
+  "527",
+  "527",
+  "527"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि sin θ = 4/5 तथा θ न्यून कोण है, तो tan θ का मान होगा -",
+ opt:[
+  "3/4",
+  "4/3",
+  "5/3",
+  "5/4"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी त्रिभुज के कोणों का अनुपात 3 : 5 : 10 है, तो सबसे बड़ा कोण होगा -",
+ opt:[
+  "90°",
+  "100°",
+  "120°",
+  "150°"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि sec θ + tan θ = 7, तो sec θ − tan θ का मान होगा -",
+ opt:[
+  "1/7",
+  "1/5",
+  "1/3",
+  "1/2"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि log₃ 81 + log₂ 32 का मान है -",
+ opt:[
+  "7",
+  "8",
+  "9",
+  "10"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि x − 1/x = 2, तो x³ − 1/x³ का मान होगा -",
+ opt:[
+  "2",
+  "10",
+  "14",
+  "18"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि tan θ + cot θ = 10, तो tan²θ + cot²θ का मान होगा -",
+ opt:[
+  "96",
+  "98",
+  "100",
+  "102"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी वृत्त का क्षेत्रफल 616 cm² है, तो उसकी त्रिज्या होगी -",
+ opt:[
+  "7 सेमी",
+  "14 सेमी",
+  "21 सेमी",
+  "28 सेमी"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी संख्या का 125% = 500 है, तो संख्या होगी -",
+ opt:[
+  "300",
+  "350",
+  "400",
+  "450"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि cos A = 12/13, तो sin A का मान होगा -",
+ opt:[
+  "5/13",
+  "12/5",
+  "13/5",
+  "5/12"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी समांतर श्रेणी का प्रथम पद 8 तथा अंतर 7 है, तो 15वाँ पद होगा -",
+ opt:[
+  "98",
+  "106",
+  "112",
+  "120"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि x² − 11x + 28 = 0, तो x का मान होगा -",
+ opt:[
+  "4, 7",
+  "3, 8",
+  "2, 14",
+  "1, 28"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि sin²θ = 5/9, तो cos²θ का मान होगा -",
+ opt:[
+  "2/9",
+  "3/9",
+  "4/9",
+  "5/9"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी घन का पृष्ठीय क्षेत्रफल 294 cm² है, तो उसकी भुजा होगी -",
+ opt:[
+  "6 सेमी",
+  "7 सेमी",
+  "8 सेमी",
+  "9 सेमी"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि √2025 का मान है -",
+ opt:[
+  "35",
+  "40",
+  "45",
+  "50"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि 7x − 9 = 40, तो x का मान होगा -",
+ opt:[
+  "5",
+  "6",
+  "7",
+  "8"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी आयत का क्षेत्रफल 240 cm² तथा चौड़ाई 12 सेमी है, तो लंबाई होगी -",
+ opt:[
+  "18 सेमी",
+  "20 सेमी",
+  "22 सेमी",
+  "24 सेमी"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि cosec θ = 13/5, तो cot θ का मान होगा -",
+ opt:[
+  "5/12",
+  "12/5",
+  "13/12",
+  "5/13"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी वृत्त की परिधि 88 सेमी है, तो उसका क्षेत्रफल होगा -",
+ opt:[
+  "616 cm²",
+  "1216 cm²",
+  "1232 cm²",
+  "1400 cm²"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि x² + 7x + 12 = 0, तो x का मान होगा -",
+ opt:[
+  "−3, −4",
+  "3, 4",
+  "−2, −6",
+  "2, 6"
+ ],
+ ans:0
+  },
+
+  {
+ q:"एक वस्तु को 20 m/s के वेग से ऊर्ध्वाधर ऊपर फेंका जाता है। अधिकतम ऊँचाई होगी -",
+ opt:[
+  "10 मी",
+  "20 मी",
+  "30 मी",
+  "40 मी"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी वस्तु का द्रव्यमान दोगुना तथा वेग आधा कर दिया जाए, तो गतिज ऊर्जा होगी -",
+ opt:[
+  "दोगुनी",
+  "आधी",
+  "चौथाई",
+  "अपरिवर्तित"
+ ],
+ ans:1
+},
+
+{
+ q:"एक 10 kg द्रव्यमान की वस्तु पर 50 N बल लगाया जाता है। त्वरण होगा -",
+ opt:[
+  "2 m/s²",
+  "5 m/s²",
+  "10 m/s²",
+  "15 m/s²"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी चालक का प्रतिरोध 5 Ω तथा धारा 2 A हो, तो विभवान्तर होगा -",
+ opt:[
+  "5 V",
+  "10 V",
+  "15 V",
+  "20 V"
+ ],
+ ans:1
+},
+
+{
+ q:"एक 100 W बल्ब 220 V पर कार्य करता है। उसमें प्रवाहित धारा होगी -",
+ opt:[
+  "0.45 A",
+  "0.50 A",
+  "0.60 A",
+  "0.75 A"
+ ],
+ ans:0
+},
+
+{
+ q:"यदि किसी वस्तु का संवेग 40 kg m/s तथा वेग 8 m/s है, तो द्रव्यमान होगा -",
+ opt:[
+  "2 kg",
+  "4 kg",
+  "5 kg",
+  "8 kg"
+ ],
+ ans:2
+},
+
+{
+ q:"एक तरंग की आवृत्ति 500 Hz तथा तरंगदैर्ध्य 0.68 m है। तरंग का वेग होगा -",
+ opt:[
+  "300 m/s",
+  "340 m/s",
+  "360 m/s",
+  "400 m/s"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी दर्पण की फोकस दूरी −20 cm है, तो दर्पण होगा -",
+ opt:[
+  "उत्तल",
+  "अवतल",
+  "समतल",
+  "कोई नहीं"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी उत्तल लेंस की क्षमता +5 D है, तो उसकी फोकस दूरी होगी -",
+ opt:[
+  "10 cm",
+  "20 cm",
+  "25 cm",
+  "40 cm"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी गैस का दाब स्थिर रखते हुए ताप दुगुना कर दिया जाए, तो आयतन होगा -",
+ opt:[
+  "आधा",
+  "दुगुना",
+  "चार गुना",
+  "अपरिवर्तित"
+ ],
+ ans:1
+},
+
+{
+ q:"एक 2 kg द्रव्यमान की वस्तु 5 m/s² के त्वरण से चल रही है। बल होगा -",
+ opt:[
+  "5 N",
+  "7 N",
+  "10 N",
+  "15 N"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि पृथ्वी की त्रिज्या आधी हो जाए तथा द्रव्यमान समान रहे, तो g का मान होगा -",
+ opt:[
+  "आधा",
+  "दोगुना",
+  "चार गुना",
+  "आधा का आधा"
+ ],
+ ans:2
+},
+
+{
+ q:"एक विद्युत हीटर 220 V पर 5 A धारा लेता है। शक्ति होगी -",
+ opt:[
+  "550 W",
+  "880 W",
+  "1100 W",
+  "1500 W"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी वस्तु की चाल दोगुनी कर दी जाए, तो उसकी गतिज ऊर्जा होगी -",
+ opt:[
+  "दोगुनी",
+  "तीन गुनी",
+  "चार गुनी",
+  "आधी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि ध्वनि की चाल 340 m/s तथा आवृत्ति 170 Hz हो, तो तरंगदैर्ध्य होगी -",
+ opt:[
+  "1 m",
+  "2 m",
+  "3 m",
+  "4 m"
+ ],
+ ans:1
+},
+
+{
+ q:"एक चालक में 3 A धारा 2 मिनट तक प्रवाहित होती है। आवेश होगा -",
+ opt:[
+  "180 C",
+  "240 C",
+  "300 C",
+  "360 C"
+ ],
+ ans:3
+},
+
+{
+ q:"यदि किसी वस्तु का भार चन्द्रमा पर 60 N है, तो पृथ्वी पर भार होगा -",
+ opt:[
+  "180 N",
+  "240 N",
+  "300 N",
+  "360 N"
+ ],
+ ans:3
+},
+
+{
+ q:"एक प्रिज्म में बैंगनी रंग का विचलन लाल रंग की अपेक्षा -",
+ opt:[
+  "कम होता है",
+  "अधिक होता है",
+  "समान होता है",
+  "शून्य होता है"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी चालक का प्रतिरोध दोगुना तथा विभवान्तर समान रहे, तो धारा होगी -",
+ opt:[
+  "दोगुनी",
+  "आधी",
+  "चार गुनी",
+  "अपरिवर्तित"
+ ],
+ ans:1
+},
+
+{
+ q:"एक वस्तु 15 m/s वेग से चल रही है। 5 सेकण्ड में चली दूरी होगी -",
+ opt:[
+  "50 मी",
+  "60 मी",
+  "75 मी",
+  "80 मी"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी वस्तु का द्रव्यमान 4 kg तथा वेग 10 m/s हो, तो गतिज ऊर्जा होगी -",
+ opt:[
+  "100 J",
+  "150 J",
+  "200 J",
+  "250 J"
+ ],
+ ans:2
+},
+
+{
+ q:"एक 6 Ω प्रतिरोध तथा 12 Ω प्रतिरोध समान्तर क्रम में जुड़े हैं। तुल्य प्रतिरोध होगा -",
+ opt:[
+  "2 Ω",
+  "4 Ω",
+  "6 Ω",
+  "8 Ω"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी गैस का ताप स्थिर रखते हुए आयतन आधा कर दिया जाए, तो दाब होगा -",
+ opt:[
+  "आधा",
+  "दोगुना",
+  "चार गुना",
+  "अपरिवर्तित"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी लेंस की फोकस दूरी 50 cm है, तो उसकी क्षमता होगी -",
+ opt:[
+  "1 D",
+  "2 D",
+  "3 D",
+  "4 D"
+ ],
+ ans:1
+},
+
+{
+ q:"एक 5 kg वस्तु पर 20 N बल 4 सेकण्ड तक लगाया जाता है। त्वरण होगा -",
+ opt:[
+  "2 m/s²",
+  "4 m/s²",
+  "5 m/s²",
+  "8 m/s²"
+ ],
+ ans:1
+  },
+
+  {
+ q:"किस तत्व का परमाणु क्रमांक 17 है ?",
+ opt:[
+  "सोडियम",
+  "क्लोरीन",
+  "सल्फर",
+  "आर्गन"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि किसी तत्व का इलेक्ट्रॉनिक विन्यास 2,8,1 है, तो वह तत्व होगा -",
+ opt:[
+  "Na",
+  "Mg",
+  "Al",
+  "Cl"
+ ],
+ ans:0
+},
+
+{
+ q:"निम्न में से कौन-सा सबसे अधिक विद्युतऋणात्मक तत्व है ?",
+ opt:[
+  "O",
+  "N",
+  "F",
+  "Cl"
+ ],
+ ans:2
+},
+
+{
+ q:"कौन-सा ऑक्साइड उभयधर्मी है ?",
+ opt:[
+  "Na₂O",
+  "Al₂O₃",
+  "SO₂",
+  "CO₂"
+ ],
+ ans:1
+},
+
+{
+ q:"यदि pH = 1 हो, तो विलयन होगा -",
+ opt:[
+  "उदासीन",
+  "प्रबल अम्लीय",
+  "क्षारीय",
+  "मृदु अम्लीय"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सी गैस अम्ल वर्षा के लिए उत्तरदायी है ?",
+ opt:[
+  "SO₂",
+  "O₂",
+  "N₂",
+  "H₂"
+ ],
+ ans:0
+},
+
+{
+ q:"CH₃−CH₂−CH₃ का IUPAC नाम है -",
+ opt:[
+  "प्रोपीन",
+  "प्रोपाइन",
+  "प्रोपेन",
+  "ब्यूटेन"
+ ],
+ ans:2
+},
+
+{
+ q:"CH₃COOH का IUPAC नाम है -",
+ opt:[
+  "मेथेनोइक अम्ल",
+  "एथेनोइक अम्ल",
+  "प्रोपेनोइक अम्ल",
+  "ब्यूटेनोइक अम्ल"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सी रेडॉक्स अभिक्रिया है ?",
+ opt:[
+  "HCl + NaOH → NaCl + H₂O",
+  "CuO + H₂ → Cu + H₂O",
+  "AgNO₃ + NaCl → AgCl + NaNO₃",
+  "BaCl₂ + Na₂SO₄ → BaSO₄ + 2NaCl"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सा यौगिक आयनिक है ?",
+ opt:[
+  "CH₄",
+  "NaCl",
+  "HCl",
+  "NH₃"
+ ],
+ ans:1
+},
+
+{
+ q:"कार्बन का वह अपररूप जो विद्युत का सुचालक है -",
+ opt:[
+  "हीरा",
+  "कोयला",
+  "ग्रेफाइट",
+  "फुलरीन"
+ ],
+ ans:2
+},
+
+{
+ q:"अमोनिया का सूत्र है -",
+ opt:[
+  "NH₄",
+  "NH₃",
+  "NO₂",
+  "N₂O"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सी गैस 'मार्श गैस' कहलाती है ?",
+ opt:[
+  "एथेन",
+  "मीथेन",
+  "प्रोपेन",
+  "ब्यूटेन"
+ ],
+ ans:1
+},
+
+{
+ q:"ऑक्सीकरण में होता है -",
+ opt:[
+  "इलेक्ट्रॉन ग्रहण",
+  "इलेक्ट्रॉन त्याग",
+  "न्यूट्रॉन त्याग",
+  "प्रोटॉन ग्रहण"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सा प्रबल अम्ल है ?",
+ opt:[
+  "CH₃COOH",
+  "HCl",
+  "H₂CO₃",
+  "H₂S"
+ ],
+ ans:1
+},
+
+{
+ q:"PVC का पूर्ण रूप है -",
+ opt:[
+  "Poly Vinyl Chloride",
+  "Poly Vinyl Carbon",
+  "Poly Vinyl Carbonate",
+  "Poly Vinyl Compound"
+ ],
+ ans:0
+},
+
+{
+ q:"निम्न में से कौन-सा बहुलक है ?",
+ opt:[
+  "बेंजीन",
+  "एथीन",
+  "पॉलीथीन",
+  "एथेन"
+ ],
+ ans:2
+},
+
+{
+ q:"यदि किसी तत्व का द्रव्यमान संख्या 39 तथा परमाणु क्रमांक 19 है, तो न्यूट्रॉनों की संख्या होगी -",
+ opt:[
+  "19",
+  "20",
+  "21",
+  "39"
+ ],
+ ans:1
+},
+
+{
+ q:"निम्न में से कौन-सा उर्ध्वपातित पदार्थ है ?",
+ opt:[
+  "NaCl",
+  "NH₄Cl",
+  "KCl",
+  "CaCO₃"
+ ],
+ ans:1
+},
+
+{
+ q:"कौन-सा तत्व द्रव अवस्था में पाया जाता है ?",
+ opt:[
+  "Na",
+  "Hg",
+  "Fe",
+  "Zn"
+ ],
+ ans:1
+},
+
+{
+ q:"मोल अवधारणा के अनुसार 1 मोल में कणों की संख्या होती है -",
+ opt:[
+  "6.023 × 10²³",
+  "3.011 × 10²³",
+  "6.023 × 10²²",
+  "9.023 × 10²³"
+ ],
+ ans:0
+},
+
+{
+ q:"किस गैस का उपयोग वनस्पति घी बनाने में किया जाता है ?",
+ opt:[
+  "ऑक्सीजन",
+  "हाइड्रोजन",
+  "नाइट्रोजन",
+  "क्लोरीन"
+ ],
+ ans:1
+},
+
+{
+ q:"कौन-सा ऑक्साइड क्षारीय प्रकृति का है ?",
+ opt:[
+  "CO₂",
+  "SO₂",
+  "Na₂O",
+  "NO₂"
+ ],
+ ans:2
+},
+
+{
+ q:"CH₃−O−CH₃ का IUPAC नाम है -",
+ opt:[
+  "मेथॉक्सी मेथेन",
+  "एथॉक्सी एथेन",
+  "डाइमेथिल कीटोन",
+  "मेथेनॉल"
+ ],
+ ans:0
+},
+
+{
+ q:"निम्न में से कौन-सी अभिक्रिया उष्माक्षेपी है ?",
+ opt:[
+  "CaCO₃ → CaO + CO₂",
+  "प्रकाश संश्लेषण",
+  "CH₄ + 2O₂ → CO₂ + 2H₂O",
+  "NH₄Cl + H₂O"
+ ],
+ ans:2
+  }
+];
+
+let current=0;
+let answers=new Array(questions.length).fill(null);
+let marked=[];
+let time=3600;
+
+function startTest(){
+let name=document.getElementById('name').value;
+let mobile=document.getElementById('mobile').value;
+
+if(name==='' || mobile===''){
+alert('Please enter details');
+return;
+}
+
+document.getElementById('loginBox').style.display='none';
+document.getElementById('testBox').style.display='flex';
+
+loadQuestion();
+createPalette();
+startTimer();
+}
+
+function loadQuestion(){
+let q=questions[current];
+
+document.getElementById('qno').innerHTML=`<h3>Question ${current+1} of ${questions.length}</h3>`;
+
+let html=q.q;
+
+if(q.img){
+html+=`<br><img src="${q.img}">`;
+}
+
+document.getElementById('question').innerHTML=html;
+
+let ops='';
+q.opt.forEach((o,i)=>{
+ops+=`
+<label class="option">
+<input type="radio" name="opt" value="${i}" ${answers[current]==i?'checked':''}>
+${o}
+</label>`;
+});
+
+document.getElementById('options').innerHTML=ops;
+
+updatePalette();
+}
+
+function saveAnswer(){
+let selected=document.querySelector('input[name="opt"]:checked');
+if(selected){
+answers[current]=parseInt(selected.value);
+}
+}
+
+function nextQ(){
+saveAnswer();
+if(current<questions.length-1){
+current++;
+loadQuestion();
+}
+}
+
+function markReview(){
+saveAnswer();
+if(!marked.includes(current)){
+marked.push(current);
+}
+updatePalette();
+}
+
+function createPalette(){
+let palette='';
+questions.forEach((q,i)=>{
+palette+=`<button onclick="gotoQ(${i})" id="p${i}" class="notattempted">${i+1}</button>`;
+});
+
+document.getElementById('palette').innerHTML=palette;
+}
+
+function updatePalette(){
+questions.forEach((q,i)=>{
+let btn=document.getElementById(`p${i}`);
+btn.className='notattempted';
+
+if(answers[i]!=null){
+btn.className='attempted';
+}
+
+if(marked.includes(i)){
+btn.className='marked';
+}
+});
+}
+
+function gotoQ(i){
+saveAnswer();
+current=i;
+loadQuestion();
+}
+
+function startTimer(){
+setInterval(()=>{
+time--;
+document.getElementById('time').innerText=time;
+
+if(time<=0){
+submitTest();
+}
+},1000);
+}
+
+function submitTest(){
+saveAnswer();
+
+document.getElementById('testBox').style.display='none';
+document.getElementById('resultBox').style.display='block';
+
+let score=0;
+let table='';
+
+questions.forEach((q,i)=>{
+let user=answers[i];
+let status='';
+
+if(user==q.ans){
+score++;
+status='<span class="correct">Correct</span>';
+}else if(user==null){
+status='<span class="notdone">Not Attempted</span>';
+}else{
+status='<span class="wrong">Wrong</span>';
+}
+
+let userAns=user!=null?q.opt[user]:'-';
+
+table+=`
+<tr>
+<td>${i+1}</td>
+<td>${userAns}</td>
+<td>${q.opt[q.ans]}</td>
+<td>${status}</td>
+</tr>`;
+});
+
+let percent=((score/questions.length)*100).toFixed(2);
+
+document.getElementById('scoreBox').innerHTML=`🎉 Score: ${score}/${questions.length} (${percent}%)`;
+document.getElementById('resultTable').innerHTML=table;
+}
+
+</script>
+
+</body>
+</html>

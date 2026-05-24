@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hindi TGT CBT Mock Test</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#eef2f7;
+}
+
+/* HEADER */
+
+.header{
+background:#0f172a;
+color:#fff;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.header h1{
+font-size:20px;
+}
+
+.timer{
+font-size:20px;
+font-weight:700;
+color:#facc15;
+}
+
+/* TEST */
+
+.container{
+display:flex;
+height:calc(100vh - 70px);
+}
+
+/* LEFT */
+
+.left{
+flex:1;
+background:#fff;
+padding:20px;
+overflow:auto;
+}
+
+/* RIGHT */
+
+.right{
+width:220px;
+background:#f8fafc;
+padding:15px;
+border-left:2px solid #ddd;
+overflow:auto;
+}
+
+/* QUESTION */
+
+.question-box{
+font-size:22px;
+font-weight:600;
+line-height:1.7;
+margin-bottom:20px;
+color:#111827;
+}
+
+/* OPTIONS */
+
+.option{
+display:block;
+background:#f1f5f9;
+padding:15px;
+margin:12px 0;
+border-radius:12px;
+cursor:pointer;
+transition:.3s;
+font-size:16px;
+border:2px solid transparent;
+}
+
+.option:hover{
+background:#dbeafe;
+}
+
+.option.selected{
+background:#dbeafe;
+border-color:#2563eb;
+}
+
+.option input{
+margin-right:10px;
+}
+
+/* BUTTONS */
+
+.buttons{
+margin-top:25px;
+}
+
+.buttons button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:10px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+}
+
+.next{
+background:#2563eb;
+color:#fff;
+}
+
+.review{
+background:#f97316;
+color:#fff;
+}
+
+.submit{
+background:#dc2626;
+color:#fff;
+}
+
+/* PALETTE */
+
+.palette{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:15px;
+}
+
+.palette button{
+height:42px;
+border:none;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+}
+
+.notattempted{
+background:#cbd5e1;
+}
+
+.attempted{
+background:#16a34a;
+color:#fff;
+}
+
+.marked{
+background:#f97316;
+color:#fff;
+}
+
+/* RESULT */
+
+.result{
+display:none;
+padding:25px;
+}
+
+.result h1{
+margin-bottom:20px;
+}
+
+.result table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:#fff;
+}
+
+.result th{
+background:#2563eb;
+color:#fff;
+padding:12px;
+border:1px solid #ddd;
+}
+
+.result td{
+padding:10px;
+border:1px solid #ddd;
+}
+
+.correct{
+color:green;
+font-weight:bold;
+}
+
+.wrong{
+color:red;
+font-weight:bold;
+}
+
+.notdone{
+color:#555;
+font-weight:bold;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.container{
+flex-direction:row;
+}
+
+.left{
+width:72%;
+padding:10px;
+}
+
+.right{
+width:28%;
+padding:10px;
+}
+
+.palette{
+grid-template-columns:repeat(2,1fr);
+gap:6px;
+}
+
+.palette button{
+height:34px;
+font-size:12px;
+}
+
+.question-box{
+font-size:18px;
+}
+
+.buttons button{
+padding:10px 12px;
+font-size:12px;
+margin:3px;
+}
+
+.header h1{
+font-size:14px;
+}
+
+.timer{
+font-size:15px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<div class="header">
+
+<h1>🎯 Hindi TGT CBT Mock Test</h1>
+
+<div class="timer">
+⏰ <span id="time">3600</span>s
+</div>
+
+</div>
+
+<!-- TEST -->
+
+<div class="container" id="testBox">
+
+<!-- LEFT -->
+
+<div class="left">
+
+<div id="qno"></div>
+
+<div class="question-box" id="question"></div>
+
+<div id="options"></div>
+
+<div class="buttons">
+
+<button class="review" onclick="markReview()">
+📌 Mark Review
+</button>
+
+<button class="next" onclick="nextQ()">
+➡ Next
+</button>
+
+<button class="submit" onclick="submitTest()" style="display:none;">
+✅ Submit
+</button>
+
+</div>
+
+</div>
+
+<!-- RIGHT -->
+
+<div class="right">
+
+<h3>📋 Questions</h3>
+
+<div class="palette" id="palette"></div>
+
+</div>
+
+</div>
+
+<!-- RESULT -->
+
+<div class="result" id="resultBox">
+
+<h1 id="scoreBox"></h1>
+
+<div id="summary"></div>
+
+<div style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Q.No</th>
+<th>Your Answer</th>
+<th>Correct Answer</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="resultTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+/* QUESTIONS */
+
+let questions=[
+
+{
+q:"'झीनी-झीनी बीनी चदरिया' किस उपन्यासकार की कृति है?",
+opt:[
+"राही मासूम रज़ा",
+"अब्दुल बिस्मिल्लाह",
+"असगर वजाहत",
+"मुद्राराक्षस"
+],
+ans:1
+},
+
+{
+q:"'सूरदास' किस उपन्यास का चर्चित पात्र है?",
+opt:[
+"गोदान",
+"कर्मभूमि",
+"रंगभूमि",
+"कायाकल्प"
+],
+ans:2
+},
+
+{
+q:"'भक्ति आंदोलन भारतीय चिंताधारा का स्वाभाविक विकास है।' यह कथन किसका है?",
+opt:[
+"आचार्य रामचन्द्र शुक्ल",
+"आचार्य हजारी प्रसाद द्विवेदी",
+"डॉ. रामस्वरूप चतुर्वेदी",
+"डॉ. भगीरथ मिश्र"
+],
+ans:1
+},
+
+{
+q:"वीर रस का स्थायीभाव है -",
+opt:[
+"शोक",
+"भय",
+"उत्साह",
+"निर्वेद"
+],
+ans:2
+},
+
+{
+q:"भाषा की सार्थक लघुतम इकाई है -",
+opt:[
+"शब्द",
+"पद",
+"ध्वनि",
+"वाक्य"
+],
+ans:0
+},
+
+{
+q:"संविधान के किस अनुच्छेद के अंतर्गत हिन्दी को संघ की राजभाषा का दर्जा मिला?",
+opt:[
+"अनुच्छेद 343",
+"अनुच्छेद 344",
+"अनुच्छेद 345",
+"अनुच्छेद 346"
+],
+ans:0
+},
+
+{
+q:"राजभाषा आयोग के प्रथम अध्यक्ष कौन थे?",
+opt:[
+"बालगंगाधर तिलक",
+"मुंशी आयंगर",
+"बालगंगाधर खेर",
+"काका साहेब कालेलकर"
+],
+ans:2
+},
+
+{
+q:"पश्चिमी हिन्दी में कौन बोली है?",
+opt:[
+"मगही",
+"कन्नौजी",
+"मैथिली",
+"अवधी"
+],
+ans:1
+},
+
+{
+q:"बिहारी हिन्दी की बोली का नाम है -",
+opt:[
+"मगही",
+"बघेली",
+"छत्तीसगढ़ी",
+"बुंदेली"
+],
+ans:0
+},
+
+{
+q:"'जगन्नाथ' में कौन संधि है?",
+opt:[
+"वृद्धि संधि",
+"यण संधि",
+"स्वर संधि",
+"व्यंजन संधि"
+],
+ans:3
+}
+
+];
+
+/* VARIABLES */
+
+let current=0;
+let answers=[];
+let marked=[];
+let time=3600;
+let timer;
+
+/* START */
+
+buildPalette();
+loadQ();
+
+timer=setInterval(()=>{
+
+time--;
+
+document.getElementById("time").innerText=time;
+
+if(time<=0){
+
+submitTest();
+
+}
+
+},1000);
+
+/* LOAD QUESTION */
+
+function loadQ(){
+
+let q=questions[current];
+
+document.getElementById("qno").innerHTML=
+`<h2>Question ${current+1}</h2>`;
+
+document.getElementById("question").innerHTML=q.q;
+
+let html="";
+
+q.opt.forEach((o,i)=>{
+
+html+=`
+
+<label class="option ${answers[current]==i ? 'selected' : ''}">
+
+<input type="radio"
+name="opt"
+${answers[current]==i ? "checked" : ""}
+onclick="selectOption(${i})">
+
+${o}
+
+</label>
+
+`;
+
+});
+
+document.getElementById("options").innerHTML=html;
+
+/* SHOW SUBMIT ONLY LAST QUESTION */
+
+if(current===questions.length-1){
+
+document.querySelector(".submit").style.display="inline-block";
+
+}
+else{
+
+document.querySelector(".submit").style.display="none";
+
+}
+
+updatePalette();
+
+}
+
+/* SELECT */
+
+function selectOption(i){
+
+answers[current]=i;
+
+loadQ();
+
+}
+
+/* NEXT */
+
+function nextQ(){
+
+if(current<questions.length-1){
+
+current++;
+
+loadQ();
+
+}
+
+}
+
+/* REVIEW */
+
+function markReview(){
+
+marked[current]=true;
+
+updatePalette();
+
+}
+
+/* BUILD PALETTE */
+
+function buildPalette(){
+
+let html="";
+
+for(let i=0;i<questions.length;i++){
+
+html+=`
+
+<button
+onclick="goQ(${i})"
+id="p${i}"
+class="notattempted">
+
+${i+1}
+
+</button>
+
+`;
+
+}
+
+document.getElementById("palette").innerHTML=html;
+
+}
+
+/* UPDATE PALETTE */
+
+function updatePalette(){
+
+for(let i=0;i<questions.length;i++){
+
+let btn=document.getElementById("p"+i);
+
+if(marked[i]){
+
+btn.className="marked";
+
+}
+else if(answers[i]!=null){
+
+btn.className="attempted";
+
+}
+else{
+
+btn.className="notattempted";
+
+}
+
+}
+
+}
+
+/* GO QUESTION */
+
+function goQ(i){
+
+current=i;
+
+loadQ();
+
+}
+
+/* SUBMIT */
+
+function submitTest(){
+
+clearInterval(timer);
+
+let correct=0;
+let wrong=0;
+let attempted=0;
+
+questions.forEach((q,i)=>{
+
+if(answers[i]!=null){
+
+attempted++;
+
+if(answers[i]==q.ans){
+
+correct++;
+
+}
+else{
+
+wrong++;
+
+}
+
+}
+
+});
+
+let score=(correct-(wrong*0.25)).toFixed(2);
+
+document.getElementById("testBox").style.display="none";
+
+document.getElementById("resultBox").style.display="block";
+
+document.getElementById("scoreBox").innerHTML=
+`🏆 Score : ${score}`;
+
+document.getElementById("summary").innerHTML=`
+
+<h2>📊 Result Summary</h2>
+
+<p><b>Total Questions :</b> ${questions.length}</p>
+
+<p><b>Attempted :</b> ${attempted}</p>
+
+<p><b>Correct :</b> ${correct}</p>
+
+<p><b>Wrong :</b> ${wrong}</p>
+
+`;
+
+let table="";
+
+questions.forEach((q,i)=>{
+
+let userAns=
+answers[i]!=null
+? q.opt[answers[i]]
+: "Not Attempted";
+
+let correctAns=q.opt[q.ans];
+
+let status="";
+
+if(answers[i]==null){
+
+status=`<span class="notdone">⚪ Not Attempted</span>`;
+
+}
+else if(answers[i]==q.ans){
+
+status=`<span class="correct">✅ Correct</span>`;
+
+}
+else{
+
+status=`<span class="wrong">❌ Wrong</span>`;
+
+}
+
+table+=`
+
+<tr>
+
+<td>${i+1}</td>
+<td>${userAns}</td>
+<td>${correctAns}</td>
+<td>${status}</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("resultTable").innerHTML=table;
+
+}
+
+</script>
+
+</body>
+</html>

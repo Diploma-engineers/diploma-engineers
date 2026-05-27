@@ -328,7 +328,10 @@ display:block;
 
 <input type="text" id="studentName" placeholder="Enter Full Name">
 
-<input type="tel" id="studentMobile" placeholder="Enter Mobile Number" pattern="[0-9]{10}"maxlength="10" required>
+<input type="email" id="studentEmail" placeholder="Enter Valid Email ID">
+
+<input type="text" id="studentMobile" placeholder="Enter Valid Mobile Number">
+
 
 <button onclick="startExam()">
 START TEST
@@ -343,7 +346,7 @@ START TEST
 <div id="examPage">
 
 <div class="topbar">
-<h1>Diploma Engineers CBT MOCK TEST</h1>
+<h1>TOPPERSEXAM CBT MOCK TEST</h1>
 </div>
 
 <div class="infoBar">
@@ -355,7 +358,7 @@ Student :
 
 <div>
 Time Left :
-<span id="timer">02:30:00</span>
+<span id="timer">01:00:00</span>
 </div>
 
 </div>
@@ -457,26 +460,9 @@ SUBMIT TEST
 
 <div class="resultCard">
 
-<!-- Heading with Logo -->
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:15px;">
-
-<img 
-src="https://anubhav.finance.blog/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg"
-alt="Logo"
-style="
-width:55px;
-height:55px;
-border-radius:50%;
-object-fit:cover;
-border:2px solid #003366;
-"
->
-
-<h1 style="color:#003366;margin:0;">
+<h1 style="text-align:center;color:#003366">
 FINAL RESULT
 </h1>
-
-</div>
 
 <h2 style="margin-top:20px">
 Student Name :
@@ -484,14 +470,15 @@ Student Name :
 </h2>
 
 <h2>
+Email :
+<span id="rEmail"></span>
+</h2>
+
+<h2>
 Mobile :
 <span id="rMobile"></span>
 </h2>
 
-<h2>
-Roll :
-<span id="rRoll"></span>
-</h2>
 
 <table>
 
@@ -553,8 +540,7 @@ Roll :
 <td id="overallMarks"></td>
 <td id="overallPercent"></td>
 
-</tr>
-
+  </tr>
 </table>
 
 <button class="downloadBtn" onclick="window.print()">
@@ -1556,20 +1542,49 @@ function startExam(){
 
 let name=document.getElementById("studentName").value.trim();
 
+let email=document.getElementById("studentEmail").value.trim();
+
 let mobile=document.getElementById("studentMobile").value.trim();
 
-let roll=document.getElementById("studentRoll").value.trim();
+/* EMAIL VALIDATION */
 
-if(name==="" || mobile==="" || roll===""){
+let emailPattern =
+/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/* MOBILE VALIDATION */
+
+let mobilePattern =
+/^[6-9]\d{9}$/;
+
+if(name==="" || email==="" || mobile===""){
 
 alert("Please Fill All Details");
+
+return;
+
+}
+
+if(!emailPattern.test(email)){
+
+alert("Enter Valid Email ID");
+
+return;
+
+}
+
+if(!mobilePattern.test(mobile)){
+
+alert("Enter Valid 10 Digit Mobile Number");
+
 return;
 
 }
 
 localStorage.setItem("name",name);
+
+localStorage.setItem("email",email);
+
 localStorage.setItem("mobile",mobile);
-localStorage.setItem("roll",roll);
 
 document.getElementById("loginPage").style.display="none";
 
@@ -1584,7 +1599,7 @@ loadQuestion();
 startTimer();
 
 }
-
+ 
 /* ======================
    TIMER
 ====================== */
@@ -1926,17 +1941,18 @@ saveAnswer();
 document.getElementById("examPage").style.display="none";
 
 document.getElementById("resultPage").style.display="block";
-
 document.getElementById("rName").innerHTML=
 localStorage.getItem("name");
+
+document.getElementById("rEmail").innerHTML=
+localStorage.getItem("email");
 
 document.getElementById("rMobile").innerHTML=
 localStorage.getItem("mobile");
 
-document.getElementById("rRoll").innerHTML=
-localStorage.getItem("roll");
+  
+  /* MATH */
 
-/* MATH */
 
 let math=calculateSection("math");
 

@@ -28,10 +28,12 @@ display:flex;
 justify-content:center;
 align-items:center;
 background:#dfe9f3;
+padding:15px;
 }
 
 .loginBox{
-width:400px;
+width:100%;
+max-width:400px;
 background:white;
 padding:30px;
 border-radius:10px;
@@ -42,6 +44,7 @@ box-shadow:0 0 10px rgba(0,0,0,0.2);
 text-align:center;
 margin-bottom:20px;
 color:#003366;
+font-size:28px;
 }
 
 .loginBox input{
@@ -50,6 +53,7 @@ padding:12px;
 margin-top:10px;
 border:1px solid #ccc;
 border-radius:5px;
+font-size:16px;
 }
 
 .loginBox button{
@@ -82,8 +86,11 @@ background:white;
 padding:10px;
 display:flex;
 justify-content:space-between;
+align-items:center;
 font-weight:bold;
 border-bottom:1px solid #ccc;
+flex-wrap:wrap;
+gap:10px;
 }
 
 .container{
@@ -110,6 +117,7 @@ display:flex;
 gap:5px;
 padding:10px;
 background:#eee;
+flex-wrap:wrap;
 }
 
 .subjects button{
@@ -119,6 +127,7 @@ cursor:pointer;
 background:#999;
 color:white;
 font-weight:bold;
+border-radius:5px;
 }
 
 .subjects .active{
@@ -127,21 +136,36 @@ background:#d9534f;
 
 .questionBox{
 padding:20px;
-min-height:300px;
+min-height:350px;
 }
 
 #qNo{
 margin-bottom:10px;
 color:#003366;
+font-size:20px;
+}
+
+#question{
+font-size:24px;
+line-height:1.5;
+margin-top:10px;
 }
 
 .option{
-display:block;
-padding:10px;
-margin-top:10px;
+display:flex;
+align-items:flex-start;
+gap:10px;
+padding:12px;
+margin-top:12px;
 border:1px solid #ccc;
 border-radius:5px;
 cursor:pointer;
+font-size:18px;
+}
+
+.option input{
+margin-top:4px;
+transform:scale(1.2);
 }
 
 .footerBtns{
@@ -158,6 +182,7 @@ cursor:pointer;
 color:white;
 font-weight:bold;
 border-radius:5px;
+font-size:15px;
 }
 
 .prevBtn{
@@ -186,11 +211,12 @@ overflow:auto;
 }
 
 .paletteBtn{
-height:40px;
+height:42px;
 border:none;
 font-weight:bold;
 cursor:pointer;
 background:#eee;
+border-radius:5px;
 }
 
 .green{
@@ -205,10 +231,11 @@ color:white;
 
 .yellow{
 background:#ffc107 !important;
+color:black;
 }
 
 .current{
-border:3px solid black;
+border:3px solid black !important;
 }
 
 /* RESULT */
@@ -222,6 +249,7 @@ padding:20px;
 background:white;
 padding:20px;
 border:1px solid #ccc;
+border-radius:10px;
 }
 
 table{
@@ -230,10 +258,12 @@ border-collapse:collapse;
 margin-top:20px;
 }
 
-table th,table td{
+table th,
+table td{
 border:1px solid #ccc;
 padding:10px;
 text-align:center;
+font-size:15px;
 }
 
 .reviewBox{
@@ -241,6 +271,7 @@ border:1px solid #ccc;
 padding:15px;
 margin-top:15px;
 background:white;
+border-radius:8px;
 }
 
 .downloadBtn{
@@ -251,6 +282,8 @@ border:none;
 cursor:pointer;
 margin-top:20px;
 font-size:16px;
+border-radius:5px;
+margin-right:10px;
 }
 
 @media(max-width:900px){
@@ -259,14 +292,30 @@ font-size:16px;
 flex-direction:column;
 }
 
-.left,.right{
+.left,
+.right{
 width:100%;
+}
+
+#question{
+font-size:20px;
+}
+
+.option{
+font-size:16px;
+}
+
+table{
+font-size:12px;
+overflow:auto;
+display:block;
 }
 
 }
 
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
@@ -296,15 +345,14 @@ START TEST
 <div id="examPage">
 
 <div class="topbar">
-
 <h1>TOPPERSEXAM CBT MOCK TEST</h1>
-
 </div>
 
 <div class="infoBar">
 
 <div>
-Student : <span id="studentShow"></span>
+Student :
+<span id="studentShow"></span>
 </div>
 
 <div>
@@ -405,7 +453,7 @@ SUBMIT TEST
 
 </div>
 
-<!-- RESULT -->
+<!-- RESULT PAGE -->
 
 <div id="resultPage">
 
@@ -498,9 +546,13 @@ Roll :
 DOWNLOAD PDF
 </button>
 
+<button class="downloadBtn" onclick="toggleAnswers()">
+VIEW ANSWERS
+</button>
+
 </div>
 
-<div id="answerReview"></div>
+<div id="answerReview" style="display:none"></div>
 
 </div>
 
@@ -1487,24 +1539,21 @@ let timer;
 
 function startExam(){
 
-let name=document.getElementById("studentName").value;
+let name=document.getElementById("studentName").value.trim();
 
-let mobile=document.getElementById("studentMobile").value;
+let mobile=document.getElementById("studentMobile").value.trim();
 
-let roll=document.getElementById("studentRoll").value;
+let roll=document.getElementById("studentRoll").value.trim();
 
 if(name==="" || mobile==="" || roll===""){
 
 alert("Please Fill All Details");
-
 return;
 
 }
 
 localStorage.setItem("name",name);
-
 localStorage.setItem("mobile",mobile);
-
 localStorage.setItem("roll",roll);
 
 document.getElementById("loginPage").style.display="none";
@@ -1536,7 +1585,6 @@ let min=Math.floor((totalTime%3600)/60);
 let sec=totalTime%60;
 
 document.getElementById("timer").innerHTML=
-
 `${String(hr).padStart(2,'0')}:${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 
 totalTime--;
@@ -1564,7 +1612,6 @@ visited[current]=true;
 let q=questions[current];
 
 document.getElementById("qNo").innerHTML=
-
 `Question No. ${current+1}`;
 
 document.getElementById("question").innerHTML=q.q;
@@ -1582,7 +1629,7 @@ name="option"
 value="${index}"
 ${answers[current]===index?"checked":""}>
 
-${o}
+<span>${o}</span>
 
 </label>
 
@@ -1613,21 +1660,15 @@ document.getElementById("chemBtn").classList.remove("active");
 let sub=questions[current].subject;
 
 if(sub==="math"){
-
 document.getElementById("mathBtn").classList.add("active");
-
 }
 
 if(sub==="physics"){
-
 document.getElementById("phyBtn").classList.add("active");
-
 }
 
 if(sub==="chemistry"){
-
 document.getElementById("chemBtn").classList.add("active");
-
 }
 
 }
@@ -1641,9 +1682,7 @@ function saveAnswer(){
 let selected=document.querySelector('input[name="option"]:checked');
 
 if(selected){
-
 answers[current]=Number(selected.value);
-
 }
 
 }
@@ -1769,29 +1808,20 @@ btn.classList.remove(
 );
 
 if(answers[i]!==null){
-
 btn.classList.add("green");
-
 }
 
 if(visited[i] && answers[i]===null){
-
 btn.classList.add("red");
-
 }
 
 if(marked[i]){
-
 btn.classList.remove("green");
-
 btn.classList.add("yellow");
-
 }
 
 if(i===current){
-
 btn.classList.add("current");
-
 }
 
 }
@@ -1799,7 +1829,7 @@ btn.classList.add("current");
 }
 
 /* ======================
-   JUMP
+   JUMP QUESTION
 ====================== */
 
 function jumpQuestion(i){
@@ -1813,17 +1843,14 @@ loadQuestion();
 }
 
 /* ======================
-   RESULT
+   RESULT CALCULATION
 ====================== */
 
 function calculateSection(subject){
 
 let total=0;
-
 let attempt=0;
-
 let correct=0;
-
 let wrong=0;
 
 questions.forEach((q,index)=>{
@@ -1852,31 +1879,27 @@ wrong++;
 
 });
 
-let marks=(correct*4)-(wrong);
+let marks=(correct*4)-wrong;
 
 if(marks<0){
-
 marks=0;
-
 }
 
 let percent=((marks/(total*4))*100).toFixed(2);
 
 return {
-
 total,
 attempt,
 correct,
 wrong,
 marks,
 percent
-
 };
 
 }
 
 /* ======================
-   SUBMIT
+   SUBMIT TEST
 ====================== */
 
 function submitTest(){
@@ -1903,51 +1926,33 @@ localStorage.getItem("roll");
 let math=calculateSection("math");
 
 document.getElementById("mathTotal").innerHTML=math.total;
-
 document.getElementById("mathAttempt").innerHTML=math.attempt;
-
 document.getElementById("mathCorrect").innerHTML=math.correct;
-
 document.getElementById("mathWrong").innerHTML=math.wrong;
-
 document.getElementById("mathMarks").innerHTML=math.marks;
-
-document.getElementById("mathPercent").innerHTML=
-math.percent+"%";
+document.getElementById("mathPercent").innerHTML=math.percent+"%";
 
 /* PHYSICS */
 
 let phy=calculateSection("physics");
 
 document.getElementById("phyTotal").innerHTML=phy.total;
-
 document.getElementById("phyAttempt").innerHTML=phy.attempt;
-
 document.getElementById("phyCorrect").innerHTML=phy.correct;
-
 document.getElementById("phyWrong").innerHTML=phy.wrong;
-
 document.getElementById("phyMarks").innerHTML=phy.marks;
-
-document.getElementById("phyPercent").innerHTML=
-phy.percent+"%";
+document.getElementById("phyPercent").innerHTML=phy.percent+"%";
 
 /* CHEMISTRY */
 
 let chem=calculateSection("chemistry");
 
 document.getElementById("chemTotal").innerHTML=chem.total;
-
 document.getElementById("chemAttempt").innerHTML=chem.attempt;
-
 document.getElementById("chemCorrect").innerHTML=chem.correct;
-
 document.getElementById("chemWrong").innerHTML=chem.wrong;
-
 document.getElementById("chemMarks").innerHTML=chem.marks;
-
-document.getElementById("chemPercent").innerHTML=
-chem.percent+"%";
+document.getElementById("chemPercent").innerHTML=chem.percent+"%";
 
 /* OVERALL */
 
@@ -1976,30 +1981,27 @@ chem.marks;
 let totalPercent=
 ((totalMarks/(totalQ*4))*100).toFixed(2);
 
-document.getElementById("overallTotal").innerHTML=
-totalQ;
+document.getElementById("overallTotal").innerHTML=totalQ;
 
-document.getElementById("overallAttempt").innerHTML=
-totalAttempt;
+document.getElementById("overallAttempt").innerHTML=totalAttempt;
 
-document.getElementById("overallCorrect").innerHTML=
-totalCorrect;
+document.getElementById("overallCorrect").innerHTML=totalCorrect;
 
-document.getElementById("overallWrong").innerHTML=
-totalWrong;
+document.getElementById("overallWrong").innerHTML=totalWrong;
 
-document.getElementById("overallMarks").innerHTML=
-totalMarks;
+document.getElementById("overallMarks").innerHTML=totalMarks;
 
 document.getElementById("overallPercent").innerHTML=
 totalPercent+"%";
 
 showAnswers();
 
+document.getElementById("answerReview").style.display="none";
+
 }
 
 /* ======================
-   ANSWERS REVIEW
+   ANSWER REVIEW
 ====================== */
 
 function showAnswers(){
@@ -2035,29 +2037,35 @@ html+=`
 
 <div class="reviewBox">
 
-<h3>
-Question ${index+1}
-</h3>
+<h3>Question ${index+1}</h3>
 
 <p>
 <b>Subject :</b>
 ${q.subject.toUpperCase()}
 </p>
 
+<br>
+
 <p>
 <b>Question :</b>
 ${q.q}
 </p>
+
+<br>
 
 <p>
 <b>Your Answer :</b>
 ${userAns}
 </p>
 
+<br>
+
 <p>
 <b>Correct Answer :</b>
 ${correctAns}
 </p>
+
+<br>
 
 <p>
 <b>Status :</b>
@@ -2071,6 +2079,26 @@ ${status}
 });
 
 document.getElementById("answerReview").innerHTML=html;
+
+}
+
+/* ======================
+   TOGGLE ANSWERS
+====================== */
+
+function toggleAnswers(){
+
+let box=document.getElementById("answerReview");
+
+if(box.style.display==="none"){
+
+box.style.display="block";
+
+}else{
+
+box.style.display="none";
+
+}
 
 }
 

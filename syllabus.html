@@ -2,1413 +2,1107 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syllabus - Diploma Engineers</title>
-
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diploma Engineering Syllabus</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body{
-    margin:0;
-    font-family:'Poppins',sans-serif;
-    padding-top:80px;
-    background:#f4f7fb;
-}
-
-/* TITLE */
-.title{
-    text-align:center;
-    margin:30px 0;
-}
-.title h2{
-    font-weight:700;
-}
-.title span{color:#ff7b00;}
-
-/* BUTTON */
-.branch-btn{
-    padding:10px 18px;
-    margin:5px;
-    border-radius:25px;
-    background:#fff;
-    border:1px solid #ddd;
-    cursor:pointer;
-    transition:.3s;
-}
-.branch-btn:hover{
-    background:#ff7b00;
-    color:#fff;
-}
-.badge-custom1{
-    display:inline-block;
-    background:linear-gradient(45deg,#ff7b00,#ffb300);
-    color:#fff !important;
-    text-decoration:none;
-    padding:8px 18px;
-    border-radius:30px;
-    font-weight:600;
-    font-size:14px;
-    transition:0.3s ease;
-    box-shadow:0 4px 12px rgba(255,123,0,.35);
-}
-
-.badge-custom1:hover{
-    background:linear-gradient(45deg,#ff5500,#ff9800);
-    color:#fff !important;
-    transform:translateY(-3px) scale(1.05);
-    box-shadow:0 8px 20px rgba(255,123,0,.5);
-}
-
-.badge-custom1 i{
-    margin-right:5px;
-}
-/* CARD */
-.sem-card{
-    background:#fff;
-    padding:20px;
-    border-radius:15px;
-    border:1px solid #eee;
-    margin-bottom:20px;
-    transition:.3s;
-}
-.sem-card:hover{
-    transform:translateY(-5px);
-    box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-.branch-section{
-    display:none;
-}
+<body>
+body{background:#f4f7fb;font-family:Arial,sans-serif}
+.hero{padding:50px 0;text-align:center}
+.year-btn{border:none;border-radius:12px;padding:14px;font-weight:bold;width:100%;background:#fff;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.year-btn.active,.year-btn:hover{background:#0d6efd;color:#fff}
+.card{border:none;border-radius:16px}
+.table thead{background:#0d6efd;color:#fff}
+.view-btn{background:#198754;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none}
 </style>
 </head>
-
-<body>
-
-<!-- HEADER (REUSABLE) -->
 <div id="header"></div>
 <script>
 fetch("header.html")
-.then(res => res.text())
-.then(data => document.getElementById("header").innerHTML = data);
+.then(response => response.text())
+.then(data => {
+  document.getElementById("header").innerHTML = data;
+  // NAV FIX (agar toggler waha hai to)
+  setTimeout(() => {
+    const toggler = document.querySelector(".navbar-toggler");
+    const menu = document.querySelector("#menu");
+    if(toggler && menu){
+      toggler.addEventListener("click", () => {
+        menu.classList.toggle("show");
+      });
+    }
+  },500);
+});
 </script>
 
-<!-- TITLE -->
-<div class="title">
-<h1>POLYTECHNIC SYLLABUS</h1>
 
-<p>Diploma Engineering (2024-25)</p>
-
-<button class="btn btn-primary year-btn " onclick="showTable('first',this)">1st Year</button>
-
-<button class="btn btn-warning year-btn" onclick="showTable('second',this)">2nd Year</button>
-
-<button class="btn btn-success year-btn" onclick="showTable('third',this)">3rd Year</button>
-
+<div class="container py-5">
+<div class="hero">
+<h1>Diploma Engineering Syllabus</h1>
+<p class="text-muted">Download Latest BTEUP Syllabus PDF</p>
 </div>
 
-</section>
-
-<div class="container mt-5">
-
-<div class="card p-4">
-
-<div class="search-box mb-4">
-
-<input
-type="text"
-class="form-control"
-placeholder="Search Branch..."
-onkeyup="searchTable(this.value)">
-
+<div class="row g-3 justify-content-center mb-4">
+<div class="col-md-3"><button class="year-btn active" onclick="showYear('first',this)">📘 First Year</button></div>
+<div class="col-md-3"><button class="year-btn" onclick="showYear('second',this)">📗 Second Year</button></div>
+<div class="col-md-3"><button class="year-btn" onclick="showYear('third',this)">📕 Third Year</button></div>
 </div>
 
-<!-- FIRST YEAR -->
+<div class="card mb-3"><div class="card-body">
+<input id="searchInput" class="form-control" placeholder="Search Branch..." onkeyup="searchTable()">
+</div></div>
 
-<div id="first" class="table-box" style="display:block;">
+<div class="card">
+<div class="card-header bg-primary text-white">Available Syllabus</div>
+<div class="card-body">
 
+<div id="first" class="year-content">
 <div class="table-responsive">
-
-<table class="table table-bordered table-hover align-middle" id="syllabusTable">
-
-<thead>
-
-<tr>
-
-<th>S.No</th>
-
-<th>Code</th>
-
-<th>Branch</th>
-
-<th width="150">View</th>
-
+<table class="table table-bordered">
+<thead><tr><th>S.No</th><th>Code</th><th>Branch</th><th>PDF</th></tr></thead>
+<tbody>
+<tr><td colspan="4" class="text-center">
+    <tr>
+    <td>1</td>
+    <td>316</td>
+    <td>AGRICULTURAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
 </tr>
 
-</thead>
-
-<tbody>
+<tr>
+    <td>2</td>
+    <td>318</td>
+    <td>ARCHITECTURAL ASSISTANTSHIP</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
 <tr>
+    <td>3</td>
+    <td>319</td>
+    <td>GLASS & CERAMICS ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
-<td>1</td>
-                                        <td>316</td>
-										<td>Diploma in Agricultural Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>2</td>
-                                        <td>318</td>
-										<td>Diploma in Architectural Assistantship</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>3</td>
-                                        <td>319</td>
-										<td>Diploma in Glass & Ceramics Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>4</td>
-                                        <td>320</td>
-										<td>Diploma in Chemical Technology (Fertilizer)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>5</td>
-                                        <td>321</td>
-										<td>Diploma in Chemical Technology (Rubber & Plastic)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>6</td>
-                                        <td>322</td>
-										<td>Diploma in Civil Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>7</td>
-                                        <td>323</td>
-										<td>Diploma in Civil Engineering (Environmental & Pollution control)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>8</td>
-                                        <td>327</td>
-										<td>Diploma in Dairy Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>9</td>
-                                        <td>328</td>
-										<td>Diploma in Electrical Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>10</td>
-                                        <td>329</td>
-										<td>Diploma in Electrical Engineering (Industrial Control)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>11</td>
-                                        <td>330</td>
-										<td>Diploma in Electronics Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>12</td>
-                                        <td>331</td>
-										<td>Diploma in Electronics Engineering (Modern Consumer Electronics Appliances)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>13</td>
-                                        <td>332</td>
-										<td>Diploma in Electronics Engineering (Advanced Microprocessor & Interface)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>14</td>
-                                        <td>333</td>
-										<td>Diploma in Electronics Engineering (Micro Electronics)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>15</td>
-                                        <td>334</td>
-										<td>Diploma in Electrical & Electronics Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>16</td>
-                                        <td>336</td>
-										<td>Diploma in Leather Technology Footwear (Computer Aided Shoe Design)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>17</td>
-                                        <td>338</td>
-										<td>Diploma in Instrumentation & Control Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>18</td>
-                                        <td>340</td>
-										<td>Diploma in Leather Technology (Tanning)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>19</td>
-                                        <td>341</td>
-										<td>Diploma in Mechanical Engineering (Automobile)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>20</td>
-                                        <td>342</td>
-										<td>Diploma in Mechanical Engineering(Computer Aided Design)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>21</td>
-                                        <td>343</td>
-										<td>Diploma in Mechanical Engineering (Production)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>22</td>
-                                        <td>344</td>
-										<td>Diploma in Mechanical Engineering (Refrigeration & Air conditioning)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>23</td>
-                                        <td>345</td>
-										<td>Diploma in Mechanical Engineering (Repair & Maintenance)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>24</td>
-                                        <td>348</td>
-										<td>Diploma in Textile Chemistry</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>25</td>
-                                        <td>351</td>
-										<td>Diploma in Textile Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>26</td>
-                                        <td>352</td>
-										<td>Diploma in Chemical Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>27</td>
-                                        <td>353</td>
-										<td>Diploma in Chemical Engineering (Petro Chemical)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>28</td>
-                                        <td>355</td>
-										<td>Diploma in Computer Science & Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>29</td>
-                                        <td>356</td>
-										<td>Diploma in Information Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>30</td>
-                                        <td>357</td>
-										<td>Diploma in Paint Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>31</td>
-                                        <td>358</td>
-										<td>Diploma in Plastic Mould Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>32</td>
-                                        <td>361</td>
-										<td>Diploma in Electronics & Communication Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>33</td>
-                                        <td>362</td>
-										<td>Diploma in Carpet Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>34</td>
-                                        <td>363</td>
-										<td>Diploma in Food Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>35</td>
-                                        <td>364</td>
-										<td>Diploma in Paper & Pulp Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>36</td>
-                                        <td>365</td>
-										<td>Diploma in Textile Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>37</td>
-                                        <td>366</td>
-										<td>Diploma in Mining Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>38</td>
-                                        <td>367</td>
-										<td>Diploma in Mechanical Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>39</td>
-                                        <td>368</td>
-										<td>Diploma in Civil and Environment Engineering</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>40</td>
-                                        <td>369</td>
-										<td>Diploma in Communication and Computer Networking</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>41</td>
-                                        <td>370</td>
-										<td>Diploma in Renewable Energy</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>42</td>
-                                        <td>392</td>
-										<td>Diploma in Printing Technology</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
+<tr>
+    <td>4</td>
+    <td>320</td>
+    <td>CHEMICAL TECHNOLOGY (FERTILIZER)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
-<!-- Continue remaining branches here -->
+<tr>
+    <td>5</td>
+    <td>321</td>
+    <td>CHEMICAL TECHNOLOGY (RUBBER & PLASTIC)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
-</tbody>
+<tr>
+    <td>6</td>
+    <td>322</td>
+    <td>CIVIL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
-</table>
+<tr>
+    <td>7</td>
+    <td>323</td>
+    <td>CIVIL ENGINEERING (ENVIRONMENTAL & POLLUTION CONTROL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
 
+<tr>
+    <td>8</td>
+    <td>327</td>
+    <td>DAIRY ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>9</td>
+    <td>328</td>
+    <td>ELECTRICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>10</td>
+    <td>329</td>
+    <td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>11</td>
+    <td>330</td>
+    <td>ELECTRONICS ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>12</td>
+    <td>331</td>
+    <td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS APPLIANCES)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>13</td>
+    <td>332</td>
+    <td>ELECTRONICS ENGINEERING (ADVANCED MICROPROCESSOR & INTERFACE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>14</td>
+    <td>333</td>
+    <td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>15</td>
+    <td>334</td>
+    <td>ELECTRICAL & ELECTRONICS ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>16</td>
+    <td>336</td>
+    <td>LEATHER TECHNOLOGY FOOTWEAR (COMPUTER AIDED SHOE DESIGN)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>17</td>
+    <td>338</td>
+    <td>INSTRUMENTATION & CONTROL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>18</td>
+    <td>340</td>
+    <td>LEATHER TECHNOLOGY (TANNING)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>19</td>
+    <td>341</td>
+    <td>MECHANICAL ENGINEERING (AUTOMOBILE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>20</td>
+    <td>342</td>
+    <td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>21</td>
+    <td>343</td>
+    <td>MECHANICAL ENGINEERING (PRODUCTION)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>22</td>
+    <td>344</td>
+    <td>MECHANICAL ENGINEERING (REFRIGERATION & AIR CONDITIONING)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>23</td>
+    <td>345</td>
+    <td>MECHANICAL ENGINEERING (REPAIR & MAINTENANCE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>24</td>
+    <td>348</td>
+    <td>TEXTILE CHEMISTRY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>25</td>
+    <td>351</td>
+    <td>TEXTILE TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>26</td>
+    <td>352</td>
+    <td>CHEMICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>27</td>
+    <td>353</td>
+    <td>CHEMICAL ENGINEERING (PETRO CHEMICAL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>28</td>
+    <td>355</td>
+    <td>COMPUTER SCIENCE & ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>29</td>
+    <td>356</td>
+    <td>INFORMATION TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>30</td>
+    <td>357</td>
+    <td>PAINT TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+<tr>
+    <td>31</td>
+    <td>358</td>
+    <td>PLASTIC MOULD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>32</td>
+    <td>361</td>
+    <td>ELECTRONICS & COMMUNICATION ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>33</td>
+    <td>362</td>
+    <td>CARPET TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>34</td>
+    <td>363</td>
+    <td>FOOD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>35</td>
+    <td>364</td>
+    <td>PAPER & PULP TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>36</td>
+    <td>365</td>
+    <td>TEXTILE ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>37</td>
+    <td>366</td>
+    <td>MINING ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>38</td>
+    <td>367</td>
+    <td>MECHANICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>39</td>
+    <td>368</td>
+    <td>CIVIL AND ENVIRONMENT ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>40</td>
+    <td>369</td>
+    <td>COMMUNICATION AND COMPUTER NETWORKING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+
+<tr>
+    <td>41</td>
+    <td>370</td>
+    <td>RENEWABLE ENERGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>42</td>
+    <td>392</td>
+    <td>PRINTING TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf">View PDF</a></td>
+</tr>
+</td></tr>
+</tbody></table></div>
 </div>
 
-</div>
-
-<!-- SECOND YEAR -->
-
-
-<div id="second" class="table-box" style="display:block;">
-
+<div id="second" class="year-content" style="display:none">
 <div class="table-responsive">
+<table class="table table-bordered">
+<thead><tr><th>S.No</th><th>Code</th><th>Branch</th><th>PDF</th></tr></thead>
+<tbody>
+<tr><td colspan="4" class="text-center">   <tr>
+        <td>1</td>
+        <td>316</td>
+        <td>AGRICULTURE ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/316_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<table class="table table-bordered table-hover align-middle" id="syllabusTable">
+    <tr>
+        <td>2</td>
+        <td>318</td>
+        <td>ARCHITECTURAL ASSISTANTSHIP</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/318_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<thead>
+    <tr>
+        <td>3</td>
+        <td>319</td>
+        <td>GLASS AND CERAMIC ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/319_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<tr>
+    <tr>
+        <td>4</td>
+        <td>320</td>
+        <td>CHEMICAL TECHNOLOGY (FERTILIZER)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/320_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<th>S.No</th>
+    <tr>
+        <td>5</td>
+        <td>321</td>
+        <td>CHEMICAL TECHNOLOGY (RUBBER AND PLASTIC)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/321_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<th>Code</th>
+    <tr>
+        <td>6</td>
+        <td>322</td>
+        <td>CIVIL ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/322_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<th>Branch</th>
+    <tr>
+        <td>7</td>
+        <td>323</td>
+        <td>CIVIL ENGINEERING (ENVIRONMENT & POLLUTION CONTROL)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/323_2025_26.pdf">View PDF</a></td>
+    </tr>
 
-<th width="150">View</th>
+    <tr>
+        <td>8</td>
+        <td>327</td>
+        <td>DAIRY ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/327_2025_26.pdf">View PDF</a></td>
+    </tr>
 
+    <tr>
+        <td>9</td>
+        <td>328</td>
+        <td>ELECTRICAL ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/328_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>10</td>
+        <td>329</td>
+        <td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/329_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>11</td>
+        <td>330</td>
+        <td>ELECTRONICS ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/330_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>12</td>
+        <td>331</td>
+        <td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS APPLIANCE)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/331_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>13</td>
+        <td>332</td>
+        <td>ELECTRONICS ENGINEERING (ADVANCE MICROPROCESSOR & INTERFACE)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/332_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>14</td>
+        <td>333</td>
+        <td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/333_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>15</td>
+        <td>334</td>
+        <td>ELECTRICAL AND ELECTRONICS ENGINEERING</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/334_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>16</td>
+        <td>336</td>
+        <td>LEATHER TECHNOLOGY FOOTWEAR (COMPUTER AIDED SHOE DESIGN)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/336_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>17</td>
+        <td>338</td>
+        <td>INSTRUMENTATION AND CONTROL</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/338_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>18</td>
+        <td>340</td>
+        <td>LEATHER TECHNOLOGY (TANNING)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/340_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>19</td>
+        <td>341</td>
+        <td>MECHANICAL ENGINEERING (AUTOMOBILE)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/341_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>20</td>
+        <td>342</td>
+        <td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/342_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>21</td>
+        <td>343</td>
+        <td>MECHANICAL ENGINEERING (PRODUCTION)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/343_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>22</td>
+        <td>344</td>
+        <td>MECHANICAL ENGINEERING (REFRIGERATION & AIR CONDITIONING)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/344_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>23</td>
+        <td>345</td>
+        <td>MECHANICAL ENGINEERING (MAINTENANCE)</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/345_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>24</td>
+        <td>348</td>
+        <td>TEXTILE CHEMISTRY</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/348_2025_26.pdf">View PDF</a></td>
+    </tr>
+
+    <tr>
+        <td>25</td>
+        <td>351</td>
+        <td>TEXTILE TECHNOLOGY</td>
+        <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/351_2025_26.pdf">View PDF</a></td>
+    </tr>
+    
+    <tr>
+    <td>26</td>
+    <td>352</td>
+    <td>CHEMICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/352_2025_26.pdf">View PDF</a></td>
 </tr>
 
-</thead>
-
-<tbody>
+<tr>
+    <td>27</td>
+    <td>353</td>
+    <td>CHEMICAL ENGINEERING (PETRO CHEMICAL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/353_2025_26.pdf">View PDF</a></td>
+</tr>
 
 <tr>
+    <td>28</td>
+    <td>355</td>
+    <td>COMPUTER SCIENCE AND ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/355_2025_26.pdf">View PDF</a></td>
+</tr>
 
-                                        <td>1</td>
-                                        <td>316</td>
-										<td>AGRICULTURE ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/316_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>2</td>
-                                        <td>318</td>
-										<td>ARCHITECTURAL ASSISTANTSHIP</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/318_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>3</td>
-                                        <td>319</td>
-										<td>GLASS AND CERAMIC ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/319_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>4</td>
-                                        <td>320</td>
-										<td>CHEMICAL TECHNOLOGY (FERTILIZER)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/320_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>5</td>
-                                        <td>321</td>
-										<td>CHEMICAL TECHNOLOGY (RUBBER AND PLASTIC)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/321_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>6</td>
-                                        <td>322</td>
-										<td>CIVIL ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/322_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>7</td>
-                                        <td>323</td>
-										<td>CIVIL ENGINEERING (ENVIRONMENT & POLLUTION CONTROL)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/323_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>8</td>
-                                        <td>327</td>
-										<td>DAIRY ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/327_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>9</td>
-                                        <td>328</td>
-										<td>ELECTRICAL ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/328_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>10</td>
-                                        <td>329</td>
-										<td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/329_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>11</td>
-                                        <td>330</td>
-										<td>ELECTRONICS ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/330_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>12</td>
-                                        <td>331</td>
-										<td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS APPLIANCE)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/331_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>13</td>
-                                        <td>332</td>
-										<td>ELECTRONICS ENGINEERING (ADVANCE MICROPROCESSOR & INTERFACE)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/332_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>14</td>
-                                        <td>333</td>
-										<td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/333_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>15</td>
-                                        <td>334</td>
-										<td>ELECTRICAL AND ELECTRONICS ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/334_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>16</td>
-                                        <td>336</td>
-										<td>LEATHER TECHNOLOGY FOOTWEAR (COMPUTER AIDED SHOE DESIGN)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/336_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>17</td>
-                                        <td>338</td>
-										<td>INSTRUMENTATION AND CONTROL</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/338_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>18</td>
-                                        <td>340</td>
-										<td>LEATHER TECHNOLOGY (TANNING)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/340_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>19</td>
-                                        <td>341</td>
-										<td>MECHANICAL ENGINEERING (AUTOMOBILE)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/341_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>20</td>
-                                        <td>342</td>
-										<td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/342_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>21</td>
-                                        <td>343</td>
-										<td>MECHANICAL ENGINEERING (PRODUCTION)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/343_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>22</td>
-                                        <td>344</td>
-										<td>MECHANICAL ENGINEERING ( REFRIGERATION & AIR CONDITIONING)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/344_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>23</td>
-                                        <td>345</td>
-										<td>MECHANICAL ENGINEERING (MAINTENANCE)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/345_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>24</td>
-                                        <td>348</td>
-										<td>TEXTILE CHEMISTRY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/348_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>25</td>
-                                        <td>351</td>
-										<td>TEXTILE TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/351_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>26</td>
-                                        <td>352</td>
-										<td>CHEMICAL ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/352_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>27</td>
-                                        <td>353</td>
-										<td>CHEMICAL ENGINEERING (PETRO CHEMICAL)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/353_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>28</td>
-                                        <td>355</td>
-										<td>COMPUTER SCIENCE AND ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/355_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>29</td>
-                                        <td>356</td>
-										<td>INFORMATION TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/356_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>30</td>
-                                        <td>357</td>
-										<td>PAINT TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/357_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>31</td>
-                                        <td>358</td>
-										<td>PLASTIC MOULD TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/358_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>32</td>
-                                        <td>361</td>
-										<td>ELECTRONICS & COMMUNICATION ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/361_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>33</td>
-                                        <td>362</td>
-										<td>CARPET TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/362_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>34</td>
-                                        <td>363</td>
-										<td>FOOD TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/363_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>35</td>
-                                        <td>364</td>
-										<td>PAPER AND PULP TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/364_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>36</td>
-                                        <td>365</td>
-										<td>TEXTILE ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/365_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>37</td>
-                                        <td>366</td>
-										<td>MINING ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/366_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>38</td>
-                                        <td>367</td>
-										<td>MECHANICAL ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/367_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>39</td>
-                                        <td>368</td>
-										<td>CIVIL AND ENVIRONMENT ENGINEERING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/368_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>40</td>
-                                        <td>369</td>
-										<td>COMMUNICATION AND COMPUTER NETWORKING</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/369_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>41</td>
-                                        <td>370</td>
-										<td>RENEWABLE ENERGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/370_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>42</td>
-                                        <td>375</td>
-										<td>CIVIL ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/375_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>43</td>
-                                        <td>376</td>
-										<td>CIVIL ENGINEERING (ENVIRONMENT & POLLUTION CONTROL)(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/376_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>44</td>
-                                        <td>378</td>
-										<td>ELECTRICAL ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/378_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>45</td>
-                                        <td>379</td>
-										<td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/379_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>46</td>
-                                        <td>380</td>
-										<td>ELECTRONICS ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/380_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>47</td>
-                                        <td>381</td>
-										<td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS)(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/381_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>48</td>
-                                        <td>382</td>
-										<td>ELECTRONICS ENGINEERING (ADVANCE MICROPROCESSOR & INTERFACE)(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/382_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>49</td>
-                                        <td>383</td>
-										<td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/383_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>50</td>
-                                        <td>384</td>
-										<td>MECHANICAL ENGINEERING (AUTOMOBILE) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/384_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>51</td>
-                                        <td>385</td>
-										<td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/385_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>52</td>
-                                        <td>386</td>
-										<td>MECHANICAL ENGINEERING (PRODUCTION) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/386_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>53</td>
-                                        <td>387</td>
-										<td>MECHANICAL ENGINEERING (REFRIGERATION & AIRCONDITIONING)(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/387_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>54</td>
-                                        <td>388</td>
-										<td>MECHANICAL ENGINEERING (MAINTENANCE) (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/388_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>55</td>
-                                        <td>389</td>
-										<td>COMPUTER SCIENCE AND ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/389_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>56</td>
-                                        <td>390</td>
-										<td>INFORMATION TECHNOLOGY (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/390_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>57</td>
-                                        <td>391</td>
-										<td>ELECTRICAL AND ELECTRONICS ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/391_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>58</td>
-                                        <td>392</td>
-										<td>PRINTING TECHNOLOGY</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/392_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>59</td>
-                                        <td>393</td>
-										<td>TEXTILE TECHNOLOGY (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/393_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>60</td>
-                                        <td>394</td>
-										<td>PRINTING TECHNOLOGY(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/394_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>61</td>
-                                        <td>395</td>
-										<td>MECHANICAL ENGINEERING (LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/395_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>62</td>
-                                        <td>396</td>
-										<td>ELECTRONICS AND COMMUNICATION ENGINEERING [LATERAL ENTRY]</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/396_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>63</td>
-                                        <td>397</td>
-										<td>TEXTILE ENGINEERING(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/397_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>64</td>
-                                        <td>398</td>
-										<td>CIVIL AND ENVIRONMENT ENGINEERING [LATERAL ENTRY]</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/398_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
-																		<tr>
-										<td>65</td>
-                                        <td>399</td>
-										<td>RENEABLE ENERGY(LATERAL ENTRY)</td>
-										<td>
-											<a  class="badge badge-custom1 p-2 font-weight-light" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/399_2025_26.pdf">
-												View
-											</a> 
-                                        </td>
-									</tr>
+<tr>
+    <td>29</td>
+    <td>356</td>
+    <td>INFORMATION TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/356_2025_26.pdf">View PDF</a></td>
+</tr>
 
-<!-- Continue remaining branches here -->
+<tr>
+    <td>30</td>
+    <td>357</td>
+    <td>PAINT TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/357_2025_26.pdf">View PDF</a></td>
+</tr>
 
-</tbody>
+<tr>
+    <td>31</td>
+    <td>358</td>
+    <td>PLASTIC MOULD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/358_2025_26.pdf">View PDF</a></td>
+</tr>
 
-</table>
+<tr>
+    <td>32</td>
+    <td>361</td>
+    <td>ELECTRONICS &amp; COMMUNICATION ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/361_2025_26.pdf">View PDF</a></td>
+</tr>
 
+<tr>
+    <td>33</td>
+    <td>362</td>
+    <td>CARPET TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/362_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>34</td>
+    <td>363</td>
+    <td>FOOD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/363_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>35</td>
+    <td>364</td>
+    <td>PAPER AND PULP TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/364_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>36</td>
+    <td>365</td>
+    <td>TEXTILE ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/365_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>37</td>
+    <td>366</td>
+    <td>MINING ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/366_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>38</td>
+    <td>367</td>
+    <td>MECHANICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/367_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>39</td>
+    <td>368</td>
+    <td>CIVIL AND ENVIRONMENT ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/368_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>40</td>
+    <td>369</td>
+    <td>COMMUNICATION AND COMPUTER NETWORKING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/369_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>41</td>
+    <td>370</td>
+    <td>RENEWABLE ENERGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/370_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>42</td>
+    <td>375</td>
+    <td>CIVIL ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/375_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>43</td>
+    <td>376</td>
+    <td>CIVIL ENGINEERING (ENVIRONMENT &amp; POLLUTION CONTROL) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/376_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>44</td>
+    <td>378</td>
+    <td>ELECTRICAL ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/378_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>45</td>
+    <td>379</td>
+    <td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/379_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>46</td>
+    <td>380</td>
+    <td>ELECTRONICS ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/380_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>47</td>
+    <td>381</td>
+    <td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/381_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>48</td>
+    <td>382</td>
+    <td>ELECTRONICS ENGINEERING (ADVANCE MICROPROCESSOR &amp; INTERFACE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/382_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>49</td>
+    <td>383</td>
+    <td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/383_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>50</td>
+    <td>384</td>
+    <td>MECHANICAL ENGINEERING (AUTOMOBILE) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/384_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>51</td>
+    <td>385</td>
+    <td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/385_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>52</td>
+    <td>386</td>
+    <td>MECHANICAL ENGINEERING (PRODUCTION) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/386_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>53</td>
+    <td>387</td>
+    <td>MECHANICAL ENGINEERING (REFRIGERATION &amp; AIR CONDITIONING) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/387_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>54</td>
+    <td>388</td>
+    <td>MECHANICAL ENGINEERING (MAINTENANCE) (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/388_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>55</td>
+    <td>389</td>
+    <td>COMPUTER SCIENCE AND ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/389_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>56</td>
+    <td>390</td>
+    <td>INFORMATION TECHNOLOGY (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/390_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>57</td>
+    <td>391</td>
+    <td>ELECTRICAL AND ELECTRONICS ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/391_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>58</td>
+    <td>392</td>
+    <td>PRINTING TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/392_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>59</td>
+    <td>393</td>
+    <td>TEXTILE TECHNOLOGY (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/393_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>60</td>
+    <td>394</td>
+    <td>PRINTING TECHNOLOGY (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/394_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>61</td>
+    <td>395</td>
+    <td>MECHANICAL ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/395_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>62</td>
+    <td>396</td>
+    <td>ELECTRONICS AND COMMUNICATION ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/396_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>63</td>
+    <td>397</td>
+    <td>TEXTILE ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/397_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>64</td>
+    <td>398</td>
+    <td>CIVIL AND ENVIRONMENT ENGINEERING (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/398_2025_26.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>65</td>
+    <td>399</td>
+    <td>RENEWABLE ENERGY (LATERAL ENTRY)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/399_2025_26.pdf">View PDF</a></td>
+</tr>
+</td></tr>
+</tbody></table></div>
 </div>
 
-</div>
-
-
-<!-- THIRD YEAR -->
-
-<<div id="second" class="table-box" style="display:block;">
-
+<div id="third" class="year-content" style="display:none">
 <div class="table-responsive">
-
-<table class="table table-bordered table-hover align-middle" id="syllabusTable">
-
-<thead>
-
-<tr>
-
-<th>S.No</th>
-
-<th>Code</th>
-
-<th>Branch</th>
-
-<th width="150">View</th>
-
+<table class="table table-bordered">
+<thead><tr><th>S.No</th><th>Code</th><th>Branch</th><th>PDF</th></tr></thead>
+<tbody>
+<tr><td colspan="4" class="text-center"><tr>
+    <td>1</td>
+    <td>316</td>
+    <td>AGRICULTURAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/316_Agricultural_Engineering.pdf">View PDF</a></td>
 </tr>
 
-</thead>
-
-<tbody>
+<tr>
+    <td>2</td>
+    <td>318</td>
+    <td>ARCHITECTURAL ASSISTANTSHIP</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Architectural%20Assistantship.pdf">View PDF</a></td>
+</tr>
 
 <tr>
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl38_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl38_HyperLink1" href="/Syllabus/folder2627/358_Plastic%20Mould%20Technology_3rd%20year_25-07-2025.pdf" target="_blank">Final  Year Diploma in Plastic Mould Technology</a>
+    <td>3</td>
+    <td>319</td>
+    <td>GLASS & CERAMICS</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Glass%20and%20Ceramic%20Engineering.pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl39_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl39_HyperLink1" href="/Syllabus/folder2627/Printing%20Technology%205th%20to%206th%20Sem.pdf" target="_blank">Final  Year Diploma in Printing Technology</a>
+<tr>
+    <td>4</td>
+    <td>320</td>
+    <td>CHEMICAL TECHNOLOGY (FERTILIZER)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Chemical%20Technology%20%20(Fertilizer).pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl40_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl40_HyperLink1" href="/Syllabus/folder2627/348%20Textile%20Chemistry.pdf" target="_blank">Final  Year Diploma in Textile Chemistry</a>
+<tr>
+    <td>5</td>
+    <td>321</td>
+    <td>CHEMICAL TECHNOLOGY (RUBBER & PLASTIC)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Chemical%20Technology%20(Plastic%20and%20Rubber).pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl41_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl41_HyperLink1" href="/Syllabus/folder2627/351Textile%20Engineering%205th%20and%206th%20Sem.pdf" target="_blank">Final  Year Diploma in Textile Engineering</a>
+<tr>
+    <td>6</td>
+    <td>322</td>
+    <td>CIVIL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20322%20Year%20CIVIL%20ENGG.pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl42_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl42_HyperLink1" href="/Syllabus/folder2627/351%20Textile%20Tech%20.pdf" target="_blank">Final  Year Diploma in Textile Technology</a>
+<tr>
+    <td>7</td>
+    <td>323</td>
+    <td>CIVIL ENGINEERING (ENVIRONMENTAL POLLUTION & CONTROL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20323%20CIVIL%20EPC%20ENGG.pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr><tr>
-			<td>
-                                                <img id="ctl00_ContentPlaceHolder1_GridView1_ctl43_Image1" src="../images/BULLETIMG.jpg" style="border-width:0px;" />
-                                                <a id="ctl00_ContentPlaceHolder1_GridView1_ctl43_HyperLink1" href="/Syllabus/folder2627/3rd%20Year%20Renewable%20Energy.pdf" target="_blank">Final  Year Renewable Energy</a>
+<tr>
+    <td>8</td>
+    <td>327</td>
+    <td>DAIRY ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/327_Dairy%20Engg%20Revised-Final%2025072025.pdf">View PDF</a></td>
+</tr>
 
-                                            </td>
-		</tr>
-	</table>
+<tr>
+    <td>9</td>
+    <td>328</td>
+    <td>ELECTRICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/328ELECTRICAL%20ENGINNERING.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>10</td>
+    <td>329</td>
+    <td>ELECTRICAL ENGINEERING (INDUSTRIAL CONTROL)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/329%20Electrical%20Engg%20IC.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>11</td>
+    <td>330</td>
+    <td>ELECTRONICS ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/330%20NEP%205th%20to%206th%20%20updated.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>12</td>
+    <td>331</td>
+    <td>ELECTRONICS ENGINEERING (MODERN CONSUMER ELECTRONICS APPLIANCES)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/331%20NEP%205th%20to%206th%20updated.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>13</td>
+    <td>332</td>
+    <td>ELECTRONICS ENGINEERING (ADVANCED MICROPROCESSOR & INTERFACE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/332%20NEP%205th%20to%206th%20updated.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>14</td>
+    <td>333</td>
+    <td>ELECTRONICS ENGINEERING (MICRO ELECTRONICS)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/333%20NEP%205th%20to%206th%20updated.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>15</td>
+    <td>334</td>
+    <td>ELECTRICAL & ELECTRONICS ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Electrical%20and%20Electronics%20Engineeering.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>16</td>
+    <td>336</td>
+    <td>LEATHER TECHNOLOGY FOOTWEAR (COMPUTER AIDED SHOE DESIGN)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/336_Leather%20Technology_CASD_3rd%20yr_260725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>17</td>
+    <td>338</td>
+    <td>INSTRUMENTATION & CONTROL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Instrumentation%20and%20Control%20Engg.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>18</td>
+    <td>340</td>
+    <td>LEATHER TECHNOLOGY (TANNING)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/340_Leather%20tech-tanning_260725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>19</td>
+    <td>341</td>
+    <td>MECHANICAL ENGINEERING (AUTOMOBILE)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/341_Mech%20Engg-Automobile_3rd%20yr_260725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>20</td>
+    <td>342</td>
+    <td>MECHANICAL ENGINEERING (COMPUTER AIDED DESIGN)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/342_Mech%20Engg-CAD_3rd%20yr_260725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>21</td>
+    <td>343</td>
+    <td>MECHANICAL ENGINEERING (PRODUCTION)</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/343_Mech%20Engg-production_3rd%20yr_260725.pdf">View PDF</a></td>
+</tr>
+<tr>
+    <td>22</td>
+    <td>355</td>
+    <td>COMPUTER SCIENCE & ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Computer%20Science%20and%20Engineering.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>23</td>
+    <td>356</td>
+    <td>INFORMATION TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Information%20Technology.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>24</td>
+    <td>357</td>
+    <td>PAINT TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Paint%20Technology.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>25</td>
+    <td>358</td>
+    <td>PLASTIC MOULD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/358_Plastic%20Mould%20Technology_3rd%20year_25-07-2025.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>26</td>
+    <td>361</td>
+    <td>ELECTRONICS & COMMUNICATION ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/Elex%20and%20Comm%20Eng%20NEP%205th%20to%206th%20updated.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>27</td>
+    <td>362</td>
+    <td>CARPET TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/328%20Carpet%20Technology%205th%20to%206th%20Sem.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>28</td>
+    <td>363</td>
+    <td>FOOD TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/363%20Food%20Tech%205th%20and%206th%20sem.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>29</td>
+    <td>364</td>
+    <td>PAPER & PULP TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/364PAPER%20AND%20PULP%20TECHNOLOGY.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>30</td>
+    <td>365</td>
+    <td>TEXTILE ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/351Textile%20Engineering%205th%20and%206th%20Sem.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>31</td>
+    <td>366</td>
+    <td>MINING ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/Mining%20Engg%205th%20to%206th%20sem.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>32</td>
+    <td>367</td>
+    <td>MECHANICAL ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/367_Mech%20Engg-3rd%20yr_260725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>33</td>
+    <td>368</td>
+    <td>CIVIL AND ENVIRONMENT ENGINEERING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20YearCIVIL%20and%20ENV%20ENGG.%20NEP%205TH%20to%206th.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>34</td>
+    <td>369</td>
+    <td>COMMUNICATION AND COMPUTER NETWORKING</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/369_CCN_3rd%20Year_250725.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>35</td>
+    <td>370</td>
+    <td>RENEWABLE ENERGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/3rd%20Year%20Renewable%20Energy.pdf">View PDF</a></td>
+</tr>
+
+<tr>
+    <td>36</td>
+    <td>392</td>
+    <td>PRINTING TECHNOLOGY</td>
+    <td><a class="btn btn-success btn-sm" target="_blank" href="/Syllabus/folder2627/Printing%20Technology%205th%20to%206th%20Sem.pdf">View PDF</a></td>
+</tr>
+
+</td></tr>
+</tbody></table></div>
 </div>
 
-	/a> 
-                                        </td>
-</tr>
-	
-
-	
-
-
+</div></div>
+</div>
 
 <script>
-
-function showTable(id,btn){
-
-document.querySelectorAll('.table-box').forEach(function(e){
-
-e.style.display='none';
-
-});
-
+function showYear(id,btn){
+document.querySelectorAll('.year-content').forEach(x=>x.style.display='none');
 document.getElementById(id).style.display='block';
-
-document.querySelectorAll('.year-btn').forEach(function(e){
-
-e.classList.remove('active-btn');
-
+document.querySelectorAll('.year-btn').forEach(x=>x.classList.remove('active'));
+btn.classList.add('active');
+searchTable();
+}
+function searchTable(){
+let input=document.getElementById('searchInput').value.toUpperCase();
+let active=[...document.querySelectorAll('.year-content')].find(x=>x.style.display!=='none');
+let rows=active.querySelectorAll('tbody tr');
+rows.forEach(r=>{
+let td=r.cells[2];
+if(!td)return;
+r.style.display=td.textContent.toUpperCase().includes(input)?'':'none';
 });
-
-btn.classList.add('active-btn');
-
-}
-
-function searchTable(value){
-
-value=value.toLowerCase();
-
-let rows=document.querySelectorAll("#syllabusTable tbody tr");
-
-rows.forEach(function(row){
-
-row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
-
-});
-
-}
-
-</script>
-
-</body>
-</html>
-		
-										
-
-<!-- SCRIPT -->
-<script>
-function show(id){
- document.querySelectorAll('.branch-section').forEach(e => e.style.display='none');
- document.getElementById(id).style.display='block';
 }
 </script>
-
-<!-- FOOTER -->
-<div id="footer"></div>
-<script>
-fetch("footer.html")
-.then(res => res.text())
-.then(data => document.getElementById("footer").innerHTML = data);
-</script>
-
 </body>
 </html>

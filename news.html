@@ -1,55 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTEUP News</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTEUP News</title>
+
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header -->
-    <div id="header"></div>
+<!-- Header -->
+<div id="header"></div>
 
-    <!-- Main Content -->
-    <main class="container">
+<!-- Main Content -->
+<main class="container">
 
-        <div class="card post">
+<div class="card">
 
-            <h2>BTEUP Important Notice</h2>
+<h2>BTEUP Important Notice</h2>
 
-            <iframe
-                src="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/preview"
-                width="100%"
-                height="300"
-                style="border:none;border-radius:10px;">
-            </iframe>
+<iframe
+src="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/preview"
+width="100%"
+height="350"
+style="border:none;border-radius:10px;">
+</iframe>
 
-            <p>
-                BTEUP के छात्रों के लिए महत्वपूर्ण सूचना जारी की गई है।
-                पूरी जानकारी के लिए नीचे दिए गए बटन पर क्लिक करें।
-            </p>
+<p>
+BTEUP के छात्रों के लिए महत्वपूर्ण सूचना जारी की गई है।
+पूरी जानकारी देखने के लिए नीचे दिए गए बटन पर क्लिक करें।
+</p>
 
-            <a href="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/view?usp=drivesdk"
-               target="_blank">
-               View Full Document
-            </a>
+<a href="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/view?usp=drivesdk"
+target="_blank"
+class="btn">
+View Full Document
+</a>
 
-        </div>
+</div>
 
-    </main>
+</main>
 
-    <!-- Footer -->
-    <div id="footer"></div>
+<!-- Footer -->
+<div id="footer"></div>
 
-    <script>
-        fetch("header.html")
-            .then(res => res.text())
-            .then(data => document.getElementById("header").innerHTML = data);
+<script>
+async function loadLayout() {
 
-        fetch("footer.html")
-            .then(res => res.text())
-            .then(data => document.getElementById("footer").innerHTML = data);
-    </script>
+    // Header Load
+    const header = await fetch("header.html");
+    document.getElementById("header").innerHTML = await header.text();
+
+    // Footer Load
+    const footer = await fetch("footer.html");
+    document.getElementById("footer").innerHTML = await footer.text();
+
+    // Re-run scripts inside header/footer
+    document.querySelectorAll("#header script, #footer script").forEach(oldScript => {
+        const s = document.createElement("script");
+
+        if (oldScript.src) {
+            s.src = oldScript.src;
+        } else {
+            s.textContent = oldScript.textContent;
+        }
+
+        document.body.appendChild(s);
+        oldScript.remove();
+    });
+
+    // Mobile Menu
+    const menuBtn = document.querySelector(".menu-toggle");
+    const nav = document.querySelector(".nav-links");
+
+    if(menuBtn && nav){
+        menuBtn.addEventListener("click",()=>{
+            nav.classList.toggle("active");
+        });
+    }
+
+}
+
+loadLayout();
+</script>
 
 </body>
 </html>

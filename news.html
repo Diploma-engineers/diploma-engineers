@@ -1,204 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latest News</title>
+
+<title>Diploma Engineers News</title>
 
 <style>
 
-*{
+body{
+
 margin:0;
-padding:0;
-box-sizing:border-box;
 font-family:Arial,sans-serif;
+background:#f4f6f9;
+
 }
 
-body{
-background:#f5f5f5;
-}
 
 .container{
+
 max-width:900px;
-margin:auto;
-padding:20px;
+margin:20px auto;
+padding:15px;
+
 }
+
 
 h2{
+
 text-align:center;
-margin-bottom:20px;
 color:#0d6efd;
+
 }
+
 
 .card{
-background:#fff;
-border-radius:10px;
-padding:15px;
+
+background:white;
+padding:20px;
+border-radius:12px;
 margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,.1);
+box-shadow:0 2px 8px rgba(0,0,0,.15);
+
 }
+
 
 .card img{
+
 width:100%;
-border-radius:8px;
+max-height:400px;
+object-fit:cover;
+border-radius:10px;
 margin:10px 0;
+
 }
 
-.cat{
-display:inline-block;
+
+.category{
+
 background:#0d6efd;
-color:#fff;
+color:white;
 padding:5px 12px;
 border-radius:20px;
-font-size:12px;
-margin-bottom:10px;
+font-size:13px;
+display:inline-block;
+
 }
+
 
 .date{
-font-size:12px;
+
 color:#777;
-margin-top:10px;
+font-size:13px;
+
 }
 
-.btn{
+
+.pdf{
+
 display:inline-block;
-margin-top:12px;
-padding:10px 18px;
 background:#0d6efd;
-color:#fff;
+color:white;
+padding:10px 15px;
+border-radius:7px;
 text-decoration:none;
-border-radius:6px;
+margin-top:10px;
+
 }
+
 
 .loading{
+
 text-align:center;
 padding:30px;
-font-size:18px;
-}
 
-.empty{
-text-align:center;
-padding:40px;
-font-size:18px;
-color:#777;
 }
 
 </style>
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
-<h2>Latest News</h2>
+
+<h2>
+Latest News
+</h2>
+
 
 <div id="newsList" class="loading">
+
 Loading News...
-</div>
 
 </div>
+
+
+</div>
+
+
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 import {
 
-getFirestore,
-
-collection,
-
-query,
-
-orderBy,
-
-onSnapshot
+db,
+ref,
+onValue
 
 }
 
-from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+from "./firebase.js";
 
-const firebaseConfig={
 
-apiKey:"AIzaSyCcFZaHR5392I-zPgghzyTSHD53FRt4YKI",
 
-authDomain:"myadmin-1b75f.firebaseapp.com",
 
-projectId:"myadmin-1b75f",
-
-storageBucket:"myadmin-1b75f.firebasestorage.app",
-
-messagingSenderId:"1018557109448",
-
-appId:"1:1018557109448:web:a0990e81d47ac64e6801fd"
-
-};
-
-const app=initializeApp(firebaseConfig);
-
-const db=getFirestore(app);
 
 const newsList=document.getElementById("newsList");
 
-const q=query(
 
-collection(db,"news"),
 
-orderBy("date","desc")
+const newsRef=ref(db,"news");
 
-);
 
-onSnapshot(q,(snapshot)=>{
+
+onValue(newsRef,(snapshot)=>{
+
 
 newsList.innerHTML="";
 
-if(snapshot.empty){
 
-newsList.innerHTML="<div class='empty'>No News Available</div>";
+
+if(!snapshot.exists()){
+
+
+newsList.innerHTML="No News Available";
 
 return;
 
-}
-
-snapshot.forEach(doc=>{
-
-const n=doc.data();
-
-let date="";
-
-if(n.date){
-
-date=n.date.toDate().toLocaleString();
 
 }
+
+
+
+let newsArray=[];
+
+
+
+snapshot.forEach((child)=>{
+
+
+newsArray.push({
+
+id:child.key,
+
+...child.val()
+
+});
+
+
+});
+
+
+
+// Latest News First
+
+newsArray.reverse();
+
+
+
+newsArray.forEach((n)=>{
+
+
 
 newsList.innerHTML+=`
 
+
 <div class="card">
 
-<div class="cat">${n.cat}</div>
 
-<h3>${n.title}</h3>
+<span class="category">
 
-${n.thumb?`<img src="${n.thumb}" alt="">`:""}
+${n.cat || "News"}
 
-<p>${n.desc}</p>
+</span>
 
-${n.pdf?`<a class="btn" href="${n.pdf}" target="_blank">Open PDF</a>`:""}
 
-<div class="date">${date}</div>
+<h3>
+
+${n.title}
+
+</h3>
+
+
+
+${n.thumb ?
+
+`
+
+<img src="${n.thumb}">
+
+`
+
+:""}
+
+
+
+<p>
+
+${n.desc}
+
+</p>
+
+
+
+${n.pdf ?
+
+`
+
+<a class="pdf" href="${n.pdf}" target="_blank">
+
+Open PDF
+
+</a>
+
+`
+
+:""}
+
+
+
+<br><br>
+
+
+<div class="date">
+
+${n.date || ""}
 
 </div>
 
+
+</div>
+
+
 `;
 
-});
+
 
 });
+
+
+
+});
+
+
 
 </script>
 
+
 </body>
+
 </html>

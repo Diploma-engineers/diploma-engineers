@@ -3,85 +3,201 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BTEUP News</title>
+<title>Latest News</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f5f5f5;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:20px;
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+color:#0d6efd;
+}
+
+.card{
+background:#fff;
+border-radius:10px;
+padding:15px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.card img{
+width:100%;
+border-radius:8px;
+margin:10px 0;
+}
+
+.cat{
+display:inline-block;
+background:#0d6efd;
+color:#fff;
+padding:5px 12px;
+border-radius:20px;
+font-size:12px;
+margin-bottom:10px;
+}
+
+.date{
+font-size:12px;
+color:#777;
+margin-top:10px;
+}
+
+.btn{
+display:inline-block;
+margin-top:12px;
+padding:10px 18px;
+background:#0d6efd;
+color:#fff;
+text-decoration:none;
+border-radius:6px;
+}
+
+.loading{
+text-align:center;
+padding:30px;
+font-size:18px;
+}
+
+.empty{
+text-align:center;
+padding:40px;
+font-size:18px;
+color:#777;
+}
+
+</style>
+
 </head>
+
 <body>
 
-<!-- Header -->
-<div id="header"></div>
+<div class="container">
 
-<!-- Main Content -->
-<main class="container">
+<h2>Latest News</h2>
 
-<div class="card">
-
-<h2>BTEUP Important Notice</h2>
-
-<iframe
-src="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/preview"
-width="100%"
-height="350"
-style="border:none;border-radius:10px;">
-</iframe>
-
-<p>
-BTEUP के छात्रों के लिए महत्वपूर्ण सूचना जारी की गई है।
-पूरी जानकारी देखने के लिए नीचे दिए गए बटन पर क्लिक करें।
-</p>
-
-<a href="https://drive.google.com/file/d/1PmaHeksLqxufO11VC5ryCVjV5FP3r9Ej/view?usp=drivesdk"
-target="_blank"
-class="btn">
-View Full Document
-</a>
+<div id="newsList" class="loading">
+Loading News...
+</div>
 
 </div>
 
-</main>
+<script type="module">
 
-<!-- Footer -->
-<div id="footer"></div>
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
-<script>
-async function loadLayout() {
+import {
 
-    // Header Load
-    const header = await fetch("header.html");
-    document.getElementById("header").innerHTML = await header.text();
+getFirestore,
 
-    // Footer Load
-    const footer = await fetch("footer.html");
-    document.getElementById("footer").innerHTML = await footer.text();
+collection,
 
-    // Re-run scripts inside header/footer
-    document.querySelectorAll("#header script, #footer script").forEach(oldScript => {
-        const s = document.createElement("script");
+query,
 
-        if (oldScript.src) {
-            s.src = oldScript.src;
-        } else {
-            s.textContent = oldScript.textContent;
-        }
+orderBy,
 
-        document.body.appendChild(s);
-        oldScript.remove();
-    });
-
-    // Mobile Menu
-    const menuBtn = document.querySelector(".menu-toggle");
-    const nav = document.querySelector(".nav-links");
-
-    if(menuBtn && nav){
-        menuBtn.addEventListener("click",()=>{
-            nav.classList.toggle("active");
-        });
-    }
+onSnapshot
 
 }
 
-loadLayout();
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig={
+
+apiKey:"AIzaSyCcFZaHR5392I-zPgghzyTSHD53FRt4YKI",
+
+authDomain:"myadmin-1b75f.firebaseapp.com",
+
+projectId:"myadmin-1b75f",
+
+storageBucket:"myadmin-1b75f.firebasestorage.app",
+
+messagingSenderId:"1018557109448",
+
+appId:"1:1018557109448:web:a0990e81d47ac64e6801fd"
+
+};
+
+const app=initializeApp(firebaseConfig);
+
+const db=getFirestore(app);
+
+const newsList=document.getElementById("newsList");
+
+const q=query(
+
+collection(db,"news"),
+
+orderBy("date","desc")
+
+);
+
+onSnapshot(q,(snapshot)=>{
+
+newsList.innerHTML="";
+
+if(snapshot.empty){
+
+newsList.innerHTML="<div class='empty'>No News Available</div>";
+
+return;
+
+}
+
+snapshot.forEach(doc=>{
+
+const n=doc.data();
+
+let date="";
+
+if(n.date){
+
+date=n.date.toDate().toLocaleString();
+
+}
+
+newsList.innerHTML+=`
+
+<div class="card">
+
+<div class="cat">${n.cat}</div>
+
+<h3>${n.title}</h3>
+
+${n.thumb?`<img src="${n.thumb}" alt="">`:""}
+
+<p>${n.desc}</p>
+
+${n.pdf?`<a class="btn" href="${n.pdf}" target="_blank">Open PDF</a>`:""}
+
+<div class="date">${date}</div>
+
+</div>
+
+`;
+
+});
+
+});
+
 </script>
 
 </body>

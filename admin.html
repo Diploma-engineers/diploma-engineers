@@ -325,11 +325,8 @@ preview.style.display="block";
 };
 
 
-//==============================
-// CLOUDINARY UPLOAD
-//==============================
-
-async function uploadCloudinary(file){
+// IMAGE UPLOAD
+async function uploadImage(file){
 
 const formData=new FormData();
 
@@ -339,30 +336,51 @@ formData.append("upload_preset","news_upload");
 
 const response=await fetch(
 
-"https://api.cloudinary.com/v1_1/ub0qgzwa/auto/upload",
+"https://api.cloudinary.com/v1_1/ub0qgzwa/image/upload",
 
 {
-
 method:"POST",
-
 body:formData
-
 }
 
 );
 
 const data=await response.json();
 
-if(data.error){
-
-throw new Error(data.error.message);
-
-}
+if(data.error) throw new Error(data.error.message);
 
 return data.secure_url;
 
 }
 
+
+// PDF UPLOAD
+async function uploadPDF(file){
+
+const formData=new FormData();
+
+formData.append("file",file);
+
+formData.append("upload_preset","news_upload");
+
+const response=await fetch(
+
+"https://api.cloudinary.com/v1_1/ub0qgzwa/raw/upload",
+
+{
+method:"POST",
+body:formData
+}
+
+);
+
+const data=await response.json();
+
+if(data.error) throw new Error(data.error.message);
+
+return data.secure_url;
+
+}
     //==============================
 // LOGIN
 //==============================
@@ -444,28 +462,16 @@ imageUrl="";
 fileUrl="";
 
 // Upload Image
-
-if(thumb.files.length>0){
-
-imageUrl=await uploadCloudinary(
-
+imageUrl=await uploadImage(
 thumb.files[0]
-
 );
 
-}
-
+  
 // Upload PDF/File
 
-if(pdf.files.length>0){
-
-fileUrl=await uploadCloudinary(
-
+fileUrl=await uploadPDF(
 pdf.files[0]
-
 );
-
-}
 
 // Save to Firebase
 

@@ -190,9 +190,7 @@ id="desc"
 placeholder="Description"></textarea>
 
 <label>
-
 Upload Thumbnail
-
 </label>
 
 <input
@@ -204,15 +202,23 @@ accept="image/*">
 id="preview">
 
 <label>
-
 Attach PDF / File
-
 </label>
 
 <input
 type="file"
 id="pdf"
 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+
+<!-- NEW -->
+<label>
+External Link (Optional)
+</label>
+
+<input
+type="url"
+id="link"
+placeholder="https://example.com">
 
 <select id="cat">
 
@@ -229,17 +235,13 @@ accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
 </select>
 
 <button id="publishBtn">
-
 Publish News
-
 </button>
 
 <button
 class="logout"
 id="logoutBtn">
-
 Logout
-
 </button>
 
 </div>
@@ -261,7 +263,9 @@ Loading...
 </div>
 
 <script type="module">
-//==============================
+
+
+  //==============================
 // FIREBASE IMPORT
 //==============================
 
@@ -300,6 +304,9 @@ const desc=document.getElementById("desc");
 const thumb=document.getElementById("thumb");
 
 const pdf=document.getElementById("pdf");
+
+// NEW
+const link=document.getElementById("link");
 
 const cat=document.getElementById("cat");
 
@@ -351,7 +358,8 @@ const CLOUD_NAME="ub0qgzwa";
 
 const UPLOAD_PRESET="news_upload";
 
-  //==============================
+
+//==============================
 // CLOUDINARY UPLOAD
 //==============================
 
@@ -450,7 +458,6 @@ loginBtn.innerHTML="Login";
 
 };
 
-
 //==============================
 // AUTH STATE
 //==============================
@@ -478,7 +485,7 @@ adminPanel.style.display="none";
 });
 
 
-  //==============================
+//==============================
 // PUBLISH NEWS
 //==============================
 
@@ -509,9 +516,7 @@ fileUrl="";
 if(thumb.files.length>0){
 
 imageUrl=await uploadCloudinary(
-
 thumb.files[0]
-
 );
 
 }
@@ -521,9 +526,7 @@ thumb.files[0]
 if(pdf.files.length>0){
 
 fileUrl=await uploadCloudinary(
-
 pdf.files[0]
-
 );
 
 }
@@ -541,6 +544,8 @@ desc:desc.value.trim(),
 thumb:imageUrl,
 
 pdf:fileUrl,
+
+link:link.value.trim(), // NEW
 
 cat:cat.value,
 
@@ -561,6 +566,8 @@ desc.value="";
 thumb.value="";
 
 pdf.value="";
+
+link.value=""; // NEW
 
 cat.selectedIndex=0;
 
@@ -592,8 +599,8 @@ publishBtn.innerHTML="Publish News";
 
 };
 
-  
-  //==============================
+
+//==============================
 // LOAD NEWS
 //==============================
 
@@ -671,6 +678,20 @@ target="_blank">
 
 `:""}
 
+${n.link?`
+
+<a
+href="${n.link}"
+target="_blank">
+
+🔗 Open Link
+
+</a>
+
+<br><br>
+
+`:""}
+
 <button
 onclick="deleteNews('${child.key}')">
 
@@ -691,7 +712,6 @@ list.innerHTML=html;
 });
 
 }
-
 
 //==============================
 // DELETE NEWS
@@ -740,4 +760,5 @@ signOut(auth);
 </body>
 
 </html>
+  
   

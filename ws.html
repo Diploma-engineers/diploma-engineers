@@ -1445,3 +1445,364 @@ publishSemester.innerHTML =
 
 }
 
+// =======================================
+// BTEUP Publish
+// =======================================
+
+const publishBteup = document.getElementById("publishBteup");
+
+if (publishBteup) {
+
+publishBteup.addEventListener("click", async () => {
+
+const title = document.getElementById("bteupTitle").value.trim();
+
+const link = document.getElementById("bteupLink").value.trim();
+
+if (title === "" || link === "") {
+
+alert("Please fill all fields");
+
+return;
+
+}
+
+publishBteup.disabled = true;
+
+await addData("bteup",{
+
+title,
+
+link,
+
+date:new Date().toLocaleString(),
+
+timestamp:Date.now()
+
+});
+
+alert("BTEUP Published Successfully");
+
+document.getElementById("bteupForm").reset();
+
+publishBteup.disabled=false;
+
+});
+
+}
+
+
+// =======================================
+// PYQ Publish
+// =======================================
+
+const publishPyq = document.getElementById("publishPyq");
+
+if (publishPyq) {
+
+publishPyq.addEventListener("click", async () => {
+
+const title=document.getElementById("pyqTitle").value.trim();
+
+const link=document.getElementById("pyqLink").value.trim();
+
+if(title==="" || link===""){
+
+alert("Please fill all fields");
+
+return;
+
+}
+
+publishPyq.disabled=true;
+
+await addData("pyq",{
+
+title,
+
+link,
+
+date:new Date().toLocaleString(),
+
+timestamp:Date.now()
+
+});
+
+alert("PYQ Published Successfully");
+
+document.getElementById("pyqForm").reset();
+
+publishPyq.disabled=false;
+
+});
+
+}
+
+
+// =======================================
+// WhatsApp Group Publish
+// =======================================
+
+const publishWhatsapp=document.getElementById("publishWhatsapp");
+
+if(publishWhatsapp){
+
+publishWhatsapp.addEventListener("click",async()=>{
+
+const groupName=document.getElementById("groupName").value.trim();
+
+const groupLink=document.getElementById("groupLink").value.trim();
+
+if(groupName==="" || groupLink===""){
+
+alert("Please fill all fields");
+
+return;
+
+}
+
+publishWhatsapp.disabled=true;
+
+await addData("whatsapp",{
+
+groupName,
+
+groupLink,
+
+date:new Date().toLocaleString(),
+
+timestamp:Date.now()
+
+});
+
+alert("WhatsApp Group Published Successfully");
+
+document.getElementById("whatsappForm").reset();
+
+publishWhatsapp.disabled=false;
+
+});
+
+}
+
+
+// =======================================
+// Dashboard Counts
+// =======================================
+
+import { loadData } from "./firebase.js";
+
+loadData("semester",(data)=>{
+
+document.getElementById("semesterCount").innerText=data?Object.keys(data).length:0;
+
+});
+
+loadData("jobs",(data)=>{
+
+document.getElementById("jobsCount").innerText=data?Object.keys(data).length:0;
+
+});
+
+loadData("bteup",(data)=>{
+
+document.getElementById("bteupCount").innerText=data?Object.keys(data).length:0;
+
+});
+
+loadData("whatsapp",(data)=>{
+
+document.getElementById("whatsappCount").innerText=data?Object.keys(data).length:0;
+
+});  
+// =======================================
+// Load Semester List
+// =======================================
+
+loadData("semester",(data)=>{
+
+const list=document.getElementById("semesterList");
+
+if(!list) return;
+
+list.innerHTML="";
+
+if(!data) return;
+
+Object.entries(data).reverse().forEach(([id,item])=>{
+
+list.innerHTML+=`
+
+<tr>
+
+<td>${item.semester}</td>
+
+<td>${item.subject}</td>
+
+<td>${item.type}</td>
+
+<td>
+
+<a href="${item.pdf}" target="_blank">
+
+View
+
+</a>
+
+</td>
+
+<td>
+
+<button
+class="btn btn-sm btn-danger deleteSemester"
+data-id="${id}">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+});
+
+
+// =======================================
+// Delete Semester
+// =======================================
+
+document.addEventListener("click",async(e)=>{
+
+if(e.target.classList.contains("deleteSemester")){
+
+const id=e.target.dataset.id;
+
+if(confirm("Delete this record?")){
+
+await deleteData("semester",id);
+
+alert("Deleted Successfully");
+
+}
+
+}
+
+});
+
+
+// =======================================
+// Load Jobs
+// =======================================
+
+loadData("jobs",(data)=>{
+
+const list=document.getElementById("jobsList");
+
+if(!list) return;
+
+list.innerHTML="";
+
+if(!data) return;
+
+Object.entries(data).reverse().forEach(([id,item])=>{
+
+list.innerHTML+=`
+
+<tr>
+
+<td>
+
+<img
+src="${item.thumbnail}"
+width="70">
+
+</td>
+
+<td>${item.title}</td>
+
+<td>${item.company}</td>
+
+<td>
+
+<a href="${item.link}" target="_blank">
+
+View
+
+</a>
+
+</td>
+
+<td>
+
+<button
+class="btn btn-danger btn-sm deleteJob"
+data-id="${id}">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+});
+
+
+// =======================================
+// Delete Job
+// =======================================
+
+document.addEventListener("click",async(e)=>{
+
+if(e.target.classList.contains("deleteJob")){
+
+const id=e.target.dataset.id;
+
+if(confirm("Delete Job?")){
+
+await deleteData("jobs",id);
+
+alert("Deleted");
+
+}
+
+}
+
+});
+
+
+// =======================================
+// Search
+// =======================================
+
+const search=document.getElementById("search");
+
+if(search){
+
+search.addEventListener("keyup",()=>{
+
+const value=search.value.toLowerCase();
+
+document.querySelectorAll("tbody tr").forEach(row=>{
+
+row.style.display=row.innerText.toLowerCase().includes(value)
+
+? ""
+
+: "none";
+
+});
+
+});
+
+}

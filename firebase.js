@@ -1,52 +1,109 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+// ===============================
+// Diploma Engineers
+// firebase.js
+// ===============================
 
+// Firebase App
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+
+// Firebase Authentication
 import {
   getAuth,
   signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
+// Firebase Realtime Database
 import {
   getDatabase,
   ref,
   push,
   set,
-  onValue,
-  remove
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+  update,
+  remove,
+  get,
+  child,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+
+// ===============================
+// Firebase Configuration
+// ===============================
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyCcFZaHR5392I-zPgghzyTSHD53FRt4YKI",
+  apiKey: "AIzaSyBib3rW6lf29qjgeKmSNS5jsOrO_uhzi7c",
 
-  authDomain: "myadmin-1b75f.firebaseapp.com",
+  authDomain: "electrical-f83b2.firebaseapp.com",
 
-  databaseURL: "https://myadmin-1b75f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL: "hhttps://electrical-f83b2-default-rtdb.firebaseio.com/",
 
-  projectId: "myadmin-1b75f",
+  projectId: "electrical-f83b2",
 
-  storageBucket: "myadmin-1b75f.firebasestorage.app",
+  storageBucket: "electrical-f83b2.firebasestorage.app",
 
-  messagingSenderId: "1018557109448",
+  messagingSenderId: "1082065159119",
 
-  appId: "1:1018557109448:web:a0990e81d47ac64e6801fd"
+  appId: "1:1082065159119:web:d91f28cea1c3de0a77c8ba"
 
 };
 
+
+// ===============================
+// Initialize Firebase
+// ===============================
+
 const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
 
-export const db = getDatabase(app);
+// ===============================
+// Authentication
+// ===============================
+
+const auth = getAuth(app);
+
+
+// ===============================
+// Realtime Database
+// ===============================
+
+const db = getDatabase(app);
+
+
+// ===============================
+// Export Everything
+// ===============================
 
 export {
+
+  app,
+
+  auth,
+
+  db,
+
   signInWithEmailAndPassword,
-  onAuthStateChanged,
+
   signOut,
+
+  onAuthStateChanged,
+
   ref,
+
   push,
+
   set,
-  onValue,
-  remove
+
+  update,
+
+  remove,
+
+  get,
+
+  child,
+
+  onValue
+
 };

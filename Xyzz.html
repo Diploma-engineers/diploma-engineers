@@ -1,1086 +1,779 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Diploma Engineers Portal</title>
-
-<!-- External Frameworks & Fonts -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-:root {
-  --primary: #ff6b00;
-  --primary-hover: #e05e00;
-  --secondary: #ff944d;
-  --bg-white: #ffffff;
-  --surface-gray: #f8fafc;
-  --dark-text: #0f172a;
-  --muted-text: #64748b;
-  --border-light: #e2e8f0;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  background-color: var(--bg-white);
-  color: var(--dark-text);
-  overflow-x: hidden;
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  box-shadow: 0 0 40px rgba(0,0,0,0.03);
-  display: flex;
-  flex-direction: column;
-}
-
-/* Custom Scrollbar Hide */
-::-webkit-scrollbar { display: none; }
-
-/* AUTH PAGE */
-#authPage {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-  background: var(--bg-white);
-}
-
-.auth-box {
-  background: var(--bg-white);
-  width: 100%;
-  padding: 30px 24px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.logo {
-  text-align: center;
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 20px;
-  letter-spacing: -0.5px;
-  color: var(--dark-text);
-}
-
-.logo span { color: var(--primary); }
-
-.auth-box h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-weight: 700;
-  font-size: 20px;
-  color: var(--dark-text);
-}
-
-.form-group { margin-bottom: 14px; }
-
-.auth-box input, .auth-box select {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--border-light);
-  outline: none;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  background-color: var(--surface-gray);
-  color: var(--dark-text);
-}
-
-.auth-box input:focus, .auth-box select:focus {
-  border-color: var(--primary);
-  background-color: var(--bg-white);
-  box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.12);
-}
-
-.btn-main {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: white;
-  font-size: 15px;
-  font-weight: 700;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25);
-}
-
-.btn-main:active { transform: scale(0.98); }
-
-.switch {
-  text-align: center;
-  margin-top: 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-  cursor: pointer;
-}
-
-/* MAIN APP WRAPPER */
-#app {
-  display: none;
-  min-height: 100vh;
-  padding-bottom: 90px;
-}
-
-/* TOP NAVBAR */
-.navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 99;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-back-btn {
-  background: var(--surface-gray);
-  border: 1px solid var(--border-light);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  color: var(--dark-text);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.nav-logo {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--dark-text);
-}
-
-.nav-logo span { color: var(--primary); }
-
-.profile-icon i {
-  font-size: 28px;
-  color: var(--dark-text);
-  cursor: pointer;
-}
-
-/* PAGES */
-.page {
-  display: none;
-  padding: 16px 20px;
-  animation: pageSlide 0.25s ease-out;
-}
-
-.active-page { display: block; }
-
-@keyframes pageSlide {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* HERO BANNER */
-.banner {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  color: white;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 20px rgba(255, 107, 0, 0.2);
-}
-
-.banner::before {
-  content: '';
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  top: -40px;
-  right: -40px;
-}
-
-.banner h2 { font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
-.banner p { font-size: 13px; opacity: 0.95; margin-top: 6px; margin-bottom: 0; position: relative; z-index: 1; }
-
-/* SECTIONS */
-.section-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 20px 0 12px 0;
-  color: var(--dark-text);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-title span { color: var(--primary); }
-
-/* HORIZONTAL SCROLL */
-.scroll-container {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  margin: 0 -20px;
-  padding-left: 20px;
-  padding-right: 20px;
-}
-
-.subject-card {
-  min-width: 160px;
-  height: 210px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  position: relative;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  flex-shrink: 0;
-}
-
-.subject-card img { width: 100%; height: 100%; object-fit: cover; }
-
-.subject-card .overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 12px;
-  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-}
-
-.subject-card h4 {
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-}
-
-/* GRID LAYOUTS */
-.grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.card-box {
-  background: var(--bg-white);
-  padding: 18px 12px;
-  border-radius: var(--radius-md);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--dark-text);
-  display: block;
-}
-
-.card-box:active { transform: scale(0.97); }
-
-.card-box i {
-  font-size: 26px;
-  margin-bottom: 8px;
-  color: var(--primary);
-  display: inline-block;
-}
-
-.card-box p {
-  margin: 0;
-  font-weight: 600;
-  font-size: 13px;
-  line-height: 1.3;
-}
-
-/* NOTICES & ALERTS */
-.notice {
-  background: #fffbe2;
-  border: 1px solid #ffe58f;
-  border-left: 4px solid #ffc107;
-  padding: 14px;
-  border-radius: var(--radius-md);
-  margin-top: 18px;
-}
-
-.notice h5 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #856404;
-  margin-bottom: 4px;
-}
-
-.notice p {
-  font-size: 12px;
-  color: #856404;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* BOOK CARDS */
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.book-card {
-  background: var(--bg-white);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  text-decoration: none;
-  color: var(--dark-text);
-  display: flex;
-  flex-direction: column;
-}
-
-.book-card img {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  background: var(--surface-gray);
-}
-
-.book-card-content { padding: 10px; }
-
-.book-card h3 {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  line-height: 1.2;
-}
-
-.book-card p {
-  font-size: 11px;
-  color: var(--muted-text);
-  margin: 0;
-  line-height: 1.3;
-}
-
-/* PROFILE PAGE */
-.profile-box {
-  background: var(--bg-white);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-}
-
-.profile-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--surface-gray);
-  border: 1px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 12px;
-  color: var(--primary);
-  font-size: 36px;
-}
-
-.profile-details {
-  margin-top: 18px;
-  text-align: left;
-  background: var(--surface-gray);
-  border: 1px solid var(--border-light);
-  padding: 14px;
-  border-radius: var(--radius-md);
-}
-
-.profile-details p {
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-}
-
-.profile-details p:last-child { margin-bottom: 0; }
-.profile-details span { font-weight: 700; color: var(--dark-text); }
-
-/* UPDATE CARDS */
-.update-box {
-  background: var(--bg-white);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  margin-bottom: 14px;
-}
-
-.update-icon {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 10px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.update-icon.wa { background: #e9fff1; color: #25D366; }
-.update-icon.tg { background: #e8f4fd; color: #0088cc; }
-
-.update-title { font-size: 16px; font-weight: 700; margin: 0; }
-.update-text { font-size: 12px; color: var(--muted-text); margin: 8px 0 14px; line-height: 1.4; }
-
-/* STORE PAGE */
-.store-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.store-card {
-  background: var(--bg-white);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-}
-
-.store-card img { width: 100%; height: 110px; object-fit: cover; }
-.store-info { padding: 10px; }
-.store-info h4 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
-.store-info p { font-size: 11px; color: var(--muted-text); margin-bottom: 8px; }
-
-/* PREMIUM CARD & POPUP */
-.premium-buy-card {
-  background: var(--bg-white);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-}
-
-.price-box {
-  display: inline-block;
-  background: #f0fdf4;
-  color: #16a34a;
-  padding: 8px 20px;
-  border-radius: var(--radius-md);
-  font-size: 20px;
-  font-weight: 800;
-  margin: 14px 0;
-  border: 1px solid #bbf7d0;
-}
-
-.premium-popup {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.premium-form-box {
-  background: white;
-  padding: 20px;
-  width: 100%;
-  max-width: 360px;
-  border-radius: var(--radius-lg);
-  position: relative;
-  text-align: center;
-  box-shadow: var(--shadow-md);
-}
-
-.close-btn {
-  position: absolute;
-  top: 12px; right: 15px;
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--muted-text);
-}
-
-.qr-img { width: 130px; border-radius: 8px; margin: 10px 0; }
-
-.premium-form-box input, .premium-form-box textarea {
-  width: 100%;
-  padding: 10px 12px;
-  margin: 5px 0;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  outline: none;
-  font-size: 12px;
-  background: var(--surface-gray);
-}
-
-/* BOTTOM NAVIGATION BAR */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0 8px;
-  border-top: 1px solid var(--border-light);
-  z-index: 99;
-}
-
-.bottom-nav .nav-link-btn {
-  text-decoration: none;
-  color: var(--muted-text);
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  border: none;
-  background: none;
-  padding: 0;
-  flex: 1;
-}
-
-.bottom-nav .nav-link-btn i {
-  display: block;
-  font-size: 18px;
-  margin-bottom: 3px;
-}
-
-.bottom-nav .nav-link-btn.active {
-  color: var(--primary);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civil Notes | Diploma Engineers</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #eef3ff, #dfe9ff);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, #4e342e, #6d4c41);
+            color: #fff;
+            padding: 14px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn {
+            color: #fff;
+            text-decoration: none;
+            border: 1px solid #fff;
+            padding: 6px 14px;
+            border-radius: 25px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* NAVIGATION BUTTONS */
+        .top-btns {
+            text-align: center;
+            margin: 18px 10px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .branch-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 25px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            color: #4e342e;
+        }
+
+        .branch-btn.active {
+            background: #ff7b00;
+            color: #fff;
+        }
+
+        .branch-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        /* SECTION STYLING */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .branch-section {
+            display: none;
+        }
+
+        .section {
+            padding: 18px;
+        }
+
+        .section h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            color: #4e342e;
+            font-size: 24px;
+        }
+
+        /* GRID LAYOUT */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        /* CARDS */
+        .card {
+            background: linear-gradient(135deg, #6d4c41, #8d6e63);
+            color: #fff;
+            padding: 18px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin: 12px 0;
+            font-size: 15px;
+        }
+
+        /* BUTTONS INSIDE CARDS */
+        .btn {
+            display: inline-block;
+            margin: 4px;
+            padding: 7px 12px;
+            border-radius: 20px;
+            background: #fff;
+            color: #4e342e;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #ff7b00;
+            color: #fff;
+        }
+
+        /* E-NOTES CARDS */
+        #enotes .card {
+            background: #fff;
+            color: #333;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #enotes .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        #enotes .card h3 {
+            color: #4e342e;
+            padding: 12px;
+            margin: 0;
+        }
+
+        /* ADMIN PROFILE */
+        .profile-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .profile-card {
+            width: 320px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: 0.3s;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #4caf50;
+            margin-bottom: 10px;
+        }
+
+        .branch-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin: 5px 0;
+        }
+
+        .role {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-group .btn {
+            color: #fff;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .btn-group .btn i {
+            margin-right: 6px;
+        }
+
+        .call { background: linear-gradient(135deg, #2c3e50, #4ca1af); }
+        .email { background: linear-gradient(135deg, #ff512f, #dd2476); }
+        .whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
+
+        .chat-btn {
+            display: block;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #fff;
+            padding: 12px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .chat-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* FEEDBACK POPUP */
+        .feedback-btn {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #ff7b00;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .feedback-popup {
+            position: fixed;
+            right: 18px;
+            bottom: 90px;
+            width: 300px;
+            background: #fff;
+            padding: 16px;
+            border-radius: 14px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 9999;
+        }
+
+        .feedback-popup input,
+        .feedback-popup select,
+        .feedback-popup textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 7px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .feedback-popup button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #6d4c41;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #4e342e;
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            margin-top: 30px;
+        }
+
+        @media(max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+
+            .section h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<!-- AUTH PAGE -->
-<div id="authPage">
-  <div class="auth-box">
-    <div class="logo">Diploma <span>Engineers</span></div>
-    <h2 id="formTitle">Login</h2>
-    
-    <div id="registerFields" style="display:none;">
-      <div class="form-group">
-        <input type="text" id="name" placeholder="Full Name">
-      </div>
-      <div class="form-group">
-        <input type="email" id="email" placeholder="Email Address">
-      </div>
-      <div class="form-group">
-        <select id="branch">
-          <option value="">Select Branch</option>
-          <option>Computer Science Engineering</option>
-          <option>Electrical Engineering</option>
-          <option>Electronics Engineering</option>
-          <option>Civil Engineering</option>
-          <option>Mechanical Engineering</option>
-          <option>Information Technology</option>
-          <option>Agriculture Engineering</option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <input type="text" id="mobile" placeholder="Mobile Number">
-    </div>
-    <div class="form-group">
-      <input type="password" id="password" placeholder="Password">
-    </div>
-    
-    <button class="btn-main" onclick="submitForm()">Submit</button>
-    <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
-  </div>
-</div>
-
-<!-- MAIN APP INTERFACE -->
-<div id="app">
-
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div class="nav-left">
-      <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-      <div class="nav-logo">Diploma <span>Engineers</span></div>
-    </div>
-    <div class="profile-icon" onclick="navigateTo('profilePage')">
-      <i class="fas fa-user-circle"></i>
-    </div>
-  </div>
-
-  <!-- HOME PAGE -->
-  <div id="homePage" class="page active-page">
-    <section class="hero">
-      <div class="banner">
-        <h2>Welcome, <span id="userName">Engineer</span> 👋</h2>
-        <p>Study Materials • Branch Notes • E-Books • Updates</p>
-      </div>
-    </section>
-
-    <!-- TRENDING SUBJECTS -->
-    <div class="section-title">Trending <span>Subjects</span></div>
-    <div class="scroll-container">
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
-        <div class="overlay"><h4>Applied Mathematics 2nd</h4></div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png" alt="Mechanics">
-        <div class="overlay"><h4>Engineering Mechanics</h4></div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png" alt="Steel Structure">
-        <div class="overlay"><h4>Design Of Steel Structures</h4></div>
-      </a>
-    </div>
-
-    <!-- EXPLORE GRID -->
-    <div class="section-title">Explore</div>
-    <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('notesPage')">
-        <i class="fas fa-code-branch"></i>
-        <p>Branch</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('jobPage')">
-        <i class="fas fa-briefcase"></i>
-        <p>Jobs</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('admitPage')">
-        <i class="fas fa-id-card"></i>
-        <p>Admit Card</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('resultPage')">
-        <i class="fas fa-square-poll-vertical"></i>
-        <p>Result</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('updatePage')">
-        <i class="fas fa-bell"></i>
-        <p>Updates</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('communityPage')">
-        <i class="fas fa-users"></i>
-        <p>Community</p>
-      </div>
-    </div>
-
-    <div class="notice">
-      <h5>Latest Announcement 📢</h5>
-      <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
-    </div>
-  </div>
-
-  <!-- BRANCH PAGE -->
-  <div id="notesPage" class="page">
-    <div class="section-title">Engineering Branches</div>
-    <div class="grid-2">
-      <a href="computer.html" class="card-box"><i class="fas fa-laptop-code"></i><p>Computer Science</p></a>
-      <a href="electrical.html" class="card-box"><i class="fas fa-bolt"></i><p>Electrical</p></a>
-      <a href="electronics.html" class="card-box"><i class="fas fa-microchip"></i><p>Electronics</p></a>
-      <a href="civil.html" class="card-box"><i class="fas fa-building"></i><p>Civil</p></a>
-      <a href="mechanical.html" class="card-box"><i class="fas fa-cogs"></i><p>Mechanical</p></a>
-      <a href="it.html" class="card-box"><i class="fas fa-code"></i><p>Information Tech</p></a>
-      <a href="agricultural.html" class="card-box"><i class="fas fa-seedling"></i><p>Agriculture</p></a>
-    </div>
-  </div>
-
-  <!-- BOOKS PAGE -->
-  <div id="booksPage" class="page">
-    <div class="section-title">E-Books Library</div>
-    <div class="notes-grid">
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
-        <div class="book-card-content">
-          <h3>Applied Physics 2nd</h3>
-          <p>Diploma Engineering Physics PDF</p>
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <a href="javascript:history.back()" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="title">
+                🏗 Civil Notes
+            </div>
         </div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
-        <div class="book-card-content">
-          <h3>Applied Mathematics 2nd</h3>
-          <p>Diploma Engineering Maths PDF</p>
+    </header>
+
+    <!-- NAVIGATION BUTTONS -->
+    <div class="top-btns">
+        <button class="branch-btn active" onclick="showSection('semester', this)">Semester</button>
+        <button class="branch-btn" onclick="showSection('enotes', this)">E-Notes</button>
+        <button class="branch-btn" onclick="showSection('syllabus', this)">Syllabus</button>
+        <button class="branch-btn" onclick="showSection('job', this)">Jobs</button>
+        <button class="branch-btn" onclick="showSection('admin', this)">Admin</button>
+        <button class="branch-btn" onclick="showSection('join', this)">Join</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- SEMESTER SECTION -->
+        <div id="semester" class="branch-section" style="display: block;">
+            
+            <!-- SEM 1 -->
+            <div class="section">
+                <h2>Semester 1 (Common)</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Applied Mathematics I</h3>
+                        <a href="https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1dFyBSWMM7M1X87eFsdwd_JtgZWXaZ6w7/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Applied Physics I</h3>
+                        <a href="https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1FVUMMrHpT7HwlCbIJGdxBB4ZWr8oI0ra/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                        <a href="https://drive.google.com/file/d/1hCYeiS3GvpwEQuXq_ov8invYusfwoYix/view?usp=drivesdk" class="btn" target="_blank">Prac. File</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Applied Chemistry</h3>
+                        <a href="https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1TP44D0wNz-aMB8mFH5uyEXhFW5bFk9Hy/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/10uyWxmQu7r3ga17C0-0PNKVMprkbchfN/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                        <a href="https://drive.google.com/file/d/1rz_IK4OceBZ97ZTdO4SgMXSDDwnOCA8e/view?usp=drivesdk" class="btn" target="_blank">Prac. File</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Communication Skills</h3>
+                        <a href="https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1YnZDKUHlLi5UA19JD0XTkKnqHy1tWO3k/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1xj5G7fQL61CkcAzFaHZgc5biHGZq1AVh/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                        <a href="https://drive.google.com/file/d/1bBeaIBephDXpuZ3SNC92_c7EpjfRXtyl/view?usp=drivesdk" class="btn" target="_blank">Prac. File</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Engineering Drawing</h3>
+                        <a href="https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1QhQZcp02Ab32GH187Z4ugtBdgTY1y5_X/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEM 2 -->
+            <div class="section">
+                <h2>Semester 2 (Common)</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Applied Mathematics II</h3>
+                        <a href="https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1TvF0XirtfeU2XBA8hd8z8trk9WeZXr3P/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/147Ny3AcoRTpFUO6DpiXkbryTzzLiQy7s/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Applied Physics II</h3>
+                        <a href="https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1AtJvINUkXh-8nPFveWchOnHAfZtfSNrC/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/17alDjhiyRV6HelhIlGBllJNWce0faPrh/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                        <a href="https://drive.google.com/file/d/1m88XqWh6vP2HMQ3wRz9wcFTzOcQ-a4ir/view?usp=drivesdk" class="btn" target="_blank">Prac. File</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Fundamentals of Electrical & Electronics Engineering</h3>
+                        <a href="https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1U8pT87pzyTYgRShzhhPvNz3YwJoFQ1f9/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1vXDHqFPqe4KEbqEuH2kJrvbazYv0WVEC/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Engineering Mechanics</h3>
+                        <a href="https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1qxDllH9w3fuaj9Ato_kA-BoyHjAuG-au/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1SqikpX8PYADNTlSjfVJwO21i7qX4AMdT/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                        <a href="https://drive.google.com/file/d/1feSjyoy8HKTJuyoMRR-xHX2qMYKw3eMR/view?usp=drivesdk" class="btn" target="_blank">Prac. File</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Environmental Studies</h3>
+                        <a href="https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1u_izHlECm2TgL8_Up3yBgLc8EXG8fu4f/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1MYm8jPTBo_ffpVaYm0lnXRWYg_nBUncI/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Introduction to IT Systems</h3>
+                        <a href="https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/19Jpg4x7VmB5HMhE7vAs4tUoVIHw8Cu_x/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1rMfmqIiPna4ssrhOmYlCRg0NP7Wt_i6Q/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEM 3 -->
+            <div class="section">
+                <h2>Semester 3</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Construction Materials</h3>
+                        <a href="https://drive.google.com/file/d/1_QmtCq45r8oN_Y5Fz6wu8yYc3BETVs3F/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1q7zlOMAWXlV-CcLh2FC3Uq6Oxb4HlFtA/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Basic Surveying</h3>
+                        <a href="https://drive.google.com/file/d/11pha_oswnd1cq2f6viKmnN-YqsaeRgmf/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1CVUC9XBlCH-41M3uZj80-KVRf8IF4-KJ/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Mechanics of Material</h3>
+                        <a href="https://drive.google.com/file/d/1-SROcpofwqptR9pkko5kp9asU6TvGw5p/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1jM-FOLymirjx4HGghqw-t7LCB7wFTcqt/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Building Construction</h3>
+                        <a href="https://drive.google.com/file/d/16B3Uyw_i0ez4lxTqzW_SXQT3rz8sq_m0/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1Ix4UDPdFtGQqzu9D-Y1vbgPWB9XQeAgL/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1TQBhLWU7YqCHQYisXRlkgyNqqIiLqQAO/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Building Planning and Drawings</h3>
+                        <a href="https://drive.google.com/file/d/15DbXrl9M1yi_hBwR_izB9282Lu7W07iK/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Concrete Technology</h3>
+                        <a href="https://drive.google.com/file/d/1Qytl1kijygjD9nd_k29EY_K7vFE6MEZ4/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1drjR7a2IwNxP-kDYYo0702hJykCtX7LD/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1DKMI4oDQgvE9tkYRcgslLFn4BtoD-M9X/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEM 4 -->
+            <div class="section">
+                <h2>Semester 4</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Hydraulics</h3>
+                        <a href="https://drive.google.com/file/d/1uBFhBlfJFNAhOpHapipZ34C1NYe9bV6i/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1Fv3duNCjK9ftizcGZt2CABNutwQyo3Qg/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1z9KYyRYO1f9dCyhniFWkjdDuOHlAvz-B/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Advance Surveying</h3>
+                        <a href="https://drive.google.com/file/d/1UKdZaIyHhU9G8vhfYGwCNluV5ysFZbke/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Reinforced Cement Concrete Structures</h3>
+                        <a href="https://drive.google.com/file/d/1Ia428egQcln55wixF0bXBSsn0_CmZiBp/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/1TEnh6AagF0YXfDDtI7yKsZ-mmMYZqUKP/view?usp=drivesdk" class="btn" target="_blank">Notes</a>
+                        <a href="https://drive.google.com/file/d/1vky3Md67gVsUzJg_US-TMqPerI7zk8G0/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>RCC Drawing</h3>
+                        <a href="https://drive.google.com/file/d/1_W8l5L3xMObDurzUTnzHDMLV_AFw47sx/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Theory of Structure</h3>
+                        <a href="https://drive.google.com/file/d/1LC2KoSZgXQwmOFtjnfsZ82xv9ei2Bau6/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/14cjR7h2Z-q-wxIeMiMk63AKt5yLlvaL_/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Water Resource Engineering</h3>
+                        <a href="https://drive.google.com/file/d/1CKiaKHfk4Odd4RhVe1IRzNYbHoZZXFQp/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-book fa-2x"></i>
+                        <h3>Public Health Engineering</h3>
+                        <a href="https://drive.google.com/file/d/1GS0gG57cS337Kqhg_fop5ozKkaGBBQtY/view?usp=drivesdk" class="btn" target="_blank">Book</a>
+                        <a href="https://drive.google.com/file/d/10637ijDLAfb81tOdSnVuKEkqeeuxaEiW/view?usp=drivesdk" class="btn" target="_blank">PYQ</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/feeee-bookbydiplomaengineers28329.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785266369195650990413638221471.png" alt="FEEE">
-        <div class="book-card-content">
-          <h3>FEEE Material</h3>
-          <p>Basic Electrical Engineering Notes</p>
+
+        <!-- E-NOTES SECTION -->
+        <div id="enotes" class="branch-section">
+            <div class="section">
+                <h2>E-Notes</h2>
+                <div class="grid">
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Applied Physics 2nd">
+                        <h3>Applied Physics 2nd</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Applied Mathematics 2nd">
+                        <h3>Applied Mathematics 2nd</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785266369195650990413638221471.png" alt="FEEE">
+                        <h3>FEEE</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/feeee-bookbydiplomaengineers28329.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png" alt="IT System">
+                        <h3>IT System</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/itsysteme-bookbydiplomaengineers.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png" alt="Engineering Mechanics">
+                        <h3>Engineering Mechanics</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png" alt="Environmental Science">
+                        <h3>Environmental Science</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/environmentalsciencee-bookbydiplomaengineers.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png" alt="Advanced Surveying">
+                        <h3>ADVANCED SURVEYING</h3>
+                        <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/advancedsurveyinge-bookbydiplomaengineers-1.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png" alt="Hydraulics">
+                        <h3>HYDRAULICS</h3>
+                        <a href="https://anubhav.finance.blog/wp-content/uploads/2026/05/hydraulicse-bookbydiplomaengineers-3.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                    <div class="card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png" alt="TOS">
+                        <h3>TOS</h3>
+                        <a href="https://anubhav.finance.blog/wp-content/uploads/2026/05/theoryofstructurese-bookbydiplomaengineers-2.pdf" class="btn" target="_blank">Open</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/construction-management-and-entrepreneur-development.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dbac7207a1d60542f858e24f8037818545726630343.png" alt="CMAED">
-        <div class="book-card-content">
-          <h3>CMAED PDF</h3>
-          <p>Construction Management Notes</p>
+
+        <!-- SYLLABUS SECTION -->
+        <div id="syllabus" class="branch-section">
+            <div class="section">
+                <h2>Civil Syllabus</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-file-pdf fa-3x"></i>
+                        <h3>1st Year</h3>
+                        <a href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf" class="btn" target="_blank">Open PDF</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-file-pdf fa-3x"></i>
+                        <h3>2nd Year</h3>
+                        <a href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/322_2025_26.pdf" class="btn" target="_blank">Open PDF</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-file-pdf fa-3x"></i>
+                        <h3>3rd Year</h3>
+                        <a href="#" class="btn">Open PDF</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </a>
-    </div>
-  </div>
 
-  <!-- PROFILE PAGE -->
-  <div id="profilePage" class="page">
-    <div class="section-title">My Profile</div>
-    <div class="profile-box">
-      <div class="profile-avatar"><i class="fas fa-user"></i></div>
-      <h3 id="profileName" style="font-size: 18px; font-weight: 700;">Engineer</h3>
-      <p id="profileBranch" style="font-size: 12px; color: var(--muted-text);">Diploma Member</p>
-      
-      <div class="profile-details">
-        <p>Name: <span id="profileFullName">-</span></p>
-        <p>Email: <span id="profileEmail">-</span></p>
-        <p>Mobile: <span id="profileMobile">-</span></p>
-        <p>Branch: <span id="profileBranchName">-</span></p>
-      </div>
-      
-      <button class="btn-main" style="margin-top: 20px; background: #ef4444;" onclick="logoutUser()">Logout</button>
-    </div>
-  </div>
-
-  <!-- UPDATES PAGE -->
-  <div id="updatePage" class="page">
-    <div class="section-title">Official Channels</div>
-    
-    <div class="update-box">
-      <div class="update-icon wa"><i class="fab fa-whatsapp"></i></div>
-      <h3 class="update-title">WhatsApp Channel</h3>
-      <p class="update-text">Join our WhatsApp channel for daily notes, PYQs, and notices.</p>
-      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" style="text-decoration:none;">
-        <button class="btn-main">Join WhatsApp</button>
-      </a>
-    </div>
-
-    <div class="update-box">
-      <div class="update-icon tg"><i class="fab fa-telegram-plane"></i></div>
-      <h3 class="update-title">Telegram Channel</h3>
-      <p class="update-text">Get PDF notes, job alerts, and discussions on Telegram.</p>
-      <a href="https://t.me/diploma_engineers7" target="_blank" style="text-decoration:none;">
-        <button class="btn-main" style="background: linear-gradient(135deg, #0088cc, #00aaff);">Join Telegram</button>
-      </a>
-    </div>
-  </div>
-
-  <!-- COMMUNITY PAGE -->
-  <div id="communityPage" class="page">
-    <div class="section-title">Branch Groups</div>
-    <div class="grid-2">
-      <a href="https://chat.whatsapp.com/BpeRT0ksGpN90hUB89NCvk" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>CSE Group</p></a>
-      <a href="https://chat.whatsapp.com/JrNYhCka0OV6Sfgmy4fISD" target="_blank" class="card-box"><i class="fas fa-bolt"></i><p>Electrical Group</p></a>
-      <a href="https://chat.whatsapp.com/Dk6XuqDLsnR4CFI7z0bKRW" target="_blank" class="card-box"><i class="fas fa-microchip"></i><p>Electronics Group</p></a>
-      <a href="https://chat.whatsapp.com/BzdzPzN4h6K3TBcaPMgIt2" target="_blank" class="card-box"><i class="fas fa-building"></i><p>Civil Group</p></a>
-      <a href="https://chat.whatsapp.com/HMmVrYqqd7iJawzV2ySk6C" target="_blank" class="card-box"><i class="fas fa-cogs"></i><p>Mechanical Group</p></a>
-      <a href="https://chat.whatsapp.com/JaEo5XrARUkFD0epcVbrsq" target="_blank" class="card-box"><i class="fas fa-seedling"></i><p>Agriculture Group</p></a>
-    </div>
-  </div>
-
-  <!-- RESULTS PAGE -->
-  <div id="resultPage" class="page">
-    <div class="section-title">Results Portal</div>
-    <div class="grid-2">
-      <a href="main-result.html" class="card-box"><i class="fas fa-square-poll-vertical"></i><p>Main Result</p></a>
-      <a href="reval-result.html" class="card-box"><i class="fas fa-file-circle-check"></i><p>Revaluation Result</p></a>
-    </div>
-  </div>
-
-  <!-- ADMIT CARD PAGE -->
-  <div id="admitPage" class="page">
-    <div class="section-title">Admit Card Downloads</div>
-    <div class="grid-2">
-      <a href="admitcard.html" class="card-box"><i class="fas fa-id-badge"></i><p>Semester Admit Card</p></a>
-    </div>
-    <div class="notice">
-      <h5>Important Notice 📢</h5>
-      <p>Download your admit card prior to exam dates. College ID card is mandatory in the examination hall.</p>
-    </div>
-  </div>
-
-  <!-- JOBS PAGE -->
-  <div id="jobPage" class="page">
-    <div class="section-title">Job Openings</div>
-    <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('privatejob')"><i class="fas fa-building"></i><p>Private Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('gov-job')"><i class="fas fa-briefcase"></i><p>Government Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('apprenticeship')"><i class="fas fa-graduation-cap"></i><p>Apprenticeship</p></div>
-      <a href="https://internshala.com/" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>Internships</p></a>
-    </div>
-  </div>
-
-  <!-- PRIVATE JOBS -->
-  <div id="privatejob" class="page">
-    <div class="section-title">Private Jobs</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-building"></i><p><b>Construction</b><br><small>Civil/Mech • ₹15k-60k</small></p></div>
-      <div class="card-box"><i class="fas fa-industry"></i><p><b>Manufacturing</b><br><small>Mech/Elec • ₹12k-50k</small></p></div>
-      <div class="card-box"><i class="fas fa-car"></i><p><b>Automobile</b><br><small>Auto/Mech • ₹15k-70k</small></p></div>
-      <div class="card-box"><i class="fas fa-microchip"></i><p><b>Electronics</b><br><small>ECE/EE • ₹12k-55k</small></p></div>
-    </div>
-  </div>
-
-  <!-- GOVT JOBS -->
-  <div id="gov-job" class="page">
-    <div class="section-title">Government Jobs</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-landmark"></i><p><b>SSC JE</b><br><small>Civil, Mech, Elec</small></p></div>
-      <div class="card-box"><i class="fas fa-train"></i><p><b>RRB JE</b><br><small>Railways Core Branches</small></p></div>
-      <div class="card-box"><i class="fas fa-industry"></i><p><b>PSU Recruitment</b><br><small>BHEL, NTPC, ONGC</small></p></div>
-      <div class="card-box"><i class="fas fa-bolt"></i><p><b>Power Sector</b><br><small>PGCIL, State Electricity</small></p></div>
-    </div>
-  </div>
-
-  <!-- APPRENTICESHIP -->
-  <div id="apprenticeship" class="page">
-    <div class="section-title">Apprenticeships</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-train"></i><p><b>Railway</b><br><small>Stipend: ₹8k - ₹15k</small></p></div>
-      <div class="card-box"><i class="fas fa-industry"></i><p><b>PSU Sector</b><br><small>Stipend: ₹10k - ₹18k</small></p></div>
-    </div>
-  </div>
-
-  <!-- STORE PAGE -->
-  <div id="storePage" class="page">
-    <div class="section-title">Store Materials</div>
-    <div class="store-grid">
-      <div class="store-card">
-        <img src="https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?q=80&w=400" alt="Pen">
-        <div class="store-info">
-          <h4>Premium Pen Pack</h4>
-          <p>Blue & Black Smooth Writing</p>
-          <button class="btn-main" style="padding: 6px; font-size: 12px;">Buy ₹49</button>
+        <!-- JOB SECTION -->
+        <div id="job" class="branch-section">
+            <div class="section">
+                <h2>Civil Jobs</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fas fa-building fa-3x"></i>
+                        <h3>Site Engineer</h3>
+                        <p style="font-size: 12px; margin: 8px 0;">Construction Company Hiring</p>
+                        <a href="https://www.naukri.com/site-engineer-jobs" target="_blank" class="btn">Apply</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-road fa-3x"></i>
+                        <h3>Highway Engineer</h3>
+                        <p style="font-size: 12px; margin: 8px 0;">Road Projects</p>
+                        <a href="https://www.naukri.com/civil-engineer-jobs" target="_blank" class="btn">Apply</a>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-city fa-3x"></i>
+                        <h3>Junior Engineer (Civil)</h3>
+                        <p style="font-size: 12px; margin: 8px 0;">Govt / PWD Jobs</p>
+                        <a href="https://www.naukri.com/government-jobs" target="_blank" class="btn">Apply</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="store-card">
-        <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=400" alt="Pencil">
-        <div class="store-info">
-          <h4>Engineering Pencils</h4>
-          <p>HB, 2B Set for Drawing</p>
-          <button class="btn-main" style="padding: 6px; font-size: 12px;">Buy ₹39</button>
+
+        <!-- JOIN SECTION -->
+        <div id="join" class="branch-section">
+            <div class="section">
+                <h2>Join Our Community</h2>
+                <div class="grid">
+                    <div class="card">
+                        <i class="fab fa-whatsapp fa-3x"></i>
+                        <h3>WhatsApp Group</h3>
+                        <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" class="btn" target="_blank">Join Branch Group</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- PREMIUM PAGE -->
-  <div id="premium-buy-card" class="page">
-    <div class="premium-buy-card">
-      <div class="premium-img">
-        <img src="https://cdn-icons-png.flaticon.com/512/3145/3145765.png" style="width: 70px;" alt="Premium">
-      </div>
-      <h2 style="font-size: 20px; font-weight: 800;">Premium Membership 🚀</h2>
-      <p style="font-size: 12px; color: var(--muted-text); margin-top: 6px;">Get Premium Notes, PYQs, Video Lectures, E-Books & Placement Guidance.</p>
-      <div class="price-box">₹99 Only</div>
-      <button onclick="openPremiumForm()" class="btn-main">Buy Membership</button>
+        <!-- ADMIN SECTION -->
+        <div id="admin" class="branch-section">
+            <div class="section">
+                <h2>Admin Profile</h2>
+                <div class="profile-wrapper">
+                    <div class="profile-card">
+                        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f42071fa96404f2d46cce3b38615769197019000394.png" class="profile-img" alt="Pritam Maurya">
+                        <div class="branch-tag">Civil Engineering</div>
+                        <h2 class="name">Pritam Maurya</h2>
+                        <p class="role">Content Admin</p>
+
+                        <div class="btn-group">
+                            <a href="tel:+919984869161" class="btn call">
+                                <i class="fa-solid fa-phone"></i> Call
+                            </a>
+                            <a href="mailto:gulshanprajapati0110@gmail.com" class="btn email">
+                                <i class="fa-solid fa-envelope"></i> Email
+                            </a>
+                            <a href="https://wa.me/919984869161" target="_blank" class="btn whatsapp">
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            </a>
+                        </div>
+
+                        <a href="https://wa.me/919984869161" target="_blank" class="chat-btn">
+                            💬 Chat Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- POPUP MODAL -->
-    <div class="premium-popup" id="premiumBox">
-      <div class="premium-form-box">
-        <span class="close-btn" onclick="closePremiumForm()">✖</span>
-        <h3 style="font-size: 16px; font-weight: 700;">Scan & Pay ₹99</h3>
-        <img src="https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592" class="qr-img" alt="QR">
+    <!-- FEEDBACK FLOATING BUTTON & POPUP -->
+    <div class="feedback-btn" onclick="toggleFeedback()">
+        <i class="fas fa-comment-dots"></i>
+    </div>
+
+    <div class="feedback-popup" id="feedbackBox">
+        <h3>Feedback</h3>
         <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST">
-          <input type="hidden" name="_captcha" value="false">
-          <input type="hidden" name="_subject" value="New Premium Membership Purchase">
-          <input type="text" name="membership" value="Premium Membership ₹99" readonly>
-          <input type="text" name="name" placeholder="Your Name" required>
-          <input type="tel" name="phone" placeholder="Phone Number" required>
-          <input type="email" name="email" placeholder="Email Address" required>
-          <input type="text" name="transaction_id" placeholder="UPI Transaction ID" required>
-          <button type="submit" class="btn-main" style="margin-top: 8px;">Verify Payment</button>
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="New Feedback Received">
+            <input type="text" name="branch" value="Civil" readonly>
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <select name="rating" required>
+                <option value="">Rate</option>
+                <option>Excellent</option>
+                <option>Good</option>
+                <option>Average</option>
+                <option>Poor</option>
+            </select>
+            <textarea rows="3" name="feedback" placeholder="Feedback" required></textarea>
+            <button type="submit">Send Feedback</button>
         </form>
-      </div>
     </div>
-  </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
-  <div class="bottom-nav" id="bottomNav">
-    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
-      <i class="fas fa-home"></i>Home
-    </button>
-    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
-      <i class="fas fa-code-branch"></i>Branch
-    </button>
-    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
-      <i class="fas fa-book"></i>Books
-    </button>
-    <button class="nav-link-btn" id="tab-premium-buy-card" onclick="navigateTo('premium-buy-card')">
-      <i class="fas fa-crown"></i>Premium
-    </button>
-    <button class="nav-link-btn" id="tab-storePage" onclick="navigateTo('storePage')">
-      <i class="fas fa-store"></i>Store
-    </button>
-  </div>
+    <!-- FOOTER -->
+    <footer>
+        © 2026 Diploma Engineers | Civil Notes
+    </footer>
 
-</div>
+    <!-- JAVASCRIPT -->
+    <script>
+        function showSection(id, btn) {
+            document.querySelectorAll('.branch-section').forEach(section => {
+                section.style.display = 'none';
+            });
 
-<!-- SCRIPT LOGIC -->
-<script>
-let isLogin = true;
-const defaultPage = "homePage";
+            document.getElementById(id).style.display = 'block';
 
-// --- NATIVE BROWSER BACK BUTTON INTEGRATION ---
-window.addEventListener("popstate", function(event) {
-  if (event.state && event.state.pageId) {
-    renderPage(event.state.pageId);
-  } else {
-    renderPage(defaultPage);
-  }
-});
+            document.querySelectorAll('.branch-btn').forEach(button => {
+                button.classList.remove('active');
+            });
 
-function navigateTo(pageId) {
-  // Push state to browser history for physical back button support
-  history.pushState({ pageId: pageId }, "", "#" + pageId);
-  renderPage(pageId);
-}
+            btn.classList.add('active');
+        }
 
-function goBack() {
-  window.history.back();
-}
+        function toggleFeedback() {
+            let box = document.getElementById('feedbackBox');
+            if (box.style.display === "block") {
+                box.style.display = "none";
+            } else {
+                box.style.display = "block";
+            }
+        }
+    </script>
 
-function renderPage(pageId) {
-  let pages = document.querySelectorAll(".page");
-  pages.forEach(page => page.classList.remove("active-page"));
-
-  let targetPage = document.getElementById(pageId);
-  if (targetPage) {
-    targetPage.classList.add("active-page");
-  }
-
-  // Update bottom nav highlighting
-  let navBtns = document.querySelectorAll(".nav-link-btn");
-  navBtns.forEach(btn => btn.classList.remove("active"));
-  let activeTab = document.getElementById("tab-" + pageId);
-  if (activeTab) {
-    activeTab.classList.add("active");
-  }
-
-  // Show Header Back Button on Sub-pages
-  let backBtn = document.getElementById("headerBackBtn");
-  if (pageId === "homePage") {
-    backBtn.style.display = "none";
-  } else {
-    backBtn.style.display = "flex";
-  }
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// --- AUTHENTICATION & FORM FUNCTIONS ---
-function toggleForm() {
-  isLogin = !isLogin;
-  document.getElementById("formTitle").innerText = isLogin ? "Login" : "Register";
-  document.getElementById("registerFields").style.display = isLogin ? "none" : "block";
-  document.getElementById("switchText").innerText = isLogin ? "New User? Register Here" : "Already Have Account? Login";
-}
-
-function submitForm() {
-  let mobile = document.getElementById("mobile").value.trim();
-  let password = document.getElementById("password").value.trim();
-
-  if (mobile === "" || password === "") {
-    alert("Please fill in Mobile and Password");
-    return;
-  }
-
-  if (!isLogin) {
-    let name = document.getElementById("name").value.trim();
-    let email = document.getElementById("email").value.trim();
-    let branch = document.getElementById("branch").value;
-
-    if (name === "" || email === "" || branch === "") {
-      alert("Please complete all registration details");
-      return;
-    }
-
-    let userData = { name: name, email: email, branch: branch, mobile: mobile, password: password };
-    localStorage.setItem("diplomaUser", JSON.stringify(userData));
-    alert("Registration Successful ✅");
-    loginUser(userData);
-  } else {
-    let savedUser = JSON.parse(localStorage.getItem("diplomaUser"));
-    if (savedUser == null) {
-      alert("Account not found. Please register first.");
-      return;
-    }
-
-    if (savedUser.mobile === mobile && savedUser.password === password) {
-      alert("Login Successful ✅");
-      loginUser(savedUser);
-    } else {
-      alert("Incorrect Mobile Number or Password ❌");
-    }
-  }
-}
-
-function loginUser(user) {
-  document.getElementById("userName").innerText = user.name || "Engineer";
-  document.getElementById("profileName").innerText = user.name || "Engineer";
-  document.getElementById("profileBranch").innerText = user.branch || "Diploma Member";
-  document.getElementById("profileFullName").innerText = user.name || "-";
-  document.getElementById("profileEmail").innerText = user.email || "-";
-  document.getElementById("profileMobile").innerText = user.mobile || "-";
-  document.getElementById("profileBranchName").innerText = user.branch || "-";
-
-  document.getElementById("authPage").style.display = "none";
-  document.getElementById("app").style.display = "block";
-
-  // Replace history state on login to establish home page as initial state
-  history.replaceState({ pageId: defaultPage }, "", "#" + defaultPage);
-  renderPage(defaultPage);
-}
-
-function logoutUser() {
-  localStorage.removeItem("diplomaUser");
-  document.getElementById("app").style.display = "none";
-  document.getElementById("authPage").style.display = "flex";
-}
-
-function openPremiumForm() {
-  document.getElementById("premiumBox").style.display = "flex";
-}
-
-function closePremiumForm() {
-  document.getElementById("premiumBox").style.display = "none";
-}
-
-window.onload = function() {
-  let savedUser = JSON.parse(localStorage.getItem("diplomaUser"));
-  if (savedUser) {
-    loginUser(savedUser);
-  }
-};
-</script>
 </body>
 </html>

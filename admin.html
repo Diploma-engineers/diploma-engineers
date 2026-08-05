@@ -1,328 +1,467 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard</title>
 
-  <!-- Bootstrap 5 CSS & FontAwesome -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diploma Engineers Admin</title>
 
   <style>
-    :root {
-      --bg-color: #f8f9fa;
-      --text-color: #212529;
-      --sidebar-bg: #1e293b;
-      --sidebar-text: #cbd5e1;
-      --card-bg: #ffffff;
-    }
-
-    [data-theme="dark"] {
-      --bg-color: #0f172a;
-      --text-color: #f8fafc;
-      --sidebar-bg: #020617;
-      --sidebar-text: #94a3b8;
-      --card-bg: #1e293b;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      transition: all 0.3s ease;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
     }
 
-    /* Sidebar Styling */
-    #sidebar {
-      min-width: 250px;
-      max-width: 250px;
-      background-color: var(--sidebar-bg);
-      min-height: 100vh;
-      transition: all 0.3s;
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 15px;
     }
 
-    #sidebar .nav-link {
-      color: var(--sidebar-text);
-      padding: 12px 20px;
-      border-radius: 8px;
-      margin: 4px 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #sidebar .nav-link:hover, #sidebar .nav-link.active {
-      background-color: #334155;
-      color: #fff;
-    }
-
-    /* Custom Cards */
-    .dashboard-card {
-      background-color: var(--card-bg);
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .table-container {
-      background-color: var(--card-bg);
-      border-radius: 12px;
+    .card {
+      background: #fff;
       padding: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      margin-bottom: 20px;
+    }
+
+    h2, h3 {
+      margin-bottom: 15px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #0d6efd;
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #0b5ed7;
+    }
+
+    button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+
+    .btn-delete:hover {
+      background: #bb2d3b;
+    }
+
+    .logout {
+      background: #dc3545;
+      margin-left: 10px;
+    }
+
+    .logout:hover {
+      background: #bb2d3b;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 12px;
+    }
+
+    #preview {
+      display: none;
+      width: 220px;
+      height: 140px;
+      object-fit: cover;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    .news-item {
+      display: flex;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .news-item img {
+      width: 160px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .news-content {
+      flex: 1;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #666;
+      margin: 6px 0;
+    }
+
+    .links-group {
+      margin: 10px 0;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .links-group a {
+      color: #0d6efd;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .links-group a:hover {
+      text-decoration: underline;
+    }
+
+    #adminPanel {
+      display: none;
+    }
+
+    @media(max-width:700px) {
+      .news-item {
+        flex-direction: column;
+      }
+
+      .news-item img {
+        width: 100%;
+        height: 200px;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .logout {
+        margin-left: 0;
+      }
     }
   </style>
 </head>
+
 <body>
 
-  <div class="d-flex">
-    <!-- SIDEBAR -->
-    <nav id="sidebar" class="d-flex flex-column justify-content-between p-3">
-      <div>
-        <a href="#" class="d-flex align-items-center mb-4 text-white text-decoration-none px-2">
-          <i class="fa-solid fa-shield-halved fa-2x me-2 text-primary"></i>
-          <span class="fs-4 fw-bold">AdminPanel</span>
-        </a>
-        <hr class="text-secondary" />
-        <ul class="nav nav-pills flex-column mb-auto">
-          <li class="nav-item">
-            <a href="#" class="nav-link active"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-          </li>
-          <li>
-            <a href="#" class="nav-link"><i class="fa-solid fa-users"></i> Users Management</a>
-          </li>
-          <li>
-            <a href="#" class="nav-link"><i class="fa-solid fa-box-archive"></i> Resources</a>
-          </li>
-          <li>
-            <a href="#" class="nav-link"><i class="fa-solid fa-gear"></i> Settings</a>
-          </li>
-        </ul>
-      </div>
-      <div>
-        <hr class="text-secondary" />
-        <button class="btn btn-outline-light w-100" id="themeToggle">
-          <i class="fa-solid fa-moon me-2"></i> Dark Mode
-        </button>
-      </div>
-    </nav>
+  <div class="container">
 
-    <!-- MAIN CONTENT AREA -->
-    <div class="flex-grow-1 p-4">
-      <!-- HEADER -->
-      <header class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="fw-bold mb-0">Overview</h2>
-          <small class="text-muted">Welcome back, Super Admin</small>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="fa-solid fa-plus me-1"></i> Add User
-          </button>
-        </div>
-      </header>
-
-      <!-- METRIC CARDS -->
-      <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card dashboard-card p-3">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-6">Total Users</span>
-                <h3 class="fw-bold my-1" id="totalUsersCount">0</h3>
-              </div>
-              <div class="bg-primary-subtle text-primary p-3 rounded-circle">
-                <i class="fa-solid fa-users fa-lg"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card dashboard-card p-3">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-6">Active Status</span>
-                <h3 class="fw-bold my-1 text-success">98.2%</h3>
-              </div>
-              <div class="bg-success-subtle text-success p-3 rounded-circle">
-                <i class="fa-solid fa-circle-check fa-lg"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card dashboard-card p-3">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-6">System Alert</span>
-                <h3 class="fw-bold my-1 text-warning">0 Issues</h3>
-              </div>
-              <div class="bg-warning-subtle text-warning p-3 rounded-circle">
-                <i class="fa-solid fa-triangle-exclamation fa-lg"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- DATA TABLE AREA -->
-      <div class="table-container">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <h5 class="fw-bold mb-0">Registered Accounts</h5>
-          <div class="w-auto">
-            <input type="text" id="searchInput" class="form-control" placeholder="Search by name or email..." />
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="userTableBody">
-              <!-- Dynamic JS rows inserted here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <!-- LOGIN BOX -->
+    <div class="card" id="loginBox">
+      <h2>Admin Login</h2>
+      <input id="email" type="email" placeholder="Enter Email" required>
+      <input id="password" type="password" placeholder="Enter Password" required>
+      <button id="loginBtn">Login</button>
     </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel">
+
+      <div class="card">
+        <h2>Publish News</h2>
+        
+        <input id="title" placeholder="News Title">
+        <textarea id="desc" placeholder="Description"></textarea>
+
+        <label>Upload Thumbnail</label>
+        <input type="file" id="thumb" accept="image/*">
+        <img id="preview" alt="Preview Thumbnail">
+
+        <label>Attach PDF / File</label>
+        <input type="file" id="pdf" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+
+        <label>External Link (Optional)</label>
+        <input type="url" id="link" placeholder="https://example.com">
+
+        <label>Category</label>
+        <select id="cat">
+          <option value="News">News</option>
+          <option value="Notice">Notice</option>
+          <option value="Result">Result</option>
+          <option value="Admission">Admission</option>
+          <option value="Scholarship">Scholarship</option>
+          <option value="Job">Job</option>
+        </select>
+
+        <button id="publishBtn">Publish News</button>
+        <button class="logout" id="logoutBtn">Logout</button>
+      </div>
+
+      <div class="card">
+        <h3>Published News</h3>
+        <div id="list">Loading...</div>
+      </div>
+
+    </div>
+
   </div>
 
-  <!-- ADD USER MODAL -->
-  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold">Create New User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="addUserForm">
-            <div class="mb-3">
-              <label class="form-label">Full Name</label>
-              <input type="text" id="userName" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Email Address</label>
-              <input type="email" id="userEmail" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Role</label>
-              <select id="userRole" class="form-select">
-                <option value="Admin">Admin</option>
-                <option value="Editor">Editor</option>
-                <option value="Student">Student</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Save Account</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
+  <script type="module">
+    import {
+      auth,
+      db,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut,
+      ref,
+      push,
+      set,
+      onValue,
+      remove
+    } from "./firebase.js";
 
-  <!-- JS DEPENDENCIES -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    // ELEMENTS
+    const loginBox = document.getElementById("loginBox");
+    const adminPanel = document.getElementById("adminPanel");
+    const list = document.getElementById("list");
+    const title = document.getElementById("title");
+    const desc = document.getElementById("desc");
+    const thumb = document.getElementById("thumb");
+    const pdf = document.getElementById("pdf");
+    const link = document.getElementById("link");
+    const cat = document.getElementById("cat");
+    const preview = document.getElementById("preview");
+    const publishBtn = document.getElementById("publishBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
 
-  <script>
-    // Initial Mock Data
-    let users = [
-      { id: 101, name: "Aarav Sharma", email: "aarav@example.com", role: "Admin", status: "Active" },
-      { id: 102, name: "Priya Verma", email: "priya@example.com", role: "Editor", status: "Active" },
-      { id: 103, name: "Rohan Patel", email: "rohan@example.com", role: "Student", status: "Inactive" }
-    ];
+    const CLOUD_NAME = "ub0qgzwa";
+    const UPLOAD_PRESET = "news_upload";
 
-    // DOM Elements
-    const userTableBody = document.getElementById('userTableBody');
-    const totalUsersCount = document.getElementById('totalUsersCount');
-    const addUserForm = document.getElementById('addUserForm');
-    const searchInput = document.getElementById('searchInput');
-    const themeToggle = document.getElementById('themeToggle');
-
-    // Render Data to Table
-    function renderTable(data = users) {
-      userTableBody.innerHTML = '';
-      data.forEach((user) => {
-        const row = `
-          <tr>
-            <td>#${user.id}</td>
-            <td class="fw-semibold">${user.name}</td>
-            <td>${user.email}</td>
-            <td><span class="badge bg-secondary">${user.role}</span></td>
-            <td>
-              <span class="badge ${user.status === 'Active' ? 'bg-success' : 'bg-danger'}">
-                ${user.status}
-              </span>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-        userTableBody.innerHTML += row;
-      });
-      totalUsersCount.innerText = users.length;
+    // Helper: Escape HTML to mitigate XSS
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    // Add New User
-    addUserForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const newUser = {
-        id: Math.floor(100 + Math.random() * 900),
-        name: document.getElementById('userName').value,
-        email: document.getElementById('userEmail').value,
-        role: document.getElementById('userRole').value,
-        status: 'Active'
-      };
-      users.push(newUser);
-      renderTable();
-      addUserForm.reset();
-      
-      // Close Modal
-      const modalElement = document.getElementById('addUserModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalElement);
-      modalInstance.hide();
-    });
+    // IMAGE PREVIEW
+    thumb.onchange = () => {
+      const file = thumb.files[0];
+      if (!file) {
+        preview.style.display = "none";
+        preview.src = "";
+        return;
+      }
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    };
 
-    // Delete User
-    function deleteUser(id) {
-      users = users.filter(user => user.id !== id);
-      renderTable();
-    }
+    // CLOUDINARY UPLOAD
+    async function uploadCloudinary(file) {
+      if (!file) return "";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
 
-    // Live Search Filter
-    searchInput.addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase();
-      const filtered = users.filter(u => 
-        u.name.toLowerCase().includes(term) || 
-        u.email.toLowerCase().includes(term)
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+        { method: "POST", body: formData }
       );
-      renderTable(filtered);
-    });
 
-    // Dark / Light Theme Toggle
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = document.body.getAttribute('data-theme');
-      if (currentTheme === 'dark') {
-        document.body.removeAttribute('data-theme');
-        themeToggle.innerHTML = `<i class="fa-solid fa-moon me-2"></i> Dark Mode`;
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error?.message || "Cloudinary Upload Failed");
+      }
+      return data.secure_url;
+    }
+
+    // ADMIN LOGIN
+    loginBtn.onclick = async () => {
+      const valEmail = email.value.trim();
+      const valPass = password.value;
+
+      if (!valEmail) return alert("Enter Email");
+      if (!valPass) return alert("Enter Password");
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = "Logging in...";
+
+      try {
+        await signInWithEmailAndPassword(auth, valEmail, valPass);
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = "Login";
+      }
+    };
+
+    // AUTH STATE
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginBox.style.display = "none";
+        adminPanel.style.display = "block";
+        loadNews();
       } else {
-        document.body.setAttribute('data-theme', 'dark');
-        themeToggle.innerHTML = `<i class="fa-solid fa-sun me-2"></i> Light Mode`;
+        loginBox.style.display = "block";
+        adminPanel.style.display = "none";
       }
     });
 
-    // Initial Load
-    renderTable();
+    // PUBLISH NEWS
+    publishBtn.onclick = async () => {
+      const valTitle = title.value.trim();
+      if (!valTitle) {
+        alert("Enter News Title");
+        title.focus();
+        return;
+      }
+
+      publishBtn.disabled = true;
+      publishBtn.innerHTML = "Uploading...";
+
+      try {
+        let imageUrl = "";
+        let fileUrl = "";
+
+        if (thumb.files.length > 0) {
+          imageUrl = await uploadCloudinary(thumb.files[0]);
+        }
+
+        if (pdf.files.length > 0) {
+          fileUrl = await uploadCloudinary(pdf.files[0]);
+        }
+
+        const newsRef = push(ref(db, "news"));
+        await set(newsRef, {
+          title: valTitle,
+          desc: desc.value.trim(),
+          thumb: imageUrl,
+          pdf: fileUrl,
+          link: link.value.trim(),
+          cat: cat.value,
+          createdAt: Date.now(),
+          date: new Date().toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+          })
+        });
+
+        alert("News Published Successfully");
+
+        // Reset Form
+        title.value = "";
+        desc.value = "";
+        thumb.value = "";
+        pdf.value = "";
+        link.value = "";
+        cat.selectedIndex = 0;
+        preview.src = "";
+        preview.style.display = "none";
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.innerHTML = "Publish News";
+      }
+    };
+
+    // LOAD NEWS
+    function loadNews() {
+      const newsRef = ref(db, "news");
+      onValue(newsRef, (snapshot) => {
+        list.innerHTML = "";
+
+        if (!snapshot.exists()) {
+          list.innerHTML = "<h3>No News Available</h3>";
+          return;
+        }
+
+        let html = "";
+        const data = snapshot.val();
+        
+        // Reverse iteration to show newest first
+        const keys = Object.keys(data).reverse();
+
+        keys.forEach((key) => {
+          const n = data[key];
+          const safeTitle = escapeHtml(n.title);
+          const safeDesc = escapeHtml(n.desc);
+          const safeCat = escapeHtml(n.cat);
+          const safeDate = escapeHtml(n.date);
+
+          html += `
+            <div class="news-item">
+              ${n.thumb ? `<img src="${encodeURI(n.thumb)}" alt="Thumbnail">` : ""}
+              <div class="news-content">
+                <h3>${safeTitle}</h3>
+                <div class="small">${safeCat} | ${safeDate}</div>
+                <p>${safeDesc}</p>
+                
+                <div class="links-group">
+                  ${n.thumb ? `<a href="${encodeURI(n.thumb)}" target="_blank" rel="noopener">🖼 Open Image</a>` : ""}
+                  ${n.pdf ? `<a href="${encodeURI(n.pdf)}" target="_blank" rel="noopener">📄 Open File</a>` : ""}
+                  ${n.link ? `<a href="${encodeURI(n.link)}" target="_blank" rel="noopener">🔗 Open Link</a>` : ""}
+                </div>
+
+                <button class="btn-delete" onclick="window.deleteNews('${key}')">Delete</button>
+              </div>
+            </div>
+          `;
+        });
+
+        list.innerHTML = html;
+      });
+    }
+
+    // GLOBAL DELETE METHOD
+    window.deleteNews = async (id) => {
+      const ok = confirm("Are you sure you want to delete this post?");
+      if (!ok) return;
+
+      try {
+        await remove(ref(db, "news/" + id));
+        alert("News Deleted");
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    // LOGOUT
+    logoutBtn.onclick = () => {
+      signOut(auth);
+    };
   </script>
 </body>
+
 </html>

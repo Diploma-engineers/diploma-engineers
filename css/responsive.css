@@ -1,0 +1,107 @@
+document.addEventListener("DOMContentLoaded", () => {
+  initScrollAnimations();
+  initMouseGlow();
+  initTiltEffect();
+  initRippleEffect();
+  initMagneticButtons();
+});
+
+/* 1. Intersection Observer for Fade Up Animations */
+function initScrollAnimations() {
+  const observerOptions = { threshold: 0.15 };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll(".fade-up").forEach((el) => observer.observe(el));
+}
+
+/* 2. Mouse Glow Effect in Hero Section */
+function initMouseGlow() {
+  const glow = document.getElementById("mouse-glow");
+  const hero = document.getElementById("hero");
+
+  if (hero && glow) {
+    hero.addEventListener("mousemove", (e) => {
+      const rect = hero.getBoundingClientRect();
+      glow.style.left = `${e.clientX - rect.left}px`;
+      glow.style.top = `${e.clientY - rect.top}px`;
+      glow.style.opacity = "1";
+    });
+
+    hero.addEventListener("mouseleave", () => {
+      glow.style.opacity = "0";
+    });
+  }
+}
+
+/* 3. 3D Tilt Effect on Cards */
+function initTiltEffect() {
+  const tiltCards = document.querySelectorAll(".tilt-card");
+
+  tiltCards.forEach((card) => {
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -8;
+      const rotateY = ((x - centerX) / centerX) * 8;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)";
+    });
+  });
+}
+
+/* 4. Button Ripple Effect */
+function initRippleEffect() {
+  document.querySelectorAll(".ripple-btn").forEach((button) => {
+    button.addEventListener("click", function (e) {
+      const circle = document.createElement("span");
+      const diameter = Math.max(this.clientWidth, this.clientHeight);
+      const radius = diameter / 2;
+
+      const rect = this.getBoundingClientRect();
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add("ripple");
+
+      const existingRipple = this.querySelector(".ripple");
+      if (existingRipple) existingRipple.remove();
+
+      this.appendChild(circle);
+    });
+  });
+}
+
+/* 5. Magnetic Hover Effect for Action Buttons */
+function initMagneticButtons() {
+  const magBtns = document.querySelectorAll(".magnetic-btn");
+
+  magBtns.forEach((btn) => {
+    btn.addEventListener("mousemove", (e) => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+
+      btn.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px)`;
+    });
+
+    btn.addEventListener("mouseleave", () => {
+      btn.style.transform = "translate(0px, 0px)";
+    });
+  });
+      }
+    

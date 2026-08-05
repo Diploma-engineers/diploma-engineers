@@ -4,167 +4,46 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Diploma Engineers Admin</title>
+<title>Diploma Engineers Admin Panel</title>
 
-<style>
+<link rel="icon" href="favicon.ico">
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
-}
-
-body{
-background:#f4f6f9;
-}
-
-.container{
-max-width:900px;
-margin:20px auto;
-padding:15px;
-}
-
-.card{
-background:#fff;
-padding:20px;
-border-radius:12px;
-box-shadow:0 2px 8px rgba(0,0,0,.15);
-margin-bottom:20px;
-}
-
-h2,h3{
-margin-bottom:15px;
-}
-
-input,
-textarea,
-select{
-width:100%;
-padding:12px;
-margin:8px 0;
-border:1px solid #ccc;
-border-radius:8px;
-font-size:15px;
-}
-
-textarea{
-height:120px;
-resize:vertical;
-}
-
-button{
-padding:12px 18px;
-border:none;
-border-radius:8px;
-background:#0d6efd;
-color:#fff;
-cursor:pointer;
-font-size:15px;
-}
-
-button:hover{
-background:#0b5ed7;
-}
-
-.logout{
-background:#dc3545;
-margin-left:10px;
-}
-
-.logout:hover{
-background:#bb2d3b;
-}
-
-label{
-font-weight:bold;
-display:block;
-margin-top:12px;
-}
-
-#preview{
-display:none;
-width:220px;
-height:140px;
-object-fit:cover;
-border:1px solid #ddd;
-border-radius:10px;
-margin:10px 0;
-}
-
-.news-item{
-display:flex;
-gap:15px;
-padding:15px 0;
-border-bottom:1px solid #ddd;
-}
-
-.news-item img{
-width:160px;
-height:100px;
-object-fit:cover;
-border-radius:10px;
-}
-
-.news-content{
-flex:1;
-}
-
-.small{
-font-size:13px;
-color:#666;
-margin:6px 0;
-}
-
-#adminPanel{
-display:none;
-}
-
-@media(max-width:700px){
-
-.news-item{
-flex-direction:column;
-}
-
-.news-item img{
-width:100%;
-height:200px;
-}
-
-button{
-width:100%;
-margin-top:10px;
-}
-
-.logout{
-margin-left:0;
-}
-
-}
-
-</style>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
 <body>
 
-<div class="container">
+<!-- Loader -->
 
-<div class="card" id="loginBox">
+<div id="loader">
 
-<h2>Admin Login</h2>
+<div class="spinner"></div>
+
+<p>Loading Admin Panel...</p>
+
+</div>
+
+<!-- Login -->
+
+<div id="loginPage" class="page">
+
+<div class="login-box">
+
+<h1>Diploma Engineers</h1>
+
+<p>Admin Login</p>
 
 <input
-id="email"
 type="email"
+id="email"
 placeholder="Enter Email">
 
 <input
-id="password"
 type="password"
+id="password"
 placeholder="Enter Password">
 
 <button id="loginBtn">
@@ -173,15 +52,36 @@ Login
 
 </button>
 
+<div id="loginError"></div>
+
 </div>
 
-<div id="adminPanel">
+</div>
+
+<!-- Dashboard -->
+
+<div id="dashboard" style="display:none;">
+
+<header>
+
+<h2>Diploma Engineers Admin</h2>
+
+<button id="logoutBtn">
+
+Logout
+
+</button>
+
+</header>
+
+<div class="container">
 
 <div class="card">
 
-<h2>Publish News</h2>
+<h3>Publish News</h3>
 
 <input
+type="text"
 id="title"
 placeholder="News Title">
 
@@ -190,7 +90,9 @@ id="desc"
 placeholder="Description"></textarea>
 
 <label>
-Upload Thumbnail
+
+Thumbnail
+
 </label>
 
 <input
@@ -202,17 +104,19 @@ accept="image/*">
 id="preview">
 
 <label>
-Attach PDF / File
+
+Attach File
+
 </label>
 
 <input
 type="file"
-id="pdf"
-accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+id="file">
 
-<!-- NEW -->
 <label>
-External Link (Optional)
+
+External Link
+
 </label>
 
 <input
@@ -220,30 +124,27 @@ type="url"
 id="link"
 placeholder="https://example.com">
 
-<select id="cat">
+<label>
+
+Category
+
+</label>
+
+<select id="category">
 
 <option>News</option>
-  
 <option>Notice</option>
-  
-<option>Result</option>
-
 <option>Admission</option>
-
+<option>Result</option>
 <option>Scholarship</option>
-
 <option>Job</option>
 
 </select>
 
 <button id="publishBtn">
-Publish News
-</button>
 
-<button
-class="logout"
-id="logoutBtn">
-Logout
+Publish News
+
 </button>
 
 </div>
@@ -252,7 +153,12 @@ Logout
 
 <h3>Published News</h3>
 
-<div id="list">
+<input
+type="text"
+id="search"
+placeholder="Search News">
+
+<div id="newsList">
 
 Loading...
 
@@ -264,175 +170,496 @@ Loading...
 
 </div>
 
-<script type="module">
+<script type="module" src="admin.js"></script>
 
+</body>
+</html>
 
-  //==============================
-// FIREBASE IMPORT
-//==============================
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
 
-import{
+body{
+background:#f4f6f9;
+color:#333;
+}
 
-auth,
-db,
+#loader{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#fff;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.spinner{
+width:55px;
+height:55px;
+border:5px solid #ddd;
+border-top:5px solid #0d6efd;
+border-radius:50%;
+animation:spin 1s linear infinite;
+margin-bottom:15px;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.page{
+width:100%;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
+
+.login-box{
+width:100%;
+max-width:420px;
+background:#fff;
+padding:30px;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,.1);
+text-align:center;
+}
+
+.login-box h1{
+color:#0d6efd;
+margin-bottom:8px;
+}
+
+.login-box p{
+margin-bottom:25px;
+color:#666;
+}
+
+.login-box input{
+width:100%;
+padding:13px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:8px;
+font-size:15px;
+}
+
+.login-box button{
+width:100%;
+padding:13px;
+background:#0d6efd;
+color:#fff;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+transition:.3s;
+}
+
+.login-box button:hover{
+background:#0b5ed7;
+}
+
+#loginError{
+margin-top:15px;
+color:red;
+font-size:14px;
+}
+
+header{
+background:#0d6efd;
+color:#fff;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+header button{
+background:#dc3545;
+color:#fff;
+border:none;
+padding:10px 18px;
+border-radius:6px;
+cursor:pointer;
+}
+
+header button:hover{
+background:#bb2d3b;
+}
+
+.container{
+max-width:1100px;
+margin:25px auto;
+padding:15px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.card{
+background:#fff;
+padding:20px;
+border-radius:12px;
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.card h3{
+margin-bottom:20px;
+}
+
+input,
+textarea,
+select{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:8px;
+font-size:15px;
+}
+
+textarea{
+height:120px;
+resize:vertical;
+}
+
+label{
+font-weight:bold;
+display:block;
+margin-top:15px;
+}
+
+#preview{
+display:none;
+width:220px;
+height:140px;
+object-fit:cover;
+border-radius:8px;
+border:1px solid #ddd;
+margin:15px 0;
+}
+
+#publishBtn{
+width:100%;
+padding:13px;
+background:#198754;
+color:#fff;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+}
+
+#publishBtn:hover{
+background:#157347;
+}
+
+#search{
+margin-bottom:20px;
+}
+
+.news-item{
+display:flex;
+gap:15px;
+padding:15px 0;
+border-bottom:1px solid #eee;
+}
+
+.news-item img{
+width:150px;
+height:100px;
+object-fit:cover;
+border-radius:8px;
+}
+
+.news-content{
+flex:1;
+}
+
+.news-content h4{
+margin-bottom:8px;
+}
+
+.news-content p{
+font-size:14px;
+line-height:1.5;
+margin:8px 0;
+}
+
+.news-meta{
+font-size:13px;
+color:#777;
+margin-bottom:8px;
+}
+
+.news-actions{
+margin-top:10px;
+}
+
+.news-actions button{
+padding:8px 12px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-right:8px;
+}
+
+.edit-btn{
+background:#ffc107;
+color:#000;
+}
+
+.delete-btn{
+background:#dc3545;
+color:#fff;
+}
+
+@media(max-width:900px){
+
+.container{
+grid-template-columns:1fr;
+}
+
+.news-item{
+flex-direction:column;
+}
+
+.news-item img{
+width:100%;
+height:220px;
+}
+
+header{
+flex-direction:column;
+gap:12px;
+text-align:center;
+}
+
+header button{
+width:100%;
+}
+
+}
+  <style>
+
+  // ==========================
+// Firebase App
+// ==========================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+// ==========================
+// Firebase Authentication
+// ==========================
+
+import {
+getAuth,
 signInWithEmailAndPassword,
 onAuthStateChanged,
-signOut,
+signOut
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+// ==========================
+// Firebase Realtime Database
+// ==========================
+
+import {
+getDatabase,
 ref,
 push,
 set,
-onValue,
-remove
+update,
+remove,
+onValue
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-}
+// ==========================
+// Firebase Configuration
+// ==========================
 
-from "./firebase.js";
+const firebaseConfig = {
 
+apiKey: "AIzaSy........",
 
-//==============================
-// ELEMENTS
-//==============================
+authDomain: "myadmin-1b75f.firebaseapp.com",
 
-const loginBox=document.getElementById("loginBox");
+databaseURL: "https://myadmin-1b75f-default-rtdb.asia-southeast1.firebasedatabase.app",
 
-const adminPanel=document.getElementById("adminPanel");
+projectId: "myadmin-1b75f",
 
-const list=document.getElementById("list");
+storageBucket: "myadmin-1b75f.firebasestorage.app",
 
-const title=document.getElementById("title");
+messagingSenderId: "1018557109448",
 
-const desc=document.getElementById("desc");
-
-const thumb=document.getElementById("thumb");
-
-const pdf=document.getElementById("pdf");
-
-// NEW
-const link=document.getElementById("link");
-
-const cat=document.getElementById("cat");
-
-const preview=document.getElementById("preview");
-
-const publishBtn=document.getElementById("publishBtn");
-
-const logoutBtn=document.getElementById("logoutBtn");
-
-const loginBtn=document.getElementById("loginBtn");
-
-const email=document.getElementById("email");
-
-const password=document.getElementById("password");
-
-let imageUrl="";
-
-let fileUrl="";
-
-
-//==============================
-// IMAGE PREVIEW
-//==============================
-
-thumb.onchange=()=>{
-
-const file=thumb.files[0];
-
-if(!file){
-
-preview.style.display="none";
-
-return;
-
-}
-
-preview.src=URL.createObjectURL(file);
-
-preview.style.display="block";
+appId: "1:1018557109448:web:xxxxxxxxxxxxx"
 
 };
 
+// ==========================
+// Initialize Firebase
+// ==========================
 
-//==============================
-// CLOUDINARY SETTINGS
-//==============================
+const app = initializeApp(firebaseConfig);
 
-const CLOUD_NAME="ub0qgzwa";
+// ==========================
+// Authentication
+// ==========================
 
-const UPLOAD_PRESET="news_upload";
+const auth = getAuth(app);
+
+// ==========================
+// Realtime Database
+// ==========================
+
+const db = getDatabase(app);
+
+// ==========================
+// Export
+// ==========================
+
+export {
+
+auth,
+db,
+
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut,
+
+ref,
+push,
+set,
+update,
+remove,
+onValue
+
+};
+
+  // ===============================
+// Firebase Imports
+// ===============================
+
+import {
+
+auth,
+db,
+
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut,
+
+ref,
+push,
+set,
+update,
+remove,
+onValue
+
+} from "./firebase.js";
 
 
-//==============================
-// CLOUDINARY UPLOAD
-//==============================
+// ===============================
+// Elements
+// ===============================
 
-async function uploadCloudinary(file){
+const loader = document.getElementById("loader");
 
-if(!file) return "";
+const loginPage = document.getElementById("loginPage");
 
-const formData=new FormData();
+const dashboard = document.getElementById("dashboard");
 
-formData.append("file",file);
+const email = document.getElementById("email");
 
-formData.append("upload_preset",UPLOAD_PRESET);
+const password = document.getElementById("password");
 
-const response=await fetch(
+const loginBtn = document.getElementById("loginBtn");
 
-`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+const logoutBtn = document.getElementById("logoutBtn");
 
-{
-
-method:"POST",
-
-body:formData
-
-}
-
-);
-
-const data=await response.json();
-
-console.log(data);
-
-if(!response.ok || data.error){
-
-throw new Error(
-
-data.error?.message || "Cloudinary Upload Failed"
-
-);
-
-}
-
-return data.secure_url;
-
-}
+const loginError = document.getElementById("loginError");
 
 
-//==============================
-// ADMIN LOGIN
-//==============================
+// Publish Form
 
-loginBtn.onclick=async()=>{
+const title = document.getElementById("title");
 
-if(email.value.trim()===""){
+const desc = document.getElementById("desc");
 
-alert("Enter Email");
+const thumb = document.getElementById("thumb");
+
+const file = document.getElementById("file");
+
+const link = document.getElementById("link");
+
+const category = document.getElementById("category");
+
+const preview = document.getElementById("preview");
+
+const publishBtn = document.getElementById("publishBtn");
+
+
+// News
+
+const newsList = document.getElementById("newsList");
+
+const search = document.getElementById("search");
+
+
+// ===============================
+// Loader
+// ===============================
+
+window.addEventListener("load", () => {
+
+setTimeout(() => {
+
+loader.style.display = "none";
+
+}, 600);
+
+});
+
+
+// ===============================
+// Login
+// ===============================
+
+loginBtn.onclick = async () => {
+
+loginError.innerHTML = "";
+
+if(email.value.trim() === ""){
+
+loginError.innerHTML = "Enter Email";
 
 return;
 
 }
 
-if(password.value.trim()===""){
+if(password.value.trim() === ""){
 
-alert("Enter Password");
+loginError.innerHTML = "Enter Password";
 
 return;
 
 }
 
-loginBtn.disabled=true;
+loginBtn.disabled = true;
 
-loginBtn.innerHTML="Logging in...";
+loginBtn.innerHTML = "Please Wait...";
 
 try{
 
@@ -447,30 +674,32 @@ password.value
 );
 
 }
-
 catch(error){
 
-alert(error.message);
+console.log(error);
+
+loginError.innerHTML = error.message;
 
 }
 
-loginBtn.disabled=false;
+loginBtn.disabled = false;
 
-loginBtn.innerHTML="Login";
+loginBtn.innerHTML = "Login";
 
 };
 
-//==============================
-// AUTH STATE
-//==============================
+
+// ===============================
+// Auth State
+// ===============================
 
 onAuthStateChanged(auth,(user)=>{
 
 if(user){
 
-loginBox.style.display="none";
+loginPage.style.display="none";
 
-adminPanel.style.display="block";
+dashboard.style.display="block";
 
 loadNews();
 
@@ -478,22 +707,215 @@ loadNews();
 
 else{
 
-loginBox.style.display="block";
+dashboard.style.display="none";
 
-adminPanel.style.display="none";
+loginPage.style.display="flex";
 
 }
 
 });
 
 
-//==============================
-// PUBLISH NEWS
-//==============================
+// ===============================
+// Logout
+// ===============================
 
-publishBtn.onclick=async()=>{
+logoutBtn.onclick = async()=>{
 
-if(title.value.trim()===""){
+const ok = confirm("Logout ?");
+
+if(!ok) return;
+
+await signOut(auth);
+
+};
+
+
+// ===============================
+// Variables
+// ===============================
+
+let imageUrl = "";
+
+let fileUrl = "";
+
+let editId = null;
+
+
+// ===============================
+// Next Part
+// ===============================
+
+// Image Preview
+// Cloudinary Upload
+// Publish News
+// Edit News
+// Delete News
+
+  // =======================================
+// Cloudinary Configuration
+// =======================================
+
+const CLOUD_NAME = "YOUR_CLOUD_NAME";
+
+const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET";
+
+
+// =======================================
+// Image Preview
+// =======================================
+
+thumb.addEventListener("change",()=>{
+
+const img = thumb.files[0];
+
+if(!img){
+
+preview.style.display="none";
+
+preview.src="";
+
+return;
+
+}
+
+preview.src = URL.createObjectURL(img);
+
+preview.style.display="block";
+
+});
+
+
+// =======================================
+// Upload File To Cloudinary
+// =======================================
+
+async function uploadToCloudinary(file){
+
+if(!file) return "";
+
+const formData = new FormData();
+
+formData.append("file",file);
+
+formData.append("upload_preset",UPLOAD_PRESET);
+
+const response = await fetch(
+
+`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+
+{
+
+method:"POST",
+
+body:formData
+
+}
+
+);
+
+const data = await response.json();
+
+if(!response.ok){
+
+throw new Error(
+
+data.error?.message || "Upload Failed"
+
+);
+
+}
+
+return data.secure_url;
+
+}
+
+
+// =======================================
+// Upload Thumbnail
+// =======================================
+
+async function uploadThumbnail(){
+
+if(thumb.files.length===0){
+
+return "";
+
+}
+
+publishBtn.innerHTML="Uploading Thumbnail...";
+
+return await uploadToCloudinary(
+
+thumb.files[0]
+
+);
+
+}
+
+
+// =======================================
+// Upload Attachment
+// =======================================
+
+async function uploadAttachment(){
+
+if(file.files.length===0){
+
+return "";
+
+}
+
+publishBtn.innerHTML="Uploading File...";
+
+return await uploadToCloudinary(
+
+file.files[0]
+
+);
+
+}
+
+
+// =======================================
+// Reset Form
+// =======================================
+
+function resetForm(){
+
+title.value="";
+
+desc.value="";
+
+thumb.value="";
+
+file.value="";
+
+link.value="";
+
+category.selectedIndex=0;
+
+preview.src="";
+
+preview.style.display="none";
+
+imageUrl="";
+
+fileUrl="";
+
+editId=null;
+
+publishBtn.innerHTML="Publish News";
+
+}
+
+  // ======================================
+// Publish / Update News
+// ======================================
+
+publishBtn.addEventListener("click", async () => {
+
+if(title.value.trim()==""){
 
 alert("Enter News Title");
 
@@ -505,39 +927,21 @@ return;
 
 publishBtn.disabled=true;
 
-publishBtn.innerHTML="Uploading...";
+publishBtn.innerHTML="Please Wait...";
 
 try{
 
-imageUrl="";
-
-fileUrl="";
-
 // Upload Thumbnail
 
-if(thumb.files.length>0){
+imageUrl = await uploadThumbnail();
 
-imageUrl=await uploadCloudinary(
-thumb.files[0]
-);
+// Upload Attachment
 
-}
+fileUrl = await uploadAttachment();
 
-// Upload PDF / File
+// News Data
 
-if(pdf.files.length>0){
-
-fileUrl=await uploadCloudinary(
-pdf.files[0]
-);
-
-}
-
-// Save News
-
-const newsRef=push(ref(db,"news"));
-
-await set(newsRef,{
+const newsData={
 
 title:title.value.trim(),
 
@@ -545,41 +949,57 @@ desc:desc.value.trim(),
 
 thumb:imageUrl,
 
-pdf:fileUrl,
+file:fileUrl,
 
-link:link.value.trim(), // NEW
+link:link.value.trim(),
 
-cat:cat.value,
+category:category.value,
 
 date:new Date().toLocaleString()
 
-});
+};
 
-// Success
+// ===============================
+// Update Existing News
+// ===============================
+
+if(editId){
+
+await update(
+
+ref(db,"news/"+editId),
+
+newsData
+
+);
+
+alert("News Updated Successfully");
+
+}
+
+// ===============================
+// Publish New News
+// ===============================
+
+else{
+
+const newsRef=push(ref(db,"news"));
+
+await set(
+
+newsRef,
+
+newsData
+
+);
 
 alert("News Published Successfully");
 
-// Reset Form
+}
 
-title.value="";
+resetForm();
 
-desc.value="";
-
-thumb.value="";
-
-pdf.value="";
-
-link.value=""; // NEW
-
-cat.selectedIndex=0;
-
-preview.src="";
-
-preview.style.display="none";
-
-imageUrl="";
-
-fileUrl="";
+loadNews();
 
 }
 
@@ -591,176 +1011,55 @@ alert(error.message);
 
 }
 
-finally{
-
 publishBtn.disabled=false;
 
 publishBtn.innerHTML="Publish News";
 
+});
+
+
+// ======================================
+// Edit News
+// ======================================
+
+window.editNews=function(id,data){
+
+editId=id;
+
+title.value=data.title||"";
+
+desc.value=data.desc||"";
+
+link.value=data.link||"";
+
+category.value=data.category||"News";
+
+imageUrl=data.thumb||"";
+
+fileUrl=data.file||"";
+
+if(imageUrl){
+
+preview.src=imageUrl;
+
+preview.style.display="block";
+
 }
 
-};
+else{
 
-
-//==============================
-// LOAD NEWS
-//==============================
-
-function loadNews(){
-
-const newsRef=ref(db,"news");
-
-onValue(newsRef,(snapshot)=>{
-
-list.innerHTML="";
-
-if(!snapshot.exists()){
-
-list.innerHTML="<h3>No News Available</h3>";
-
-return;
+preview.style.display="none";
 
 }
 
-let html="";
+publishBtn.innerHTML="Update News";
 
-snapshot.forEach((child)=>{
+window.scrollTo({
 
-const n=child.val();
+top:0,
 
-html+=`
-
-<div class="news-item">
-
-${n.thumb?`
-
-<img
-src="${n.thumb}"
-alt="Thumbnail">
-
-`:""}
-
-<div class="news-content">
-
-<h3>${n.title}</h3>
-
-<div class="small">
-
-${n.cat} | ${n.date}
-
-</div>
-
-<p>${n.desc}</p>
-
-${n.thumb?`
-
-<a
-href="${n.thumb}"
-target="_blank">
-
-🖼 Open Image
-
-</a>
-
-<br><br>
-
-`:""}
-
-${n.pdf?`
-
-<a
-href="${n.pdf}"
-target="_blank">
-
-📄 Open File
-
-</a>
-
-<br><br>
-
-`:""}
-
-${n.link?`
-
-<a
-href="${n.link}"
-target="_blank">
-
-🔗 Open Link
-
-</a>
-
-<br><br>
-
-`:""}
-
-<button
-onclick="deleteNews('${child.key}')">
-
-Delete
-
-</button>
-
-</div>
-
-</div>
-
-`;
+behavior:"smooth"
 
 });
 
-list.innerHTML=html;
-
-});
-
-}
-
-//==============================
-// DELETE NEWS
-//==============================
-
-window.deleteNews=async(id)=>{
-
-const ok=confirm("Delete this news?");
-
-if(!ok) return;
-
-try{
-
-await remove(ref(db,"news/"+id));
-
-alert("News Deleted");
-
-}
-
-catch(error){
-
-alert(error.message);
-
-}
-
 };
-
-
-//==============================
-// LOGOUT
-//==============================
-
-logoutBtn.onclick=()=>{
-
-signOut(auth);
-
-};
-
-
-//==============================
-// END SCRIPT
-//==============================
-
-</script>
-
-</body>
-
-</html>
-  
-  

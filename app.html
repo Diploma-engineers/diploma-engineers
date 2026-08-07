@@ -493,29 +493,52 @@ body {
   });
 
   // UI Navigation Logic
+// UI NAVIGATION & MOBILE BACK BUTTON LOGIC
+  // ==========================================
+  const defaultPage = "homePage";
+
+  // 1. Listen for Mobile Hardware Back Button
+  window.addEventListener("popstate", function(event) {
+    if (event.state && event.state.pageId) {
+      renderPageUI(event.state.pageId);
+    } else {
+      renderPageUI(defaultPage);
+    }
+  });
+
+  // 2. Navigate and Push to Browser History
   window.navigateTo = function(pageId) {
+    // History API use karke URL hash update karna (Mobile Back Button support ke liye)
+    history.pushState({ pageId: pageId }, "", "#" + pageId);
+    renderPageUI(pageId);
+  };
+
+  // 3. UI App Header Back Button (Matches Mobile Back Button)
+  window.goBack = function() {
+    window.history.back(); // Ye native browser back feature trigger karega
+  };
+
+  // 4. Core UI Render Function
+  function renderPageUI(pageId) {
+    // Hide all pages
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
-    document.getElementById(pageId).classList.add("active-page");
     
+    // Show Target Page
+    const targetPage = document.getElementById(pageId);
+    if(targetPage) targetPage.classList.add("active-page");
+    
+    // Update Bottom Nav Highlighting
     document.querySelectorAll(".nav-link-btn").forEach(b => b.classList.remove("active"));
     const activeTab = document.getElementById("tab-" + pageId);
     if(activeTab) activeTab.classList.add("active");
 
+    // Show/Hide Header Back Button
     const backBtn = document.getElementById("headerBackBtn");
-    backBtn.style.display = (pageId === "homePage") ? "none" : "flex";
+    if(backBtn) backBtn.style.display = (pageId === defaultPage) ? "none" : "flex";
 
-    if (pageHistory[pageHistory.length - 1] !== pageId) {
-      pageHistory.push(pageId);
-    }
+    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  window.goBack = function() {
-    if (pageHistory.length > 1) {
-      pageHistory.pop();
-      navigateTo(pageHistory[pageHistory.length - 1]);
-      pageHistory.pop(); 
-    }
+  }
   };
 </script>
 </body>

@@ -458,6 +458,63 @@ body {
 .update-title { font-size: 15px; font-weight: 700; margin: 0; }
 .update-text { font-size: 12px; color: var(--muted-text); margin: 6px 0 12px; line-height: 1.3; }
 
+/* CASIO CALCULATOR STYLES */
+.calculator-container {
+  max-width: 360px;
+  margin: 10px auto;
+  background: #2b2b2b;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  border: 2px solid #3a3a3a;
+}
+.calc-screen {
+  background: #9ead8c;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: right;
+  margin-bottom: 14px;
+  border: 2px inset #7c8a6f;
+  min-height: 60px;
+}
+.calc-screen-sub {
+  font-size: 11px;
+  color: #333;
+  font-family: monospace;
+  min-height: 14px;
+  overflow: hidden;
+}
+.calc-screen-main {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  font-family: monospace;
+  overflow-x: auto;
+}
+.calc-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.calc-btn {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #b5b5b5;
+}
+.calc-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #b5b5b5;
+}
+.calc-btn.op { background: #ff9f43; color: white; box-shadow: 0 3px 0 #d97d22; }
+.calc-btn.func { background: #4a69bd; color: white; box-shadow: 0 3px 0 #324c91; }
+.calc-btn.clear { background: #eb4d4b; color: white; box-shadow: 0 3px 0 #b72d2b; }
+
 /* SUB-NAVIGATION BAR */
 .nav-wrapper { margin: 10px 0; width: 100%; }
 .top-btns {
@@ -596,7 +653,7 @@ body {
       <div class="card-box" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i><p>Branch</p></div>
       <div class="card-box" onclick="navigateTo('booksPage')"><i class="fas fa-book"></i><p>E-Books</p></div>
       <div class="card-box" onclick="navigateTo('updatePage')"><i class="fas fa-bell"></i><p>Updates</p></div>
-      <div class="card-box" onclick="navigateTo('communityPage')"><i class="fas fa-users"></i><p>Community</p></div>
+      <div class="card-box" onclick="navigateTo('casioPage')"><i class="fas fa-calculator"></i><p>Engineering Casio</p></div>
     </div>
 
     <div class="notice">
@@ -684,6 +741,47 @@ body {
     </div>
   </div>
 
+  <!-- ENGINEERING CASIO PAGE -->
+  <div id="casioPage" class="page">
+    <div class="section-title">Engineering Casio Calculator</div>
+    <div class="calculator-container">
+      <div class="calc-screen">
+        <div class="calc-screen-sub" id="calcSub">0</div>
+        <div class="calc-screen-main" id="calcMain">0</div>
+      </div>
+      <div class="calc-buttons">
+        <button class="calc-btn clear" onclick="calcClear()">AC</button>
+        <button class="calc-btn func" onclick="calcFn('sin')">sin</button>
+        <button class="calc-btn func" onclick="calcFn('cos')">cos</button>
+        <button class="calc-btn op" onclick="calcAppend('/')">÷</button>
+
+        <button class="calc-btn func" onclick="calcFn('tan')">tan</button>
+        <button class="calc-btn" onclick="calcAppend('7')">7</button>
+        <button class="calc-btn" onclick="calcAppend('8')">8</button>
+        <button class="calc-btn" onclick="calcAppend('9')">9</button>
+
+        <button class="calc-btn op" onclick="calcAppend('*')">×</button>
+        <button class="calc-btn func" onclick="calcFn('sqrt')">√</button>
+        <button class="calc-btn" onclick="calcAppend('4')">4</button>
+        <button class="calc-btn" onclick="calcAppend('5')">5</button>
+
+        <button class="calc-btn" onclick="calcAppend('6')">6</button>
+        <button class="calc-btn op" onclick="calcAppend('-')">-</button>
+        <button class="calc-btn func" onclick="calcFn('pow')">x^y</button>
+        <button class="calc-btn" onclick="calcAppend('1')">1</button>
+
+        <button class="calc-btn" onclick="calcAppend('2')">2</button>
+        <button class="calc-btn" onclick="calcAppend('3')">3</button>
+        <button class="calc-btn op" onclick="calcAppend('+')">+</button>
+        <button class="calc-btn func" onclick="calcPi()">π</button>
+
+        <button class="calc-btn" onclick="calcAppend('0')">0</button>
+        <button class="calc-btn" onclick="calcAppend('.')">.</button>
+        <button class="calc-btn op" style="grid-column: span 2; background: #20bf6b;" onclick="calcEvaluate()">=</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PROFILE PAGE -->
   <div id="profilePage" class="page">
     <div class="section-title">My Profile</div>
@@ -722,22 +820,12 @@ body {
     </div>
   </div>
 
-  <!-- COMMUNITY PAGE -->
-  <div id="communityPage" class="page">
-    <div class="section-title">Branch Groups</div>
-    <div class="grid-2">
-      <a href="https://chat.whatsapp.com/BpeRT0ksGpN90hUB89NCvk" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>CSE Group</p></a>
-      <a href="https://chat.whatsapp.com/JrNYhCka0OV6Sfgmy4fISD" target="_blank" class="card-box"><i class="fas fa-bolt"></i><p>Electrical Group</p></a>
-      <a href="https://chat.whatsapp.com/Dk6XuqDLsnR4" target="_blank" class="card-box"><i class="fas fa-building"></i><p>Civil Group</p></a>
-    </div>
-  </div>
-
   <!-- BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav">
     <button class="nav-link-btn active" onclick="navigateTo('homePage', this)"><i class="fas fa-home"></i>Home</button>
     <button class="nav-link-btn" onclick="navigateTo('notesPage', this)"><i class="fas fa-code-branch"></i>Branch</button>
     <button class="nav-link-btn" onclick="navigateTo('booksPage', this)"><i class="fas fa-book"></i>E-Books</button>
-    <button class="nav-link-btn" onclick="navigateTo('updatePage', this)"><i class="fas fa-bell"></i>Updates</button>
+    <button class="nav-link-btn" onclick="navigateTo('casioPage', this)"><i class="fas fa-calculator"></i>Casio</button>
   </div>
 </div>
 
@@ -819,6 +907,49 @@ function logoutApp() {
   document.getElementById('authPage').style.display = 'flex';
 }
 
+// Casio Scientific Calculator Logic
+let calcExpression = '';
+function calcAppend(val) {
+  calcExpression += val;
+  document.getElementById('calcMain').innerText = calcExpression;
+}
+function calcClear() {
+  calcExpression = '';
+  document.getElementById('calcMain').innerText = '0';
+  document.getElementById('calcSub').innerText = '0';
+}
+function calcPi() {
+  calcExpression += Math.PI.toFixed(4);
+  document.getElementById('calcMain').innerText = calcExpression;
+}
+function calcFn(fn) {
+  try {
+    let val = eval(calcExpression || '0');
+    let res = 0;
+    if(fn === 'sin') res = Math.sin(val * Math.PI / 180);
+    if(fn === 'cos') res = Math.cos(val * Math.PI / 180);
+    if(fn === 'tan') res = Math.tan(val * Math.PI / 180);
+    if(fn === 'sqrt') res = Math.sqrt(val);
+    if(fn === 'pow') { calcExpression += '**'; document.getElementById('calcMain').innerText = calcExpression; return; }
+    
+    document.getElementById('calcSub').innerText = `${fn}(${val})`;
+    calcExpression = res.toString();
+    document.getElementById('calcMain').innerText = calcExpression;
+  } catch(e) {
+    document.getElementById('calcMain').innerText = 'Error';
+  }
+}
+function calcEvaluate() {
+  try {
+    document.getElementById('calcSub').innerText = calcExpression;
+    let result = eval(calcExpression);
+    calcExpression = result.toString();
+    document.getElementById('calcMain').innerText = calcExpression;
+  } catch(e) {
+    document.getElementById('calcMain').innerText = 'Error';
+  }
+}
+
 // Fast Google Sign-In Initialization
 window.onload = function() {
   const saved = localStorage.getItem('diploma_user');
@@ -830,7 +961,7 @@ window.onload = function() {
 
   if (typeof google !== 'undefined') {
     google.accounts.id.initialize({
-      client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with valid Client ID if needed
+      client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
       callback: handleGoogleResponse
     });
     google.accounts.id.renderButton(
@@ -841,7 +972,6 @@ window.onload = function() {
 };
 
 function handleGoogleResponse(response) {
-  // Decode JWT payload for fast login
   let base64Url = response.credential.split('.')[1];
   let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
   let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {

@@ -10,9 +10,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Google Identity Services (GIS) for Fast Google Login -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
 <style>
 :root {
   --primary: #ff6b00;
@@ -47,6 +44,7 @@ body {
   flex-direction: column;
 }
 
+/* Custom Scrollbar Hide */
 ::-webkit-scrollbar { display: none; }
 
 /* AUTH PAGE */
@@ -55,7 +53,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: 24px;
   background: var(--bg-white);
 }
 
@@ -64,55 +62,47 @@ body {
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 32px 24px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-md);
-  will-change: transform, opacity;
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .logo {
   text-align: center;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   letter-spacing: -0.5px;
   color: var(--dark-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-/* Circular App Logo */
-.app-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--primary);
-  transform: translateZ(0);
 }
 
 .logo span { color: var(--primary); }
 
 .auth-box h2 {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--dark-text);
 }
 
-.form-group { margin-bottom: 12px; }
+.form-group { margin-bottom: 14px; }
 
 .auth-box input, .auth-box select {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1.5px solid var(--border-light);
   outline: none;
   font-size: 14px;
+  transition: all 0.15s ease;
   background-color: var(--surface-gray);
   color: var(--dark-text);
 }
@@ -125,29 +115,43 @@ body {
 
 .btn-main {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border: none;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: white;
   font-size: 15px;
   font-weight: 700;
+  transition: transform 0.1s, box-shadow 0.1s;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25);
 }
 
 .btn-main:active { transform: scale(0.98); }
 
-.btn-google-container {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
+.btn-google {
   width: 100%;
+  padding: 14px;
+  background: #ffffff;
+  color: #374151;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  transition: background 0.15s;
 }
+
+.btn-google:active { background: var(--surface-gray); }
 
 .switch {
   text-align: center;
-  margin-top: 14px;
+  margin-top: 18px;
   font-size: 13px;
   font-weight: 600;
   color: var(--primary);
@@ -159,14 +163,14 @@ body {
   display: none;
   min-height: 100vh;
   width: 100%;
-  padding-bottom: 80px;
+  padding-bottom: 90px;
 }
 
-/* TOP NAVBAR - Zero Top Gap */
+/* TOP NAVBAR */
 .navbar {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  padding: 10px 16px;
+  padding: 14px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -180,14 +184,14 @@ body {
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .header-back-btn {
   background: var(--surface-gray);
   border: 1px solid var(--border-light);
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: none;
   align-items: center;
@@ -198,19 +202,15 @@ body {
 }
 
 .nav-logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--dark-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .nav-logo span { color: var(--primary); }
-.nav-logo .app-logo { width: 32px; height: 32px; }
 
 .profile-icon i {
-  font-size: 26px;
+  font-size: 28px;
   color: var(--dark-text);
   cursor: pointer;
 }
@@ -218,34 +218,50 @@ body {
 /* FULL-WIDTH RESPONSIVE PAGES */
 .page {
   display: none;
-  padding: 12px 10px;
+  padding: 20px 10px;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  contain: content;
+  animation: pageSlide 0.1s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .active-page { display: block; }
 
+@keyframes pageSlide {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* HERO BANNER */
 .banner {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
-  padding: 20px;
+  padding: 28px;
   border-radius: var(--radius-lg);
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(255, 107, 0, 0.2);
+  box-shadow: 0 10px 20px rgba(255, 107, 0, 0.2);
 }
 
-.banner h2 { font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
-.banner p { font-size: 13px; opacity: 0.95; margin-top: 4px; margin-bottom: 0; position: relative; z-index: 1; }
+.banner::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  top: -40px;
+  right: -40px;
+}
+
+.banner h2 { font-size: 24px; font-weight: 800; position: relative; z-index: 1; }
+.banner p { font-size: 14px; opacity: 0.95; margin-top: 6px; margin-bottom: 0; position: relative; z-index: 1; }
 
 /* SECTIONS */
 .section-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  margin: 16px 0 10px 0;
+  margin: 24px 0 14px 0;
   color: var(--dark-text);
   display: flex;
   align-items: center;
@@ -257,14 +273,14 @@ body {
 /* HORIZONTAL SCROLL */
 .scroll-container {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 10px;
 }
 
 .subject-card {
-  min-width: 160px;
-  height: 200px;
+  min-width: 180px;
+  height: 220px;
   border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
@@ -277,34 +293,55 @@ body {
 
 .subject-card .overlay {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 10px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
   background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
 }
 
-.subject-card h4 { font-size: 13px; font-weight: 700; color: white; margin: 0; }
+.subject-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
 
-/* GRIDS */
+/* RESPONSIVE GRID LAYOUTS */
 .grid-2, .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
 
 @media (min-width: 640px) {
-  .grid-2, .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grid-2, .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
 }
+
 @media (min-width: 992px) {
-  .grid-2, .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-2, .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid-2 {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 
 .card-box, .card {
   background: var(--bg-white);
-  padding: 16px 12px;
+  padding: 20px 14px;
   border-radius: var(--radius-md);
   text-align: center;
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-subtle);
+  transition: transform 0.1s ease;
   cursor: pointer;
   text-decoration: none;
   color: var(--dark-text);
@@ -313,11 +350,11 @@ body {
   justify-content: space-between;
 }
 
-.card-box:active, .card:hover { transform: scale(0.98); }
+.card-box:active, .card:hover { transform: scale(0.97); }
 
 .card-box i, .card-icon-box {
-  font-size: 24px;
-  margin-bottom: 6px;
+  font-size: 28px;
+  margin-bottom: 8px;
   color: var(--primary);
   display: inline-block;
 }
@@ -329,12 +366,13 @@ body {
   line-height: 1.3;
 }
 
-.card h3 { font-size: 14px; margin-bottom: 10px; }
+.card h3 { font-size: 15px; margin-bottom: 12px; }
 
+/* BUTTON GRID INSIDE CARDS */
 .btn-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
+  gap: 8px;
   margin-top: auto;
 }
 
@@ -342,41 +380,70 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
   background: var(--surface-gray);
   color: var(--dark-text);
   text-decoration: none;
   font-size: 11px;
   font-weight: 700;
   border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
 }
 
-.btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-.btn-primary { background: var(--primary); color: #fff; border: none; grid-column: span 2; padding: 8px; }
+.btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  grid-column: span 2;
+  padding: 10px;
+}
 
 /* NOTICES & ALERTS */
 .notice {
   background: #fffbe2;
   border: 1px solid #ffe58f;
   border-left: 4px solid #ffc107;
-  padding: 12px 14px;
+  padding: 16px;
   border-radius: var(--radius-md);
-  margin-top: 14px;
+  margin-top: 20px;
 }
 
-.notice h5 { font-size: 13px; font-weight: 700; color: #856404; margin-bottom: 2px; }
-.notice p { font-size: 12px; color: #856404; margin: 0; line-height: 1.3; }
+.notice h5 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #856404;
+  margin-bottom: 4px;
+}
+
+.notice p {
+  font-size: 13px;
+  color: #856404;
+  margin: 0;
+  line-height: 1.4;
+}
 
 /* NOTES & STORE GRIDS */
 .notes-grid, .store-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
-@media (min-width: 640px) { .notes-grid, .store-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 992px) { .notes-grid, .store-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+
+@media (min-width: 640px) {
+  .notes-grid, .store-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 992px) {
+  .notes-grid, .store-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+}
 
 .book-card, .store-card {
   background: var(--bg-white);
@@ -390,155 +457,144 @@ body {
   flex-direction: column;
 }
 
-.book-card img { width: 100%; height: 120px; object-fit: cover; background: var(--surface-gray); }
-.book-card-content { padding: 10px; }
-.book-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
-.book-card p { font-size: 11px; color: var(--muted-text); margin: 0; }
+.book-card img, .store-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: var(--surface-gray);
+}
+
+.book-card-content, .store-info { padding: 12px; }
+
+.book-card h3, .store-info h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.book-card p, .store-info p {
+  font-size: 12px;
+  color: var(--muted-text);
+  margin: 0;
+  line-height: 1.3;
+}
 
 /* PROFILE PAGE */
 .profile-box {
   background: var(--bg-white);
-  padding: 20px;
+  padding: 28px;
   border-radius: var(--radius-lg);
   text-align: center;
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-subtle);
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
 .profile-avatar {
-  width: 70px; height: 70px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: var(--surface-gray);
-  border: 2px solid var(--primary);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 10px;
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
   color: var(--primary);
-  font-size: 30px;
-  overflow: hidden;
+  font-size: 36px;
 }
 
 .profile-details {
-  margin-top: 14px;
+  margin-top: 18px;
   text-align: left;
   background: var(--surface-gray);
   border: 1px solid var(--border-light);
-  padding: 12px 14px;
+  padding: 16px;
   border-radius: var(--radius-md);
 }
 
-.profile-details p { margin-bottom: 8px; font-size: 12px; font-weight: 500; display: flex; justify-content: space-between; }
+.profile-details p {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
 .profile-details p:last-child { margin-bottom: 0; }
 .profile-details span { font-weight: 700; color: var(--dark-text); }
 
 /* UPDATE CARDS */
-.update-container { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 768px) { .update-container { grid-template-columns: repeat(2, 1fr); } }
+.update-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .update-container { grid-template-columns: repeat(2, 1fr); }
+}
 
 .update-box {
   background: var(--bg-white);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px;
   text-align: center;
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-subtle);
 }
 
 .update-icon {
-  width: 50px; height: 50px;
-  margin: 0 auto 10px;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
 }
+
 .update-icon.wa { background: #e9fff1; color: #25D366; }
 .update-icon.tg { background: #e8f4fd; color: #0088cc; }
 
-.update-title { font-size: 15px; font-weight: 700; margin: 0; }
-.update-text { font-size: 12px; color: var(--muted-text); margin: 6px 0 12px; line-height: 1.3; }
+.update-title { font-size: 16px; font-weight: 700; margin: 0; }
+.update-text { font-size: 13px; color: var(--muted-text); margin: 8px 0 16px; line-height: 1.4; }
 
-/* CASIO CALCULATOR STYLES */
-.calculator-container {
-  max-width: 360px;
-  margin: 10px auto;
-  background: #2b2b2b;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-  border: 2px solid #3a3a3a;
+/* SUB-NAVIGATION BAR FOR CIVIL PORTION */
+.nav-wrapper {
+  margin: 16px 0;
+  width: 100%;
 }
-.calc-screen {
-  background: #9ead8c;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: right;
-  margin-bottom: 14px;
-  border: 2px inset #7c8a6f;
-  min-height: 60px;
-}
-.calc-screen-sub {
-  font-size: 11px;
-  color: #333;
-  font-family: monospace;
-  min-height: 14px;
-  overflow: hidden;
-}
-.calc-screen-main {
-  font-size: 22px;
-  font-weight: 700;
-  color: #111;
-  font-family: monospace;
-  overflow-x: auto;
-}
-.calc-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-.calc-btn {
-  background: #e0e0e0;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #222;
-  cursor: pointer;
-  box-shadow: 0 3px 0 #b5b5b5;
-}
-.calc-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #b5b5b5;
-}
-.calc-btn.op { background: #ff9f43; color: white; box-shadow: 0 3px 0 #d97d22; }
-.calc-btn.func { background: #4a69bd; color: white; box-shadow: 0 3px 0 #324c91; }
-.calc-btn.clear { background: #eb4d4b; color: white; box-shadow: 0 3px 0 #b72d2b; }
 
-/* SUB-NAVIGATION BAR */
-.nav-wrapper { margin: 10px 0; width: 100%; }
 .top-btns {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--surface-gray);
-  padding: 6px;
-  border-radius: 14px;
+  padding: 8px;
+  border-radius: 16px;
   border: 1px solid var(--border-light);
   overflow-x: auto;
 }
 
 .branch-btn {
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: none;
   border-radius: 10px;
   background: transparent;
   color: var(--muted-text);
   cursor: pointer;
   font-weight: 700;
-  font-size: 12px;
-  display: flex; align-items: center; gap: 6px;
-  white-space: nowrap; flex-shrink: 0;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .branch-btn.active {
@@ -550,12 +606,14 @@ body {
 /* BOTTOM NAVIGATION BAR */
 .bottom-nav {
   position: fixed;
-  bottom: 0; left: 0; width: 100%;
-  background: rgba(255, 255, 255, 0.98);
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0 6px;
+  padding: 10px 0 8px;
   border-top: 1px solid var(--border-light);
   z-index: 99;
 }
@@ -566,26 +624,36 @@ body {
   font-size: 11px;
   font-weight: 600;
   text-align: center;
-  border: none; background: none; padding: 0; flex: 1; cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  flex: 1;
+  cursor: pointer;
 }
 
-.bottom-nav .nav-link-btn i { display: block; font-size: 16px; margin-bottom: 2px; }
-.bottom-nav .nav-link-btn.active { color: var(--primary); }
+.bottom-nav .nav-link-btn i {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 3px;
+}
+
+.bottom-nav .nav-link-btn.active {
+  color: var(--primary);
+}
 </style>
 </head>
 <body>
 
 <!-- AUTH PAGE -->
-<div id="authPage">
+<div id="authPage" style="display:none;">
   <div class="auth-box">
-    <div class="logo">
-      <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Logo" class="app-logo">
-      Diploma <span>Engineers</span>
-    </div>
+    <div class="logo">Diploma <span>Engineers</span></div>
     <h2 id="formTitle">Login</h2>
     
     <div id="registerFields" style="display:none;">
-      <div class="form-group"><input type="text" id="name" placeholder="Full Name"></div>
+      <div class="form-group">
+        <input type="text" id="name" placeholder="Full Name">
+      </div>
       <div class="form-group">
         <select id="branch">
           <option value="Civil Engineering" selected>Civil Engineering</option>
@@ -597,16 +665,23 @@ body {
           <option value="Agriculture Engineering">Agriculture Engineering</option>
         </select>
       </div>
-      <div class="form-group"><input type="text" id="mobile" placeholder="Mobile Number"></div>
+      <div class="form-group">
+        <input type="text" id="mobile" placeholder="Mobile Number">
+      </div>
     </div>
     
-    <div class="form-group"><input type="email" id="email" placeholder="Email Address"></div>
-    <div class="form-group"><input type="password" id="password" placeholder="Password"></div>
+    <div class="form-group">
+      <input type="email" id="email" placeholder="Email Address">
+    </div>
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password">
+    </div>
     
     <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
     
-    <!-- Ultra-Fast Google One-Tap & Sign-In Container -->
-    <div class="btn-google-container" id="g_id_signin"></div>
+    <button class="btn-google" onclick="googleLogin()">
+      <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
+    </button>
 
     <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
   </div>
@@ -619,10 +694,7 @@ body {
   <div class="navbar">
     <div class="nav-left">
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-      <div class="nav-logo">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Logo" class="app-logo">
-        Diploma <span>Engineers</span>
-      </div>
+      <div class="nav-logo">Diploma <span>Engineers</span></div>
     </div>
     <div class="profile-icon" onclick="navigateTo('profilePage')">
       <i class="fas fa-user-circle"></i>
@@ -631,11 +703,14 @@ body {
 
   <!-- HOME PAGE -->
   <div id="homePage" class="page active-page">
-    <div class="banner">
-      <h2>Welcome, <span id="userName">Engineer</span> 👋</h2>
-      <p>Study Materials • Branch Notes • E-Books • Updates</p>
-    </div>
+    <section class="hero">
+      <div class="banner">
+        <h2>Welcome, <span id="userName">Engineer</span> 👋</h2>
+        <p>Study Materials • Branch Notes • E-Books • Updates</p>
+      </div>
+    </section>
 
+    <!-- TRENDING SUBJECTS -->
     <div class="section-title">Trending <span>Subjects</span></div>
     <div class="scroll-container">
       <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="subject-card">
@@ -646,19 +721,44 @@ body {
         <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png" alt="Mechanics">
         <div class="overlay"><h4>Engineering Mechanics</h4></div>
       </a>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf" target="_blank" class="subject-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png" alt="Steel Structure">
+        <div class="overlay"><h4>Design Of Steel Structures</h4></div>
+      </a>
     </div>
 
+    <!-- EXPLORE GRID -->
     <div class="section-title">Explore</div>
     <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i><p>Branch</p></div>
-      <div class="card-box" onclick="navigateTo('booksPage')"><i class="fas fa-book"></i><p>E-Books</p></div>
-      <div class="card-box" onclick="navigateTo('updatePage')"><i class="fas fa-bell"></i><p>Updates</p></div>
-      <div class="card-box" onclick="navigateTo('casioPage')"><i class="fas fa-calculator"></i><p>Engineering Casio</p></div>
+      <div class="card-box" onclick="navigateTo('notesPage')">
+        <i class="fas fa-code-branch"></i>
+        <p>Branch</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('jobPage')">
+        <i class="fas fa-briefcase"></i>
+        <p>Jobs</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('admitPage')">
+        <i class="fas fa-id-card"></i>
+        <p>Admit Card</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('resultPage')">
+        <i class="fas fa-square-poll-vertical"></i>
+        <p>Result</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('updatePage')">
+        <i class="fas fa-bell"></i>
+        <p>Updates</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('communityPage')">
+        <i class="fas fa-users"></i>
+        <p>Community</p>
+      </div>
     </div>
 
     <div class="notice">
       <h5>Latest Announcement 📢</h5>
-      <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are updated instantly.</p>
+      <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
     </div>
   </div>
 
@@ -676,20 +776,45 @@ body {
     </div>
   </div>
 
+  <!-- BRANCH DETAILS PAGES -->
+  <div id="computerscience" class="page">
+    <div class="section-title">Computer Science Materials</div>
+    <div class="notice">
+      <h5>CSE Notes & Materials 💻</h5>
+      <p>Access computer science notes, programming manuals, and ebooks here.</p>
+    </div>
+  </div>
+
   <!-- CIVIL ENGINEERING PORTAL -->
   <div id="civil" class="page">
+    
+    <!-- SUB NAVIGATION BAR -->
     <div class="nav-wrapper">
       <div class="top-btns">
-        <button class="branch-btn active" onclick="showCivilSection('civil-semester', this)"><i class="fas fa-graduation-cap"></i> Semester</button>
-        <button class="branch-btn" onclick="showCivilSection('civil-enotes', this)"><i class="fas fa-book-open"></i> E-Notes</button>
-        <button class="branch-btn" onclick="showCivilSection('civil-syllabus', this)"><i class="fas fa-scroll"></i> Syllabus</button>
-        <button class="branch-btn" onclick="showCivilSection('civil-admin', this)"><i class="fas fa-user-shield"></i> Admin</button>
-        <button class="branch-btn" onclick="showCivilSection('civil-join', this)"><i class="fab fa-whatsapp"></i> Join Us</button>
+        <button class="branch-btn active" onclick="showSection('civil-semester', this)">
+          <i class="fas fa-graduation-cap"></i> Semester
+        </button>
+        <button class="branch-btn" onclick="showSection('civil-enotes', this)">
+          <i class="fas fa-book-open"></i> E-Notes
+        </button>
+        <button class="branch-btn" onclick="showSection('civil-syllabus', this)">
+          <i class="fas fa-scroll"></i> Syllabus
+        </button>
+        <button class="branch-btn" onclick="showSection('civil-job', this)">
+          <i class="fas fa-briefcase"></i> Jobs
+        </button>
+        <button class="branch-btn" onclick="showSection('civil-admin', this)">
+          <i class="fas fa-user-shield"></i> Admin
+        </button>
+        <button class="branch-btn" onclick="showSection('civil-join', this)">
+          <i class="fab fa-whatsapp"></i> Join Us
+        </button>
       </div>
     </div>
 
+    <!-- SEMESTER SECTION -->
     <div id="civil-semester" class="civil-section" style="display:block;">
-      <div class="section-title">Semester 1 & 2 Core</div>
+      <div class="section-title">Semester 1 (Common)</div>
       <div class="grid">
         <div class="card">
           <div class="card-icon-box"><i class="fas fa-calculator"></i></div>
@@ -697,36 +822,116 @@ body {
           <div class="btn-grid">
             <a href="https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
             <a href="https://drive.google.com/file/d/1dFyBSWMM7M1X87eFsdwd_JtgZWXaZ6w7/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+            <a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon-box"><i class="fas fa-atom"></i></div>
+          <h3>Applied Physics I</h3>
+          <div class="btn-grid">
+            <a href="https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+            <a href="https://drive.google.com/file/d/1FVUMMrHpT7HwlCbIJGdxBB4ZWr8oI0ra/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+            <a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+            <a href="https://drive.google.com/file/d/1hCYeiS3GvpwEQuXq_ov8invYusfwoYix/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- E-NOTES SECTION -->
     <div id="civil-enotes" class="civil-section" style="display:none;">
-      <div class="notice"><h5>Civil E-Notes</h5><p>Access curated PDF notes instantly.</p></div>
-    </div>
-    <div id="civil-syllabus" class="civil-section" style="display:none;">
-      <div class="notice"><h5>BTEUP Official Syllabus</h5><p>Curriculum guidelines for civil branch.</p></div>
-    </div>
-    <div id="civil-admin" class="civil-section" style="display:none;">
-      <div class="profile-box" style="margin-top:10px;">
-        <div class="profile-avatar"><i class="fas fa-user-shield"></i></div>
-        <h3>Admin Support</h3>
-        <p style="font-size: 11px; color: var(--muted-text);">Civil Engineering Library Manager</p>
+      <div class="grid">
+        <div class="book-card">
+          <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
+          <div class="book-card-content">
+            <h3>Applied Physics 2nd</h3>
+            <p>Diploma Engineering Physics PDF</p>
+            <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" target="_blank" class="btn btn-primary" style="margin-top:8px;"><i class="fas fa-folder-open"></i> Open PDF</a>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- SYLLABUS SECTION -->
+    <div id="civil-syllabus" class="civil-section" style="display:none;">
+      <div class="notice">
+        <h5>BTEUP Official Syllabus</h5>
+        <p>Curriculum guidelines and scheme of studies for civil branch.</p>
+      </div>
+    </div>
+
+    <!-- JOBS SECTION -->
+    <div id="civil-job" class="civil-section" style="display:none;">
+      <div class="section-title">Civil Careers</div>
+      <div class="notice">
+        <h5>Junior Engineer Openings</h5>
+        <p>Explore latest recruitment drives for civil graduates.</p>
+      </div>
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="civil-admin" class="civil-section" style="display:none;">
+      <div class="profile-box" style="margin-top:20px;">
+        <div class="profile-avatar"><i class="fas fa-user-shield"></i></div>
+        <h3>Admin Support</h3>
+        <p style="font-size: 12px; color: var(--muted-text);">Civil Engineering Library Manager</p>
+        <div class="btn-grid" style="margin-top:16px;">
+          <a href="tel:+910000000000" class="btn"><i class="fas fa-phone"></i> Call</a>
+          <a href="mailto:support@civilnotes.com" class="btn"><i class="fas fa-envelope"></i> Email</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOIN SECTION -->
     <div id="civil-join" class="civil-section" style="display:none;">
-      <div class="notice"><h5>WhatsApp Civil Group</h5><p>Connect with peers to solve assignments.</p></div>
+      <div class="section-title">Community Group</div>
+      <div class="notice">
+        <h5>WhatsApp Civil Group</h5>
+        <p>Connect with peers to solve assignments and share updates.</p>
+      </div>
     </div>
   </div>
 
-  <!-- OTHER BRANCH PLACEHOLDERS -->
-  <div id="computerscience" class="page"><div class="notice"><h5>CSE Notes & Materials 💻</h5><p>Programming manuals and ebooks.</p></div></div>
-  <div id="electrical" class="page"><div class="notice"><h5>Electrical Notes ⚡</h5><p>Power systems and machines.</p></div></div>
-  <div id="electronics" class="page"><div class="notice"><h5>Electronics Notes 🔌</h5><p>Microprocessors and comms.</p></div></div>
-  <div id="mechanical" class="page"><div class="notice"><h5>Mechanical Notes ⚙️</h5><p>Thermodynamics and SOM.</p></div></div>
-  <div id="it" class="page"><div class="notice"><h5>IT Materials 🌐</h5><p>Web technology and networking.</p></div></div>
-  <div id="agriculture" class="page"><div class="notice"><h5>Agriculture Notes 🌾</h5><p>Farm machinery and soil conservation.</p></div></div>
+  <div id="electrical" class="page">
+    <div class="section-title">Electrical Engineering Materials</div>
+    <div class="notice">
+      <h5>Electrical Notes & Materials ⚡</h5>
+      <p>Access circuits, power systems, and machine theory notes here.</p>
+    </div>
+  </div>
 
+  <div id="electronics" class="page">
+    <div class="section-title">Electronics Engineering Materials</div>
+    <div class="notice">
+      <h5>Electronics Notes & Materials 🔌</h5>
+      <p>Access digital electronics, microprocessors, and communication notes here.</p>
+    </div>
+  </div>
+
+  <div id="mechanical" class="page">
+    <div class="section-title">Mechanical Engineering Materials</div>
+    <div class="notice">
+      <h5>Mechanical Notes & Materials ⚙️</h5>
+      <p>Access thermodynamics, SOM, and fluid mechanics notes here.</p>
+    </div>
+  </div>
+
+  <div id="it" class="page">
+    <div class="section-title">Information Technology Materials</div>
+    <div class="notice">
+      <h5>IT Notes & Materials 🌐</h5>
+      <p>Access database, web technology, and networking notes here.</p>
+    </div>
+  </div>
+
+  <div id="agriculture" class="page">
+    <div class="section-title">Agriculture Engineering Materials</div>
+    <div class="notice">
+      <h5>Agriculture Notes & Materials 🌾</h5>
+      <p>Access farm machinery, irrigation, and soil conservation notes here.</p>
+    </div>
+  </div>
+ 
   <!-- BOOKS PAGE -->
   <div id="booksPage" class="page">
     <div class="section-title">E-Books Library</div>
@@ -735,50 +940,16 @@ body {
         <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
         <div class="book-card-content">
           <h3>Applied Physics 2nd</h3>
-          <p>Physics PDF</p>
+          <p>Diploma Engineering Physics PDF</p>
         </div>
       </a>
-    </div>
-  </div>
-
-  <!-- ENGINEERING CASIO PAGE -->
-  <div id="casioPage" class="page">
-    <div class="section-title">Engineering Casio Calculator</div>
-    <div class="calculator-container">
-      <div class="calc-screen">
-        <div class="calc-screen-sub" id="calcSub">0</div>
-        <div class="calc-screen-main" id="calcMain">0</div>
-      </div>
-      <div class="calc-buttons">
-        <button class="calc-btn clear" onclick="calcClear()">AC</button>
-        <button class="calc-btn func" onclick="calcFn('sin')">sin</button>
-        <button class="calc-btn func" onclick="calcFn('cos')">cos</button>
-        <button class="calc-btn op" onclick="calcAppend('/')">÷</button>
-
-        <button class="calc-btn func" onclick="calcFn('tan')">tan</button>
-        <button class="calc-btn" onclick="calcAppend('7')">7</button>
-        <button class="calc-btn" onclick="calcAppend('8')">8</button>
-        <button class="calc-btn" onclick="calcAppend('9')">9</button>
-
-        <button class="calc-btn op" onclick="calcAppend('*')">×</button>
-        <button class="calc-btn func" onclick="calcFn('sqrt')">√</button>
-        <button class="calc-btn" onclick="calcAppend('4')">4</button>
-        <button class="calc-btn" onclick="calcAppend('5')">5</button>
-
-        <button class="calc-btn" onclick="calcAppend('6')">6</button>
-        <button class="calc-btn op" onclick="calcAppend('-')">-</button>
-        <button class="calc-btn func" onclick="calcFn('pow')">x^y</button>
-        <button class="calc-btn" onclick="calcAppend('1')">1</button>
-
-        <button class="calc-btn" onclick="calcAppend('2')">2</button>
-        <button class="calc-btn" onclick="calcAppend('3')">3</button>
-        <button class="calc-btn op" onclick="calcAppend('+')">+</button>
-        <button class="calc-btn func" onclick="calcPi()">π</button>
-
-        <button class="calc-btn" onclick="calcAppend('0')">0</button>
-        <button class="calc-btn" onclick="calcAppend('.')">.</button>
-        <button class="calc-btn op" style="grid-column: span 2; background: #20bf6b;" onclick="calcEvaluate()">=</button>
-      </div>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="book-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
+        <div class="book-card-content">
+          <h3>Applied Mathematics 2nd</h3>
+          <p>Diploma Engineering Maths PDF</p>
+        </div>
+      </a>
     </div>
   </div>
 
@@ -786,18 +957,18 @@ body {
   <div id="profilePage" class="page">
     <div class="section-title">My Profile</div>
     <div class="profile-box">
-      <div class="profile-avatar">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
-      </div>
-      <h3 id="profileName" style="font-size: 16px; font-weight: 700;">Engineer</h3>
+      <div class="profile-avatar"><i class="fas fa-user"></i></div>
+      <h3 id="profileName" style="font-size: 18px; font-weight: 700;">Engineer</h3>
       <p id="profileBranch" style="font-size: 12px; color: var(--muted-text);">Diploma Member</p>
+      
       <div class="profile-details">
         <p>Name: <span id="profileFullName">-</span></p>
         <p>Email: <span id="profileEmail">-</span></p>
         <p>Mobile: <span id="profileMobile">-</span></p>
         <p>Branch: <span id="profileBranchName">-</span></p>
       </div>
-      <button class="btn-main" style="margin-top: 14px; background: #ef4444;" onclick="logoutApp()">Logout</button>
+      
+      <button class="btn-main" style="margin-top: 20px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
     </div>
   </div>
 
@@ -808,186 +979,50 @@ body {
       <div class="update-box">
         <div class="update-icon wa"><i class="fab fa-whatsapp"></i></div>
         <h3 class="update-title">WhatsApp Channel</h3>
-        <p class="update-text">Join for daily notes, PYQs, and notices.</p>
-        <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank"><button class="btn-main">Join WhatsApp</button></a>
+        <p class="update-text">Join our WhatsApp channel for daily notes, PYQs, and notices.</p>
+        <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" style="text-decoration:none;">
+          <button class="btn-main">Join WhatsApp</button>
+        </a>
       </div>
       <div class="update-box">
         <div class="update-icon tg"><i class="fab fa-telegram-plane"></i></div>
         <h3 class="update-title">Telegram Channel</h3>
-        <p class="update-text">Get PDF notes and job alerts.</p>
-        <a href="https://t.me/diploma_engineers7" target="_blank"><button class="btn-main" style="background: linear-gradient(135deg, #0088cc, #00aaff);">Join Telegram</button></a>
+        <p class="update-text">Get PDF notes, job alerts, and discussions on Telegram.</p>
+        <a href="https://t.me/diploma_engineers7" target="_blank" style="text-decoration:none;">
+          <button class="btn-main" style="background: linear-gradient(135deg, #0088cc, #00aaff);">Join Telegram</button>
+        </a>
       </div>
+    </div>
+  </div>
+
+  <!-- COMMUNITY PAGE -->
+  <div id="communityPage" class="page">
+    <div class="section-title">Branch Groups</div>
+    <div class="grid-2">
+      <a href="https://chat.whatsapp.com/BpeRT0ksGpN90hUB89NCvk" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>CSE Group</p></a>
+      <a href="https://chat.whatsapp.com/JrNYhCka0OV6Sfgmy4fISD" target="_blank" class="card-box"><i class="fas fa-bolt"></i><p>Electrical Group</p></a>
+      <a href="https://chat.whatsapp.com/CivilGroupLinkHere" target="_blank" class="card-box"><i class="fas fa-building"></i><p>Civil Group</p></a>
+      <a href="https://chat.whatsapp.com/MechanicalGroupLinkHere" target="_blank" class="card-box"><i class="fas fa-cogs"></i><p>Mechanical Group</p></a>
     </div>
   </div>
 
   <!-- BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav">
-    <button class="nav-link-btn active" onclick="navigateTo('homePage', this)"><i class="fas fa-home"></i>Home</button>
-    <button class="nav-link-btn" onclick="navigateTo('notesPage', this)"><i class="fas fa-code-branch"></i>Branch</button>
-    <button class="nav-link-btn" onclick="navigateTo('booksPage', this)"><i class="fas fa-book"></i>E-Books</button>
-    <button class="nav-link-btn" onclick="navigateTo('casioPage', this)"><i class="fas fa-calculator"></i>Casio</button>
+    <button class="nav-link-btn active" onclick="navigateTo('homePage')">
+      <i class="fas fa-home"></i> Home
+    </button>
+    <button class="nav-link-btn" onclick="navigateTo('notesPage')">
+      <i class="fas fa-book"></i> Notes
+    </button>
+    <button class="nav-link-btn" onclick="navigateTo('booksPage')">
+      <i class="fas fa-book-open"></i> E-Books
+    </button>
+    <button class="nav-link-btn" onclick="navigateTo('updatePage')">
+      <i class="fas fa-bell"></i> Updates
+    </button>
   </div>
+
 </div>
 
-<script>
-let historyStack = ['homePage'];
-let isRegister = false;
-
-// Fast Router Navigation
-function navigateTo(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-  const target = document.getElementById(pageId);
-  if(target) target.classList.add('active-page');
-  
-  if(pageId !== 'homePage') {
-    document.getElementById('headerBackBtn').style.display = 'flex';
-    if(!historyStack.includes(pageId)) historyStack.push(pageId);
-  } else {
-    document.getElementById('headerBackBtn').style.display = 'none';
-    historyStack = ['homePage'];
-  }
-  window.scrollTo(0,0);
-}
-
-function goBack() {
-  if(historyStack.length > 1) {
-    historyStack.pop();
-    navigateTo(historyStack[historyStack.length - 1]);
-  } else {
-    navigateTo('homePage');
-  }
-}
-
-function showCivilSection(sectionId, btn) {
-  document.querySelectorAll('.civil-section').forEach(s => s.style.display = 'none');
-  document.getElementById(sectionId).style.display = 'block';
-  btn.parentElement.querySelectorAll('.branch-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-function toggleForm() {
-  isRegister = !isRegister;
-  document.getElementById('registerFields').style.display = isRegister ? 'block' : 'none';
-  document.getElementById('formTitle').innerText = isRegister ? 'Register' : 'Login';
-  document.getElementById('submitBtnText').innerText = isRegister ? 'Register' : 'Login';
-  document.getElementById('switchText').innerText = isRegister ? 'Existing User? Login Here' : 'New User? Register Here';
-}
-
-function submitAuthForm() {
-  const email = document.getElementById('email').value;
-  if(!email) { alert('Please enter email'); return; }
-  
-  let userData = {
-    name: isRegister ? document.getElementById('name').value : 'Engineer',
-    email: email,
-    mobile: isRegister ? document.getElementById('mobile').value : '9876543210',
-    branch: isRegister ? document.getElementById('branch').value : 'Civil Engineering'
-  };
-  
-  localStorage.setItem('diploma_user', JSON.stringify(userData));
-  initAppSession(userData);
-}
-
-function initAppSession(user) {
-  document.getElementById('userName').innerText = user.name || 'Engineer';
-  document.getElementById('profileName').innerText = user.name || 'Engineer';
-  document.getElementById('profileFullName').innerText = user.name || '-';
-  document.getElementById('profileEmail').innerText = user.email || '-';
-  document.getElementById('profileMobile').innerText = user.mobile || '-';
-  document.getElementById('profileBranchName').innerText = user.branch || '-';
-  
-  document.getElementById('authPage').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  navigateTo('homePage');
-}
-
-function logoutApp() {
-  localStorage.removeItem('diploma_user');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('authPage').style.display = 'flex';
-}
-
-// Casio Scientific Calculator Logic
-let calcExpression = '';
-function calcAppend(val) {
-  calcExpression += val;
-  document.getElementById('calcMain').innerText = calcExpression;
-}
-function calcClear() {
-  calcExpression = '';
-  document.getElementById('calcMain').innerText = '0';
-  document.getElementById('calcSub').innerText = '0';
-}
-function calcPi() {
-  calcExpression += Math.PI.toFixed(4);
-  document.getElementById('calcMain').innerText = calcExpression;
-}
-function calcFn(fn) {
-  try {
-    let val = eval(calcExpression || '0');
-    let res = 0;
-    if(fn === 'sin') res = Math.sin(val * Math.PI / 180);
-    if(fn === 'cos') res = Math.cos(val * Math.PI / 180);
-    if(fn === 'tan') res = Math.tan(val * Math.PI / 180);
-    if(fn === 'sqrt') res = Math.sqrt(val);
-    if(fn === 'pow') { calcExpression += '**'; document.getElementById('calcMain').innerText = calcExpression; return; }
-    
-    document.getElementById('calcSub').innerText = `${fn}(${val})`;
-    calcExpression = res.toString();
-    document.getElementById('calcMain').innerText = calcExpression;
-  } catch(e) {
-    document.getElementById('calcMain').innerText = 'Error';
-  }
-}
-function calcEvaluate() {
-  try {
-    document.getElementById('calcSub').innerText = calcExpression;
-    let result = eval(calcExpression);
-    calcExpression = result.toString();
-    document.getElementById('calcMain').innerText = calcExpression;
-  } catch(e) {
-    document.getElementById('calcMain').innerText = 'Error';
-  }
-}
-
-// Fast Google Sign-In Initialization
-window.onload = function() {
-  const saved = localStorage.getItem('diploma_user');
-  if(saved) {
-    initAppSession(JSON.parse(saved));
-  } else {
-    document.getElementById('authPage').style.display = 'flex';
-  }
-
-  if (typeof google !== 'undefined') {
-    google.accounts.id.initialize({
-      client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-      callback: handleGoogleResponse
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme: 'outline', size: 'large', width: '100%', shape: 'pill' }
-    );
-  }
-};
-
-function handleGoogleResponse(response) {
-  let base64Url = response.credential.split('.')[1];
-  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
-  let profile = JSON.parse(jsonPayload);
-  
-  let userData = {
-    name: profile.name,
-    email: profile.email,
-    mobile: 'Linked via Google',
-    branch: 'Civil Engineering'
-  };
-  localStorage.setItem('diploma_user', JSON.stringify(userData));
-  initAppSession(userData);
-}
-</script>
 </body>
 </html>

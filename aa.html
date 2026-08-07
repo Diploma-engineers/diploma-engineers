@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diploma Engineers Portal - Firebase Integrated</title>
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --accent: #f59e0b;
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* AUTH PAGE STYLES */
+    #authPage {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    .auth-card h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-main:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 12px;
+      background: #ffffff;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .btn-google:hover {
+      background: #f9fafb;
+    }
+
+    .switch-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* MAIN APP CONTAINER */
+    #app {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      max-height: 850px;
+      background: var(--card-bg);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media(min-width: 500px) {
+      #app {
+        border-radius: 24px;
+      }
+    }
+
+    /* APP HEADER */
+    .app-header {
+      padding: 16px 20px;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-header h3 {
+      font-size: 18px;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 15px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* PAGES VIEW AREA */
+    .page-container {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+      background: var(--bg-color);
+    }
+
+    .page {
+      display: none;
+      padding: 20px;
+    }
+
+    .active-page {
+      display: block;
+    }
+
+    /* CARDS & SECTIONS */
+    .dashboard-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    /* BOTTOM NAV BAR */
+    .bottom-nav {
+      height: 65px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .nav-link-btn {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .nav-link-btn i {
+      font-size: 18px;
+    }
+
+    .nav-link-btn.active {
+      color: var(--primary);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTHENTICATION SCREEN -->
+  <div id="authPage">
+    <div class="auth-card">
+      <h2 id="formTitle">Login</h2>
+      
+      <div id="registerFields" style="display: none;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="name" placeholder="Enter your name">
+        </div>
+        <div class="form-group">
+          <label>Branch</label>
+          <select id="branch">
+            <option value="Civil Engineering">Civil Engineering</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Electrical Engineering">Electrical Engineering</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="name@example.com">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••">
+      </div>
+
+      <div id="mobileFieldGroup" class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" id="mobile" placeholder="9876543210">
+      </div>
+
+      <button class="btn-main" onclick="submitForm()" id="submitBtnText">
+        Login
+      </button>
+
+      <div style="text-align:center; margin:15px 0; font-weight:bold; color:var(--text-muted);">
+        OR
+      </div>
+
+      <button class="btn-google" onclick="googleLogin()">
+        <i class="fab fa-google" style="color: #ea4335;"></i>
+        Continue with Google
+      </button>
+
+      <div class="switch-text" id="switchText" onclick="toggleForm()">
+        New User? Register Here
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP SCREEN -->
+  <div id="app">
+    <!-- App Header -->
+    <div class="app-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="headerBackBtn" onclick="goBack()" style="background:none; border:none; color:white; font-size:16px; cursor:pointer; display:none;"><i class="fas fa-arrow-left"></i></button>
+        <h3>Diploma Portal</h3>
+      </div>
+      <div class="header-icons">
+        <i class="fas fa-sign-out-alt" onclick="logoutUser()" title="Logout"></i>
+      </div>
+    </div>
+
+    <!-- Pages Container -->
+    <div class="page-container">
+      
+      <!-- Home Page -->
+      <div id="homePage" class="page active-page">
+        <div class="dashboard-card">
+          <h2>Welcome Back, <span id="userName">Engineer</span>! 👋</h2>
+          <p style="color: var(--text-muted); margin-top: 5px;">BTEUP Semester Study Hub</p>
+        </div>
+        <div class="dashboard-card">
+          <h4>Quick Notice</h4>
+          <p style="font-size: 14px; margin-top: 8px; color: var(--text-muted);">Firebase Authentication and Realtime Database are fully active and connected.</p>
+        </div>
+      </div>
+
+      <!-- Books Page -->
+      <div id="booksPage" class="page">
+        <div class="dashboard-card">
+          <h3>Subject Books & Syllabus</h3>
+          <p style="color: var(--text-muted); margin-top: 5px; font-size: 14px;">Access all semester study material and previous year question papers here.</p>
+        </div>
+      </div>
+
+      <!-- Store Page -->
+      <div id="storePage" class="page">
+        <div class="dashboard-card">
+          <h3>Engineering Resource Store</h3>
+          <p style="color: var(--text-muted); margin-top: 5px; font-size: 14px;">Explore customized blueprints, project kits, and important notes.</p>
+        </div>
+      </div>
+
+      <!-- Profile Page -->
+      <div id="profilePage" class="page">
+        <div class="dashboard-card" style="text-align: center;">
+          <i class="fas fa-user-circle" style="font-size: 64px; color: var(--primary); margin-bottom: 10px;"></i>
+          <h3 id="profileName">User Name</h3>
+          <p id="profileEmail" style="color: var(--text-muted); font-size: 13px;">email@domain.com</p>
+        </div>
+        <div class="dashboard-card">
+          <p><strong>Mobile:</strong> <span id="profileMobile">N/A</span></p>
+          <p style="margin-top: 8px;"><strong>Branch:</strong> <span id="profileBranch">N/A</span></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+      <button class="nav-link-btn active" onclick="navigateTo('homePage', this)">
+        <i class="fas fa-home"></i>Home
+      </button>
+      <button class="nav-link-btn" onclick="navigateTo('booksPage', this)">
+        <i class="fas fa-book"></i>Books
+      </button>
+      <button class="nav-link-btn" onclick="navigateTo('storePage', this)">
+        <i class="fas fa-store"></i>Store
+      </button>
+      <button class="nav-link-btn" onclick="navigateTo('profilePage', this)">
+        <i class="fas fa-user"></i>Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { 
+      getDatabase, 
+      ref, 
+      set, 
+      get, 
+      child 
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+      authDomain: "diploma-app-9a378.firebaseapp.com",
+      databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+      projectId: "diploma-app-9a378",
+      storageBucket: "diploma-app-9a378.firebasestorage.app",
+      messagingSenderId: "160233059797",
+      appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
+      measurementId: "G-9646VK4C6L"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    let isRegister = false;
+    let pageHistory = ['homePage'];
+
+    window.toggleForm = function() {
+      isRegister = !isRegister;
+      document.getElementById('registerFields').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('mobileFieldGroup').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('formTitle').innerText = isRegister ? 'Register Account' : 'Login';
+      document.getElementById('submitBtnText').innerText = isRegister ? 'Register' : 'Login';
+      document.getElementById('switchText').innerText = isRegister ? 'Already registered? Login Here' : 'New User? Register Here';
+    }
+
+    window.submitForm = async function() {
+      if (isRegister) {
+        await registerUser();
+      } else {
+        await loginFirebase();
+      }
+    }
+
+    async function registerUser() {
+      let name = document.getElementById("name").value;
+      let email = document.getElementById("email").value;
+      let password = document.getElementById("password").value;
+      let mobile = document.getElementById("mobile").value;
+      let branch = document.getElementById("branch").value;
+
+      if (!email || !password || !name) {
+        alert("Please fill in all required fields!");
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        await set(ref(db, "users/" + uid), {
+          name: name,
+          email: email,
+          mobile: mobile || "N/A",
+          branch: branch || "Diploma Student"
+        });
+
+        alert("Registration Successful!");
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function loginFirebase() {
+      let email = document.getElementById("email").value;
+      let password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        alert("Please enter your email and password.");
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    window.googleLogin = async function() {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Check if user info already exists in DB, otherwise write default
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, `users/${user.uid}`));
+        
+        if (!snapshot.exists()) {
+          await set(ref(db, "users/" + user.uid), {
+            name: user.displayName || "Google User",
+            email: user.email,
+            mobile: user.phoneNumber || "N/A",
+            branch: "Civil Engineering"
+          });
+        }
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    window.logoutUser = function() {
+      signOut(auth).then(() => {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('authPage').style.display = 'flex';
+      });
+    }
+
+    // Monitor Firebase Auth State Changes for seamless Auto-Login
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in
+        const dbRef = ref(db);
+        try {
+          const snapshot = await get(child(dbRef, `users/${user.uid}`));
+          let userData = {
+            name: user.displayName || "Engineer",
+            email: user.email,
+            mobile: "N/A",
+            branch: "Diploma Student"
+          };
+
+          if (snapshot.exists()) {
+            userData = snapshot.val();
+          }
+
+          // Populate UI fields
+          document.getElementById('userName').innerText = userData.name;
+          document.getElementById('profileName').innerText = userData.name;
+          document.getElementById('profileEmail').innerText = userData.email;
+          document.getElementById('profileMobile').innerText = userData.mobile || "N/A";
+          document.getElementById('profileBranch').innerText = userData.branch || "N/A";
+
+          // Switch views
+          document.getElementById('authPage').style.display = 'none';
+          document.getElementById('app').style.display = 'flex';
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        // User is signed out
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('authPage').style.display = 'flex';
+      }
+    });
+
+    // Navigation logic inside app
+    window.navigateTo = function(pageId, btnElement) {
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active-page');
+      });
+      document.getElementById(pageId).classList.add('active-page');
+
+      if (pageHistory[pageHistory.length - 1] !== pageId) {
+        pageHistory.push(pageId);
+      }
+
+      const backBtn = document.getElementById('headerBackBtn');
+      if (pageHistory.length > 1 && pageId !== 'homePage') {
+        backBtn.style.display = 'block';
+      } else {
+        backBtn.style.display = 'none';
+      }
+
+      if (btnElement) {
+        document.querySelectorAll('.bottom-nav .nav-link-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        btnElement.classList.add('active');
+      }
+      window.scrollTo(0, 0);
+    }
+
+    window.goBack = function() {
+      if (pageHistory.length > 1) {
+        pageHistory.pop();
+        const previousPage = pageHistory[pageHistory.length - 1];
+        document.querySelectorAll('.page').forEach(page => {
+          page.classList.remove('active-page');
+        });
+        document.getElementById(previousPage).classList.add('active-page');
+
+        if (previousPage === 'homePage') {
+          document.getElementById('headerBackBtn').style.display = 'none';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

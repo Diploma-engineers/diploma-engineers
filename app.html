@@ -1159,129 +1159,792 @@ body {
 </div>
 
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
+<!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-  import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-    authDomain: "diploma-app-9a378.firebaseapp.com",
-    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-    projectId: "diploma-app-9a378",
-    storageBucket: "diploma-app-9a378.firebasestorage.app",
-    messagingSenderId: "160233059797",
-    appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
-  };
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-  const provider = new GoogleAuthProvider();
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-  let isRegister = false;
-  const defaultPage = "homePage";
-  const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
+import {
+  getDatabase,
+  ref,
+  set,
+  get
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-  function hideLoader() {
-    const loader = document.getElementById("globalLoader");
-    if (loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 300);
-    }
+
+/* ==========================================
+   FIREBASE CONFIG
+========================================== */
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+
+  authDomain:
+    "diploma-app-9a378.firebaseapp.com",
+
+  databaseURL:
+    "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+
+  projectId:
+    "diploma-app-9a378",
+
+  storageBucket:
+    "diploma-app-9a378.firebasestorage.app",
+
+  messagingSenderId:
+    "160233059797",
+
+  appId:
+    "1:160233059797:web:be38130ed64f8bd0afb95c"
+
+};
+
+
+/* ==========================================
+   INITIALIZE FIREBASE
+========================================== */
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getDatabase(app);
+
+const provider = new GoogleAuthProvider();
+
+
+/*
+  Google account selection
+*/
+
+provider.setCustomParameters({
+  prompt: "select_account"
+});
+
+
+let isRegister = false;
+
+const defaultPage = "homePage";
+
+
+/* ==========================================
+   LOADER
+========================================== */
+
+function hideLoader(){
+
+  const loader =
+    document.getElementById("globalLoader");
+
+  if(loader){
+
+    loader.style.opacity = "0";
+
+    setTimeout(() => {
+
+      loader.style.display = "none";
+
+    }, 300);
+
   }
 
-  window.toggleForm = function() {
-    isRegister = !isRegister;
-    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
-    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
-    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
-    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
-  };
+}
 
-  window.submitAuthForm = async function() {
-    let email = document.getElementById("email").value.trim();
-    let password = document.getElementById("password").value.trim();
-    
-    if (!email || !password) {
-      alert("Please enter Email and Password");
-      return;
+
+/* ==========================================
+   LOGIN / REGISTER TOGGLE
+========================================== */
+
+window.toggleForm = function(){
+
+  isRegister = !isRegister;
+
+  const title =
+    document.getElementById("formTitle");
+
+  const submit =
+    document.getElementById("submitBtnText");
+
+  const fields =
+    document.getElementById("registerFields");
+
+  const switchText =
+    document.getElementById("switchText");
+
+
+  if(title){
+
+    title.innerText =
+      isRegister
+      ? "Register Account"
+      : "Login";
+
+  }
+
+
+  if(submit){
+
+    submit.innerText =
+      isRegister
+      ? "Register"
+      : "Login";
+
+  }
+
+
+  if(fields){
+
+    fields.style.display =
+      isRegister
+      ? "block"
+      : "none";
+
+  }
+
+
+  if(switchText){
+
+    switchText.innerText =
+      isRegister
+      ? "Already Have Account? Login"
+      : "New User? Register Here";
+
+  }
+
+};
+
+
+/* ==========================================
+   EMAIL LOGIN / REGISTER
+========================================== */
+
+window.submitAuthForm = async function(){
+
+  const email =
+    document.getElementById("email")
+      ?.value
+      .trim();
+
+  const password =
+    document.getElementById("password")
+      ?.value
+      .trim();
+
+
+  if(!email || !password){
+
+    alert(
+      "Please enter Email and Password"
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+
+    /* ===============================
+       REGISTER
+    =============================== */
+
+    if(isRegister){
+
+      const name =
+        document.getElementById("name")
+          ?.value
+          .trim();
+
+      const branch =
+        document.getElementById("branch")
+          ?.value;
+
+      const mobile =
+        document.getElementById("mobile")
+          ?.value
+          .trim();
+
+
+      if(!name || !mobile){
+
+        alert(
+          "Please fill all details"
+        );
+
+        return;
+
+      }
+
+
+      const cred =
+        await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+
+      try{
+
+        await set(
+          ref(
+            db,
+            "users/" + cred.user.uid
+          ),
+          {
+
+            name: name,
+
+            email: email,
+
+            branch: branch,
+
+            mobile: mobile
+
+          }
+        );
+
+      }catch(dbError){
+
+        console.error(
+          "Database Save Error:",
+          dbError
+        );
+
+        /*
+          Authentication already succeeded.
+          Database error should not be shown
+          as login failure.
+        */
+
+      }
+
+
+      alert(
+        "Registration Successful!"
+      );
+
+
     }
 
-    try {
-      if (isRegister) {
-        let name = document.getElementById("name").value.trim();
-        let branch = document.getElementById("branch").value;
-        let mobile = document.getElementById("mobile").value.trim();
-        
-        if (!name || !mobile) {
-          alert("Please fill all details");
-          return;
+
+    /* ===============================
+       LOGIN
+    =============================== */
+
+    else{
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    }
+
+
+  }catch(error){
+
+    console.error(
+      "Authentication Error:",
+      error
+    );
+
+
+    alert(
+      "Login Error:\n\n" +
+      error.code +
+      "\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+/* ==========================================
+   GOOGLE LOGIN
+========================================== */
+
+window.googleLogin = async function(){
+
+  try{
+
+    console.log(
+      "Starting Google Login..."
+    );
+
+
+    /* ===============================
+       GOOGLE AUTHENTICATION
+    =============================== */
+
+    const result =
+      await signInWithPopup(
+        auth,
+        provider
+      );
+
+
+    const user =
+      result.user;
+
+
+    console.log(
+      "Google Authentication Successful"
+    );
+
+    console.log(
+      "UID:",
+      user.uid
+    );
+
+    console.log(
+      "Name:",
+      user.displayName
+    );
+
+    console.log(
+      "Email:",
+      user.email
+    );
+
+
+    /* ===============================
+       DATABASE PROFILE
+    =============================== */
+
+    try{
+
+      const userRef =
+        ref(
+          db,
+          "users/" + user.uid
+        );
+
+
+      const snapshot =
+        await get(userRef);
+
+
+      if(!snapshot.exists()){
+
+        await set(
+          userRef,
+          {
+
+            name:
+              user.displayName ||
+              "Google User",
+
+            email:
+              user.email || "",
+
+            branch:
+              "Civil Engineering",
+
+            mobile:
+              "N/A"
+
+          }
+        );
+
+      }
+
+
+    }catch(databaseError){
+
+      /*
+        IMPORTANT:
+
+        Google login itself has already
+        succeeded. Database permission
+        error should NOT logout the user.
+      */
+
+      console.error(
+        "Database Profile Error:",
+        databaseError
+      );
+
+    }
+
+
+    console.log(
+      "Google Login Completed"
+    );
+
+
+  }catch(error){
+
+    console.error(
+      "GOOGLE LOGIN ERROR:",
+      error
+    );
+
+
+    let message =
+      error.code +
+      "\n\n" +
+      error.message;
+
+
+    if(
+      error.code ===
+      "auth/popup-blocked"
+    ){
+
+      message =
+        "Google popup was blocked by browser.\n\n" +
+        "Please allow popups for this website.";
+
+    }
+
+
+    if(
+      error.code ===
+      "auth/popup-closed-by-user"
+    ){
+
+      message =
+        "Google login popup was closed.";
+
+    }
+
+
+    if(
+      error.code ===
+      "auth/unauthorized-domain"
+    ){
+
+      message =
+        "This website domain is not authorized in Firebase.\n\n" +
+        "Add your current domain in Firebase Authentication → Settings → Authorized domains.";
+
+    }
+
+
+    if(
+      error.code ===
+      "auth/operation-not-allowed"
+    ){
+
+      message =
+        "Google Sign-In is not enabled.\n\n" +
+        "Firebase → Authentication → Sign-in method → Google → Enable";
+
+    }
+
+
+    alert(
+      "Google Login Failed\n\n" +
+      message
+    );
+
+  }
+
+};
+
+
+/* ==========================================
+   LOGOUT
+========================================== */
+
+window.logoutFirebase = async function(){
+
+  try{
+
+    await signOut(auth);
+
+  }catch(error){
+
+    console.error(
+      "Logout Error:",
+      error
+    );
+
+  }
+
+};
+
+
+/* ==========================================
+   AUTH STATE
+========================================== */
+
+onAuthStateChanged(
+  auth,
+  async (user) => {
+
+
+    if(user){
+
+
+      let data = {
+
+        name:
+          user.displayName ||
+          "Engineer",
+
+        email:
+          user.email ||
+          "-",
+
+        branch:
+          "Diploma Member",
+
+        mobile:
+          "N/A"
+
+      };
+
+
+      /* ===============================
+         LOAD DATABASE PROFILE
+      =============================== */
+
+      try{
+
+        const userRef =
+          ref(
+            db,
+            "users/" + user.uid
+          );
+
+
+        const snapshot =
+          await get(userRef);
+
+
+        if(snapshot.exists()){
+
+          data =
+            snapshot.val();
+
         }
 
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { name, email, branch, mobile });
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
+
+      }catch(error){
+
+        console.warn(
+          "Could not load profile:",
+          error
+        );
+
       }
-    } catch (e) {
-      alert("Auth Error: " + e.message);
-    }
-  };
 
-  window.googleLogin = async function() {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
-      if (!snapshot.exists()) {
-        await set(ref(db, "users/" + result.user.uid), {
-          name: result.user.displayName || "Google User",
-          email: result.user.email,
-          branch: "Civil Engineering",
-          mobile: "N/A"
-        });
+
+      /* ===============================
+         UPDATE UI
+      =============================== */
+
+      const userName =
+        document.getElementById(
+          "userName"
+        );
+
+      const profileName =
+        document.getElementById(
+          "profileName"
+        );
+
+      const profileFullName =
+        document.getElementById(
+          "profileFullName"
+        );
+
+      const profileEmail =
+        document.getElementById(
+          "profileEmail"
+        );
+
+      const profileMobile =
+        document.getElementById(
+          "profileMobile"
+        );
+
+      const profileBranchName =
+        document.getElementById(
+          "profileBranchName"
+        );
+
+      const profileBranch =
+        document.getElementById(
+          "profileBranch"
+        );
+
+
+      if(userName){
+
+        userName.innerText =
+          (data.name || "Engineer")
+          .split(" ")[0];
+
       }
-    } catch (e) {
-      alert("Google Login Error: " + e.message);
-    }
-  };
 
-  window.logoutFirebase = function() {
-    signOut(auth);
-  };
 
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const snapshot = await get(child(ref(db), `users/${user.uid}`));
-      let data = snapshot.exists() ? snapshot.val() : { 
-        name: user.displayName || "Engineer", 
-        email: user.email, 
-        branch: "Diploma Member", 
-        mobile: "N/A" 
-      };
-      
-      document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-      document.getElementById("profileName").innerText = data.name || "Engineer";
-      document.getElementById("profileFullName").innerText = data.name || "-";
-      document.getElementById("profileEmail").innerText = data.email || "-";
-      document.getElementById("profileMobile").innerText = data.mobile || "-";
-      document.getElementById("profileBranchName").innerText = data.branch || "-";
-      document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+      if(profileName){
 
-      document.getElementById("authPage").style.display = "none";
-      document.getElementById("app").style.display = "block";
+        profileName.innerText =
+          data.name || "Engineer";
 
-      const initialHash = window.location.hash.substring(1);
-      const targetPage = initialHash || defaultPage;
-      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
-      renderPageUI(targetPage);
+      }
+
+
+      if(profileFullName){
+
+        profileFullName.innerText =
+          data.name || "-";
+
+      }
+
+
+      if(profileEmail){
+
+        profileEmail.innerText =
+          data.email || "-";
+
+      }
+
+
+      if(profileMobile){
+
+        profileMobile.innerText =
+          data.mobile || "-";
+
+      }
+
+
+      if(profileBranchName){
+
+        profileBranchName.innerText =
+          data.branch || "-";
+
+      }
+
+
+      if(profileBranch){
+
+        profileBranch.innerText =
+          data.branch ||
+          "Diploma Member";
+
+      }
+
+
+      /* ===============================
+         SHOW APP
+      =============================== */
+
+      const authPage =
+        document.getElementById(
+          "authPage"
+        );
+
+      const appElement =
+        document.getElementById(
+          "app"
+        );
+
+
+      if(authPage){
+
+        authPage.style.display =
+          "none";
+
+      }
+
+
+      if(appElement){
+
+        appElement.style.display =
+          "block";
+
+      }
+
+
+      const initialHash =
+        window.location.hash.substring(1);
+
+
+      const targetPage =
+        initialHash ||
+        defaultPage;
+
+
+      history.replaceState(
+        { pageId: targetPage },
+        "",
+        "#" + targetPage
+      );
+
+
+      if(
+        typeof renderPageUI ===
+        "function"
+      ){
+
+        renderPageUI(targetPage);
+
+      }
+
+
       hideLoader();
-    } else {
-      document.getElementById("app").style.display = "none";
-      document.getElementById("authPage").style.display = "flex";
+
+
+    }else{
+
+
+      const appElement =
+        document.getElementById(
+          "app"
+        );
+
+      const authPage =
+        document.getElementById(
+          "authPage"
+        );
+
+
+      if(appElement){
+
+        appElement.style.display =
+          "none";
+
+      }
+
+
+      if(authPage){
+
+        authPage.style.display =
+          "flex";
+
+      }
+
+
       hideLoader();
+
     }
-  });
+
+  }
+
+);
 
   async function loadBranchFromExternalFile(branchId) {
     const container = document.getElementById(branchId);

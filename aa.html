@@ -930,18 +930,11 @@ body {
     <!-- ==========================================
          NEW BLUE THEME SECTION 2 (Directly Below Section 1)
     ========================================== -->
-    <div class="blue-theme-grid-2">
-      <div class="blue-mini-card" onclick="navigateTo('booksPage')">
-        <i class="fas fa-book-open"></i>
-        <h5>E-Books Library</h5>
-        <p>Semester textbooks</p>
-      </div>
-      <div class="blue-mini-card" onclick="navigateTo('updatePage')">
-        <i class="fas fa-bullhorn"></i>
-        <h5>BTEUP Updates</h5>
-        <p>Latest board notices</p>
-      </div>
-    </div>
+      <div class="card-box" onclick="navigateTo('sem1')"><i class="fas fa-book-bookmark"></i><p>1st Semester (Common)</p></div>
+      <div class="card-box" onclick="navigateTo('sem2')"><i class="fas fa-book-bookmark"></i><p>2nd Semester (Common)</p></div> 
+
+     <div id="sem1" class="page"></div>
+  <div id="sem2" class="page"></div>
 
     <div class="notice">
       <h5>Latest Announcement 📢</h5>
@@ -1368,7 +1361,85 @@ body {
       renderDefaultBranchLayout(container, branchId);
     }
   }
+async function loadPortalFromFile(portalId) {
 
+  const container =
+    document.getElementById(portalId);
+
+  if (!container) return;
+
+
+  container.innerHTML = `
+    <div style="
+      text-align:center;
+      padding:50px 20px;
+      color:var(--muted-text);
+    ">
+      <i
+        class="fas fa-spinner fa-spin"
+        style="
+          font-size:32px;
+          color:var(--primary);
+        "
+      ></i>
+
+      <p style="
+        margin-top:12px;
+        font-weight:700;
+      ">
+        Content Loading...
+      </p>
+    </div>
+  `;
+
+
+  let fileName = `${portalId}.html`;
+
+
+  if (portalId === 'sem1')
+    fileName = '1st-sem.html';
+
+
+  if (portalId === 'sem2')
+    fileName = '2nd-sem.html';
+
+
+  if (portalId === 'computerscience')
+    fileName = 'computer.html';
+
+
+  try {
+
+    const response =
+      await fetch(fileName);
+
+
+    if (!response.ok)
+      throw new Error(
+        `File ${fileName} not found`
+      );
+
+
+    const htmlContent =
+      await response.text();
+
+
+    container.innerHTML =
+      htmlContent;
+
+
+  } catch (err) {
+
+    console.error(err);
+
+    renderDefaultPortalLayout(
+      container,
+      portalId
+    );
+
+  }
+
+}
   function renderDefaultBranchLayout(container, branchId) {
     const formattedTitle = branchId.toUpperCase();
     container.innerHTML = `

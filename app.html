@@ -1330,10 +1330,36 @@ body {
     }
 
     // Auto Fetch for all Engineering Branches
-    const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
-    if (externalBranches.includes(pageId)) {
-      loadBranchFromExternalFile(pageId);
-    }
+// Branches Array
+const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
+
+if (externalBranches.includes(pageId)) {
+  loadBranchFromExternalFile(pageId);
+}
+
+// Separate File Fetch Function
+function loadBranchFromExternalFile(pageId) {
+  const container = document.getElementById('branch-content-container'); // जहाँ कंटेंट शो करना है
+
+  // pageId + '.html' से फाइल का नाम बनेगा (उदा. computer.html, civil.html)
+  const fileName = `${pageId}.html`; 
+
+  fetch(fileName)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('File load nahi ho payi!');
+      }
+      return response.text();
+    })
+    .then(data => {
+      container.innerHTML = data; // HTML को div के अंदर लोड करेगा
+    })
+    .catch(error => {
+      console.error('Error fetching file:', error);
+      container.innerHTML = `<div class="error">Content load karne me samsya aayi.</div>`;
+    });
+}
+
 
     let navBtns = document.querySelectorAll(".nav-link-btn");
     navBtns.forEach(btn => btn.classList.remove("active"));

@@ -1112,6 +1112,8 @@ body {
 
   let isRegister = false;
   const defaultPage = "homePage";
+  
+  // External Branches Mapping (pageId: fileName)
   const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
 
   window.toggleForm = function() {
@@ -1204,34 +1206,32 @@ body {
     }
   });
 
-  // UNIFIED BRANCH DYNAMIC CONTENT LOADER
+  // Dynamic Fetch Engine for External HTML Files
   async function loadBranchFromExternalFile(branchId) {
     const container = document.getElementById(branchId);
     if (!container) return;
 
-    // Show Loading Spinner
+    // Show Loading State
     container.innerHTML = `
       <div style="text-align:center; padding: 50px 20px; color: var(--muted-text);">
         <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
-        <p style="margin-top: 12px; font-weight: 700;">Loading Branch Portal...</p>
+        <p style="margin-top: 12px; font-weight: 700;">Content Loading...</p>
       </div>`;
 
-    try {
-      const response = await fetch('branch.html');
-      if (!response.ok) throw new Error('branch.html not found');
-      
-      const htmlText = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, 'text/html');
-      const fetchedContent = doc.getElementById(branchId);
+    // Map computer.html or branchName.html
+    let fileName = `${branchId}.html`;
+    if (branchId === 'computerscience') {
+      fileName = 'computer.html'; // Adjusting to match computer.html filename
+    }
 
-      if (fetchedContent) {
-        container.innerHTML = fetchedContent.innerHTML;
-      } else {
-        renderDefaultBranchLayout(container, branchId);
-      }
+    try {
+      const response = await fetch(fileName);
+      if (!response.ok) throw new Error(`File ${fileName} not found`);
+      
+      const htmlContent = await response.text();
+      container.innerHTML = htmlContent;
     } catch (err) {
-      // Direct Fallback Layout if branch.html isn't hosted locally
+      console.warn(`Could not load ${fileName}, loading default layout fallback.`);
       renderDefaultBranchLayout(container, branchId);
     }
   }

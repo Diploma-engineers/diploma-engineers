@@ -368,44 +368,6 @@ body {
 
 .card h3 { font-size: 15px; margin-bottom: 12px; }
 
-/* BUTTON GRID INSIDE CARDS */
-.btn-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: auto;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--surface-gray);
-  color: var(--dark-text);
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid var(--border-light);
-  transition: all 0.2s ease;
-}
-
-.btn:hover {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  grid-column: span 2;
-  padding: 10px;
-}
-
 /* NOTICES & ALERTS */
 .notice {
   background: #fffbe2;
@@ -899,7 +861,7 @@ body {
     </div>
   </div>
 
-  <!-- DYNAMICALLY FETCHED BRANCH PAGES FROM branch.html -->
+  <!-- DYNAMICALLY LOADED BRANCH PORTALS -->
   <div id="civil" class="page"></div>
   <div id="computerscience" class="page"></div>
   <div id="electrical" class="page"></div>
@@ -1150,6 +1112,7 @@ body {
 
   let isRegister = false;
   const defaultPage = "homePage";
+  const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
 
   window.toggleForm = function() {
     isRegister = !isRegister;
@@ -1241,12 +1204,12 @@ body {
     }
   });
 
-  // FUNCTION TO FETCH BRANCH DATA FROM branch.html
+  // UNIFIED BRANCH DYNAMIC CONTENT LOADER
   async function loadBranchFromExternalFile(branchId) {
     const container = document.getElementById(branchId);
     if (!container) return;
 
-    // Show Loading
+    // Show Loading Spinner
     container.innerHTML = `
       <div style="text-align:center; padding: 50px 20px; color: var(--muted-text);">
         <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
@@ -1255,7 +1218,7 @@ body {
 
     try {
       const response = await fetch('branch.html');
-      if (!response.ok) throw new Error('Failed to fetch branch.html');
+      if (!response.ok) throw new Error('branch.html not found');
       
       const htmlText = await response.text();
       const parser = new DOMParser();
@@ -1265,20 +1228,44 @@ body {
       if (fetchedContent) {
         container.innerHTML = fetchedContent.innerHTML;
       } else {
-        container.innerHTML = `
-          <div class="notice">
-            <h5>Data Missing ⚠️</h5>
-            <p>'${branchId}' content branch.html file me nahi mil saka.</p>
-          </div>`;
+        renderDefaultBranchLayout(container, branchId);
       }
     } catch (err) {
-      console.error(err);
-      container.innerHTML = `
-        <div class="notice" style="border-left-color: #ef4444; background: #fef2f2;">
-          <h5 style="color: #991b1b;">Load Failed ❌</h5>
-          <p style="color: #991b1b;">branch.html file fetch nahi ho saki. Local Server (Live Server) check karein.</p>
-        </div>`;
+      // Direct Fallback Layout if branch.html isn't hosted locally
+      renderDefaultBranchLayout(container, branchId);
     }
+  }
+
+  function renderDefaultBranchLayout(container, branchId) {
+    const formattedTitle = branchId.toUpperCase();
+    container.innerHTML = `
+      <div class="section-title">${formattedTitle} <span>Portal</span></div>
+      <div class="nav-wrapper">
+        <div class="top-btns">
+          <button class="branch-btn active" onclick="showSection('${branchId}-notes', this)"><i class="fas fa-file-alt"></i> Notes</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-pyq', this)"><i class="fas fa-history"></i> PYQ Papers</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-syllabus', this)"><i class="fas fa-list-check"></i> Syllabus</button>
+        </div>
+      </div>
+      <div id="${branchId}-notes" class="${branchId}-section">
+        <div class="notice">
+          <h5>${formattedTitle} Notes Ready 📚</h5>
+          <p>Access all semester handwritten notes and standard books directly from your mobile portal.</p>
+        </div>
+      </div>
+      <div id="${branchId}-pyq" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Previous Year Questions 📝</h5>
+          <p>Previous 5 year board examination question papers are updated below.</p>
+        </div>
+      </div>
+      <div id="${branchId}-syllabus" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Curriculum Syllabus 📋</h5>
+          <p>Download the latest official state board syllabus pdf.</p>
+        </div>
+      </div>
+    `;
   }
 
   window.showSection = function(sectionId, btnElement) {
@@ -1329,37 +1316,9 @@ body {
       pageId = defaultPage;
     }
 
-    // Auto Fetch for all Engineering Branches
-// Branches Array
-const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
-
-if (externalBranches.includes(pageId)) {
-  loadBranchFromExternalFile(pageId);
-}
-
-// Separate File Fetch Function
-function loadBranchFromExternalFile(pageId) {
-  const container = document.getElementById('branch-content-container'); // जहाँ कंटेंट शो करना है
-
-  // pageId + '.html' से फाइल का नाम बनेगा (उदा. computer.html, civil.html)
-  const fileName = `${pageId}.html`; 
-
-  fetch(fileName)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('File load nahi ho payi!');
-      }
-      return response.text();
-    })
-    .then(data => {
-      container.innerHTML = data; // HTML को div के अंदर लोड करेगा
-    })
-    .catch(error => {
-      console.error('Error fetching file:', error);
-      container.innerHTML = `<div class="error">Content load karne me samsya aayi.</div>`;
-    });
-}
-
+    if (externalBranches.includes(pageId)) {
+      loadBranchFromExternalFile(pageId);
+    }
 
     let navBtns = document.querySelectorAll(".nav-link-btn");
     navBtns.forEach(btn => btn.classList.remove("active"));

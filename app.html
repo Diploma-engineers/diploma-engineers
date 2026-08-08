@@ -47,6 +47,41 @@ body {
 /* Custom Scrollbar Hide */
 ::-webkit-scrollbar { display: none; }
 
+/* GLOBAL LOADER */
+#globalLoader {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.spinner-ring {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-light);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#globalLoader p {
+  margin-top: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--dark-text);
+  letter-spacing: -0.2px;
+}
+
 /* AUTH PAGE */
 #authPage {
   min-height: 100vh;
@@ -392,22 +427,22 @@ body {
   line-height: 1.4;
 }
 
-/* NOTES & STORE GRIDS */
-.notes-grid, .store-grid {
+/* NOTES GRIDS */
+.notes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
 
 @media (min-width: 640px) {
-  .notes-grid, .store-grid { grid-template-columns: repeat(3, 1fr); }
+  .notes-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 992px) {
-  .notes-grid, .store-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .notes-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
 }
 
-.book-card, .store-card {
+.book-card {
   background: var(--bg-white);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -419,23 +454,23 @@ body {
   flex-direction: column;
 }
 
-.book-card img, .store-card img {
+.book-card img {
   width: 100%;
   height: 140px;
   object-fit: cover;
   background: var(--surface-gray);
 }
 
-.book-card-content, .store-info { padding: 12px; }
+.book-card-content { padding: 12px; }
 
-.book-card h3, .store-info h4 {
+.book-card h3 {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 4px;
   line-height: 1.2;
 }
 
-.book-card p, .store-info p {
+.book-card p {
   font-size: 12px;
   color: var(--muted-text);
   margin: 0;
@@ -633,7 +668,7 @@ body {
   box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
 }
 
-/* FLOATING FEEDBACK BUTTON */
+/* FLOATING FEEDBACK BUTTON & MODAL */
 .feedback-btn {
   position: fixed;
   right: 20px;
@@ -650,15 +685,16 @@ body {
   cursor: pointer;
   z-index: 99;
   box-shadow: 0 10px 25px rgba(255, 107, 0, 0.3);
+  border: none;
 }
 
 .feedback-popup {
   position: fixed;
   right: 20px;
   bottom: 140px;
-  width: 300px;
+  width: 320px;
   background: #fff;
-  padding: 16px;
+  padding: 20px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   display: none;
@@ -666,26 +702,30 @@ body {
   border: 1px solid var(--border-light);
 }
 
-.feedback-popup input, .feedback-popup select, .feedback-popup textarea {
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 12px;
-  outline: none;
-  background: var(--surface-gray);
+.feedback-popup h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.feedback-popup button {
+.feedback-popup input, .feedback-popup select, .feedback-popup textarea {
   width: 100%;
-  padding: 10px;
-  border: none;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
+  font-size: 13px;
+  outline: none;
+  background: var(--surface-gray);
+  color: var(--dark-text);
+}
+
+.feedback-popup textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 /* BOTTOM NAVIGATION BAR */
@@ -728,6 +768,12 @@ body {
 </style>
 </head>
 <body>
+
+<!-- GLOBAL LOADER -->
+<div id="globalLoader">
+  <div class="spinner-ring"></div>
+  <p>Loading Diploma Portal...</p>
+</div>
 
 <!-- AUTH PAGE -->
 <div id="authPage" style="display:none;">
@@ -1005,21 +1051,6 @@ body {
     </div>
   </div>
 
-  <!-- STORE PAGE -->
-  <div id="storePage" class="page">
-    <div class="section-title">Store Materials</div>
-    <div class="store-grid">
-      <div class="store-card">
-        <img src="https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?q=80&w=400" alt="Pen">
-        <div class="store-info">
-          <h4>Premium Pen Pack</h4>
-          <p>Blue & Black Smooth Writing</p>
-          <button class="btn-main" style="padding: 6px; font-size: 12px; margin-top: 6px;">Buy ₹49</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- PREMIUM PAGE -->
   <div id="premium-buy-card" class="page">
     <div class="premium-buy-card">
@@ -1049,7 +1080,30 @@ body {
     </div>
   </div>
 
->
+  <!-- FLOATING FEEDBACK BUTTON & POPUP -->
+  <button class="feedback-btn" onclick="toggleFeedback()" title="Give Feedback">
+    <i class="fas fa-comment-dots"></i>
+  </button>
+
+  <div class="feedback-popup" id="feedbackPopup">
+    <h4>Send Feedback <span onclick="toggleFeedback()" style="cursor:pointer; font-size:16px;">✖</span></h4>
+    <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_subject" value="New App Feedback Received">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email Address" required>
+      <select name="rating" required>
+        <option value="" disabled selected>Select Rating</option>
+        <option value="5 - Excellent">⭐⭐⭐⭐⭐ Excellent</option>
+        <option value="4 - Very Good">⭐⭐⭐⭐ Very Good</option>
+        <option value="3 - Good">⭐⭐⭐ Good</option>
+        <option value="2 - Fair">⭐⭐ Fair</option>
+        <option value="1 - Poor">⭐ Poor</option>
+      </select>
+      <textarea name="message" placeholder="Write your feedback or suggestions here..." required></textarea>
+      <button type="submit" class="btn-main" style="padding: 10px; font-size: 13px;">Submit Feedback</button>
+    </form>
+  </div>
 
   <!-- BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav">
@@ -1065,8 +1119,8 @@ body {
     <button class="nav-link-btn" id="tab-premium-buy-card" onclick="navigateTo('premium-buy-card')">
       <i class="fas fa-crown"></i>Premium
     </button>
-    <button class="nav-link-btn" id="tab-storePage" onclick="navigateTo('storePage')">
-      <i class="fas fa-store"></i>Store
+    <button class="nav-link-btn" id="tab-updatePage" onclick="navigateTo('updatePage')">
+      <i class="fas fa-bell"></i>Updates
     </button>
   </div>
 
@@ -1098,6 +1152,15 @@ body {
   
   // External Branches Mapping (pageId: fileName)
   const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture'];
+
+  // Global Loader Handler
+  function hideLoader() {
+    const loader = document.getElementById("globalLoader");
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 300);
+    }
+  }
 
   window.toggleForm = function() {
     isRegister = !isRegister;
@@ -1183,9 +1246,11 @@ body {
       const targetPage = initialHash || defaultPage;
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
+      hideLoader();
     } else {
       document.getElementById("app").style.display = "none";
       document.getElementById("authPage").style.display = "flex";
+      hideLoader();
     }
   });
 
@@ -1194,17 +1259,15 @@ body {
     const container = document.getElementById(branchId);
     if (!container) return;
 
-    // Show Loading State
     container.innerHTML = `
       <div style="text-align:center; padding: 50px 20px; color: var(--muted-text);">
         <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
         <p style="margin-top: 12px; font-weight: 700;">Content Loading...</p>
       </div>`;
 
-    // Map computer.html or branchName.html
     let fileName = `${branchId}.html`;
     if (branchId === 'computerscience') {
-      fileName = 'computer.html'; // Adjusting to match computer.html filename
+      fileName = 'computer.html';
     }
 
     try {

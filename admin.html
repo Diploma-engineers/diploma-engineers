@@ -1,555 +1,2673 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Diploma Engineers | Admin Panel</title>
+
 <link rel="icon" href="favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
+
+/* =====================================================
+   RESET
+===================================================== */
+
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Poppins,sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
 }
 
 body{
-background:#f1f5f9;
+    font-family:"Poppins",Arial,sans-serif;
+    background:#f1f5f9;
+    color:#172033;
 }
 
-/* LOADER */
-#loader{
-position:fixed;
-width:100%;
-height:100vh;
-background:white;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-z-index:9999;
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-page{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+
+    background:
+    radial-gradient(circle at top left,#dbeafe,transparent 35%),
+    radial-gradient(circle at bottom right,#e0e7ff,transparent 35%),
+    #f1f5f9;
 }
 
-.loader{
-width:55px;
-height:55px;
-border:6px solid #ddd;
-border-top-color:#2563eb;
-border-radius:50%;
-animation:load 1s linear infinite;
+.login-card{
+    width:100%;
+    max-width:420px;
+    background:#ffffff;
+    border-radius:22px;
+    padding:35px 30px;
+    box-shadow:0 20px 60px rgba(15,23,42,.12);
 }
 
-@keyframes load{
-100%{
-transform:rotate(360deg);
-}
+.login-logo{
+    width:75px;
+    height:75px;
+    margin:0 auto 18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:20px;
+
+    background:linear-gradient(135deg,#2563eb,#4f46e5);
+    color:#fff;
+
+    font-size:32px;
+
+    box-shadow:0 10px 25px rgba(37,99,235,.25);
 }
 
-#loader p{
-margin-top:15px;
-color:#2563eb;
-font-weight:600;
+.login-card h1{
+    text-align:center;
+    font-size:25px;
+    margin-bottom:5px;
 }
 
-/* LOGIN */
-#loginPage{
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:20px;
+.login-card .subtitle{
+    text-align:center;
+    color:#64748b;
+    font-size:13px;
+    margin-bottom:25px;
 }
 
-.login-box{
-background:white;
-width:380px;
-padding:35px;
-border-radius:20px;
-box-shadow:0 10px 30px rgba(0,0,0,.15);
-text-align:center;
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+.form-group{
+    margin-bottom:15px;
 }
 
-.login-box img{
-width:90px;
-height:90px;
-border-radius:50%;
-margin-bottom:15px;
+.form-label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:7px;
+    color:#334155;
 }
 
-.login-box h2{
-color:#2563eb;
-margin-bottom:25px;
+.input-wrap{
+    position:relative;
 }
 
-.input{
-width:100%;
-padding:13px;
-margin-bottom:15px;
-border:1px solid #ddd;
-border-radius:8px;
-outline:none;
+.input-wrap i{
+    position:absolute;
+    left:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#64748b;
 }
 
-.input:focus{
-border-color:#2563eb;
+.form-input,
+.form-textarea,
+.form-select{
+    width:100%;
+    border:1px solid #dbe1ea;
+    background:#f8fafc;
+    border-radius:11px;
+    padding:13px 14px;
+    font-family:inherit;
+    font-size:14px;
+    outline:none;
+    transition:.25s;
 }
 
-.login-btn{
-width:100%;
-padding:13px;
-background:#2563eb;
-border:none;
-color:white;
-font-size:16px;
-border-radius:8px;
-cursor:pointer;
-font-weight:600;
+.input-wrap .form-input{
+    padding-left:42px;
 }
 
-.login-btn:hover{
-background:#1d4ed8;
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus{
+    border-color:#2563eb;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
 }
 
-#error{
-margin-top:15px;
-color:red;
-font-size:14px;
+.form-textarea{
+    min-height:140px;
+    resize:vertical;
 }
 
-/* ADMIN */
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.btn{
+    border:0;
+    cursor:pointer;
+    border-radius:11px;
+    padding:12px 18px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    transition:.25s;
+}
+
+.btn:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+}
+
+.btn-primary{
+    width:100%;
+    background:linear-gradient(135deg,#2563eb,#4f46e5);
+    color:#fff;
+    box-shadow:0 8px 20px rgba(37,99,235,.20);
+}
+
+.btn-primary:hover:not(:disabled){
+    transform:translateY(-2px);
+    box-shadow:0 12px 25px rgba(37,99,235,.28);
+}
+
+.btn-danger{
+    background:#ef4444;
+    color:#fff;
+}
+
+.btn-danger:hover{
+    background:#dc2626;
+}
+
+.btn-secondary{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.btn-success{
+    background:#16a34a;
+    color:#fff;
+}
+
+.btn-small{
+    padding:8px 11px;
+    font-size:12px;
+}
+
+
+/* =====================================================
+   ADMIN
+===================================================== */
+
 #adminPanel{
-display:none;
+    display:none;
 }
 
-.navbar{
-height:70px;
-background:#2563eb;
-color:white;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 25px;
+.admin-header{
+    position:sticky;
+    top:0;
+    z-index:100;
+
+    background:#ffffff;
+    border-bottom:1px solid #e2e8f0;
+
+    box-shadow:0 5px 25px rgba(15,23,42,.06);
 }
 
-.navbar h2{
-font-size:20px;
+.header-inner{
+    max-width:1200px;
+    margin:auto;
+    padding:14px 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
 }
 
-.logout{
-background:white;
-color:#2563eb;
-border:none;
-padding:10px 18px;
-border-radius:8px;
-font-weight:600;
-cursor:pointer;
+.brand{
+    display:flex;
+    align-items:center;
+    gap:11px;
 }
 
-.dashboard{
-padding:25px;
+.brand-icon{
+    width:44px;
+    height:44px;
+    border-radius:12px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+    background:linear-gradient(135deg,#2563eb,#4f46e5);
 }
 
-.welcome-box{
-background:white;
-padding:25px;
-border-radius:15px;
-margin-bottom:25px;
-box-shadow:0 5px 20px rgba(0,0,0,.08);
+.brand-text h2{
+    font-size:17px;
 }
 
-.welcome-box h1{
-color:#2563eb;
+.brand-text p{
+    font-size:11px;
+    color:#64748b;
 }
 
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
-margin-bottom:25px;
+.header-actions{
+    display:flex;
+    gap:8px;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main{
+    max-width:1200px;
+    margin:auto;
+    padding:25px 20px 50px;
+}
+
+
+/* =====================================================
+   DASHBOARD CARDS
+===================================================== */
+
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:22px;
+}
+
+.stat-card{
+    background:#fff;
+    border-radius:16px;
+    padding:20px;
+
+    display:flex;
+    align-items:center;
+    gap:15px;
+
+    box-shadow:0 5px 20px rgba(15,23,42,.06);
+    border:1px solid #e8edf4;
+}
+
+.stat-icon{
+    width:50px;
+    height:50px;
+    flex-shrink:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:14px;
+
+    background:#eff6ff;
+    color:#2563eb;
+
+    font-size:20px;
+}
+
+.stat-card h3{
+    font-size:22px;
+}
+
+.stat-card p{
+    color:#64748b;
+    font-size:12px;
+}
+
+
+/* =====================================================
+   CONTENT GRID
+===================================================== */
+
+.content-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:20px;
 }
 
 .card{
-background:white;
-padding:25px;
-border-radius:15px;
-text-align:center;
-box-shadow:0 5px 20px rgba(0,0,0,.08);
+    background:#fff;
+    border-radius:18px;
+    padding:22px;
+    border:1px solid #e8edf4;
+    box-shadow:0 5px 20px rgba(15,23,42,.06);
+    margin-bottom:20px;
 }
 
-.card i{
-font-size:35px;
-color:#2563eb;
-margin-bottom:15px;
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:20px;
 }
 
-.box{
-background:white;
-padding:25px;
-border-radius:15px;
-margin-bottom:25px;
-box-shadow:0 5px 20px rgba(0,0,0,.08);
+.card-title{
+    font-size:18px;
+    font-weight:800;
 }
 
-.box h2{
-color:#2563eb;
-margin-bottom:20px;
+.card-title i{
+    color:#2563eb;
+    margin-right:7px;
 }
 
-textarea.input{
-height:120px;
-resize:none;
+
+/* =====================================================
+   UPLOAD BOX
+===================================================== */
+
+.upload-box{
+    border:2px dashed #cbd5e1;
+    background:#f8fafc;
+    border-radius:13px;
+    padding:18px;
+    text-align:center;
+    transition:.25s;
 }
 
-.save-btn{
-background:#2563eb;
-color:white;
-border:none;
-padding:12px 25px;
-border-radius:8px;
-cursor:pointer;
-font-weight:600;
+.upload-box:hover{
+    border-color:#2563eb;
+    background:#eff6ff;
 }
 
-.save-btn:hover{
-background:#1d4ed8;
+.upload-box i{
+    font-size:28px;
+    color:#2563eb;
+    margin-bottom:8px;
 }
 
-#dataList div{
-background:#f8fafc;
-padding:15px;
-border-radius:10px;
-margin-bottom:12px;
+.upload-box p{
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:10px;
 }
 
-/* FOOTER */
+.file-input{
+    width:100%;
+    font-size:12px;
+}
+
+.or{
+    text-align:center;
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:700;
+    margin:12px 0;
+}
+
+
+/* =====================================================
+   IMAGE PREVIEW
+===================================================== */
+
+.preview-box{
+    display:none;
+    margin-top:14px;
+    position:relative;
+}
+
+.preview-box img{
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:13px;
+    border:1px solid #e2e8f0;
+}
+
+.preview-label{
+    display:inline-block;
+    margin-bottom:7px;
+    font-size:11px;
+    font-weight:700;
+    color:#475569;
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+.progress-wrap{
+    display:none;
+    margin-top:15px;
+}
+
+.progress-info{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:#64748b;
+    margin-bottom:5px;
+}
+
+.progress{
+    width:100%;
+    height:8px;
+    background:#e2e8f0;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,#2563eb,#4f46e5);
+    transition:.2s;
+}
+
+
+/* =====================================================
+   NEWS LIST
+===================================================== */
+
+.news-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.news-item{
+    border:1px solid #e2e8f0;
+    border-radius:15px;
+    padding:14px;
+
+    display:flex;
+    gap:14px;
+
+    background:#fff;
+}
+
+.news-thumb{
+    width:145px;
+    height:95px;
+    flex-shrink:0;
+
+    object-fit:cover;
+    border-radius:10px;
+
+    background:#e2e8f0;
+}
+
+.news-placeholder{
+    width:145px;
+    height:95px;
+    flex-shrink:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:10px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:25px;
+}
+
+.news-content{
+    flex:1;
+    min-width:0;
+}
+
+.news-content h3{
+    font-size:15px;
+    margin-bottom:5px;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.news-meta{
+    color:#64748b;
+    font-size:10px;
+    margin-bottom:7px;
+}
+
+.news-description{
+    color:#475569;
+    font-size:12px;
+    line-height:1.5;
+
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.news-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+}
+
+.news-actions a{
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.empty{
+    text-align:center;
+    padding:45px 20px;
+    color:#64748b;
+}
+
+.empty i{
+    font-size:40px;
+    margin-bottom:12px;
+    color:#94a3b8;
+}
+
+.empty h3{
+    margin-bottom:5px;
+    color:#334155;
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+.toast{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+
+    max-width:360px;
+
+    padding:14px 17px;
+
+    background:#0f172a;
+    color:#fff;
+
+    border-radius:12px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.2);
+
+    transform:translateY(120px);
+    opacity:0;
+
+    transition:.3s;
+
+    z-index:9999;
+
+    font-size:13px;
+}
+
+.toast.show{
+    transform:translateY(0);
+    opacity:1;
+}
+
+.toast.success{
+    background:#15803d;
+}
+
+.toast.error{
+    background:#dc2626;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
 .footer{
-background:#2563eb;
-color:white;
-text-align:center;
-padding:25px;
-margin-top:30px;
+    text-align:center;
+    color:#64748b;
+    font-size:11px;
+    padding:20px;
 }
 
-.footer h2{
-margin-bottom:10px;
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:900px){
+
+    .content-grid{
+        grid-template-columns:1fr;
+    }
+
 }
 
-.footer p{
-font-size:14px;
-margin:5px;
+@media(max-width:650px){
+
+    .dashboard-grid{
+        grid-template-columns:1fr;
+    }
+
+    .header-inner{
+        padding:12px 14px;
+    }
+
+    .brand-text h2{
+        font-size:14px;
+    }
+
+    .brand-text p{
+        font-size:9px;
+    }
+
+    .brand-icon{
+        width:38px;
+        height:38px;
+    }
+
+    .header-actions .btn{
+        padding:9px 10px;
+        font-size:11px;
+    }
+
+    .main{
+        padding:15px 12px 40px;
+    }
+
+    .card{
+        padding:16px;
+    }
+
+    .news-item{
+        flex-direction:column;
+    }
+
+    .news-thumb,
+    .news-placeholder{
+        width:100%;
+        height:180px;
+    }
+
 }
 
-/* DELETE BUTTON */
-#dataList button{
-background:#dc2626;
-color:white;
-border:none;
-padding:8px 15px;
-border-radius:6px;
-cursor:pointer;
-font-weight:600;
-}
-
-#dataList button:hover{
-background:#b91c1c;
-}
-
-@media(max-width:600px){
-.navbar{
-padding:0 15px;
-}
-.navbar h2{
-font-size:14px;
-}
-.logout{
-padding:8px 12px;
-}
-.login-box{
-width:100%;
-}
-.box{
-padding:18px;
-}
-.dashboard{
-padding:15px;
-}
-}
 </style>
+
 </head>
+
 
 <body>
 
-<!-- LOADER -->
-<div id="loader">
-<div class="loader"></div>
-<p>Loading Admin Panel...</p>
+
+<!-- =====================================================
+     LOGIN PAGE
+===================================================== -->
+
+<div class="login-page" id="loginBox">
+
+    <div class="login-card">
+
+        <div class="login-logo">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h1>Admin Panel</h1>
+
+        <p class="subtitle">
+            Diploma Engineers Secure Management
+        </p>
+
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Email Address
+            </label>
+
+            <div class="input-wrap">
+
+                <i class="fa-solid fa-envelope"></i>
+
+                <input
+                    class="form-input"
+                    id="email"
+                    type="email"
+                    placeholder="Enter admin email"
+                    autocomplete="username"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Password
+            </label>
+
+            <div class="input-wrap">
+
+                <i class="fa-solid fa-lock"></i>
+
+                <input
+                    class="form-input"
+                    id="password"
+                    type="password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="btn btn-primary"
+            id="loginBtn"
+            type="button">
+
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Login
+
+        </button>
+
+    </div>
+
 </div>
 
-<!-- LOGIN -->
-<div id="loginPage">
-<div class="login-box">
-<img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Logo">
-<h2>Admin Login</h2>
-<input class="input" id="email" type="email" placeholder="Enter Email">
-<input class="input" id="password" type="password" placeholder="Enter Password">
-<button class="login-btn" onclick="login()">Login</button>
-<p id="error"></p>
-</div>
-</div>
 
-<!-- ADMIN PANEL START -->
+
+<!-- =====================================================
+     ADMIN PANEL
+===================================================== -->
+
 <div id="adminPanel">
 
-<nav class="navbar">
-<h2><i class="fa-solid fa-user-shield"></i> Diploma Engineers Admin</h2>
-<button class="logout" onclick="logout()">
-<i class="fa-solid fa-right-from-bracket"></i> Logout
-</button>
-</nav>
 
-<!-- ADMIN DASHBOARD -->
-<section class="dashboard">
+<!-- HEADER -->
 
-<div class="welcome-box">
-<h1>Welcome Admin 👋</h1>
-<p>Manage Diploma Engineers Website Content</p>
+<header class="admin-header">
+
+    <div class="header-inner">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+
+                <i class="fa-solid fa-gauge-high"></i>
+
+            </div>
+
+            <div class="brand-text">
+
+                <h2>Diploma Engineers</h2>
+
+                <p>Admin Management Panel</p>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <button
+                class="btn btn-secondary"
+                type="button"
+                onclick="window.open('news.html','_blank')">
+
+                <i class="fa-solid fa-newspaper"></i>
+                News Page
+
+            </button>
+
+
+            <button
+                class="btn btn-danger"
+                id="logoutBtn"
+                type="button">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- MAIN -->
+
+<main class="main">
+
+
+<!-- DASHBOARD -->
+
+<div class="dashboard-grid">
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+
+            <i class="fa-solid fa-newspaper"></i>
+
+        </div>
+
+        <div>
+
+            <h3 id="newsCount">0</h3>
+
+            <p>Published News</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+
+        </div>
+
+        <div>
+
+            <h3 id="uploadStatus">
+                Ready
+            </h3>
+
+            <p>Cloudinary</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+
+            <i class="fa-solid fa-database"></i>
+
+        </div>
+
+        <div>
+
+            <h3>Realtime</h3>
+
+            <p>Firebase Database</p>
+
+        </div>
+
+    </div>
+
 </div>
 
-<div class="cards">
+
+
+<!-- CONTENT -->
+
+<div class="content-grid">
+
+
+<!-- =====================================================
+     PUBLISH FORM
+===================================================== -->
+
+<section>
+
+
 <div class="card">
-<i class="fa-solid fa-bell"></i>
-<h3>Notifications</h3>
-<p>Latest Updates</p>
-</div>
 
-<div class="card">
-<i class="fa-solid fa-book"></i>
-<h3>Books & Notes</h3>
-<p>Study Material</p>
-</div>
+    <div class="card-header">
 
-<div class="card">
-<i class="fa-solid fa-database"></i>
-<h3>Database</h3>
-<p>Realtime Data</p>
-</div>
-</div>
+        <h2 class="card-title">
 
-<!-- ADD NEWS -->
-<div class="box">
-<h2><i class="fa-solid fa-newspaper"></i> Add News</h2>
+            <i class="fa-solid fa-pen-to-square"></i>
+            Publish News
 
-<input class="input" id="newsTitle" placeholder="News Title">
+        </h2>
 
-<textarea class="input" id="newsText" placeholder="News Description"></textarea>
+    </div>
 
-<button class="save-btn" onclick="addNews()">
-Publish News
-</button>
-<a href="news.html" target="_blank" class="view-news-btn">
-    <i class="fa-solid fa-newspaper"></i>
-    View All News
-</a>
- 
-</div>
 
-<!-- ADD BOOK -->
-<div class="box">
-<h2><i class="fa-solid fa-book-open"></i> Add Study Material</h2>
-<input class="input" id="bookName" placeholder="Book Name">
-<input class="input" id="semester" placeholder="Semester">
-<input class="input" id="branch" placeholder="Branch">
-<input class="input" id="bookLink" placeholder="PDF Link">
-<button class="save-btn" onclick="addBook()">Add Book</button>
-</div>
+    <!-- TITLE -->
 
-<!-- DATABASE DATA -->
-<div class="box">
-<h2><i class="fa-solid fa-server"></i> Database Records</h2>
-<div id="dataList">Loading...</div>
+    <div class="form-group">
+
+        <label class="form-label">
+            News Title *
+        </label>
+
+        <input
+            class="form-input"
+            id="title"
+            type="text"
+            placeholder="Enter news title">
+
+    </div>
+
+
+    <!-- DESCRIPTION -->
+
+    <div class="form-group">
+
+        <label class="form-label">
+            Description
+        </label>
+
+        <textarea
+            class="form-textarea"
+            id="desc"
+            placeholder="Write news description..."></textarea>
+
+    </div>
+
+
+    <!-- CATEGORY -->
+
+    <div class="form-group">
+
+        <label class="form-label">
+            Category
+        </label>
+
+        <select
+            class="form-select"
+            id="cat">
+
+            <option value="News">News</option>
+            <option value="Notice">Notice</option>
+            <option value="Result">Result</option>
+            <option value="Admission">Admission</option>
+            <option value="Scholarship">Scholarship</option>
+            <option value="Job">Job</option>
+
+        </select>
+
+    </div>
+
+
+    <!-- =================================================
+         IMAGE
+    ================================================== -->
+
+    <div class="form-group">
+
+        <label class="form-label">
+
+            <i class="fa-solid fa-image"></i>
+            Thumbnail Image
+
+        </label>
+
+
+        <div class="upload-box">
+
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+
+            <p>
+                Upload image to Cloudinary
+            </p>
+
+            <input
+                class="file-input"
+                type="file"
+                id="thumb"
+                accept="image/jpeg,image/png,image/webp,image/gif">
+
+        </div>
+
+
+        <div class="or">
+            OR USE IMAGE URL
+        </div>
+
+
+        <input
+            class="form-input"
+            id="imageUrl"
+            type="url"
+            placeholder="https://example.com/image.jpg">
+
+
+        <div
+            class="preview-box"
+            id="previewBox">
+
+            <span class="preview-label">
+                Thumbnail Preview
+            </span>
+
+            <img
+                id="preview"
+                alt="Thumbnail Preview">
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         PDF / FILE
+    ================================================== -->
+
+    <div class="form-group">
+
+        <label class="form-label">
+
+            <i class="fa-solid fa-file-pdf"></i>
+            PDF / Document
+
+        </label>
+
+
+        <div class="upload-box">
+
+            <i class="fa-solid fa-file-arrow-up"></i>
+
+            <p>
+                Upload PDF / Document to Cloudinary
+            </p>
+
+            <input
+                class="file-input"
+                type="file"
+                id="pdf"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+
+        </div>
+
+
+        <div class="or">
+            OR USE PDF / FILE URL
+        </div>
+
+
+        <input
+            class="form-input"
+            id="pdfUrl"
+            type="url"
+            placeholder="https://example.com/file.pdf">
+
+    </div>
+
+
+
+    <!-- =================================================
+         EXTERNAL LINK
+    ================================================== -->
+
+    <div class="form-group">
+
+        <label class="form-label">
+
+            <i class="fa-solid fa-link"></i>
+            External Link
+            <span style="font-weight:400;color:#94a3b8;">
+                (Optional)
+            </span>
+
+        </label>
+
+        <input
+            class="form-input"
+            id="link"
+            type="url"
+            placeholder="https://example.com">
+
+    </div>
+
+
+
+    <!-- PROGRESS -->
+
+    <div
+        class="progress-wrap"
+        id="progressWrap">
+
+        <div class="progress-info">
+
+            <span id="progressText">
+                Uploading...
+            </span>
+
+            <span id="progressPercent">
+                0%
+            </span>
+
+        </div>
+
+        <div class="progress">
+
+            <div
+                class="progress-bar"
+                id="progressBar">
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- PUBLISH -->
+
+    <button
+        class="btn btn-primary"
+        id="publishBtn"
+        type="button">
+
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        Publish News
+
+    </button>
+
+
 </div>
 
 </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-<h2>Diploma Engineers</h2>
-<p>Secure Admin Management Panel</p>
-<p>© 2026 Diploma Engineers. All Rights Reserved.</p>
-</footer>
+
+
+<!-- =====================================================
+     PUBLISHED NEWS
+===================================================== -->
+
+<section>
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h2 class="card-title">
+
+            <i class="fa-solid fa-list"></i>
+            Published News
+
+        </h2>
+
+        <span
+            id="listCount"
+            style="font-size:12px;color:#64748b;">
+
+            0 Items
+
+        </span>
+
+    </div>
+
+
+    <div
+        class="news-list"
+        id="list">
+
+        <div class="empty">
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            <h3>Loading...</h3>
+
+            <p>
+                Firebase news loading...
+            </p>
+
+        </div>
+
+    </div>
 
 </div>
-<!-- ADMIN PANEL END -->
 
-<!-- FIREBASE SCRIPT -->
+</section>
+
+
+</div>
+
+</main>
+
+
+
+<footer class="footer">
+
+    <strong>
+        Diploma Engineers
+    </strong>
+
+    <br>
+
+    Secure Admin Management Panel
+
+    <br>
+
+    © 2026 Diploma Engineers. All Rights Reserved.
+
+</footer>
+
+
+</div>
+
+
+
+<!-- TOAST -->
+
+<div
+    class="toast"
+    id="toast">
+
+</div>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// FIREBASE CONFIG
-const firebaseConfig = {
-apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-authDomain: "diplomaengineers-869df.firebaseapp.com",
-databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-projectId: "diplomaengineers-869df",
-storageBucket: "diplomaengineers-869df.appspot.com",
-messagingSenderId: "356779436080",
-appId: "1:356779436080:web:4b28da380e547420d0e5f5"
-};
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+/* =====================================================
+   FIREBASE IMPORT
+===================================================== */
 
-// LOGIN
-window.login = function(){
-let email = document.getElementById("email").value;
-let password = document.getElementById("password").value;
-let error = document.getElementById("error");
+import {
 
-if(email == "" || password == ""){
-error.innerHTML = "Enter Email and Password";
-return;
+    auth,
+    db,
+
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+
+    ref,
+    push,
+    set,
+    onValue,
+    remove
+
+} from "./firebase.js";
+
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const loginBox =
+    document.getElementById("loginBox");
+
+const adminPanel =
+    document.getElementById("adminPanel");
+
+const loginBtn =
+    document.getElementById("loginBtn");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+const email =
+    document.getElementById("email");
+
+const password =
+    document.getElementById("password");
+
+const title =
+    document.getElementById("title");
+
+const desc =
+    document.getElementById("desc");
+
+const thumb =
+    document.getElementById("thumb");
+
+const imageUrl =
+    document.getElementById("imageUrl");
+
+const preview =
+    document.getElementById("preview");
+
+const previewBox =
+    document.getElementById("previewBox");
+
+const pdf =
+    document.getElementById("pdf");
+
+const pdfUrl =
+    document.getElementById("pdfUrl");
+
+const link =
+    document.getElementById("link");
+
+const cat =
+    document.getElementById("cat");
+
+const publishBtn =
+    document.getElementById("publishBtn");
+
+const list =
+    document.getElementById("list");
+
+const newsCount =
+    document.getElementById("newsCount");
+
+const listCount =
+    document.getElementById("listCount");
+
+const uploadStatus =
+    document.getElementById("uploadStatus");
+
+const progressWrap =
+    document.getElementById("progressWrap");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const progressText =
+    document.getElementById("progressText");
+
+const progressPercent =
+    document.getElementById("progressPercent");
+
+const toast =
+    document.getElementById("toast");
+
+
+
+/* =====================================================
+   CLOUDINARY
+===================================================== */
+
+const CLOUD_NAME =
+    "ub0qgzwa";
+
+const UPLOAD_PRESET =
+    "news_upload";
+
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+function showToast(message,type="success"){
+
+    toast.textContent = message;
+
+    toast.className =
+        "toast show " + type;
+
+    setTimeout(()=>{
+
+        toast.className =
+            "toast";
+
+    },3500);
+
 }
 
-signInWithEmailAndPassword(auth, email, password)
-.then(()=>{
-error.style.color = "green";
-error.innerHTML = "Login Successful";
-})
-.catch((e)=>{
-console.log(e);
-if(e.code === "auth/too-many-requests"){
-error.innerHTML = "Too many attempts. Wait and try again";
-} else if(e.code === "auth/invalid-credential"){
-error.innerHTML = "Wrong Email or Password";
-} else {
-error.innerHTML = e.message;
-}
-});
-};
 
-// CHECK LOGIN
-onAuthStateChanged(auth, (user)=>{
-document.getElementById("loader").style.display = "none";
-if(user){
-document.getElementById("loginPage").style.display = "none";
-document.getElementById("adminPanel").style.display = "block";
-loadData();
-} else {
-document.getElementById("loginPage").style.display = "flex";
-document.getElementById("adminPanel").style.display = "none";
-}
-});
 
-// LOGOUT
-window.logout = function(){
-signOut(auth).then(()=>{
-location.reload();
-});
-};
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
 
-// ADD NOTIFICATION
-// ADD NEWS
-window.addNews = function(){
+function escapeHTML(value){
 
-let title = document.getElementById("newsTitle").value;
-let text = document.getElementById("newsText").value;
+    return String(value ?? "")
 
-if(title=="" || text==""){
-alert("Fill all fields");
-return;
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
 }
 
-let news = push(ref(db,"news"));
 
-set(news,{
-title:title,
-text:text,
-date:new Date().toLocaleString()
-}).then(()=>{
-alert("News Published");
-document.getElementById("newsTitle").value="";
-document.getElementById("newsText").value="";
-});
 
-};
+/* =====================================================
+   VALID URL
+===================================================== */
 
-// ADD BOOK
-window.addBook = function(){
-let name = document.getElementById("bookName").value;
-let semester = document.getElementById("semester").value;
-let branch = document.getElementById("branch").value;
-let link = document.getElementById("bookLink").value;
+function validURL(value){
 
-if(name == "" || link == ""){
-alert("Enter Book Name and Link");
-return;
+    if(!value) return false;
+
+    try{
+
+        const url =
+            new URL(value);
+
+        return (
+            url.protocol === "http:" ||
+            url.protocol === "https:"
+        );
+
+    }catch{
+
+        return false;
+
+    }
+
 }
 
-let book = push(ref(db, "books"));
-set(book, {
-name: name,
-semester: semester,
-branch: branch,
-link: link,
-date: new Date().toLocaleString()
-}).then(()=>{
-alert("Book Added");
-document.getElementById("bookName").value = "";
-document.getElementById("semester").value = "";
-document.getElementById("branch").value = "";
-document.getElementById("bookLink").value = "";
-});
-};
 
-// LOAD DATA
-function loadData(){
-let list = document.getElementById("dataList");
 
-onValue(ref(db), (snapshot)=>{
-list.innerHTML = "";
-let data = snapshot.val();
+/* =====================================================
+   IMAGE PREVIEW FROM FILE
+===================================================== */
 
-if(!data){
-list.innerHTML = "No Data Found";
-return;
+thumb.addEventListener(
+    "change",
+    ()=>{
+
+        const file =
+            thumb.files[0];
+
+        if(!file){
+
+            return;
+
+        }
+
+        const localURL =
+            URL.createObjectURL(file);
+
+        preview.src =
+            localURL;
+
+        previewBox.style.display =
+            "block";
+
+        imageUrl.value = "";
+
+    }
+);
+
+
+
+/* =====================================================
+   IMAGE PREVIEW FROM URL
+===================================================== */
+
+imageUrl.addEventListener(
+    "input",
+    ()=>{
+
+        const value =
+            imageUrl.value.trim();
+
+        if(!value){
+
+            if(!thumb.files.length){
+
+                previewBox.style.display =
+                    "none";
+
+            }
+
+            return;
+
+        }
+
+        if(!validURL(value)){
+
+            return;
+
+        }
+
+        preview.src =
+            value;
+
+        previewBox.style.display =
+            "block";
+
+        thumb.value = "";
+
+    }
+);
+
+
+
+/* =====================================================
+   CLOUDINARY UPLOAD
+===================================================== */
+
+async function uploadCloudinary(file,type){
+
+    if(!file){
+
+        return "";
+
+    }
+
+
+    if(type === "image"){
+
+        if(!file.type.startsWith("image/")){
+
+            throw new Error(
+                "Please select a valid image."
+            );
+
+        }
+
+    }
+
+
+    if(type === "file"){
+
+        const allowed = [
+
+            "application/pdf",
+
+            "application/msword",
+
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+            "application/vnd.ms-excel",
+
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+            "application/vnd.ms-powerpoint",
+
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
+            "application/zip"
+
+        ];
+
+        if(!allowed.includes(file.type)){
+
+            const name =
+                file.name.toLowerCase();
+
+            const validExtension =
+                /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip)$/.test(name);
+
+            if(!validExtension){
+
+                throw new Error(
+                    "Unsupported file type."
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /* 20 MB limit */
+
+    if(file.size > 20 * 1024 * 1024){
+
+        throw new Error(
+            "File size must be less than 20 MB."
+        );
+
+    }
+
+
+    progressWrap.style.display =
+        "block";
+
+    progressText.textContent =
+        "Uploading " + file.name;
+
+    progressPercent.textContent =
+        "0%";
+
+    progressBar.style.width =
+        "0%";
+
+
+    /*
+      Cloudinary direct upload.
+
+      fetch does not expose reliable upload
+      progress in all browsers, so we show
+      an indeterminate-style staged progress.
+    */
+
+    progressBar.style.width =
+        "25%";
+
+
+    const formData =
+        new FormData();
+
+    formData.append(
+        "file",
+        file
+    );
+
+    formData.append(
+        "upload_preset",
+        UPLOAD_PRESET
+    );
+
+
+    const endpoint =
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+
+
+    const response =
+        await fetch(
+            endpoint,
+            {
+                method:"POST",
+                body:formData
+            }
+        );
+
+
+    progressBar.style.width =
+        "75%";
+
+
+    let data;
+
+    try{
+
+        data =
+            await response.json();
+
+    }catch{
+
+        throw new Error(
+            "Invalid response from Cloudinary."
+        );
+
+    }
+
+
+    if(
+        !response.ok ||
+        data.error
+    ){
+
+        throw new Error(
+            data.error?.message ||
+            "Cloudinary upload failed."
+        );
+
+    }
+
+
+    progressBar.style.width =
+        "100%";
+
+    progressPercent.textContent =
+        "100%";
+
+    uploadStatus.textContent =
+        "Uploaded";
+
+
+    return data.secure_url;
+
 }
 
-Object.keys(data).forEach(section=>{
-Object.keys(data[section]).forEach(id=>{
-let item = data[section][id];
-let div = document.createElement("div");
 
-div.innerHTML = `
-<b>Section: ${section}</b><br>
-${item.title || item.name || ""}
-<br>
-${item.text || item.link || ""}
-<br><br>
-<button onclick="deleteItem('${section}','${id}')">Delete</button>
-`;
 
-list.appendChild(div);
-});
-});
-});
+/* =====================================================
+   LOGIN
+===================================================== */
+
+loginBtn.addEventListener(
+    "click",
+    async()=>{
+
+        const userEmail =
+            email.value.trim();
+
+        const userPassword =
+            password.value;
+
+
+        if(!userEmail){
+
+            showToast(
+                "Enter admin email.",
+                "error"
+            );
+
+            email.focus();
+
+            return;
+
+        }
+
+
+        if(!userPassword){
+
+            showToast(
+                "Enter password.",
+                "error"
+            );
+
+            password.focus();
+
+            return;
+
+        }
+
+
+        loginBtn.disabled =
+            true;
+
+        loginBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
+
+
+        try{
+
+            await signInWithEmailAndPassword(
+                auth,
+                userEmail,
+                userPassword
+            );
+
+
+            showToast(
+                "Login successful."
+            );
+
+        }catch(error){
+
+            console.error(error);
+
+            showToast(
+                error.message ||
+                "Login failed.",
+                "error"
+            );
+
+        }finally{
+
+            loginBtn.disabled =
+                false;
+
+            loginBtn.innerHTML =
+                '<i class="fa-solid fa-right-to-bracket"></i> Login';
+
+        }
+
+    }
+);
+
+
+
+/* =====================================================
+   ENTER KEY LOGIN
+===================================================== */
+
+password.addEventListener(
+    "keydown",
+    event=>{
+
+        if(event.key === "Enter"){
+
+            loginBtn.click();
+
+        }
+
+    }
+);
+
+
+
+/* =====================================================
+   AUTH STATE
+===================================================== */
+
+onAuthStateChanged(
+    auth,
+    user=>{
+
+        if(user){
+
+            loginBox.style.display =
+                "none";
+
+            adminPanel.style.display =
+                "block";
+
+            loadNews();
+
+        }else{
+
+            loginBox.style.display =
+                "flex";
+
+            adminPanel.style.display =
+                "none";
+
+        }
+
+    }
+);
+
+
+
+/* =====================================================
+   PUBLISH NEWS
+===================================================== */
+
+publishBtn.addEventListener(
+    "click",
+    async()=>{
+
+        const newsTitle =
+            title.value.trim();
+
+        const newsDesc =
+            desc.value.trim();
+
+        const imageLink =
+            imageUrl.value.trim();
+
+        const documentLink =
+            pdfUrl.value.trim();
+
+        const externalLink =
+            link.value.trim();
+
+
+        /* TITLE */
+
+        if(!newsTitle){
+
+            showToast(
+                "Enter News Title.",
+                "error"
+            );
+
+            title.focus();
+
+            return;
+
+        }
+
+
+        /* IMAGE URL VALIDATION */
+
+        if(
+            imageLink &&
+            !validURL(imageLink)
+        ){
+
+            showToast(
+                "Invalid image URL.",
+                "error"
+            );
+
+            imageUrl.focus();
+
+            return;
+
+        }
+
+
+        /* PDF URL VALIDATION */
+
+        if(
+            documentLink &&
+            !validURL(documentLink)
+        ){
+
+            showToast(
+                "Invalid PDF/File URL.",
+                "error"
+            );
+
+            pdfUrl.focus();
+
+            return;
+
+        }
+
+
+        /* EXTERNAL LINK */
+
+        if(
+            externalLink &&
+            !validURL(externalLink)
+        ){
+
+            showToast(
+                "Invalid external link.",
+                "error"
+            );
+
+            link.focus();
+
+            return;
+
+        }
+
+
+        publishBtn.disabled =
+            true;
+
+        publishBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
+
+        uploadStatus.textContent =
+            "Uploading";
+
+
+        try{
+
+            let finalImageURL =
+                imageLink;
+
+            let finalFileURL =
+                documentLink;
+
+
+            /* =========================================
+               IMAGE UPLOAD
+            ========================================= */
+
+            if(thumb.files.length){
+
+                finalImageURL =
+                    await uploadCloudinary(
+                        thumb.files[0],
+                        "image"
+                    );
+
+            }
+
+
+            /* =========================================
+               FILE UPLOAD
+            ========================================= */
+
+            if(pdf.files.length){
+
+                finalFileURL =
+                    await uploadCloudinary(
+                        pdf.files[0],
+                        "file"
+                    );
+
+            }
+
+
+            /* =========================================
+               FIREBASE
+            ========================================= */
+
+            const newsRef =
+                push(
+                    ref(db,"news")
+                );
+
+
+            await set(
+                newsRef,
+                {
+
+                    title:
+                        newsTitle,
+
+                    desc:
+                        newsDesc,
+
+                    thumb:
+                        finalImageURL || "",
+
+                    pdf:
+                        finalFileURL || "",
+
+                    link:
+                        externalLink || "",
+
+                    cat:
+                        cat.value,
+
+                    date:
+                        new Date().toLocaleString(),
+
+                    timestamp:
+                        Date.now(),
+
+                    published:
+                        true
+
+                }
+            );
+
+
+            /* =========================================
+               SUCCESS
+            ========================================= */
+
+            showToast(
+                "News published successfully."
+            );
+
+
+            resetForm();
+
+
+            uploadStatus.textContent =
+                "Ready";
+
+
+        }catch(error){
+
+            console.error(
+                "Publish Error:",
+                error
+            );
+
+
+            showToast(
+                error.message ||
+                "Unable to publish news.",
+                "error"
+            );
+
+
+            uploadStatus.textContent =
+                "Error";
+
+
+        }finally{
+
+            publishBtn.disabled =
+                false;
+
+            publishBtn.innerHTML =
+                '<i class="fa-solid fa-cloud-arrow-up"></i> Publish News';
+
+
+            setTimeout(()=>{
+
+                progressWrap.style.display =
+                    "none";
+
+            },1000);
+
+        }
+
+    }
+);
+
+
+
+/* =====================================================
+   RESET FORM
+===================================================== */
+
+function resetForm(){
+
+    title.value = "";
+
+    desc.value = "";
+
+    thumb.value = "";
+
+    imageUrl.value = "";
+
+    pdf.value = "";
+
+    pdfUrl.value = "";
+
+    link.value = "";
+
+    cat.selectedIndex = 0;
+
+
+    preview.src = "";
+
+    previewBox.style.display =
+        "none";
+
+
+    progressBar.style.width =
+        "0%";
+
+    progressPercent.textContent =
+        "0%";
+
 }
 
-// DELETE
-window.deleteItem = function(section, id){
-if(confirm("Delete Data?")){
-remove(ref(db, section + "/" + id)).then(()=>{
-alert("Deleted");
-});
+
+
+/* =====================================================
+   LOAD NEWS
+===================================================== */
+
+let newsLoadedOnce = false;
+
+
+function loadNews(){
+
+    const newsRef =
+        ref(db,"news");
+
+
+    onValue(
+        newsRef,
+        snapshot=>{
+
+            list.innerHTML = "";
+
+
+            if(!snapshot.exists()){
+
+                newsCount.textContent =
+                    "0";
+
+                listCount.textContent =
+                    "0 Items";
+
+
+                list.innerHTML = `
+
+                    <div class="empty">
+
+                        <i class="fa-regular fa-newspaper"></i>
+
+                        <h3>No News Available</h3>
+
+                        <p>
+                            अभी कोई news publish नहीं हुई है।
+                        </p>
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            const records = [];
+
+
+            snapshot.forEach(
+                child=>{
+
+                    records.push({
+
+                        id:
+                            child.key,
+
+                        data:
+                            child.val()
+
+                    });
+
+                }
+            );
+
+
+            /* Latest first */
+
+            records.sort(
+                (a,b)=>{
+
+                    const aTime =
+                        Number(
+                            a.data.timestamp || 0
+                        );
+
+                    const bTime =
+                        Number(
+                            b.data.timestamp || 0
+                        );
+
+                    return bTime - aTime;
+
+                }
+            );
+
+
+            newsCount.textContent =
+                records.length;
+
+            listCount.textContent =
+                records.length +
+                (
+                    records.length === 1
+                    ? " Item"
+                    : " Items"
+                );
+
+
+            records.forEach(
+                item=>{
+
+                    const n =
+                        item.data;
+
+
+                    const card =
+                        document.createElement(
+                            "article"
+                        );
+
+                    card.className =
+                        "news-item";
+
+
+                    /* IMAGE */
+
+                    if(n.thumb){
+
+                        const img =
+                            document.createElement(
+                                "img"
+                            );
+
+                        img.className =
+                            "news-thumb";
+
+                        img.src =
+                            n.thumb;
+
+                        img.alt =
+                            n.title || "News";
+
+                        img.loading =
+                            "lazy";
+
+                        img.onerror =
+                            ()=>{
+
+                                img.style.display =
+                                    "none";
+
+                            };
+
+                        card.appendChild(img);
+
+                    }else{
+
+                        const placeholder =
+                            document.createElement(
+                                "div"
+                            );
+
+                        placeholder.className =
+                            "news-placeholder";
+
+                        placeholder.innerHTML =
+                            '<i class="fa-regular fa-image"></i>';
+
+                        card.appendChild(
+                            placeholder
+                        );
+
+                    }
+
+
+                    /* CONTENT */
+
+                    const content =
+                        document.createElement(
+                            "div"
+                        );
+
+                    content.className =
+                        "news-content";
+
+
+                    const heading =
+                        document.createElement(
+                            "h3"
+                        );
+
+                    heading.textContent =
+                        n.title ||
+                        "Untitled News";
+
+
+                    const meta =
+                        document.createElement(
+                            "div"
+                        );
+
+                    meta.className =
+                        "news-meta";
+
+                    meta.textContent =
+                        `${n.cat || "News"} • ${n.date || ""}`;
+
+
+                    const description =
+                        document.createElement(
+                            "p"
+                        );
+
+                    description.className =
+                        "news-description";
+
+                    description.textContent =
+                        n.desc || "";
+
+
+                    content.appendChild(
+                        heading
+                    );
+
+                    content.appendChild(
+                        meta
+                    );
+
+                    content.appendChild(
+                        description
+                    );
+
+
+                    /* ACTIONS */
+
+                    const actions =
+                        document.createElement(
+                            "div"
+                        );
+
+                    actions.className =
+                        "news-actions";
+
+
+                    /* IMAGE */
+
+                    if(n.thumb){
+
+                        const imageButton =
+                            document.createElement(
+                                "a"
+                            );
+
+                        imageButton.href =
+                            n.thumb;
+
+                        imageButton.target =
+                            "_blank";
+
+                        imageButton.rel =
+                            "noopener noreferrer";
+
+                        imageButton.className =
+                            "btn btn-small btn-secondary";
+
+                        imageButton.innerHTML =
+                            '<i class="fa-solid fa-image"></i> Image';
+
+                        actions.appendChild(
+                            imageButton
+                        );
+
+                    }
+
+
+                    /* PDF */
+
+                    if(n.pdf){
+
+                        const pdfButton =
+                            document.createElement(
+                                "a"
+                            );
+
+                        pdfButton.href =
+                            n.pdf;
+
+                        pdfButton.target =
+                            "_blank";
+
+                        pdfButton.rel =
+                            "noopener noreferrer";
+
+                        pdfButton.className =
+                            "btn btn-small btn-success";
+
+                        pdfButton.innerHTML =
+                            '<i class="fa-solid fa-file-pdf"></i> View File';
+
+                        actions.appendChild(
+                            pdfButton
+                        );
+
+                    }
+
+
+                    /* LINK */
+
+                    if(n.link){
+
+                        const linkButton =
+                            document.createElement(
+                                "a"
+                            );
+
+                        linkButton.href =
+                            n.link;
+
+                        linkButton.target =
+                            "_blank";
+
+                        linkButton.rel =
+                            "noopener noreferrer";
+
+                        linkButton.className =
+                            "btn btn-small btn-secondary";
+
+                        linkButton.innerHTML =
+                            '<i class="fa-solid fa-link"></i> Link';
+
+                        actions.appendChild(
+                            linkButton
+                        );
+
+                    }
+
+
+                    /* DELETE */
+
+                    const deleteButton =
+                        document.createElement(
+                            "button"
+                        );
+
+                    deleteButton.type =
+                        "button";
+
+                    deleteButton.className =
+                        "btn btn-small btn-danger";
+
+                    deleteButton.innerHTML =
+                        '<i class="fa-solid fa-trash"></i> Delete';
+
+
+                    deleteButton.addEventListener(
+                        "click",
+                        ()=>{
+
+                            deleteNews(
+                                item.id
+                            );
+
+                        }
+                    );
+
+
+                    actions.appendChild(
+                        deleteButton
+                    );
+
+
+                    content.appendChild(
+                        actions
+                    );
+
+                    card.appendChild(
+                        content
+                    );
+
+                    list.appendChild(
+                        card
+                    );
+
+                }
+            );
+
+        },
+
+        error=>{
+
+            console.error(
+                "Firebase News Error:",
+                error
+            );
+
+
+            list.innerHTML = `
+
+                <div class="empty">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    <h3>Unable to Load News</h3>
+
+                    <p>
+                        Firebase Database से news load नहीं हो सकी।
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    );
+
 }
-};
+
+
+
+/* =====================================================
+   DELETE NEWS
+===================================================== */
+
+async function deleteNews(id){
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this news?"
+        );
+
+
+    if(!confirmed){
+
+        return;
+
+    }
+
+
+    try{
+
+        await remove(
+            ref(
+                db,
+                "news/" + id
+            )
+        );
+
+
+        showToast(
+            "News deleted successfully."
+        );
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showToast(
+            error.message ||
+            "Unable to delete news.",
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+logoutBtn.addEventListener(
+    "click",
+    async()=>{
+
+        try{
+
+            await signOut(auth);
+
+            showToast(
+                "Logged out."
+            );
+
+        }catch(error){
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+);
+
+
 </script>
 
 </body>
+
 </html>

@@ -996,26 +996,6 @@ body {
 }
 .loading i { font-size: 24px; color: #2563eb; margin-bottom: 8px; }
 
-/* FLOATING FEEDBACK BUTTON */
-.feedback-btn {
-  position: fixed;
-  right: 16px;
-  bottom: 75px;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 99;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
-  border: none;
-}
-
 /* BOTTOM NAVIGATION BAR */
 .bottom-nav {
   position: fixed;
@@ -1059,7 +1039,6 @@ body {
 <!-- ==================================================
      FULL PAGE LOADER
 ================================================== -->
-<!-- ================= LOADER ================= -->
 <div id="page-loader">
     <div class="loader-content">
         <div class="loader-logo">
@@ -1198,13 +1177,13 @@ body {
     </div>
 
     <!-- PREMIUM ACCESS CARD -->
-    <div class="blue-theme-card-1" onclick="navigateTo('premium-buy-card')">
+    <div class="blue-theme-card-1" onclick="navigateTo('coursePage')">
       <div class="content">
-        <h4>Unlock Premium Access 🚀</h4>
-        <p>Get exclusive handwritten notes, PYQ solutions & e-books.</p>
+        <h4>Unlock Courses 🚀</h4>
+        <p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>
       </div>
       <div class="icon-box">
-        <i class="fas fa-crown"></i>
+        <i class="fas fa-graduation-cap"></i>
       </div>
     </div>
 
@@ -1263,6 +1242,7 @@ body {
   <!-- FETCHED EXTERNALLY MANAGED MODULES -->
   <div id="admitPage" class="page"></div>
   <div id="resultPage" class="page"></div>
+  <div id="coursePage" class="page"></div>
 
   <!-- INTEGRATED UPDATE & NOTIFICATIONS PAGE -->
   <div id="updatePage" class="page">
@@ -1414,16 +1394,6 @@ body {
     </div>
   </div>
 
-  <!-- PREMIUM PAGE -->
-  <div id="premium-buy-card" class="page">
-    <div class="premium-buy-card">
-      <h2 style="font-size: 20px; font-weight: 800;">Premium Membership 🚀</h2>
-      <p style="font-size: 13px; color: var(--muted-text); margin-top: 6px;">Get Premium Notes, PYQs, Video Lectures, E-Books & Placement Guidance.</p>
-      <div class="price-box">₹99 Only</div>
-      <button onclick="openPremiumForm()" class="btn-main">Buy Membership</button>
-    </div>
-  </div>
-
   <!-- FEEDBACK PAGE -->
   <div id="feedbackPage" class="page">
     <div class="premium-buy-card">
@@ -1502,8 +1472,8 @@ body {
     <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
       <i class="fas fa-book"></i>Books
     </button>
-    <button class="nav-link-btn" id="tab-premium-buy-card" onclick="navigateTo('premium-buy-card')">
-      <i class="fas fa-crown"></i>Premium
+    <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')">
+      <i class="fas fa-graduation-cap"></i>Courses
     </button>
     <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')">
       <i class="fas fa-comment-dots"></i>Feedback
@@ -1518,50 +1488,46 @@ body {
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-      /* ================= LOADER ================= */
-document.addEventListener("DOMContentLoaded",function(){
+  /* ================= LOADER ================= */
+  document.addEventListener("DOMContentLoaded", function(){
+    const loader = document.getElementById("page-loader");
+    const bar = document.getElementById("progress-bar");
+    const percent = document.getElementById("progress-percent");
 
-    const loader=document.getElementById("page-loader");
-    const bar=document.getElementById("progress-bar");
-    const percent=document.getElementById("progress-percent");
+    let progress = 0;
+    document.body.style.overflow = "hidden";
 
-    let progress=0;
+    const timer = setInterval(function(){
+      progress += Math.floor(Math.random() * 5) + 2;
 
-    document.body.style.overflow="hidden";
+      if(progress >= 100){
+        progress = 100;
+        clearInterval(timer);
 
-    const timer=setInterval(function(){
+        bar.style.width = progress + "%";
+        percent.textContent = progress + "%";
 
-        progress += Math.floor(Math.random()*5)+2;
+        setTimeout(function(){
+          loader.classList.add("hide");
+          document.body.style.overflow = "";
+        }, 450);
 
-        if(progress>=100){
-            progress=100;
-            clearInterval(timer);
+        return;
+      }
 
-            bar.style.width=progress+"%";
-            percent.textContent=progress+"%";
+      bar.style.width = progress + "%";
+      percent.textContent = progress + "%";
+    }, 45);
+  });
 
-            setTimeout(function(){
-                loader.classList.add("hide");
-                document.body.style.overflow="";
-            },450);
-
-            return;
-        }
-
-        bar.style.width=progress+"%";
-        percent.textContent=progress+"%";
-
-    },45);
-});
-
-/* Loader fail-safe */
-setTimeout(function(){
-    const loader=document.getElementById("page-loader");
+  /* Loader fail-safe */
+  setTimeout(function(){
+    const loader = document.getElementById("page-loader");
     if(loader && !loader.classList.contains("hide")){
-        loader.classList.add("hide");
-        document.body.style.overflow="";
+      loader.classList.add("hide");
+      document.body.style.overflow = "";
     }
-},5000);
+  }, 5000);
 
   // App Auth Database Config
   const firebaseConfig = {
@@ -1574,7 +1540,7 @@ setTimeout(function(){
     appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
   };
 
-  // News Database Config (from first snippet)
+  // News Database Config
   const newsFirebaseConfig = {
     apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
     authDomain: "diplomaengineers-869df.firebaseapp.com",
@@ -1596,7 +1562,7 @@ setTimeout(function(){
 
   let isRegister = false;
   const defaultPage = "homePage";
-  const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture', 'sem1', 'sem2', 'admitPage', 'resultPage'];
+  const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture', 'sem1', 'sem2', 'admitPage', 'resultPage', 'coursePage'];
 
   function hideLoader() {
     const loader = document.getElementById("globalLoader");
@@ -1698,7 +1664,7 @@ setTimeout(function(){
       const targetPage = initialHash || defaultPage;
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
-      loadNewsData(); // Load Realtime News from Firebase
+      loadNewsData();
       hideLoader();
     } else {
       document.getElementById("app").style.display = "none";
@@ -1863,12 +1829,13 @@ setTimeout(function(){
         <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
       </div>`;
 
-    let fileName = `${portalId}.html`;
+    let fileName = `${portalId}`;
     if (portalId === 'sem1') fileName = '1st-sem.html';
     if (portalId === 'sem2') fileName = '2nd-sem.html';
     if (portalId === 'computerscience') fileName = 'computer.html';
     if (portalId === 'admitPage') fileName = 'admitcard.html';
     if (portalId === 'resultPage') fileName = 'result.html';
+    if (portalId === 'coursePage') fileName = 'courses.html';
 
     try {
       const response = await fetch(fileName);
@@ -1885,6 +1852,8 @@ setTimeout(function(){
         renderDefaultAdmitLayout(container);
       } else if (portalId === 'resultPage') {
         renderDefaultResultLayout(container);
+      } else if (portalId === 'coursePage') {
+        renderDefaultCourseLayout(container);
       } else {
         renderDefaultBranchLayout(container, portalId);
       }
@@ -1921,6 +1890,18 @@ setTimeout(function(){
       <div class="grid-2">
         <div class="card-box"><i class="fas fa-square-poll-vertical"></i><p>Main Result</p></div>
         <div class="card-box"><i class="fas fa-file-circle-check"></i><p>Revaluation Result</p></div>
+      </div>
+    `;
+  }
+
+  function renderDefaultCourseLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Courses <span>Portal</span></div>
+      <div class="premium-buy-card" style="margin: 0 auto; max-width: 600px;">
+        <h2 style="font-size: 20px; font-weight: 800;">Video Courses & Premium Access 🚀</h2>
+        <p style="font-size: 13px; color: var(--muted-text); margin-top: 6px;">Get Video Lectures, Premium Notes, PYQs, E-Books & Placement Guidance.</p>
+        <div class="price-box">₹99 Only</div>
+        <button onclick="openPremiumForm()" class="btn-main">Buy Membership</button>
       </div>
     `;
   }

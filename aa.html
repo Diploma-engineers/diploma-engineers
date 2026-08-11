@@ -10,9 +10,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Cashfree Web Checkout SDK -->
-<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-
 <style>
 :root {
   --primary: #2563EB;
@@ -683,7 +680,7 @@ body {
 .profile-details p:last-child { margin-bottom: 0; }
 .profile-details span { font-weight: 700; color: var(--dark-text); }
 
-.premium-buy-card {
+.courses-buy-card {
   background: var(--bg-white);
   padding: 24px 20px;
   border-radius: var(--radius-lg);
@@ -704,6 +701,50 @@ body {
   font-weight: 800;
   margin: 12px 0;
   border: 1px solid #bbf7d0;
+}
+
+.courses-popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.courses-form-box {
+  background: white;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--radius-lg);
+  position: relative;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px; right: 14px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted-text);
+}
+
+.qr-img { width: 130px; border-radius: 8px; margin: 10px 0; }
+
+.courses-form-box input, .courses-form-box textarea {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  outline: none;
+  font-size: 12px;
+  background: var(--surface-gray);
 }
 
 .nav-wrapper {
@@ -799,6 +840,10 @@ body {
   text-align: left;
 }
 
+.news-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
 .category {
   display: inline-block;
   background: #dbeafe;
@@ -821,6 +866,11 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.news-title i {
+  color: #2563eb;
+  font-size: 15px;
 }
 
 .news-description {
@@ -869,6 +919,11 @@ body {
   cursor: pointer;
   font-size: 12px;
   padding: 0;
+}
+
+.action-btn:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .expandable-panel {
@@ -939,6 +994,27 @@ body {
   padding: 30px;
   color: #64748b;
 }
+.loading i { font-size: 24px; color: #2563eb; margin-bottom: 8px; }
+
+/* FLOATING FEEDBACK BUTTON */
+.feedback-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 75px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 99;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  border: none;
+}
 
 /* BOTTOM NAVIGATION BAR */
 .bottom-nav {
@@ -980,21 +1056,28 @@ body {
 </head>
 <body>
 
-<!-- PAGE LOADER -->
+<!-- ==================================================
+     FULL PAGE LOADER
+================================================== -->
+<!-- ================= LOADER ================= -->
 <div id="page-loader">
     <div class="loader-content">
         <div class="loader-logo">
             <div class="loader-ring"></div>
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Logo">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
         </div>
+
         <h1 class="loader-title">
             <span class="orange-text">DIPLOMA</span>
             <span class="blue-text">ENGINEERS</span>
         </h1>
+
         <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
+
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
+
         <div class="loading-status">
             <span>Loading...</span>
             <span id="progress-percent">0%</span>
@@ -1036,15 +1119,19 @@ body {
     </div>
     
     <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
+    
     <button class="btn-google" onclick="googleLogin()">
       <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
     </button>
+
     <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
   </div>
 </div>
 
 <!-- MAIN APP INTERFACE -->
 <div id="app">
+
+  <!-- NAVBAR -->
   <div class="navbar">
     <div class="nav-left">
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1064,6 +1151,7 @@ body {
       </div>
     </section>
 
+    <!-- TRENDING SUBJECTS -->
     <div class="section-title">Trending <span>Subjects</span></div>
     <div class="scroll-container">
       <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="subject-card">
@@ -1080,24 +1168,47 @@ body {
       </a>
     </div>
 
+    <!-- EXPLORE GRID -->
     <div class="section-title">Explore</div>
     <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i><p>Branch</p></div>
-      <div class="card-box" onclick="navigateTo('jobPage')"><i class="fas fa-briefcase"></i><p>Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('admitPage')"><i class="fas fa-id-card"></i><p>Admit Card</p></div>
-      <div class="card-box" onclick="navigateTo('resultPage')"><i class="fas fa-square-poll-vertical"></i><p>Result</p></div>
-      <div class="card-box" onclick="navigateTo('updatePage')"><i class="fas fa-bell"></i><p>Updates</p></div>
-      <div class="card-box" onclick="navigateTo('communityPage')"><i class="fas fa-users"></i><p>Community</p></div>
+      <div class="card-box" onclick="navigateTo('notesPage')">
+        <i class="fas fa-code-branch"></i>
+        <p>Branch</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('jobPage')">
+        <i class="fas fa-briefcase"></i>
+        <p>Jobs</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('admitPage')">
+        <i class="fas fa-id-card"></i>
+        <p>Admit Card</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('resultPage')">
+        <i class="fas fa-square-poll-vertical"></i>
+        <p>Result</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('updatePage')">
+        <i class="fas fa-bell"></i>
+        <p>Updates</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('communityPage')">
+        <i class="fas fa-users"></i>
+        <p>Community</p>
+      </div>
     </div>
 
-    <div class="blue-theme-card-1" onclick="navigateTo('premium-buy-card')">
+    <!-- COURSES ACCESS CARD -->
+    <div class="blue-theme-card-1" onclick="navigateTo('courses-buy-card')">
       <div class="content">
-        <h4>Unlock Premium Access 🚀</h4>
+        <h4>Unlock Courses Access 🚀</h4>
         <p>Get exclusive handwritten notes, PYQ solutions & e-books.</p>
       </div>
-      <div class="icon-box"><i class="fas fa-crown"></i></div>
+      <div class="icon-box">
+        <i class="fas fa-crown"></i>
+      </div>
     </div>
 
+    <!-- SEMESTER CARDS (1ST & 2ND SEMESTER COMMON) -->
     <div class="sem-banner-grid">
       <div class="sem-card-orange" onclick="navigateTo('sem1')">
         <div class="sem-card-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
@@ -1124,6 +1235,7 @@ body {
     </div>
   </div>
   
+  <!-- BRANCH PAGE LIST -->
   <div id="notesPage" class="page">
     <div class="section-title">Engineering Branches</div>
     <div class="grid-2">
@@ -1137,6 +1249,7 @@ body {
     </div>
   </div>
 
+  <!-- DYNAMICALLY LOADED BRANCH, SEMESTER, & FETCHED PORTALS -->
   <div id="civil" class="page"></div>
   <div id="computerscience" class="page"></div>
   <div id="electrical" class="page"></div>
@@ -1146,21 +1259,31 @@ body {
   <div id="agriculture" class="page"></div>
   <div id="sem1" class="page"></div>
   <div id="sem2" class="page"></div>
+  
+  <!-- FETCHED EXTERNALLY MANAGED MODULES -->
   <div id="admitPage" class="page"></div>
   <div id="resultPage" class="page"></div>
 
+  <!-- INTEGRATED UPDATE & NOTIFICATIONS PAGE -->
   <div id="updatePage" class="page">
     <div class="news-page">
       <div class="page-header">
-        <div class="header-icon"><i class="fa-regular fa-bell"></i></div>
+        <div class="header-icon">
+          <i class="fa-regular fa-bell"></i>
+        </div>
         <h1>Notifications & News</h1>
       </div>
+
       <div id="newsList">
-        <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading Notifications...</p></div>
+        <div class="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading Notifications...</p>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- BOOKS PAGE -->
   <div id="booksPage" class="page">
     <div class="section-title">E-Books Library</div>
     <div class="notes-grid">
@@ -1181,6 +1304,7 @@ body {
     </div>
   </div>
 
+  <!-- PROFILE PAGE -->
   <div id="profilePage" class="page">
     <div class="section-title">My Profile</div>
     <div class="profile-box">
@@ -1199,21 +1323,60 @@ body {
     </div>
   </div>
 
+  <!-- COMMUNITY PAGE -->
   <div id="communityPage" class="page">
     <div class="section-title">Branch Groups</div>
     <div class="grid-2">
-      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box"><i class="fab fa-whatsapp"></i><p>WhatsApp Channel</p></a>
-      <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box"><i class="fab fa-telegram"></i><p>Telegram Channel</p></a>
-      <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box"><i class="fab fa-youtube"></i><p>YouTube Channel</p></a>
-      <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>CSE / IT Group</p></a>
-      <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box"><i class="fas fa-bolt"></i><p>Electrical Group</p></a>
-      <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box"><i class="fas fa-microchip"></i><p>Electronics Group</p></a>
-      <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box"><i class="fas fa-building"></i><p>Civil Group</p></a>
-      <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box"><i class="fas fa-cogs"></i><p>Mechanical Group</p></a>
-      <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box"><i class="fas fa-seedling"></i><p>Agriculture Group</p></a>
+
+      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box">
+        <i class="fab fa-whatsapp"></i>
+        <p>WhatsApp Channel</p>
+      </a>
+
+      <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-telegram"></i>
+        <p>Telegram Channel</p>
+      </a>
+
+      <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-youtube"></i>
+        <p>YouTube Channel</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box">
+        <i class="fas fa-laptop-code"></i>
+        <p>CSE / IT Group</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box">
+        <i class="fas fa-bolt"></i>
+        <p>Electrical Group</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box">
+        <i class="fas fa-microchip"></i>
+        <p>Electronics Group</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box">
+        <i class="fas fa-building"></i>
+        <p>Civil Group</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box">
+        <i class="fas fa-cogs"></i>
+        <p>Mechanical Group</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box">
+        <i class="fas fa-seedling"></i>
+        <p>Agriculture Group</p>
+      </a>
+
     </div>
   </div>
 
+  <!-- JOBS PAGE -->
   <div id="jobPage" class="page">
     <div class="section-title">Job Openings</div>
     <div class="grid-2">
@@ -1224,6 +1387,7 @@ body {
     </div>
   </div>
 
+  <!-- PRIVATE JOBS -->
   <div id="privatejob" class="page">
     <div class="section-title">Private Jobs</div>
     <div class="grid-2">
@@ -1232,6 +1396,7 @@ body {
     </div>
   </div>
 
+  <!-- GOVT JOBS -->
   <div id="gov-job" class="page">
     <div class="section-title">Government Jobs</div>
     <div class="grid-2">
@@ -1240,6 +1405,7 @@ body {
     </div>
   </div>
 
+  <!-- APPRENTICESHIP -->
   <div id="apprenticeship" class="page">
     <div class="section-title">Apprenticeships</div>
     <div class="grid-2">
@@ -1248,21 +1414,25 @@ body {
     </div>
   </div>
 
-  <!-- PREMIUM PAGE (Updated with Cashfree Payment Integration) -->
-  <div id="premium-buy-card" class="page">
-    <div class="premium-buy-card">
-      <h2 style="font-size: 20px; font-weight: 800;">Premium Membership 🚀</h2>
+  <!-- COURSES PAGE -->
+  <div id="courses-buy-card" class="page">
+    <div class="courses-buy-card">
+      <h2 style="font-size: 20px; font-weight: 800;">Courses Access 🚀</h2>
       <p style="font-size: 13px; color: var(--muted-text); margin-top: 6px;">Get Premium Notes, PYQs, Video Lectures, E-Books & Placement Guidance.</p>
       <div class="price-box">₹99 Only</div>
-      <button onclick="buyPremiumCourse()" class="btn-main">Buy Membership via Cashfree</button>
+      <button onclick="opencoursesForm()" class="btn-main">Buy Membership</button>
     </div>
   </div>
 
   <!-- FEEDBACK PAGE -->
   <div id="feedbackPage" class="page">
-    <div class="premium-buy-card">
-      <h2 style="font-size:20px; font-weight:800;"><i class="fas fa-comment-dots"></i> Send Feedback</h2>
-      <p style="font-size:13px; color:var(--muted-text); margin-top:6px; line-height:1.6;">Help us improve Diploma Engineers by sharing your valuable feedback.</p>
+    <div class="courses-buy-card">
+      <h2 style="font-size:20px; font-weight:800;">
+        <i class="fas fa-comment-dots"></i> Send Feedback
+      </h2>
+      <p style="font-size:13px; color:var(--muted-text); margin-top:6px; line-height:1.6;">
+        Help us improve Diploma Engineers by sharing your valuable feedback.
+      </p>
 
       <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST" style="margin-top:16px;">
         <input type="hidden" name="_subject" value="New Feedback - Diploma Engineers">
@@ -1289,24 +1459,57 @@ body {
           <textarea name="Feedback" rows="5" placeholder="Write your feedback..." required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; resize:vertical; font-family:inherit; font-size:13px;"></textarea>
         </div>
 
-        <button type="submit" class="btn-main" style="width:100%;"><i class="fas fa-paper-plane"></i> Send Feedback</button>
+        <button type="submit" class="btn-main" style="width:100%;">
+          <i class="fas fa-paper-plane"></i> Send Feedback
+        </button>
       </form>
     </div>
   </div>
 
+  <!-- THANK YOU MESSAGE -->
   <div id="feedbackThanks" style="display:none; margin-top:16px; padding:14px; border-radius:12px; background:#ecfdf5; border:1px solid #bbf7d0; color:#15803d; text-align:center; font-size:14px; font-weight:700;">
     <i class="fas fa-check-circle"></i> Thanks for your Feedback!<br>
     <span style="font-size:12px;font-weight:500;">Your feedback has been received successfully.</span>
   </div>
 
+  <!-- POPUP MODAL -->
+  <div class="courses-popup" id="coursesBox">
+    <div class="courses-form-box">
+      <span class="close-btn" onclick="closecoursesForm()">✖</span>
+      <h3 style="font-size: 16px; font-weight: 700;">Scan & Pay ₹99</h3>
+      <img src="https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592" class="qr-img" alt="QR">
+      <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_subject" value="New courses Membership Purchase">
+        <input type="text" name="membership" value="courses Membership ₹99" readonly>
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="tel" name="phone" placeholder="Phone Number" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="text" name="transaction_id" placeholder="UPI Transaction ID" required>
+        <button type="submit" class="btn-main" style="margin-top: 8px;">Verify Payment</button>
+      </form>
+    </div>
+  </div>
+
   <!-- BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav">
-    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')"><i class="fas fa-home"></i>Home</button>
-    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i>Branch</button>
-    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')"><i class="fas fa-book"></i>Books</button>
-    <button class="nav-link-btn" id="tab-premium-buy-card" onclick="navigateTo('premium-buy-card')"><i class="fas fa-crown"></i>Premium</button>
-    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')"><i class="fas fa-comment-dots"></i>Feedback</button>
+    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
+      <i class="fas fa-home"></i>Home
+    </button>
+    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
+      <i class="fas fa-code-branch"></i>Branch
+    </button>
+    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
+      <i class="fas fa-book"></i>Books
+    </button>
+    <button class="nav-link-btn" id="tab-courses-buy-card" onclick="navigateTo('courses-buy-card')">
+      <i class="fas fa-crown"></i>Courses
+    </button>
+    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')">
+      <i class="fas fa-comment-dots"></i>Feedback
+    </button>
   </div>
+
 </div>
 
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
@@ -1315,39 +1518,52 @@ body {
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  /* LOADER */
-  document.addEventListener("DOMContentLoaded",function(){
+      /* ================= LOADER ================= */
+document.addEventListener("DOMContentLoaded",function(){
+
     const loader=document.getElementById("page-loader");
     const bar=document.getElementById("progress-bar");
     const percent=document.getElementById("progress-percent");
+
     let progress=0;
+
     document.body.style.overflow="hidden";
+
     const timer=setInterval(function(){
+
         progress += Math.floor(Math.random()*5)+2;
+
         if(progress>=100){
             progress=100;
             clearInterval(timer);
+
             bar.style.width=progress+"%";
             percent.textContent=progress+"%";
+
             setTimeout(function(){
                 loader.classList.add("hide");
                 document.body.style.overflow="";
             },450);
+
             return;
         }
+
         bar.style.width=progress+"%";
         percent.textContent=progress+"%";
-    },45);
-  });
 
-  setTimeout(function(){
+    },45);
+});
+
+/* Loader fail-safe */
+setTimeout(function(){
     const loader=document.getElementById("page-loader");
     if(loader && !loader.classList.contains("hide")){
         loader.classList.add("hide");
         document.body.style.overflow="";
     }
-  },5000);
+},5000);
 
+  // App Auth Database Config
   const firebaseConfig = {
     apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
     authDomain: "diploma-app-9a378.firebaseapp.com",
@@ -1358,6 +1574,7 @@ body {
     appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
   };
 
+  // News Database Config (from first snippet)
   const newsFirebaseConfig = {
     apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
     authDomain: "diplomaengineers-869df.firebaseapp.com",
@@ -1373,6 +1590,7 @@ body {
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
 
+  // News Firebase Init
   const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
   const newsDb = getDatabase(newsApp);
 
@@ -1399,19 +1617,23 @@ body {
   window.submitAuthForm = async function() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
+    
     if (!email || !password) {
       alert("Please enter Email and Password");
       return;
     }
+
     try {
       if (isRegister) {
         let name = document.getElementById("name").value.trim();
         let branch = document.getElementById("branch").value;
         let mobile = document.getElementById("mobile").value.trim();
+        
         if (!name || !mobile) {
           alert("Please fill all details");
           return;
         }
+
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await set(ref(db, "users/" + cred.user.uid), { name, email, branch, mobile });
       } else {
@@ -1472,14 +1694,11 @@ body {
       document.getElementById("authPage").style.display = "none";
       document.getElementById("app").style.display = "block";
 
-      // Check Real-time Firebase Purchase Status
-      checkUserPurchaseStatus(user.uid);
-
       const initialHash = window.location.hash.substring(1);
       const targetPage = initialHash || defaultPage;
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
-      loadNewsData();
+      loadNewsData(); // Load Realtime News from Firebase
       hideLoader();
     } else {
       document.getElementById("app").style.display = "none";
@@ -1488,120 +1707,60 @@ body {
     }
   });
 
-  /* ================= CASHFREE PAYMENT INTEGRATION ================= */
-  const BACKEND_CREATE_ORDER_URL = "https://us-central1-diploma-app-9a378.cloudfunctions.net/createCashfreeOrder";
-  
-  const cashfreeInstance = Cashfree({
-    mode: "sandbox" // Live जाने पर "production" करें
-  });
-
-  window.buyPremiumCourse = async function() {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("Please login first!");
-      return;
-    }
-
-    const buyBtn = document.querySelector("#premium-buy-card .btn-main");
-    if (buyBtn) {
-      buyBtn.innerText = "Processing...";
-      buyBtn.disabled = true;
-    }
-
-    try {
-      const response = await fetch(BACKEND_CREATE_ORDER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderAmount: 99.00,
-          customerId: user.uid,
-          customerPhone: document.getElementById("profileMobile").innerText !== "N/A" ? document.getElementById("profileMobile").innerText : "9999999999",
-          customerEmail: user.email || "user@diplomaengineers.com"
-        })
-      });
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || "Failed to create order");
-      }
-
-      let checkoutOptions = {
-        paymentSessionId: result.data.payment_session_id,
-        redirectTarget: "_self"
-      };
-
-      cashfreeInstance.checkout(checkoutOptions).then(function(res) {
-        if (res.error) {
-          alert("Payment failed: " + res.error.message);
-          if (buyBtn) {
-            buyBtn.innerText = "Buy Membership via Cashfree";
-            buyBtn.disabled = false;
-          }
-        }
-        if (res.paymentDetails) {
-          alert("Payment Successful!");
-          window.location.reload();
-        }
-      });
-
-    } catch (error) {
-      console.error("Payment Error:", error);
-      alert("Payment Error: " + error.message);
-      if (buyBtn) {
-        buyBtn.innerText = "Buy Membership via Cashfree";
-        buyBtn.disabled = false;
-      }
-    }
-  };
-
-  async function checkUserPurchaseStatus(uid) {
-    try {
-      const purchaseRef = ref(db, `users/${uid}/purchases/premium_course`);
-      const snapshot = await get(purchaseRef);
-      const premiumCardContainer = document.getElementById("premium-buy-card");
-      
-      if (snapshot.exists() && snapshot.val().purchased === true) {
-        if (premiumCardContainer) {
-          premiumCardContainer.innerHTML = `
-            <div class="premium-buy-card">
-              <h2 style="font-size: 20px; font-weight: 800; color: #16a34a;"><i class="fas fa-check-circle"></i> Premium Unlocked! 🚀</h2>
-              <p style="font-size: 13px; color: var(--muted-text); margin-top: 6px;">You have lifetime access to all premium notes, PYQs, and video lectures.</p>
-              <div class="price-box" style="background: #f0fdf4; color: #16a34a;">Access Granted</div>
-              <button onclick="navigateTo('homePage')" class="btn-main" style="background: #16a34a;">Start Studying Now</button>
-            </div>
-          `;
-        }
-      }
-    } catch (e) {
-      console.error("Error checking purchase status:", e);
-    }
-  }
-
-  /* NEWS & NOTIFICATIONS */
+  /* REALTIME NEWS & NOTIFICATIONS SYSTEM */
   function escapeHTML(value) {
-    return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function validURL(value) {
     try {
       const url = new URL(value);
       return (url.protocol === "http:" || url.protocol === "https:");
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   function loadNewsData() {
     const newsList = document.getElementById("newsList");
     if (!newsList) return;
-    onValue(ref(newsDb, "news"), snapshot => {
+    const newsRef = ref(newsDb, "news");
+
+    onValue(newsRef, snapshot => {
       newsList.innerHTML = "";
+
       if (!snapshot.exists()) {
-        newsList.innerHTML = `<div class="empty"><i class="fa-regular fa-newspaper" style="font-size:32px;"></i><p>कोई News या Update उपलब्ध नहीं है।</p></div>`;
+        newsList.innerHTML = `
+          <div class="empty">
+            <i class="fa-regular fa-newspaper" style="font-size:32px;"></i>
+            <p>कोई News या Update उपलब्ध नहीं है।</p>
+          </div>
+        `;
         return;
       }
+
       const newsArray = [];
-      snapshot.forEach(child => { newsArray.push({ id: child.key, data: child.val() || {} }); });
+      snapshot.forEach(child => {
+        newsArray.push({
+          id: child.key,
+          data: child.val() || {}
+        });
+      });
+
       newsArray.reverse();
       newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
+    }, error => {
+      console.error(error);
+      newsList.innerHTML = `
+        <div class="error-box">
+          <p>Data Load करने में समस्या हुई। कृपया पुनः प्रयास करें।</p>
+        </div>
+      `;
     });
   }
 
@@ -1623,32 +1782,86 @@ body {
 
     card.innerHTML = `
       <span class="category">${escapeHTML(category)}</span>
-      <h2 class="news-title"><i class="fa-solid fa-square-check"></i> ${escapeHTML(title)}</h2>
+      
+      <h2 class="news-title">
+        <i class="fa-solid fa-square-check"></i>
+        ${escapeHTML(title)}
+      </h2>
+
       <p class="news-description">${escapeHTML(description)}</p>
+
       <div class="card-footer">
-        <div class="news-date"><i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}</div>
+        <div class="news-date">
+          <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
+        </div>
         <div class="action-links">
-          <button class="action-btn" onclick="toggleDetails('${id}')"><i class="fa-solid fa-share-nodes"></i> Share</button>
+          <button class="action-btn" onclick="toggleDetails('${id}')">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
           ${actionTarget}
         </div>
       </div>
+
       <div class="expandable-panel" id="panel-${id}">
         ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
         <div class="full-desc">${escapeHTML(description)}</div>
+        
+        <div class="share-grid">
+          <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </button>
+          <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </button>
+          <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+        </div>
       </div>
     `;
+
     container.appendChild(card);
   }
 
   window.toggleDetails = function(id) {
     const panel = document.getElementById(`panel-${id}`);
-    if (panel) panel.classList.toggle("active");
+    if (panel) {
+      panel.classList.toggle("active");
+    }
+  };
+
+  window.shareWhatsApp = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  window.shareTelegram = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+  };
+
+  window.copyLink = async function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    try {
+      await navigator.clipboard.writeText(`${title} - ${url}`);
+      alert("Link Copied!");
+    } catch (err) {
+      prompt("Copy Link:", url);
+    }
   };
 
   async function loadPortalFromFile(portalId) {
     const container = document.getElementById(portalId);
-    if (!container || container.dataset.loaded === "true") return;
-    container.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--muted-text);"><i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i><p style="margin-top: 10px; font-weight: 700;">Content Loading...</p></div>`;
+    if (!container) return;
+
+    if (container.dataset.loaded === "true") return;
+
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px 20px; color: var(--muted-text);">
+        <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i>
+        <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
+      </div>`;
 
     let fileName = `${portalId}.html`;
     if (portalId === 'sem1') fileName = '1st-sem.html';
@@ -1656,19 +1869,114 @@ body {
     if (portalId === 'computerscience') fileName = 'computer.html';
     if (portalId === 'admitPage') fileName = 'admitcard.html';
     if (portalId === 'resultPage') fileName = 'result.html';
+    if (portalId === 'courses-buy-card') fileName = 'course.html';
 
     try {
       const response = await fetch(fileName);
-      if (!response.ok) throw new Error();
-      container.innerHTML = await response.text();
+      if (!response.ok) throw new Error(`File ${fileName} not found`);
+      
+      const htmlContent = await response.text();
+      container.innerHTML = htmlContent;
       container.dataset.loaded = "true";
-    } catch {
-      container.innerHTML = `<div class="notice"><h5>Notice</h5><p>Module content ready.</p></div>`;
+    } catch (err) {
+      console.error(err);
+      if (portalId === 'sem1' || portalId === 'sem2') {
+        renderDefaultSemLayout(container, portalId);
+      } else if (portalId === 'admitPage') {
+        renderDefaultAdmitLayout(container);
+      } else if (portalId === 'resultPage') {
+        renderDefaultResultLayout(container);
+      } else {
+        renderDefaultBranchLayout(container, portalId);
+      }
     }
   }
 
+  function renderDefaultSemLayout(container, semId) {
+    const title = semId === 'sem1' ? '1st Semester (Common)' : '2nd Semester (Common)';
+    container.innerHTML = `
+      <div class="section-title">${title} <span>Portal</span></div>
+      <div class="notice">
+        <h5>Content Ready 📚</h5>
+        <p>Explore your foundation and core engineering notes, syllabus, and study materials here.</p>
+      </div>
+    `;
+  }
+
+  function renderDefaultAdmitLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Admit Card Downloads</div>
+      <div class="grid-2">
+        <div class="card-box"><i class="fas fa-id-badge"></i><p>Semester Admit Card</p></div>
+      </div>
+      <div class="notice">
+        <h5>Important Notice 📢</h5>
+        <p>Download your admit card prior to exam dates. College ID card is mandatory in the examination hall.</p>
+      </div>
+    `;
+  }
+
+  function renderDefaultResultLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Results Portal</div>
+      <div class="grid-2">
+        <div class="card-box"><i class="fas fa-square-poll-vertical"></i><p>Main Result</p></div>
+        <div class="card-box"><i class="fas fa-file-circle-check"></i><p>Revaluation Result</p></div>
+      </div>
+    `;
+  }
+
+  function renderDefaultBranchLayout(container, branchId) {
+    const formattedTitle = branchId.toUpperCase();
+    container.innerHTML = `
+      <div class="section-title">${formattedTitle} <span>Portal</span></div>
+      <div class="nav-wrapper">
+        <div class="top-btns">
+          <button class="branch-btn active" onclick="showSection('${branchId}-notes', this)"><i class="fas fa-file-alt"></i> Notes</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-pyq', this)"><i class="fas fa-history"></i> PYQ Papers</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-syllabus', this)"><i class="fas fa-list-check"></i> Syllabus</button>
+        </div>
+      </div>
+      <div id="${branchId}-notes" class="${branchId}-section">
+        <div class="notice">
+          <h5>${formattedTitle} Notes Ready 📚</h5>
+          <p>Access all semester handwritten notes and standard books directly from your mobile portal.</p>
+        </div>
+      </div>
+      <div id="${branchId}-pyq" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Previous Year Questions 📝</h5>
+          <p>Previous 5 year board examination question papers are updated below.</p>
+        </div>
+      </div>
+      <div id="${branchId}-syllabus" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Curriculum Syllabus 📋</h5>
+          <p>Download the latest official state board syllabus pdf.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  window.showSection = function(sectionId, btnElement) {
+    const parentContainer = btnElement.closest('.page');
+    const sections = parentContainer.querySelectorAll('[class$="-section"]');
+    sections.forEach(sec => sec.style.display = 'none');
+
+    const buttons = parentContainer.querySelectorAll('.branch-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    const target = parentContainer.querySelector('#' + sectionId);
+    if (target) target.style.display = 'block';
+    if (btnElement) btnElement.classList.add('active');
+  };
+
   window.addEventListener("popstate", function(event) {
-    renderPageUI(event.state && event.state.pageId ? event.state.pageId : defaultPage);
+    if (event.state && event.state.pageId) {
+      renderPageUI(event.state.pageId);
+    } else {
+      renderPageUI(defaultPage);
+    }
   });
 
   window.navigateTo = function(pageId) {
@@ -1677,10 +1985,14 @@ body {
     renderPageUI(pageId);
   };
 
-  window.goBack = function() { window.history.back(); };
+  window.goBack = function() {
+    window.history.back();
+  };
 
   function renderPageUI(pageId) {
-    document.querySelectorAll(".page").forEach(page => page.classList.remove("active-page"));
+    let pages = document.querySelectorAll(".page");
+    pages.forEach(page => page.classList.remove("active-page"));
+
     let targetPage = document.getElementById(pageId);
     if (targetPage) {
       targetPage.classList.add("active-page");
@@ -1689,16 +2001,47 @@ body {
       pageId = defaultPage;
     }
 
-    if (externalBranches.includes(pageId)) loadPortalFromFile(pageId);
+    if (externalBranches.includes(pageId) || pageId === 'courses-buy-card') {
+      loadPortalFromFile(pageId);
+    }
 
-    document.querySelectorAll(".nav-link-btn").forEach(btn => btn.classList.remove("active"));
+    let navBtns = document.querySelectorAll(".nav-link-btn");
+    navBtns.forEach(btn => btn.classList.remove("active"));
     let activeTab = document.getElementById("tab-" + pageId);
     if (activeTab) activeTab.classList.add("active");
 
     let backBtn = document.getElementById("headerBackBtn");
     if (backBtn) backBtn.style.display = (pageId === defaultPage) ? "none" : "flex";
+
     window.scrollTo(0, 0);
   }
+
+  window.opencoursesForm = function() {
+    document.getElementById("coursesBox").style.display = "flex";
+  };
+
+  window.closecoursesForm = function() {
+    document.getElementById("coursesBox").style.display = "none";
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("feedback") === "success") {
+      const thanks = document.getElementById("feedbackThanks");
+      if (thanks) {
+        thanks.style.display = "block";
+      }
+      if (typeof navigateTo === "function") {
+        setTimeout(function () {
+          navigateTo("feedbackPage");
+        }, 300);
+      }
+      setTimeout(function () {
+        const cleanURL = window.location.origin + window.location.pathname + "#feedbackPage";
+        window.history.replaceState({}, document.title, cleanURL);
+      }, 5000);
+    }
+  });
 </script>
 </body>
 </html>

@@ -86,7 +86,7 @@ body {
   color: var(--dark-text);
   letter-spacing: -0.2px;
 }
-/* ================= PAGE LOADER ================= */
+/* ================= LOADER ================= */
 #page-loader{
     position:fixed;inset:0;background:#fff;
     display:flex;align-items:center;justify-content:center;
@@ -129,7 +129,6 @@ body {
     color:#64748b;font-size:14px
 }
 #progress-percent{color:#2864e8;font-weight:700}
-
 /* AUTH PAGE */
 #authPage {
   min-height: 100vh;
@@ -178,7 +177,7 @@ body {
 
 .form-group { margin-bottom: 12px; }
 
-.auth-box input, .auth-box select {
+.auth-box input, .auth-box select, .sliding-drawer input, .sliding-drawer select {
   width: 100%;
   padding: 12px 14px;
   border-radius: var(--radius-md);
@@ -190,7 +189,7 @@ body {
   color: var(--dark-text);
 }
 
-.auth-box input:focus, .auth-box select:focus {
+.auth-box input:focus, .auth-box select:focus, .sliding-drawer input:focus, .sliding-drawer select:focus {
   border-color: var(--primary);
   background-color: var(--bg-white);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
@@ -296,6 +295,78 @@ body {
   font-size: 26px;
   color: var(--dark-text);
   cursor: pointer;
+}
+
+/* SLIDING PROFILE DRAWER */
+.sliding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sliding-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+.sliding-drawer {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 100%;
+  max-width: 400px;
+  height: 100vh;
+  background: var(--bg-white);
+  z-index: 1000;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sliding-drawer.open {
+  right: 0;
+}
+
+.drawer-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-gray);
+}
+
+.drawer-header h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--dark-text);
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--muted-text);
+  cursor: pointer;
+}
+
+.drawer-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drawer-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-light);
+  background: var(--surface-gray);
 }
 
 /* PAGES */
@@ -787,7 +858,7 @@ body {
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-/* NEWS & NOTIFICATION STYLES */
+/* NEWS & NOTIFICATION STYLES (INTEGRATED) */
 .news-page {
   width: 100%;
   max-width: 650px;
@@ -1037,7 +1108,9 @@ body {
 </head>
 <body>
 
-<!-- FULL PAGE LOADER -->
+<!-- ==================================================
+     FULL PAGE LOADER
+================================================== -->
 <div id="page-loader">
     <div class="loader-content">
         <div class="loader-logo">
@@ -1106,6 +1179,71 @@ body {
   </div>
 </div>
 
+<!-- SLIDING PROFILE EDIT DRAWER -->
+<div class="sliding-overlay" id="profileOverlay" onclick="toggleProfileDrawer()"></div>
+<div class="sliding-drawer" id="profileDrawer">
+  <div class="drawer-header">
+    <h3>Edit Student Profile</h3>
+    <button class="drawer-close" onclick="toggleProfileDrawer()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">FULL NAME</label>
+      <input type="text" id="editName" placeholder="Enter Full Name">
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">BRANCH</label>
+      <select id="editBranch">
+        <option value="Civil Engineering">Civil Engineering</option>
+        <option value="Computer Science Engineering">Computer Science Engineering</option>
+        <option value="Electrical Engineering">Electrical Engineering</option>
+        <option value="Electronics Engineering">Electronics Engineering</option>
+        <option value="Mechanical Engineering">Mechanical Engineering</option>
+        <option value="Information Technology">Information Technology</option>
+        <option value="Agriculture Engineering">Agriculture Engineering</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">COLLEGE NAME</label>
+      <input type="text" id="editCollege" placeholder="Enter College Name">
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">ENROLLMENT / BOARD ROLL NO.</label>
+      <input type="text" id="editEnrollment" placeholder="Enter Enrollment Number">
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">SEMESTER</label>
+      <select id="editSemester">
+        <option value="1st Semester">1st Semester</option>
+        <option value="2nd Semester">2nd Semester</option>
+        <option value="3rd Semester">3rd Semester</option>
+        <option value="4th Semester">4th Semester</option>
+        <option value="5th Semester">5th Semester</option>
+        <option value="6th Semester">6th Semester</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">ACADEMIC YEAR</label>
+      <select id="editYear">
+        <option value="1st Year">1st Year</option>
+        <option value="2nd Year">2nd Year</option>
+        <option value="3rd Year">3rd Year</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">MOBILE NUMBER</label>
+      <input type="tel" id="editMobile" placeholder="Enter Mobile Number">
+    </div>
+    <div class="form-group">
+      <label style="font-size: 11px; font-weight: 700; color: var(--muted-text); margin-bottom: 4px; display: block;">ADDRESS</label>
+      <input type="text" id="editAddress" placeholder="Enter Address">
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-main" onclick="saveProfileChanges()"><i class="fas fa-check"></i> Save Changes</button>
+  </div>
+</div>
+
 <!-- MAIN APP INTERFACE -->
 <div id="app">
 
@@ -1115,7 +1253,7 @@ body {
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
       <div class="nav-logo">Diploma <span>Engineers</span></div>
     </div>
-    <div class="profile-icon" onclick="navigateTo('profilePage')">
+    <div class="profile-icon" onclick="toggleProfileDrawer()">
       <i class="fas fa-user-circle"></i>
     </div>
   </div>
@@ -1186,7 +1324,7 @@ body {
       </div>
     </div>
 
-    <!-- SEMESTER CARDS -->
+    <!-- SEMESTER CARDS (1ST & 2ND SEMESTER COMMON) -->
     <div class="sem-banner-grid">
       <div class="sem-card-orange" onclick="navigateTo('sem1')">
         <div class="sem-card-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
@@ -1296,9 +1434,15 @@ body {
         <p>Email: <span id="profileEmail">-</span></p>
         <p>Mobile: <span id="profileMobile">-</span></p>
         <p>Branch: <span id="profileBranchName">-</span></p>
+        <p>College: <span id="profileCollege">-</span></p>
+        <p>Enrollment No: <span id="profileEnrollment">-</span></p>
+        <p>Semester: <span id="profileSemester">-</span></p>
+        <p>Year: <span id="profileYear">-</span></p>
+        <p>Address: <span id="profileAddress">-</span></p>
       </div>
-      
-      <button class="btn-main" style="margin-top: 20px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
+
+      <button class="btn-main" style="margin-top: 15px;" onclick="toggleProfileDrawer()"><i class="fas fa-edit"></i> Edit Profile</button>
+      <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
     </div>
   </div>
 
@@ -1306,42 +1450,52 @@ body {
   <div id="communityPage" class="page">
     <div class="section-title">Branch Groups</div>
     <div class="grid-2">
+
       <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box">
         <i class="fab fa-whatsapp"></i>
         <p>WhatsApp Channel</p>
       </a>
+
       <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box">
         <i class="fab fa-telegram"></i>
         <p>Telegram Channel</p>
       </a>
+
       <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box">
         <i class="fab fa-youtube"></i>
         <p>YouTube Channel</p>
       </a>
+
       <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box">
         <i class="fas fa-laptop-code"></i>
         <p>CSE / IT Group</p>
       </a>
+
       <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box">
         <i class="fas fa-bolt"></i>
         <p>Electrical Group</p>
       </a>
+
       <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box">
         <i class="fas fa-microchip"></i>
         <p>Electronics Group</p>
       </a>
+
       <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box">
         <i class="fas fa-building"></i>
         <p>Civil Group</p>
       </a>
+
       <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box">
         <i class="fas fa-cogs"></i>
         <p>Mechanical Group</p>
       </a>
+
       <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box">
         <i class="fas fa-seedling"></i>
         <p>Agriculture Group</p>
       </a>
+
     </div>
   </div>
 
@@ -1475,9 +1629,9 @@ body {
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, update, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  /* PAGE LOADER CONTROLLER */
+  /* ================= LOADER ================= */
   document.addEventListener("DOMContentLoaded", function(){
     const loader = document.getElementById("page-loader");
     const bar = document.getElementById("progress-bar");
@@ -1552,6 +1706,15 @@ body {
   let isRegister = false;
   const defaultPage = "homePage";
   const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture', 'sem1', 'sem2', 'admitPage', 'resultPage', 'coursePage'];
+  let currentUserUid = null;
+
+  function hideLoader() {
+    const loader = document.getElementById("globalLoader");
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 300);
+    }
+  }
 
   window.toggleForm = function() {
     isRegister = !isRegister;
@@ -1582,7 +1745,10 @@ body {
         }
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { name, email, branch, mobile });
+        await set(ref(db, "users/" + cred.user.uid), { 
+          name, email, branch, mobile,
+          college: "N/A", enrollment: "N/A", semester: "1st Semester", year: "1st Year", address: "N/A"
+        });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -1600,7 +1766,12 @@ body {
           name: result.user.displayName || "Google User",
           email: result.user.email,
           branch: "Civil Engineering",
-          mobile: "N/A"
+          mobile: "N/A",
+          college: "N/A", 
+          enrollment: "N/A", 
+          semester: "1st Semester", 
+          year: "1st Year", 
+          address: "N/A"
         });
       }
     } catch (e) {
@@ -1612,31 +1783,87 @@ body {
     signOut(auth);
   };
 
+  // Sliding Profile Drawer Controls
+  window.toggleProfileDrawer = function() {
+    const drawer = document.getElementById("profileDrawer");
+    const overlay = document.getElementById("profileOverlay");
+    drawer.classList.toggle("open");
+    overlay.classList.toggle("open");
+  };
+
+  window.saveProfileChanges = async function() {
+    if (!currentUserUid) return;
+    
+    const updatedData = {
+      name: document.getElementById("editName").value.trim(),
+      branch: document.getElementById("editBranch").value,
+      college: document.getElementById("editCollege").value.trim(),
+      enrollment: document.getElementById("editEnrollment").value.trim(),
+      semester: document.getElementById("editSemester").value,
+      year: document.getElementById("editYear").value,
+      mobile: document.getElementById("editMobile").value.trim(),
+      address: document.getElementById("editAddress").value.trim()
+    };
+
+    try {
+      await update(ref(db, "users/" + currentUserUid), updatedData);
+      alert("Profile updated successfully! ✨");
+      toggleProfileDrawer();
+    } catch (e) {
+      alert("Error updating profile: " + e.message);
+    }
+  };
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const snapshot = await get(child(ref(db), `users/${user.uid}`));
-      let data = snapshot.exists() ? snapshot.val() : { 
-        name: user.displayName || "Engineer", 
-        email: user.email, 
-        branch: "Diploma Member", 
-        mobile: "N/A" 
-      };
+      currentUserUid = user.uid;
+      const userRef = ref(db, `users/${user.uid}`);
       
-      document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-      document.getElementById("profileName").innerText = data.name || "Engineer";
-      document.getElementById("profileFullName").innerText = data.name || "-";
-      document.getElementById("profileEmail").innerText = data.email || "-";
-      document.getElementById("profileMobile").innerText = data.mobile || "-";
-      document.getElementById("profileBranchName").innerText = data.branch || "-";
-      document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+      onValue(userRef, (snapshot) => {
+        let data = snapshot.exists() ? snapshot.val() : { 
+          name: user.displayName || "Engineer", 
+          email: user.email, 
+          branch: "Diploma Member", 
+          mobile: "N/A",
+          college: "N/A",
+          enrollment: "N/A",
+          semester: "1st Semester",
+          year: "1st Year",
+          address: "N/A"
+        };
+        
+        // Update App UI elements
+        document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
+        document.getElementById("profileName").innerText = data.name || "Engineer";
+        document.getElementById("profileFullName").innerText = data.name || "-";
+        document.getElementById("profileEmail").innerText = data.email || "-";
+        document.getElementById("profileMobile").innerText = data.mobile || "-";
+        document.getElementById("profileBranchName").innerText = data.branch || "-";
+        document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+        document.getElementById("profileCollege").innerText = data.college || "-";
+        document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
+        document.getElementById("profileSemester").innerText = data.semester || "-";
+        document.getElementById("profileYear").innerText = data.year || "-";
+        document.getElementById("profileAddress").innerText = data.address || "-";
 
-      const nameField = document.getElementById("feedbackName");
-      const emailField = document.getElementById("feedbackEmail");
-      const branchField = document.getElementById("feedbackBranch");
+        // Populate drawer inputs
+        document.getElementById("editName").value = data.name || "";
+        document.getElementById("editBranch").value = data.branch || "Civil Engineering";
+        document.getElementById("editCollege").value = data.college || "";
+        document.getElementById("editEnrollment").value = data.enrollment || "";
+        document.getElementById("editSemester").value = data.semester || "1st Semester";
+        document.getElementById("editYear").value = data.year || "1st Year";
+        document.getElementById("editMobile").value = data.mobile || "";
+        document.getElementById("editAddress").value = data.address || "";
 
-      if (nameField) nameField.value = data.name || user.displayName || "";
-      if (emailField) emailField.value = data.email || user.email || "";
-      if (branchField) branchField.value = data.branch || "Diploma Member";
+        const nameField = document.getElementById("feedbackName");
+        const emailField = document.getElementById("feedbackEmail");
+        const branchField = document.getElementById("feedbackBranch");
+
+        if (nameField) nameField.value = data.name || user.displayName || "";
+        if (emailField) emailField.value = data.email || user.email || "";
+        if (branchField) branchField.value = data.branch || "Diploma Member";
+      });
 
       document.getElementById("authPage").style.display = "none";
       document.getElementById("app").style.display = "block";
@@ -1646,9 +1873,12 @@ body {
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
       loadNewsData();
+      hideLoader();
     } else {
+      currentUserUid = null;
       document.getElementById("app").style.display = "none";
       document.getElementById("authPage").style.display = "flex";
+      hideLoader();
     }
   });
 
@@ -1808,7 +2038,7 @@ body {
         <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
       </div>`;
 
-    let fileName = `${portalId}.html`;
+    let fileName = `${portalId}`;
     if (portalId === 'sem1') fileName = '1st-sem.html';
     if (portalId === 'sem2') fileName = '2nd-sem.html';
     if (portalId === 'computerscience') fileName = 'computer.html';
@@ -1824,7 +2054,7 @@ body {
       container.innerHTML = htmlContent;
       container.dataset.loaded = "true";
     } catch (err) {
-      console.warn(`External fetch failed for ${portalId}, deploying fallback layout.`, err);
+      console.error(err);
       if (portalId === 'sem1' || portalId === 'sem2') {
         renderDefaultSemLayout(container, portalId);
       } else if (portalId === 'admitPage') {
@@ -1836,7 +2066,6 @@ body {
       } else {
         renderDefaultBranchLayout(container, portalId);
       }
-      container.dataset.loaded = "true";
     }
   }
 

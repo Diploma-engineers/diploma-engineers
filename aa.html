@@ -3,526 +3,362 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Civil Engineering - Ashoka Batch</title>
+  <title>BMC 14 : Rock and Stone (Part 04)</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background-color: #f4f6f8;
+      background-color: #f2f3f7;
       color: #333;
-      padding: 15px;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* SECTION 1: Subject Cards Grid */
-    .subjects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .subject-card {
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
-      padding: 20px;
-      cursor: pointer;
-      text-align: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      transition: transform 0.2s;
-    }
-
-    .subject-card:hover {
-      transform: translateY(-3px);
-      border-color: #5c5be5;
-    }
-
-    /* SECTION 2: Main Player & Interface */
-    .view-section {
-      display: none;
-    }
-
-    .back-btn {
-      background: #e0e0e0;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-
-    .player-layout {
+      padding: 10px;
       display: flex;
-      flex-direction: row;
-      gap: 20px;
+      justify-content: center;
     }
 
-    .main-content {
-      flex: 2;
+    .app-container {
+      width: 100%;
+      max-width: 480px; /* Mobile View Frame */
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
 
-    /* Player Container with Overlay Controls */
-    .video-wrapper {
+    /* Video Player Wrapper */
+    .player-wrapper {
       position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-      overflow: hidden;
-      border-radius: 12px;
-      background: #1a1a1a;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: #000;
     }
 
-    .video-wrapper iframe {
-      position: absolute;
-      top: -5%;
-      left: -5%;
-      width: 110%;
-      height: 110%;
-      border: 0;
-      pointer-events: none; /* Allows click through to custom overlay controls */
-    }
-
-    /* App Video Overlay Controls (Rewind, Pause, Forward, Seekbar) */
-    .video-overlay-controls {
+    .player-wrapper iframe {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.35);
+      border: 0;
+      pointer-events: auto;
+    }
+
+    /* Video Overlay Elements matching Image Theme */
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Allows click through if needed */
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 15px;
-      z-index: 10;
+      padding: 10px 14px;
+      z-index: 2;
     }
 
-    .center-controls {
+    .overlay-top {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .gear-icon {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 18px;
+    }
+
+    .overlay-center {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
-      margin-auto: auto;
-      height: 100%;
+      gap: 25px;
     }
 
-    .control-btn {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      color: white;
-      width: 50px;
-      height: 50px;
+    .btn-circle {
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-      user-select: none;
-      transition: background 0.2s;
-    }
-
-    .control-btn:hover {
-      background: rgba(255, 255, 255, 0.45);
-    }
-
-    .control-btn.play-btn {
-      width: 60px;
-      height: 60px;
-      font-size: 22px;
-    }
-
-    /* Custom Progress Bar & Time Bar */
-    .bottom-seekbar-container {
-      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      color: #ffffff;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-    }
-
-    .time-display {
-      color: #ffffff;
-      font-size: 13px;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
       font-weight: bold;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      pointer-events: auto;
+      cursor: pointer;
     }
 
-    .seekbar {
+    .btn-circle.pause {
+      width: 48px;
+      height: 48px;
+      font-size: 18px;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .overlay-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .time-stamp {
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Custom Purple Seekbar */
+    .seekbar-bg {
       width: 100%;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 3px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 2px;
       position: relative;
-      cursor: pointer;
     }
 
     .seekbar-fill {
-      width: 67%; /* Matched to photo timing 1:22:33 / 2:03:50 */
+      width: 75%; /* Timed near 1:33:12 / 2:03:50 */
       height: 100%;
-      background: #8c52ff;
-      border-radius: 3px;
+      background: #8e7bf1;
+      border-radius: 2px;
       position: relative;
     }
 
-    .seekbar-handle {
-      width: 12px;
-      height: 12px;
-      background: #8c52ff;
+    .seekbar-thumb {
+      width: 10px;
+      height: 10px;
+      background: #8e7bf1;
       border-radius: 50%;
       position: absolute;
-      right: -6px;
+      right: -5px;
       top: -3px;
     }
 
-    .lecture-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #222;
-      margin: 15px 0;
+    /* Title Section */
+    .title-box {
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #555;
+      line-height: 1.3;
+      border-bottom: 1px solid #f0f0f0;
     }
 
-    /* PW App Tabs Bar */
-    .app-tabs {
+    /* App Tab Bar */
+    .tab-bar {
       display: flex;
       justify-content: space-around;
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 10px 0;
-      border: 1px solid #e0e0e0;
-      margin-bottom: 15px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eef0f3;
     }
 
-    .tab-item {
+    .tab-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
+      color: #888;
+      font-size: 12px;
+      gap: 4px;
       cursor: pointer;
-      font-size: 13px;
-      color: #666;
     }
 
-    .tab-item.active {
-      color: #5c5be5;
-      font-weight: bold;
+    .tab-btn.active {
+      color: #6c5ce7;
+      font-weight: 600;
     }
 
     .tab-icon {
-      font-size: 18px;
-      margin-bottom: 3px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f4f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
     }
 
-    /* Comments Section */
-    .comments-container {
-      background: #ffffff;
-      border-radius: 10px;
-      border: 1px solid #e0e0e0;
-      padding: 15px;
+    .tab-btn.active .tab-icon {
+      background: #eef0fd;
+      color: #6c5ce7;
+    }
+
+    /* Comments Area */
+    .comments-section {
+      padding: 14px;
+    }
+
+    .comments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .comments-header h3 {
+      font-size: 15px;
+      color: #333;
     }
 
     .comments-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      max-height: 250px;
+      max-height: 220px;
       overflow-y: auto;
-      margin-bottom: 15px;
     }
 
-    .comment-card {
-      border-bottom: 1px solid #f0f0f0;
-      padding-bottom: 8px;
-    }
-
-    .comment-user {
-      font-weight: bold;
-      font-size: 13px;
-      color: #444;
-    }
-
-    .comment-time {
-      font-size: 11px;
-      color: #888;
-      margin-left: 6px;
-    }
-
-    .comment-text {
-      font-size: 14px;
-      color: #333;
-      margin: 4px 0;
-    }
-
-    .comment-actions {
+    .comment-item {
       display: flex;
-      gap: 15px;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .user-name {
       font-size: 12px;
       color: #777;
     }
 
-    .comment-actions span {
-      cursor: pointer;
+    .comment-content {
+      font-size: 14px;
+      color: #222;
+      margin: 2px 0;
     }
 
-    .comment-input-box {
+    .timestamp-link {
+      color: #6c5ce7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .action-row {
       display: flex;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 12px;
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
     }
 
-    .comment-input-box input {
-      flex: 1;
-      padding: 10px 15px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      outline: none;
-    }
-
-    .comment-input-box button {
-      background: #5c5be5;
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 20px;
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 3px;
       cursor: pointer;
     }
 
-    /* Playlist Sidebar */
-    .playlist-sidebar {
-      flex: 1;
-      background: #ffffff;
-      border-radius: 10px;
-      border: 1px solid #e0e0e0;
-      padding: 15px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .playlist-item {
-      padding: 10px;
-      border-radius: 8px;
-      background: #f9f9f9;
-      border: 1px solid #eee;
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .playlist-item.active {
-      background: #eef2ff;
-      border-left: 4px solid #5c5be5;
-    }
-
-    .playlist-item h4 {
-      font-size: 13px;
-      color: #333;
-    }
-
-    @media (max-width: 768px) {
-      .player-layout {
-        flex-direction: column;
-      }
+    .action-btn.like {
+      color: #e74c3c;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- SUBJECT SELECTION -->
-    <div id="subjectSection" class="subjects-grid">
-      <div class="subject-card" onclick="openSubject('bmc')">
-        <h3>Building Materials (BMC)</h3>
-        <p>Rock, Stone & Ransome Stone</p>
-      </div>
-      <div class="subject-card" onclick="openSubject('som')">
-        <h3>Strength of Materials (SOM)</h3>
-        <p>Stress, Strain & Beams</p>
-      </div>
-    </div>
+  <div class="app-container">
+    <!-- Video Player Section with Overlay Controls -->
+    <div class="player-wrapper">
+      <!-- YouTube Embed for https://www.youtube.com/live/dUM8SvHdzeU -->
+      <iframe src="https://www.youtube.com/embed/dUM8SvHdzeU?autoplay=1&controls=1&modestbranding=1" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+      </iframe>
 
-    <!-- MAIN APP INTERFACE -->
-    <div id="playerSection" class="view-section">
-      <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
+      <!-- Screen Theme Overlay Controls -->
+      <div class="video-overlay">
+        <div class="overlay-top">
+          <span class="gear-icon">⚙️</span>
+        </div>
 
-      <div class="player-layout">
-        <!-- Main Player Area -->
-        <div class="main-content">
-          <!-- Video Frame with App Overlay -->
-          <div class="video-wrapper">
-            <iframe id="mainPlayer" src="" allowfullscreen allow="autoplay"></iframe>
-
-            <!-- Player Overlay Controls -->
-            <div class="video-overlay-controls">
-              <div></div>
-              
-              <!-- Center Rewind, Pause, Forward Controls -->
-              <div class="center-controls">
-                <div class="control-btn">↺ 10</div>
-                <div class="control-btn play-btn">❚❚</div>
-                <div class="control-btn">10 ↻</div>
-              </div>
-
-              <!-- Bottom Seekbar & Timing -->
-              <div class="bottom-seekbar-container">
-                <div class="time-display">1:22:33 / 2:03:50</div>
-                <div class="seekbar">
-                  <div class="seekbar-fill">
-                    <div class="seekbar-handle"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="overlay-center">
+          <div class="btn-circle">
+            <span>⟲</span>
+            <span>10</span>
           </div>
-          
-          <div class="lecture-title" id="lectureTitle">
-            BMC (Building Materials) 14 : Rock and Stone (Part 04)
+          <div class="btn-circle pause">
+            <span>❚❚</span>
           </div>
-
-          <!-- App Navigation Tabs -->
-          <div class="app-tabs">
-            <div class="tab-item active">
-              <span class="tab-icon">💬</span>
-              <span>Comments</span>
-            </div>
-            <div class="tab-item">
-              <span class="tab-icon">⏱️</span>
-              <span>Timeline</span>
-            </div>
-            <div class="tab-item">
-              <span class="tab-icon">📥</span>
-              <span>Download</span>
-            </div>
-            <div class="tab-item">
-              <span class="tab-icon">⭐</span>
-              <span>Rating</span>
-            </div>
-          </div>
-
-          <!-- Comments Section -->
-          <div class="comments-container">
-            <h4>Comments</h4>
-            <div class="comments-list" id="commentsList">
-              <div class="comment-card">
-                <span class="comment-user">Rahul Kumar</span>
-                <span class="comment-time">• 2 days ago</span>
-                <div class="comment-text">gjyutuul</div>
-                <div class="comment-actions">
-                  <span>❤️ Like</span>
-                  <span>⚠️ Report</span>
-                </div>
-              </div>
-              <div class="comment-card">
-                <span class="comment-user">Shashwat Sharma</span>
-                <span class="comment-time">• 1 day ago</span>
-                <div class="comment-text" style="color: #5c5be5; font-weight: 500;">1:15:25</div>
-                <div class="comment-actions">
-                  <span>❤️ Like</span>
-                  <span>⚠️ Report</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="comment-input-box">
-              <input type="text" id="commentInput" placeholder="Add Comment">
-              <button onclick="addComment()">Send</button>
-            </div>
+          <div class="btn-circle">
+            <span>⟳</span>
+            <span>10</span>
           </div>
         </div>
 
-        <!-- Right Playlist Sidebar -->
-        <div class="playlist-sidebar">
-          <h4 style="margin-bottom: 12px;" id="playlistTitle">Batch Playlist</h4>
-          <div id="playlistContainer"></div>
+        <div class="overlay-bottom">
+          <div class="time-stamp">1:33:12 / 2:03:50</div>
+          <div class="seekbar-bg">
+            <div class="seekbar-fill">
+              <div class="seekbar-thumb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Title Section -->
+    <div class="title-box">
+      BMC (Building Materials) 14 : Rock and Stone (Part 04)
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tab-bar">
+      <div class="tab-btn active">
+        <div class="tab-icon">💬</div>
+        <span>Comments</span>
+      </div>
+      <div class="tab-btn">
+        <div class="tab-icon">⏱️</div>
+        <span>Timeline</span>
+      </div>
+      <div class="tab-btn">
+        <div class="tab-icon">📥</div>
+        <span>Download</span>
+      </div>
+      <div class="tab-btn">
+        <div class="tab-icon">⭐</div>
+        <span>Rating</span>
+      </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="comments-section">
+      <div class="comments-header">
+        <h3>Comments</h3>
+        <span style="color: #888; font-size: 14px;">⚙️ ✖</span>
+      </div>
+
+      <div class="comments-list">
+        <!-- Comment 1 -->
+        <div class="comment-item">
+          <span class="user-name">Rahul Kumar • 2 days ago</span>
+          <div class="comment-content">gjyutuul</div>
+          <div class="action-row">
+            <span class="action-btn like">♥ Like</span>
+            <span class="action-btn">⚠️ Report</span>
+          </div>
+        </div>
+
+        <!-- Comment 2 -->
+        <div class="comment-item">
+          <span class="user-name">Shashwat Sharma • 1 day ago</span>
+          <div class="comment-content">
+            <a href="#" class="timestamp-link">1:15:25</a>
+          </div>
+          <div class="action-row">
+            <span class="action-btn like">♥ Like</span>
+            <span class="action-btn">⚠️ Report</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    const coursesData = {
-      bmc: {
-        title: "BMC (Building Materials)",
-        videos: [
-          { id: "cOjlfPnv4F3", title: "BMC 14 : Rock and Stone (Part 04)" },
-          { id: "cOjlfPnv4F3", title: "BMC 15 : Ransome Stone & Chemical Stones" }
-        ]
-      },
-      som: {
-        title: "Strength of Materials",
-        videos: [
-          { id: "cOjlfPnv4F3", title: "SOM 01 : Stress and Strain" }
-        ]
-      }
-    };
-
-    function openSubject(key) {
-      const subject = coursesData[key];
-      if(!subject) return;
-
-      document.getElementById("subjectSection").style.display = "none";
-      document.getElementById("playerSection").style.display = "block";
-
-      const container = document.getElementById("playlistContainer");
-      container.innerHTML = "";
-
-      subject.videos.forEach((video, index) => {
-        const item = document.createElement("div");
-        item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
-        item.onclick = () => playVideo(video.id, video.title, item);
-        item.innerHTML = `<h4>${video.title}</h4>`;
-        container.appendChild(item);
-      });
-
-      if(subject.videos.length > 0) {
-        playVideo(subject.videos[0].id, subject.videos[0].title, container.children[0]);
-      }
-    }
-
-    function playVideo(screenPalCode, title, element) {
-      const player = document.getElementById("mainPlayer");
-      player.src = `https://go.screenpal.com/player/${screenPalCode}?width=100%&height=100%&title=0&controls=0`;
-      document.getElementById("lectureTitle").innerText = title;
-
-      document.querySelectorAll(".playlist-item").forEach(el => el.classList.remove("active"));
-      if(element) element.classList.add("active");
-    }
-
-    function goBack() {
-      document.getElementById("playerSection").style.display = "none";
-      document.getElementById("subjectSection").style.display = "grid";
-      document.getElementById("mainPlayer").src = "";
-    }
-
-    function addComment() {
-      const input = document.getElementById("commentInput");
-      const list = document.getElementById("commentsList");
-
-      if(input.value.trim() !== "") {
-        const card = document.createElement("div");
-        card.className = "comment-card";
-        card.innerHTML = `
-          <span class="comment-user">You</span>
-          <span class="comment-time">• Just now</span>
-          <div class="comment-text">${input.value}</div>
-          <div class="comment-actions">
-            <span>❤️ Like</span>
-            <span>⚠️ Report</span>
-          </div>
-        `;
-        list.prepend(card);
-        input.value = "";
-      }
-    }
-  </script>
 </body>
 </html>

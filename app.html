@@ -1575,44 +1575,25 @@ body {
     </div>
   </div>
 
-  <!-- Profile Details / Form Container -->
-      <div class="profile-details" id="profileDisplayView">
-        <div class="profile-row"><span class="label">Full Name</span><span class="value" id="profileFullName">-</span></div>
-        <div class="profile-row"><span class="label">Email</span><span class="value" id="profileEmail">-</span></div>
-        <div class="profile-row"><span class="label">Mobile Number</span><span class="value" id="profileMobile">-</span></div>
-        <div class="profile-row"><span class="label">Engineering Branch</span><span class="value" id="profileBranchName">-</span></div>
-        <div class="profile-row"><span class="label">College Name</span><span class="value" id="profileCollege">-</span></div>
-        <div class="profile-row"><span class="label">Enrollment Number</span><span class="value" id="profileEnrollment">-</span></div>
-        <div class="profile-row"><span class="label">Semester / Year</span><span class="value" id="profileSemester">-</span></div>
-        <div class="profile-row"><span class="label">Address</span><span class="value" id="profileAddress">-</span></div>
-      </div>
-
-      <div class="profile-details" id="profileEditView" style="display:none;">
-        <div class="profile-row"><span class="label">Full Name</span><input type="text" id="editName"></div>
-        <div class="profile-row"><span class="label">Mobile Number</span><input type="text" id="editMobile"></div>
-        <div class="profile-row"><span class="label">Engineering Branch</span>
-          <select id="editBranch">
-            <option value="Civil Engineering">Civil Engineering</option>
-            <option value="Computer Science Engineering">Computer Science Engineering</option>
-            <option value="Electrical Engineering">Electrical Engineering</option>
-            <option value="Electronics Engineering">Electronics Engineering</option>
-            <option value="Mechanical Engineering">Mechanical Engineering</option>
-            <option value="Information Technology">Information Technology</option>
-            <option value="Agriculture Engineering">Agriculture Engineering</option>
-          </select>
-        </div>
-        <div class="profile-row"><span class="label">College Name</span><input type="text" id="editCollege" placeholder="Enter College Name"></div>
-        <div class="profile-row"><span class="label">Enrollment Number</span><input type="text" id="editEnrollment" placeholder="Enter Enrollment Number"></div>
-        <div class="profile-row"><span class="label">Semester / Year</span><input type="text" id="editSemester" placeholder="e.g. 2nd Semester"></div>
-        <div class="profile-row"><span class="label">Address</span><input type="text" id="editAddress" placeholder="Enter Address"></div>
+  <!-- PROFILE PAGE -->
+  <div id="profilePage" class="page">
+    <div class="section-title">My Profile</div>
+    <div class="profile-box">
+      <div class="profile-avatar"><i class="fas fa-user"></i></div>
+      <h3 id="profileName" style="font-size: 18px; font-weight: 700;">Engineer</h3>
+      <p id="profileBranch" style="font-size: 12px; color: var(--muted-text);">Diploma Member</p>
+      
+      <div class="profile-details">
+        <p>Name: <span id="profileFullName">-</span></p>
+        <p>Email: <span id="profileEmail">-</span></p>
+        <p>Mobile: <span id="profileMobile">-</span></p>
+        <p>Branch: <span id="profileBranchName">-</span></p>
       </div>
       
-      <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
-      <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
+      <button class="btn-main" style="margin-top: 20px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
     </div>
   </div>
 
-  
   <!-- COMMUNITY PAGE -->
   <div id="communityPage" class="page">
     <div class="section-title">Branch Groups</div>
@@ -1852,10 +1833,8 @@ body {
   const newsDb = getDatabase(newsApp);
 
   let isRegister = false;
-  let isEditingProfile = false;
-  let currentUserData = {};
   const defaultPage = "homePage";
-  const externalBranches = ['civil', 'computerscience', 'electrical', 'electronics', 'mechanical', 'it', 'agriculture', 'sem1', 'sem2', 'admitPage', 'resultPage', 'coursePage'];
+  const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage'];
 
   function hideLoader() {
     const loader = document.getElementById("globalLoader");
@@ -1894,10 +1873,7 @@ body {
         }
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { 
-          name, email, branch, mobile, 
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-        });
+        await set(ref(db, "users/" + cred.user.uid), { name, email, branch, mobile });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -1915,8 +1891,7 @@ body {
           name: result.user.displayName || "Google User",
           email: result.user.email,
           branch: "Civil Engineering",
-          mobile: "N/A",
-          college: "", enrollment: "", address: "", semester: "", profilePic: ""
+          mobile: "N/A"
         });
       }
     } catch (e) {
@@ -1931,15 +1906,28 @@ body {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const snapshot = await get(child(ref(db), `users/${user.uid}`));
-      currentUserData = snapshot.exists() ? snapshot.val() : { 
+      let data = snapshot.exists() ? snapshot.val() : { 
         name: user.displayName || "Engineer", 
         email: user.email, 
         branch: "Diploma Member", 
-        mobile: "N/A",
-        college: "", enrollment: "", address: "", semester: "", profilePic: "" 
+        mobile: "N/A" 
       };
       
-      updateProfileUI(currentUserData);
+      document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
+      document.getElementById("profileName").innerText = data.name || "Engineer";
+      document.getElementById("profileFullName").innerText = data.name || "-";
+      document.getElementById("profileEmail").innerText = data.email || "-";
+      document.getElementById("profileMobile").innerText = data.mobile || "-";
+      document.getElementById("profileBranchName").innerText = data.branch || "-";
+      document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+
+      const nameField = document.getElementById("feedbackName");
+      const emailField = document.getElementById("feedbackEmail");
+      const branchField = document.getElementById("feedbackBranch");
+
+      if (nameField) nameField.value = data.name || user.displayName || "";
+      if (emailField) emailField.value = data.email || user.email || "";
+      if (branchField) branchField.value = data.branch || "Diploma Member";
 
       document.getElementById("authPage").style.display = "none";
       document.getElementById("app").style.display = "block";
@@ -1957,128 +1945,6 @@ body {
     }
   });
 
-  function updateProfileUI(data) {
-    document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-    document.getElementById("profileName").innerText = data.name || "Engineer";
-    document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
-    
-    document.getElementById("profileFullName").innerText = data.name || "-";
-    document.getElementById("profileEmail").innerText = data.email || "-";
-    document.getElementById("profileMobile").innerText = data.mobile || "-";
-    document.getElementById("profileBranchName").innerText = data.branch || "-";
-    document.getElementById("profileCollege").innerText = data.college || "-";
-    document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
-    document.getElementById("profileSemester").innerText = data.semester || "-";
-    document.getElementById("profileAddress").innerText = data.address || "-";
-
-    const avatarBox = document.getElementById("profileAvatarBox");
-    if (data.profilePic) {
-      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
-    } else {
-      avatarBox.innerHTML = `<i class="fas fa-user" id="defaultUserIcon"></i>`;
-    }
-
-    const nameField = document.getElementById("feedbackName");
-    const emailField = document.getElementById("feedbackEmail");
-    const branchField = document.getElementById("feedbackBranch");
-
-    if (nameField) nameField.value = data.name || "";
-    if (emailField) emailField.value = data.email || "";
-    if (branchField) branchField.value = data.branch || "Diploma Member";
-  }
-
-  window.toggleProfileEditMode = async function() {
-    const displayView = document.getElementById("profileDisplayView");
-    const editView = document.getElementById("profileEditView");
-    const toggleBtn = document.getElementById("profileToggleBtn");
-    const uploadBtn = document.getElementById("uploadIconBtn");
-
-    isEditingProfile = !isEditingProfile;
-
-    if (isEditingProfile) {
-      // Switch to Edit Mode
-      document.getElementById("editName").value = currentUserData.name || "";
-      document.getElementById("editMobile").value = currentUserData.mobile || "";
-      document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
-      document.getElementById("editCollege").value = currentUserData.college || "";
-      document.getElementById("editEnrollment").value = currentUserData.enrollment || "";
-      document.getElementById("editSemester").value = currentUserData.semester || "";
-      document.getElementById("editAddress").value = currentUserData.address || "";
-
-      displayView.style.display = "none";
-      editView.style.display = "block";
-      uploadBtn.style.display = "flex";
-      toggleBtn.innerText = "Save Changes";
-      toggleBtn.style.background = "#16a34a";
-    } else {
-      // Save Changes to Firebase
-      const updatedData = {
-        name: document.getElementById("editName").value.trim(),
-        mobile: document.getElementById("editMobile").value.trim(),
-        branch: document.getElementById("editBranch").value,
-        college: document.getElementById("editCollege").value.trim(),
-        enrollment: document.getElementById("editEnrollment").value.trim(),
-        semester: document.getElementById("editSemester").value.trim(),
-        address: document.getElementById("editAddress").value.trim()
-      };
-
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          await update(ref(db, "users/" + user.uid), updatedData);
-          currentUserData = { ...currentUserData, ...updatedData };
-          updateProfileUI(currentUserData);
-          alert("Profile updated successfully!");
-        } catch (e) {
-          alert("Error updating profile: " + e.message);
-        }
-      }
-
-      displayView.style.display = "block";
-      editView.style.display = "none";
-      uploadBtn.style.display = "none";
-      toggleBtn.innerText = "Edit Profile";
-      toggleBtn.style.background = "";
-    }
-  };
-
-  window.uploadProfileImage = async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "news_upload");
-
-    const avatarBox = document.getElementById("profileAvatarBox");
-    avatarBox.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-
-    try {
-      const response = await fetch("https://api.cloudinary.com/v1_1/ub0qgzwa/auto/upload", {
-        method: "POST",
-        body: formData
-      });
-      const data = await response.json();
-      
-      if (data.secure_url) {
-        const imageUrl = data.secure_url;
-        const user = auth.currentUser;
-        if (user) {
-          await update(ref(db, "users/" + user.uid), { profilePic: imageUrl });
-          currentUserData.profilePic = imageUrl;
-          updateProfileUI(currentUserData);
-          alert("Profile picture uploaded successfully!");
-        }
-      } else {
-        throw new Error("Cloudinary upload failed");
-      }
-    } catch (err) {
-      alert("Image Upload Error: " + err.message);
-      updateProfileUI(currentUserData);
-    }
-  };
-
-  
   /* REALTIME NEWS & NOTIFICATIONS SYSTEM */
   function escapeHTML(value) {
     return String(value ?? "")

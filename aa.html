@@ -1,2270 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Diploma Engineers Portal</title>
-
-<!-- External Frameworks & Fonts -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-:root {
-  --primary: #2563EB;
-  --primary-dark: #1D4ED8;
-  --primary-light: #3B82F6;
-  
-  --blue-bg: #EFF6FF;
-  --blue-border: #BFDBFE;
-  --blue-text: #1E40AF;
-
-  --bg-white: #ffffff;
-  --surface-gray: #f8fafc;
-  --dark-text: #0F172A;
-  --muted-text: #64748B;
-  --border-light: #e2e8f0;
-  
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  background-color: var(--bg-white);
-  color: var(--dark-text);
-  overflow-x: hidden;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-::-webkit-scrollbar { display: none; }
-
-/* LOADER */
-#page-loader {
-  position: fixed;
-  inset: 0;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999999;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .6s ease, visibility .6s ease;
-}
-#page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
-.loader-content { width: min(90%, 500px); text-align: center; }
-.loader-logo {
-  width: 150px;
-  height: 150px;
-  margin: 0 auto 25px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.loader-ring {
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  border: 4px solid #edf1f6;
-  border-top-color: #2864e8;
-  border-right-color: #ff6500;
-  border-bottom-color: #2864e8;
-  animation: loaderRotate 1.8s linear infinite;
-}
-.loader-ring:after {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 28px;
-  background: #ff6500;
-  border-radius: 10px;
-  top: -4px;
-  right: 5px;
-}
-@keyframes loaderRotate { to { transform: rotate(360deg); } }
-.loader-logo img {
-  width: 105px;
-  height: 105px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #fff;
-  padding: 7px;
-  position: relative;
-  z-index: 2;
-  box-shadow: 0 5px 25px rgba(0,0,0,.06);
-}
-.loader-title { font-size: 28px; font-weight: 800; line-height: 1.2; }
-.orange-text { color: #ff6500; }
-.blue-text { color: #2864e8; }
-.loader-subtitle { margin: 10px 0 30px; color: #64748b; font-size: 15px; }
-.progress-container { width: 100%; height: 7px; background: #e4e9ef; border-radius: 20px; overflow: hidden; }
-.progress-bar {
-  width: 0;
-  height: 100%;
-  background: linear-gradient(90deg, #2864e8, #2864e8, #ff6500);
-  border-radius: 20px;
-  transition: width .12s linear;
-}
-.loading-status {
-  margin-top: 9px;
-  display: flex;
-  justify-content: space-between;
-  color: #64748b;
-  font-size: 14px;
-}
-#progress-percent { color: #2864e8; font-weight: 700; }
-
-/* AUTH PAGE */
-#authPage {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  background: var(--bg-white);
-}
-
-.auth-box {
-  background: var(--bg-white);
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  padding: 24px 20px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.logo {
-  text-align: center;
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 16px;
-  letter-spacing: -0.5px;
-  color: var(--dark-text);
-}
-
-.logo span { color: var(--primary); }
-
-.auth-box h2 {
-  text-align: center;
-  margin-bottom: 16px;
-  font-weight: 700;
-  font-size: 20px;
-  color: var(--dark-text);
-}
-
-.form-group { margin-bottom: 12px; }
-
-.auth-box input, .auth-box select {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--border-light);
-  outline: none;
-  font-size: 14px;
-  transition: all 0.15s ease;
-  background-color: var(--surface-gray);
-  color: var(--dark-text);
-}
-
-.auth-box input:focus, .auth-box select:focus {
-  border-color: var(--primary);
-  background-color: var(--bg-white);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-}
-
-.btn-main {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  color: white;
-  font-size: 15px;
-  font-weight: 700;
-  transition: transform 0.1s, box-shadow 0.1s;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
-}
-
-.btn-main:active { transform: scale(0.98); }
-
-.btn-google {
-  width: 100%;
-  padding: 12px;
-  background: #ffffff;
-  color: #374151;
-  border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-  transition: background 0.15s;
-}
-
-.btn-google:active { background: var(--surface-gray); }
-
-.switch {
-  text-align: center;
-  margin-top: 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-  cursor: pointer;
-}
-
-/* MAIN APP WRAPPER */
-#app {
-  display: none;
-  min-height: 100vh;
-  width: 100%;
-  padding-bottom: 90px;
-}
-
-/* TOP NAVBAR */
-.navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 8px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 99;
-  border-bottom: 1px solid var(--border-light);
-  width: 100%;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-back-btn {
-  background: var(--surface-gray);
-  border: 1px solid var(--border-light);
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  color: var(--dark-text);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.nav-logo {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--dark-text);
-}
-
-.nav-logo span { color: var(--primary); }
-
-.profile-icon i {
-  font-size: 26px;
-  color: var(--dark-text);
-  cursor: pointer;
-}
-
-/* PAGES */
-.page {
-  display: none;
-  padding: 8px 10px 20px 10px;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  animation: pageSlide 0.1s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.active-page { display: block; }
-
-@keyframes pageSlide {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* HERO BANNER */
-.banner {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  color: white;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-}
-
-.banner::before {
-  content: '';
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  top: -40px;
-  right: -40px;
-}
-
-.banner h2 { font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
-.banner p { font-size: 13px; opacity: 0.95; margin-top: 4px; margin-bottom: 0; position: relative; z-index: 1; }
-
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 16px 0 10px 0;
-  color: var(--dark-text);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-title span { color: var(--primary); }
-
-.scroll-container {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-}
-
-.subject-card {
-  min-width: 160px;
-  height: 200px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  position: relative;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  flex-shrink: 0;
-}
-
-.subject-card img { width: 100%; height: 100%; object-fit: cover; }
-
-.subject-card .overlay {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 10px;
-  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-}
-
-.subject-card h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-}
-
-.grid-2, .grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-@media (min-width: 640px) {
-  .grid-2, .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-}
-
-@media (min-width: 992px) {
-  .grid-2, .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
-}
-
-@media (min-width: 1200px) {
-  .grid-2 { grid-template-columns: repeat(6, 1fr); }
-}
-
-.card-box {
-  background: var(--bg-white);
-  padding: 16px 12px;
-  border-radius: var(--radius-md);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  transition: transform 0.1s ease;
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--dark-text);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.card-box:active, .card-box:hover { transform: scale(0.97); }
-
-.card-box i {
-  font-size: 24px;
-  margin-bottom: 6px;
-  color: var(--primary);
-  display: inline-block;
-}
-
-.card-box p {
-  margin: 0;
-  font-weight: 600;
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-/* SEMESTER BANNER CARDS */
-.sem-banner-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-@media (min-width: 768px) {
-  .sem-banner-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-.sem-card-orange {
-  background: linear-gradient(135deg, #FF7A00, #FF9933);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  color: white;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(255, 122, 0, 0.25);
-  transition: transform 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 140px;
-}
-
-.sem-card-dark {
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  color: white;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
-  transition: transform 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 140px;
-}
-
-.sem-card-orange:active, .sem-card-dark:active { transform: scale(0.98); }
-
-.sem-card-icon {
-  width: 38px;
-  height: 38px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.sem-card-content h3 {
-  font-size: 16px;
-  font-weight: 800;
-  margin-bottom: 2px;
-  letter-spacing: -0.3px;
-}
-
-.sem-card-content p {
-  font-size: 12px;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.sem-card-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 6px 14px;
-  border-radius: 30px;
-  font-size: 11px;
-  font-weight: 700;
-  width: max-content;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* BLUE THEME SECTION 1 */
-.blue-theme-card-1 {
-  background: var(--blue-bg);
-  border: 1px solid var(--blue-border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: var(--shadow-subtle);
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-.blue-theme-card-1:active { transform: scale(0.98); }
-
-.blue-theme-card-1 .content h4 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--blue-text);
-  margin-bottom: 2px;
-}
-
-.blue-theme-card-1 .content p {
-  font-size: 12px;
-  color: var(--muted-text);
-  margin: 0;
-}
-
-.blue-theme-card-1 .icon-box {
-  width: 42px;
-  height: 42px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.notice {
-  background: var(--blue-bg);
-  border: 1px solid var(--blue-border);
-  border-left: 4px solid var(--primary);
-  padding: 14px;
-  border-radius: var(--radius-md);
-  margin-top: 14px;
-}
-
-.notice h5 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--blue-text);
-  margin-bottom: 4px;
-}
-
-.notice p {
-  font-size: 12px;
-  color: var(--blue-text);
-  opacity: 0.9;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-@media (min-width: 640px) {
-  .notes-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 992px) {
-  .notes-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
-}
-
-.book-card {
-  background: var(--bg-white);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  text-decoration: none;
-  color: var(--dark-text);
-  display: flex;
-  flex-direction: column;
-}
-
-.book-card img {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  background: var(--surface-gray);
-}
-
-.book-card-content { padding: 10px; }
-
-.book-card h3 {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 2px;
-  line-height: 1.2;
-}
-
-.book-card p {
-  font-size: 11px;
-  color: var(--muted-text);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.profile-box {
-  background: var(--bg-white);
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-subtle);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.profile-avatar-wrapper {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 12px;
-}
-
-.profile-avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--surface-gray);
-  border: 2px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  font-size: 32px;
-  overflow: hidden;
-}
-
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.upload-icon-btn {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: var(--primary);
-  color: white;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: var(--shadow-subtle);
-}
-
-.profile-details {
-  margin-top: 14px;
-  text-align: left;
-  background: var(--surface-gray);
-  border: 1px solid var(--border-light);
-  padding: 14px;
-  border-radius: var(--radius-md);
-}
-
-.profile-row {
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 500;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.profile-row:last-child { margin-bottom: 0; }
-.profile-row .label { color: var(--muted-text); font-weight: 600; }
-.profile-row .value { font-weight: 700; color: var(--dark-text); font-size: 13px; }
-
-.profile-details input, .profile-details select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 13px;
-  outline: none;
-  background: #fff;
-}
-
-.premium-buy-card {
-  background: var(--bg-white);
-  padding: 24px 20px;
-  border-radius: var(--radius-lg);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.nav-wrapper {
-  margin: 10px 0;
-  width: 100%;
-}
-
-.top-btns {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface-gray);
-  padding: 6px;
-  border-radius: 14px;
-  border: 1px solid var(--border-light);
-  overflow-x: auto;
-}
-
-.branch-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-text);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 12px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.branch-btn.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-}
-
-/* COURSE & BATCH CARDS GRID STYLES */
-.course-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid var(--border-light);
-  text-align: left;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-  padding: 24px 20px;
-  color: #ffffff;
-  position: relative;
-}
-
-.card-header.purple { background-color: #5c41e6; }
-.card-header.green { background-color: #0fb861; }
-.card-header.blue { background-color: #2f6bf2; }
-.card-header.orange { background-color: #e65217; }
-.card-header.red { background-color: #d32027; }
-
-.card-badge {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.card-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.card-title-wrap i {
-  font-size: 22px;
-}
-
-.card-title {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.2;
-  margin: 0;
-  color: #ffffff;
-}
-
-.card-subtitle {
-  font-size: 13px;
-  opacity: 0.9;
-  font-weight: 500;
-  margin: 0;
-}
-
-.card-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
-.rating-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px dashed #e2e8f0;
-}
-
-.rating-row i.fa-star {
-  color: #f59e0b;
-  font-size: 14px;
-}
-
-.rating-score {
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.rating-count {
-  color: #64748b;
-}
-
-.features-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-grow: 1;
-  padding: 0;
-}
-
-.features-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 13px;
-  color: #334155;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.features-list li i {
-  color: #10b981;
-  font-size: 14px;
-  margin-top: 1px;
-}
-
-.access-btn {
-  width: 100%;
-  background-color: #2563eb;
-  color: #ffffff;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: background-color 0.2s ease;
-  text-decoration: none;
-}
-
-.access-btn:hover {
-  background-color: #1d4ed8;
-  color: #ffffff;
-}
-
-@media (max-width: 992px) {
-  .course-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .course-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* NEWS & NOTIFICATION STYLES */
-.news-page {
-  width: 100%;
-  max-width: 650px;
-  margin: auto;
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 10px 0px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.header-icon {
-  width: 42px;
-  height: 42px;
-  background: #eef2ff;
-  color: #3b82f6;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.page-header h1 {
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-
-#newsList {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.news-card {
-  background: #f8fafc;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  border-left: 5px solid #2563eb;
-  padding: 16px;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  text-align: left;
-}
-
-.news-card:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); }
-
-.category {
-  display: inline-block;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-.news-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.4;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.news-title i {
-  color: #2563eb;
-  font-size: 15px;
-}
-
-.news-description {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #64748b;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
-  font-size: 12px;
-}
-
-.news-date {
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 500;
-}
-
-.action-links {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.action-btn {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 0;
-}
-
-.action-btn:hover {
-  color: #1d4ed8;
-  text-decoration: underline;
-}
-
-.expandable-panel {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
-  background: #ffffff;
-  border-radius: 10px;
-  margin-top: 0;
-  padding: 0 12px;
-  border: 0px solid #e2e8f0;
-}
-
-.expandable-panel.active {
-  max-height: 500px;
-  transition: max-height 0.3s ease-in-out;
-  margin-top: 12px;
-  padding: 12px;
-  border-width: 1px;
-}
-
-.card-thumbnail {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-
-.full-desc {
-  font-size: 13px;
-  color: #334155;
-  line-height: 1.6;
-  margin-bottom: 10px;
-  white-space: pre-wrap;
-}
-
-.share-grid {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.share-icon-btn {
-  flex: 1;
-  height: 34px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  gap: 6px;
-  font-weight: 600;
-}
-
-.share-whatsapp { background: #25D366; }
-.share-telegram { background: #229ED9; }
-.share-copy { background: #64748b; }
-
-.loading, .empty, .error-box {
-  text-align: center;
-  padding: 30px;
-  color: #64748b;
-}
-.loading i { font-size: 24px; color: #2563eb; margin-bottom: 8px; }
-
-/* BOTTOM NAVIGATION BAR */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  display: flex;
-  justify-content: space-around;
-  padding: 8px 0 6px;
-  border-top: 1px solid var(--border-light);
-  z-index: 99;
-}
-
-.bottom-nav .nav-link-btn {
-  text-decoration: none;
-  color: var(--muted-text);
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  border: none;
-  background: none;
-  padding: 0;
-  flex: 1;
-  cursor: pointer;
-}
-
-.bottom-nav .nav-link-btn i {
-  display: block;
-  font-size: 16px;
-  margin-bottom: 2px;
-}
-
-.bottom-nav .nav-link-btn.active { color: var(--primary); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Batches - Learning Portal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --muted-text: #94a3b8;
+      --border-color: #334155;
+      
+      --purple: #8b5cf6;
+      --green: #10b981;
+      --blue: #3b82f6;
+      --orange: #f97316;
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    /* Page Visibility Controls */
+    .page {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* Header & Navigation */
+    header {
+      max-width: 1200px;
+      margin: 0 auto 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
+    .logo span {
+      color: var(--blue);
+    }
+
+    nav a {
+      color: var(--muted-text);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+
+    nav a:hover, nav a.active-link {
+      color: var(--text-color);
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .section-title span {
+      color: var(--blue);
+    }
+
+    /* Grid & Cards */
+    .batch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .batch-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .batch-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Header Color Themes */
+    .batch-header {
+      padding: 20px;
+      position: relative;
+      background-size: cover;
+    }
+
+    .batch-header.purple { background: linear-gradient(135deg, #4c1d95, #6d28d9); }
+    .batch-header.green { background: linear-gradient(135deg, #064e3b, #047857); }
+    .batch-header.blue { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); }
+    .batch-header.orange { background: linear-gradient(135deg, #7c2d12, #c2410c); }
+    .batch-header.red { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
+
+    .batch-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(5px);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .batch-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .batch-title-wrap i {
+      font-size: 1.3rem;
+    }
+
+    .batch-title-wrap h3 {
+      font-size: 1.2rem;
+    }
+
+    .batch-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    /* Card Body */
+    .batch-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+
+    .batch-rating {
+      font-size: 0.85rem;
+      color: #facc15;
+      margin-bottom: 15px;
+    }
+
+    .batch-rating span {
+      color: var(--muted-text);
+      margin-left: 4px;
+    }
+
+    .batch-features {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .batch-features li {
+      font-size: 0.88rem;
+      color: var(--muted-text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .batch-features li i {
+      color: var(--green);
+      font-size: 0.85rem;
+    }
+
+    /* Buttons */
+    .batch-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .batch-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .placeholder-page {
+      padding: 40px 0;
+      text-align: center;
+    }
+
+    .placeholder-page button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<!-- FULL PAGE LOADER -->
-<div id="page-loader">
-    <div class="loader-content">
-        <div class="loader-logo">
-            <div class="loader-ring"></div>
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
-        </div>
+  <!-- NAVIGATION HEADER -->
+  <header>
+    <div class="logo">Edu<span>Portal</span></div>
+    <nav>
+      <a href="#homePage" onclick="navigateTo('homePage')">Home</a>
+      <a href="#coursePage" onclick="navigateTo('coursePage')" class="active-link">Batches</a>
+    </nav>
+  </header>
 
-        <h1 class="loader-title">
-            <span class="orange-text">DIPLOMA</span>
-            <span class="blue-text">ENGINEERS</span>
-        </h1>
-
-        <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
-
-        <div class="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-
-        <div class="loading-status">
-            <span>Loading...</span>
-            <span id="progress-percent">0%</span>
-        </div>
-    </div>
-</div>
-
-<!-- AUTH PAGE -->
-<div id="authPage" style="display:none;">
-  <div class="auth-box">
-    <div class="logo">Diploma <span>Engineers</span></div>
-    <h2 id="formTitle">Login</h2>
-    
-    <div id="registerFields" style="display:none;">
-      <div class="form-group">
-        <input type="text" id="name" placeholder="Full Name">
-      </div>
-      <div class="form-group">
-        <select id="branch">
-          <option value="Civil Engineering" selected>Civil Engineering</option>
-          <option value="Computer Science Engineering">Computer Science Engineering</option>
-          <option value="Electrical Engineering">Electrical Engineering</option>
-          <option value="Electronics Engineering">Electronics Engineering</option>
-          <option value="Mechanical Engineering">Mechanical Engineering</option>
-          <option value="Information Technology">Information Technology</option>
-          <option value="Agriculture Engineering">Agriculture Engineering</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <input type="text" id="mobile" placeholder="Mobile Number">
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <input type="email" id="email" placeholder="Email Address">
-    </div>
-    <div class="form-group">
-      <input type="password" id="password" placeholder="Password">
-    </div>
-    
-    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
-    
-    <button class="btn-google" onclick="googleLogin()">
-      <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
-    </button>
-
-    <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
-  </div>
-</div>
-
-<!-- MAIN APP INTERFACE -->
-<div id="app">
-
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div class="nav-left">
-      <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-      <div class="nav-logo">Diploma <span>Engineers</span></div>
-    </div>
-    <div class="profile-icon" onclick="navigateTo('profilePage')">
-      <i class="fas fa-user-circle"></i>
-    </div>
-  </div>
-
-  <!-- HOME PAGE -->
-  <div id="homePage" class="page active-page">
-    <section class="hero">
-      <div class="banner">
-        <h2>Welcome, <span id="userName">Engineer</span> 👋</h2>
-        <p>Study Materials • Branch Notes • E-Books • Updates</p>
-      </div>
-    </section>
-
-    <!-- TRENDING SUBJECTS -->
-    <div class="section-title">Trending <span>Subjects</span></div>
-    <div class="scroll-container">
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
-        <div class="overlay"><h4>Applied Mathematics 2nd</h4></div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png" alt="Mechanics">
-        <div class="overlay"><h4>Engineering Mechanics</h4></div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf" target="_blank" class="subject-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png" alt="Steel Structure">
-        <div class="overlay"><h4>Design Of Steel Structures</h4></div>
-      </a>
-    </div>
-
-    <!-- EXPLORE GRID -->
-    <div class="section-title">Explore</div>
-    <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('notesPage')">
-        <i class="fas fa-code-branch"></i>
-        <p>Branch</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('jobPage')">
-        <i class="fas fa-briefcase"></i>
-        <p>Jobs</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('admitPage')">
-        <i class="fas fa-id-card"></i>
-        <p>Admit Card</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('resultPage')">
-        <i class="fas fa-square-poll-vertical"></i>
-        <p>Result</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('updatePage')">
-        <i class="fas fa-bell"></i>
-        <p>Updates</p>
-      </div>
-      <div class="card-box" onclick="navigateTo('communityPage')">
-        <i class="fas fa-users"></i>
-        <p>Community</p>
-      </div>
-    </div>
-
-    <!-- PREMIUM ACCESS CARD -->
-    <div class="blue-theme-card-1" onclick="navigateTo('coursePage')">
-      <div class="content">
-        <h4>Unlock Courses 🚀</h4>
-        <p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>
-      </div>
-      <div class="icon-box">
-        <i class="fas fa-graduation-cap"></i>
-      </div>
-    </div>
-
-    <!-- SEMESTER CARDS -->
-    <div class="sem-banner-grid">
-      <div class="sem-card-orange" onclick="navigateTo('sem1')">
-        <div class="sem-card-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
-        <div class="sem-card-content">
-          <h3>1ST SEMESTER (COMMON)</h3>
-          <p>All 42 Branches Foundation</p>
-        </div>
-        <div class="sem-card-btn">ACCESS MATERIAL <i class="fas fa-arrow-right"></i></div>
-      </div>
-
-      <div class="sem-card-dark" onclick="navigateTo('sem2')">
-        <div class="sem-card-icon"><i class="fas fa-book-open"></i></div>
-        <div class="sem-card-content">
-          <h3>2ND SEMESTER (COMMON)</h3>
-          <p>Core Engineering Basics</p>
-        </div>
-        <div class="sem-card-btn">ACCESS MATERIAL <i class="fas fa-arrow-right"></i></div>
-      </div>
-    </div>
-
-    <div class="notice">
-      <h5>Latest Announcement 📢</h5>
-      <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
-    </div>
-  </div>
-  
-  <!-- BRANCH PAGE LIST -->
-  <div id="notesPage" class="page">
-    <div class="section-title">Engineering Branches</div>
-    <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('civil')"><i class="fas fa-building"></i><p>Civil Engineering</p></div>
-      <div class="card-box" onclick="navigateTo('computer')"><i class="fas fa-laptop-code"></i><p>Computer Science</p></div>
-      <div class="card-box" onclick="navigateTo('electrical')"><i class="fas fa-bolt"></i><p>Electrical Engineering</p></div>
-      <div class="card-box" onclick="navigateTo('electronics')"><i class="fas fa-microchip"></i><p>Electronics Engineering</p></div>
-      <div class="card-box" onclick="navigateTo('mechanical')"><i class="fas fa-cogs"></i><p>Mechanical Engineering</p></div>
-      <div class="card-box" onclick="navigateTo('it')"><i class="fas fa-network-wired"></i><p>Information Technology</p></div>
-      <div class="card-box" onclick="navigateTo('agricultural')"><i class="fas fa-seedling"></i><p>Agriculture Engineering</p></div>
-    </div>
-  </div>
-
-  <!-- DYNAMICALLY LOADED BRANCH & SEMESTER PAGES -->
-  <div id="civil" class="page"></div>
-  <div id="computer" class="page"></div>
-  <div id="electrical" class="page"></div>
-  <div id="electronics" class="page"></div>
-  <div id="mechanical" class="page"></div>
-  <div id="it" class="page"></div>
-  <div id="agricultural" class="page"></div>
-  <div id="sem1" class="page"></div>
-  <div id="sem2" class="page"></div>
-  <div id="admitPage" class="page"></div>
-  <div id="resultPage" class="page"></div>
-  
-  <!-- COURSE PAGE SECTION -->
-  <div id="coursePage" class="page">
-    <div class="section-title">Explore Free <span>Batches</span></div>
-    <p style="font-size: 13px; color: var(--muted-text); margin-bottom: 14px;">High-quality structured programs designed for academic excellence</p>
-    
-    <div class="course-grid">
-      <!-- Card 1: Semester 1 Full Batch -->
-      <div class="card">
-        <div class="card-header purple">
-          <span class="card-badge">FREE</span>
-          <div class="card-title-wrap">
-            <i class="fa-solid fa-cubes"></i>
-            <h2 class="card-title">Semester 1 Full Batch</h2>
-          </div>
-          <p class="card-subtitle">For All Branches (Common)</p>
-        </div>
-        <div class="card-body">
-          <div class="rating-row">
-            <i class="fa-solid fa-star"></i>
-            <span class="rating-score">4.9</span>
-            <span class="rating-count">(1,240 Reviews)</span>
-          </div>
-          <ul class="features-list">
-            <li><i class="fa-solid fa-circle-check"></i> Maths-I, Physics-I, Chemistry & CS</li>
-            <li><i class="fa-solid fa-circle-check"></i> Chapter-wise HD Recorded Lectures</li>
-            <li><i class="fa-solid fa-circle-check"></i> Handwritten Printable PDF Notes</li>
-            <li><i class="fa-solid fa-circle-check"></i> Last 5 Years PYQ Video Solutions</li>
-            <li><i class="fa-solid fa-circle-check"></i> Dedicated WhatsApp Doubt Group</li>
-          </ul>
-          <a href="branch-course.html?branch=sem1" onclick="navigateToBranchCourse('sem1', event)" class="access-btn">
-            <i class="fa-solid fa-gift"></i> Access Free Batch
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 2: Civil Engg. Special Batch -->
-      <div class="card">
-        <div class="card-header green">
-          <span class="card-badge">FREE</span>
-          <div class="card-title-wrap">
-            <i class="fa-solid fa-hard-hat"></i>
-            <h2 class="card-title">Civil Engg. Special Batch</h2>
-          </div>
-          <p class="card-subtitle">Core Subjects + Practical Concept</p>
-        </div>
-        <div class="card-body">
-          <div class="rating-row">
-            <i class="fa-solid fa-star"></i>
-            <span class="rating-score">4.8</span>
-            <span class="rating-count">(890 Reviews)</span>
-          </div>
-          <ul class="features-list">
-            <li><i class="fa-solid fa-circle-check"></i> SOM, Surveying, Building Materials</li>
-            <li><i class="fa-solid fa-circle-check"></i> 100+ Video lectures & Diagrams</li>
-            <li><i class="fa-solid fa-circle-check"></i> Quick Revision Formula Sheets</li>
-            <li><i class="fa-solid fa-circle-check"></i> Board Exam Important Questions</li>
-            <li><i class="fa-solid fa-circle-check"></i> Practical & Practical File PDFs</li>
-          </ul>
-          <a href="branch-course.html?branch=civil" onclick="navigateToBranchCourse('civil', event)" class="access-btn">
-            <i class="fa-solid fa-gift"></i> Access Free Batch
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 3: CS & IT Master Batch -->
-      <div class="card">
-        <div class="card-header blue">
-          <span class="card-badge">FREE</span>
-          <div class="card-title-wrap">
-            <i class="fa-solid fa-laptop-code"></i>
-            <h2 class="card-title">CS & IT Master Batch</h2>
-          </div>
-          <p class="card-subtitle">Coding + Syllabus Subjects</p>
-        </div>
-        <div class="card-body">
-          <div class="rating-row">
-            <i class="fa-solid fa-star"></i>
-            <span class="rating-score">4.9</span>
-            <span class="rating-count">(1,450 Reviews)</span>
-          </div>
-          <ul class="features-list">
-            <li><i class="fa-solid fa-circle-check"></i> C/C++, Python, DBMS & Web Dev</li>
-            <li><i class="fa-solid fa-circle-check"></i> Practical Live Code Walkthroughs</li>
-            <li><i class="fa-solid fa-circle-check"></i> Complete Board Exam Notes</li>
-            <li><i class="fa-solid fa-circle-check"></i> Final Year Project Guidance</li>
-            <li><i class="fa-solid fa-circle-check"></i> Certificate of Completion</li>
-          </ul>
-          <a href="branch-course.html?branch=computer" onclick="navigateToBranchCourse('computer', event)" class="access-btn">
-            <i class="fa-solid fa-gift"></i> Access Free Batch
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 4: Mech & Electrical Pass -->
-      <div class="card">
-        <div class="card-header orange">
-          <span class="card-badge">FREE</span>
-          <div class="card-title-wrap">
-            <i class="fa-solid fa-gears"></i>
-            <h2 class="card-title">Mech & Electrical Pass</h2>
-          </div>
-          <p class="card-subtitle">Thermal, Machine & Circuit Theory</p>
-        </div>
-        <div class="card-body">
-          <div class="rating-row">
-            <i class="fa-solid fa-star"></i>
-            <span class="rating-score">4.8</span>
-            <span class="rating-count">(970 Reviews)</span>
-          </div>
-          <ul class="features-list">
-            <li><i class="fa-solid fa-circle-check"></i> Thermodynamics, SOM & Electrical Machines</li>
-            <li><i class="fa-solid fa-circle-check"></i> Step-by-Step Numerical Solutions</li>
-            <li><i class="fa-solid fa-circle-check"></i> High quality Diagram Notes</li>
-          </ul>
-          <a href="branch-course.html?branch=mechanical" onclick="navigateToBranchCourse('mechanical', event)" class="access-btn">
-            <i class="fa-solid fa-gift"></i> Access Free Batch
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 5: PYQ Exam Booster Batch -->
-      <div class="card">
-        <div class="card-header red">
-          <span class="card-badge">FREE</span>
-          <div class="card-title-wrap">
-            <i class="fa-solid fa-fire"></i>
-            <h2 class="card-title">PYQ Exam Booster Batch</h2>
-          </div>
-          <p class="card-subtitle">Last 15 Days Exam Strategy</p>
-        </div>
-        <div class="card-body">
-          <div class="rating-row">
-            <i class="fa-solid fa-star"></i>
-            <span class="rating-score">5.0</span>
-            <span class="rating-count">(2,100 Reviews)</span>
-          </div>
-          <ul class="features-list">
-            <li><i class="fa-solid fa-circle-check"></i> Top 50 Most Repeated Questions</li>
-            <li><i class="fa-solid fa-circle-check"></i> 1-Shot Revision Videos</li>
-            <li><i class="fa-solid fa-circle-check"></i> Exact Exam Pattern Model Papers</li>
-          </ul>
-          <a href="branch-course.html?branch=all" onclick="navigateToBranchCourse('all', event)" class="access-btn">
-            <i class="fa-solid fa-gift"></i> Access Free Batch
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- UPDATE & NOTIFICATIONS PAGE -->
-  <div id="updatePage" class="page">
-    <div class="news-page">
-      <div class="page-header">
-        <div class="header-icon">
-          <i class="fa-regular fa-bell"></i>
-        </div>
-        <h1>Notifications & News</h1>
-      </div>
-
-      <div id="newsList">
-        <div class="loading">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <p>Loading Notifications...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOOKS PAGE -->
-  <div id="booksPage" class="page">
-    <div class="section-title">E-Books Library</div>
-    <div class="notes-grid">
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
-        <div class="book-card-content">
-          <h3>Applied Physics 2nd</h3>
-          <p>Diploma Engineering Physics PDF</p>
-        </div>
-      </a>
-      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="book-card">
-        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
-        <div class="book-card-content">
-          <h3>Applied Mathematics 2nd</h3>
-          <p>Diploma Engineering Maths PDF</p>
-        </div>
-      </a>
-    </div>
-  </div>
-
-  <!-- PROFILE PAGE -->
-  <div id="profilePage" class="page">
-    <div class="profile-box">
-      <div class="profile-avatar-wrapper">
-        <div class="profile-avatar" id="profileAvatarBox">
-          <i class="fas fa-user"></i>
-        </div>
-        <label for="profileImageInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;">
-          <i class="fas fa-camera"></i>
-        </label>
-        <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
-      </div>
+  <!-- MAIN APP CONTAINER -->
+  <main>
+    <!-- COURSE SECTION / PAGE -->
+    <div id="coursePage" class="page active">
+      <div class="section-title">Explore Free <span>Batches</span></div>
+      <p style="font-size: 13px; color: var(--muted-text); margin-bottom: 14px;">High-quality structured programs designed for academic excellence</p>
       
-      <h3 id="profileName" style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">Engineer</h3>
-      <p id="profileBranch" style="font-size: 12px; color: var(--muted-text); margin: 0;">Diploma Member</p>
-
-      <div class="profile-details" id="profileDisplayView">
-        <div class="profile-row"><span class="label">Full Name</span><span class="value" id="profileFullName">-</span></div>
-        <div class="profile-row"><span class="label">Email</span><span class="value" id="profileEmail">-</span></div>
-        <div class="profile-row"><span class="label">Mobile Number</span><span class="value" id="profileMobile">-</span></div>
-        <div class="profile-row"><span class="label">Engineering Branch</span><span class="value" id="profileBranchName">-</span></div>
-        <div class="profile-row"><span class="label">College Name</span><span class="value" id="profileCollege">-</span></div>
-        <div class="profile-row"><span class="label">Enrollment Number</span><span class="value" id="profileEnrollment">-</span></div>
-        <div class="profile-row"><span class="label">Semester / Year</span><span class="value" id="profileSemester">-</span></div>
-        <div class="profile-row"><span class="label">Address</span><span class="value" id="profileAddress">-</span></div>
-      </div>
-
-      <div class="profile-details" id="profileEditView" style="display:none;">
-        <div class="profile-row"><span class="label">Full Name</span><input type="text" id="editName"></div>
-        <div class="profile-row"><span class="label">Mobile Number</span><input type="text" id="editMobile"></div>
-        <div class="profile-row"><span class="label">Engineering Branch</span>
-          <select id="editBranch">
-            <option value="Civil Engineering">Civil Engineering</option>
-            <option value="Computer Science Engineering">Computer Science Engineering</option>
-            <option value="Electrical Engineering">Electrical Engineering</option>
-            <option value="Electronics Engineering">Electronics Engineering</option>
-            <option value="Mechanical Engineering">Mechanical Engineering</option>
-            <option value="Information Technology">Information Technology</option>
-            <option value="Agriculture Engineering">Agriculture Engineering</option>
-          </select>
-        </div>
-        <div class="profile-row"><span class="label">College Name</span><input type="text" id="editCollege" placeholder="Enter College Name"></div>
-        <div class="profile-row"><span class="label">Enrollment Number</span><input type="text" id="editEnrollment" placeholder="Enter Enrollment Number"></div>
-        <div class="profile-row"><span class="label">Semester / Year</span><input type="text" id="editSemester" placeholder="e.g. 2nd Semester"></div>
-        <div class="profile-row"><span class="label">Address</span><input type="text" id="editAddress" placeholder="Enter Address"></div>
-      </div>
-      
-      <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
-      <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
-    </div>
-  </div>
-
-  <!-- COMMUNITY PAGE -->
-  <div id="communityPage" class="page">
-    <div class="section-title">Branch Groups</div>
-    <div class="grid-2">
-      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box">
-        <i class="fab fa-whatsapp"></i>
-        <p>WhatsApp Channel</p>
-      </a>
-      <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box">
-        <i class="fab fa-telegram"></i>
-        <p>Telegram Channel</p>
-      </a>
-      <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box">
-        <i class="fab fa-youtube"></i>
-        <p>YouTube Channel</p>
-      </a>
-      <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box">
-        <i class="fas fa-laptop-code"></i>
-        <p>CSE / IT Group</p>
-      </a>
-      <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box">
-        <i class="fas fa-bolt"></i>
-        <p>Electrical Group</p>
-      </a>
-      <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box">
-        <i class="fas fa-microchip"></i>
-        <p>Electronics Group</p>
-      </a>
-      <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box">
-        <i class="fas fa-building"></i>
-        <p>Civil Group</p>
-      </a>
-      <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box">
-        <i class="fas fa-cogs"></i>
-        <p>Mechanical Group</p>
-      </a>
-      <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box">
-        <i class="fas fa-seedling"></i>
-        <p>Agriculture Group</p>
-      </a>
-    </div>
-  </div>
-
-  <!-- JOBS PAGE -->
-  <div id="jobPage" class="page">
-    <div class="section-title">Job Openings</div>
-    <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('privatejob')"><i class="fas fa-building"></i><p>Private Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('gov-job')"><i class="fas fa-briefcase"></i><p>Government Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('apprenticeship')"><i class="fas fa-graduation-cap"></i><p>Apprenticeship</p></div>
-      <a href="https://internshala.com/" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>Internships</p></a>
-    </div>
-  </div>
-
-  <!-- PRIVATE JOBS -->
-  <div id="privatejob" class="page">
-    <div class="section-title">Private Jobs</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-building"></i><p><b>Construction</b><br><small>Civil/Mech • ₹15k-60k</small></p></div>
-      <div class="card-box"><i class="fas fa-industry"></i><p><b>Manufacturing</b><br><small>Mech/Elec • ₹12k-50k</small></p></div>
-    </div>
-  </div>
-
-  <!-- GOVT JOBS -->
-  <div id="gov-job" class="page">
-    <div class="section-title">Government Jobs</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-landmark"></i><p><b>SSC JE</b><br><small>Civil, Mech, Elec</small></p></div>
-      <div class="card-box"><i class="fas fa-train"></i><p><b>RRB JE</b><br><small>Railways Core Branches</small></p></div>
-    </div>
-  </div>
-
-  <!-- APPRENTICESHIP -->
-  <div id="apprenticeship" class="page">
-    <div class="section-title">Apprenticeships</div>
-    <div class="grid-2">
-      <div class="card-box"><i class="fas fa-train"></i><p><b>Railway</b><br><small>Stipend: ₹8k - ₹15k</small></p></div>
-      <div class="card-box"><i class="fas fa-industry"></i><p><b>PSU Sector</b><br><small>Stipend: ₹10k - ₹18k</small></p></div>
-    </div>
-  </div>
-
-  <!-- FEEDBACK PAGE -->
-  <div id="feedbackPage" class="page">
-    <div class="premium-buy-card">
-      <h2 style="font-size:20px; font-weight:800;">
-        <i class="fas fa-comment-dots"></i> Send Feedback
-      </h2>
-      <p style="font-size:13px; color:var(--muted-text); margin-top:6px; line-height:1.6;">
-        Help us improve Diploma Engineers by sharing your valuable feedback.
-      </p>
-
-      <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST" style="margin-top:16px;">
-        <input type="hidden" name="_subject" value="New Feedback - Diploma Engineers">
-        <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_template" value="table">
-        <input type="hidden" name="_next" value="https://diplomaengineers.vercel.app/?feedback=success#feedbackPage">
-
-        <input type="hidden" id="feedbackName" name="Name">
-        <input type="hidden" id="feedbackEmail" name="Email">
-        <input type="hidden" id="feedbackBranch" name="Branch">
-
-        <div class="form-group" style="margin-bottom:12px;">
-          <select name="Rating" required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; font-family:inherit; font-size:13px; background:white;">
-            <option value="">Select Rating</option>
-            <option value="5 - Excellent">★★★★★ Excellent</option>
-            <option value="4 - Very Good">★★★★ Very Good</option>
-            <option value="3 - Good">★★★ Good</option>
-            <option value="2 - Need Improvement">★★ Need Improvement</option>
-            <option value="1 - Poor">★ Poor</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="margin-bottom:14px;">
-          <textarea name="Feedback" rows="5" placeholder="Write your feedback..." required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; resize:vertical; font-family:inherit; font-size:13px;"></textarea>
-        </div>
-
-        <button type="submit" class="btn-main" style="width:100%;">
-          <i class="fas fa-paper-plane"></i> Send Feedback
-        </button>
-      </form>
-
-      <!-- THANK YOU MESSAGE -->
-      <div id="feedbackThanks" style="display:none; margin-top:16px; padding:14px; border-radius:12px; background:#ecfdf5; border:1px solid #bbf7d0; color:#15803d; text-align:center; font-size:14px; font-weight:700;">
-        <i class="fas fa-check-circle"></i> Thanks for your Feedback!<br>
-        <span style="font-size:12px;font-weight:500;">Your feedback has been received successfully.</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAVIGATION BAR -->
-  <div class="bottom-nav">
-    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
-      <i class="fas fa-home"></i>Home
-    </button>
-    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
-      <i class="fas fa-code-branch"></i>Branch
-    </button>
-    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
-      <i class="fas fa-book"></i>Books
-    </button>
-    <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')">
-      <i class="fas fa-graduation-cap"></i>Courses
-    </button>
-    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')">
-      <i class="fas fa-comment-dots"></i>Feedback
-    </button>
-  </div>
-
-</div>
-
-<!-- NAVIGATION ROUTER & BRANCH COURSE FETCH FUNCTION -->
-<script>
-  function navigateTo(pageId) {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(p => p.classList.remove('active-page'));
-    const target = document.getElementById(pageId);
-    if (target) {
-      target.classList.add('active-page');
-    }
-    
-    const tabs = document.querySelectorAll('.bottom-nav .nav-link-btn');
-    tabs.forEach(t => t.classList.remove('active'));
-    const activeTab = document.getElementById('tab-' + pageId);
-    if (activeTab) {
-      activeTab.classList.add('active');
-    }
-
-    const backBtn = document.getElementById('headerBackBtn');
-    if (backBtn) {
-      backBtn.style.display = (pageId === 'homePage') ? 'none' : 'flex';
-    }
-  }
-
-  function goBack() {
-    navigateTo('homePage');
-  }
-
-  async function navigateToBranchCourse(branch, event) {
-    if (event) event.preventDefault();
-    
-    // Fetch branch-course.html dynamically
-    try {
-      const response = await fetch(`branch-course.html?branch=${branch}`);
-      if (response.ok) {
-        const html = await response.text();
-        let targetDiv = document.getElementById(branch);
-        if (!targetDiv) {
-          targetDiv = document.createElement('div');
-          targetDiv.id = branch;
-          targetDiv.className = 'page';
-          document.getElementById('app').appendChild(targetDiv);
-        }
-        targetDiv.innerHTML = html;
-        navigateTo(branch);
-      } else {
-        window.location.href = `branch-course.html?branch=${branch}`;
-      }
-    } catch (e) {
-      window.location.href = `branch-course.html?branch=${branch}`;
-    }
-  }
-</script>
-
-<!-- FIREBASE & CORE APPLICATION SCRIPT -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, update, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-  /* LOADER TIMEOUT & ANIMATION */
-  document.addEventListener("DOMContentLoaded", function(){
-    const loader = document.getElementById("page-loader");
-    const bar = document.getElementById("progress-bar");
-    const percent = document.getElementById("progress-percent");
-
-    let progress = 0;
-    document.body.style.overflow = "hidden";
-
-    const timer = setInterval(function(){
-      progress += Math.floor(Math.random() * 5) + 2;
-
-      if(progress >= 100){
-        progress = 100;
-        clearInterval(timer);
-
-        if (bar) bar.style.width = progress + "%";
-        if (percent) percent.textContent = progress + "%";
-
-        setTimeout(function(){
-          if (loader) loader.classList.add("hide");
-          document.body.style.overflow = "";
-        }, 450);
-
-        return;
-      }
-
-      if (bar) bar.style.width = progress + "%";
-      if (percent) percent.textContent = progress + "%";
-    }, 45);
-  });
-
-  setTimeout(function(){
-    const loader = document.getElementById("page-loader");
-    if(loader && !loader.classList.contains("hide")){
-      loader.classList.add("hide");
-      document.body.style.overflow = "";
-    }
-  }, 5000);
-
-  /* FIREBASE CONFIGS */
-  const firebaseConfig = {
-    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-    authDomain: "diploma-app-9a378.firebaseapp.com",
-    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-    projectId: "diploma-app-9a378",
-    storageBucket: "diploma-app-9a378.firebasestorage.app",
-    messagingSenderId: "160233059797",
-    appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
-  };
-
-  const newsFirebaseConfig = {
-    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-    authDomain: "diplomaengineers-869df.firebaseapp.com",
-    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-    projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.appspot.com",
-    messagingSenderId: "356779436080",
-    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-  const provider = new GoogleAuthProvider();
-
-  const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
-  const newsDb = getDatabase(newsApp);
-
-  let isRegister = false;
-  let isEditingProfile = false;
-  let currentUserData = {};
-  const defaultPage = "homePage";
-
-  window.toggleForm = function() {
-    isRegister = !isRegister;
-    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
-    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
-    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
-    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
-  };
-
-  window.submitAuthForm = async function() {
-    let email = document.getElementById("email").value.trim();
-    let password = document.getElementById("password").value.trim();
-    
-    if (!email || !password) {
-      alert("Please enter Email and Password");
-      return;
-    }
-
-    try {
-      if (isRegister) {
-        let name = document.getElementById("name").value.trim();
-        let branch = document.getElementById("branch").value;
-        let mobile = document.getElementById("mobile").value.trim();
-        
-        if (!name || !mobile) {
-          alert("Please fill all details");
-          return;
-        }
-
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { 
-          name, email, branch, mobile, 
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-        });
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-    } catch (e) {
-      alert("Auth Error: " + e.message);
-    }
-  };
-
-  window.googleLogin = async function() {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
-      if (!snapshot.exists()) {
-        await set(ref(db, "users/" + result.user.uid), {
-          name: result.user.displayName || "Google User",
-          email: result.user.email,
-          branch: "Civil Engineering",
-          mobile: "N/A",
-          college: "", enrollment: "", address: "", semester: "", profilePic: ""
-        });
-      }
-    } catch (e) {
-      alert("Google Login Error: " + e.message);
-    }
-  };
-
-  window.logoutFirebase = function() {
-    signOut(auth);
-  };
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const snapshot = await get(child(ref(db), `users/${user.uid}`));
-      currentUserData = snapshot.exists() ? snapshot.val() : { 
-        name: user.displayName || "Engineer", 
-        email: user.email, 
-        branch: "Diploma Member", 
-        mobile: "N/A",
-        college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-      };
-      
-      updateProfileUI(currentUserData);
-
-      document.getElementById("authPage").style.display = "none";
-      document.getElementById("app").style.display = "block";
-
-      const initialHash = window.location.hash.substring(1);
-      const targetPage = initialHash || defaultPage;
-      navigateTo(targetPage);
-      loadNewsData();
-    } else {
-      document.getElementById("app").style.display = "none";
-      document.getElementById("authPage").style.display = "flex";
-    }
-  });
-
-  function updateProfileUI(data) {
-    document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-    document.getElementById("profileName").innerText = data.name || "Engineer";
-    document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
-    
-    document.getElementById("profileFullName").innerText = data.name || "-";
-    document.getElementById("profileEmail").innerText = data.email || "-";
-    document.getElementById("profileMobile").innerText = data.mobile || "-";
-    document.getElementById("profileBranchName").innerText = data.branch || "-";
-    document.getElementById("profileCollege").innerText = data.college || "-";
-    document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
-    document.getElementById("profileSemester").innerText = data.semester || "-";
-    document.getElementById("profileAddress").innerText = data.address || "-";
-
-    const avatarBox = document.getElementById("profileAvatarBox");
-    if (data.profilePic) {
-      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
-    } else {
-      avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
-    }
-
-    const nameField = document.getElementById("feedbackName");
-    const emailField = document.getElementById("feedbackEmail");
-    const branchField = document.getElementById("feedbackBranch");
-
-    if (nameField) nameField.value = data.name || "";
-    if (emailField) emailField.value = data.email || "";
-    if (branchField) branchField.value = data.branch || "Diploma Member";
-  }
-
-  window.toggleProfileEditMode = async function() {
-    const displayView = document.getElementById("profileDisplayView");
-    const editView = document.getElementById("profileEditView");
-    const toggleBtn = document.getElementById("profileToggleBtn");
-    const uploadBtn = document.getElementById("uploadIconBtn");
-
-    isEditingProfile = !isEditingProfile;
-
-    if (isEditingProfile) {
-      document.getElementById("editName").value = currentUserData.name || "";
-      document.getElementById("editMobile").value = currentUserData.mobile || "";
-      document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
-      document.getElementById("editCollege").value = currentUserData.college || "";
-      document.getElementById("editEnrollment").value = currentUserData.enrollment || "";
-      document.getElementById("editSemester").value = currentUserData.semester || "";
-      document.getElementById("editAddress").value = currentUserData.address || "";
-
-      displayView.style.display = "none";
-      editView.style.display = "block";
-      uploadBtn.style.display = "flex";
-      toggleBtn.innerText = "Save Changes";
-      toggleBtn.style.background = "#16a34a";
-    } else {
-      const updatedData = {
-        name: document.getElementById("editName").value.trim(),
-        mobile: document.getElementById("editMobile").value.trim(),
-        branch: document.getElementById("editBranch").value,
-        college: document.getElementById("editCollege").value.trim(),
-        enrollment: document.getElementById("editEnrollment").value.trim(),
-        semester: document.getElementById("editSemester").value.trim(),
-        address: document.getElementById("editAddress").value.trim()
-      };
-
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          await update(ref(db, "users/" + user.uid), updatedData);
-          currentUserData = { ...currentUserData, ...updatedData };
-          updateProfileUI(currentUserData);
-          alert("Profile updated successfully!");
-        } catch (e) {
-          alert("Error updating profile: " + e.message);
-        }
-      }
-
-      displayView.style.display = "block";
-      editView.style.display = "none";
-      uploadBtn.style.display = "none";
-      toggleBtn.innerText = "Edit Profile";
-      toggleBtn.style.background = "";
-    }
-  };
-
-  window.uploadProfileImage = async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "news_upload");
-
-    const avatarBox = document.getElementById("profileAvatarBox");
-    avatarBox.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-
-    try {
-      const response = await fetch("https://api.cloudinary.com/v1_1/ub0qgzwa/auto/upload", {
-        method: "POST",
-        body: formData
-      });
-      const data = await response.json();
-      
-      if (data.secure_url) {
-        const imageUrl = data.secure_url;
-        const user = auth.currentUser;
-        if (user) {
-          await update(ref(db, "users/" + user.uid), { profilePic: imageUrl });
-          currentUserData.profilePic = imageUrl;
-          updateProfileUI(currentUserData);
-          alert("Profile picture uploaded successfully!");
-        }
-      } else {
-        throw new Error("Cloudinary upload failed");
-      }
-    } catch (err) {
-      alert("Image Upload Error: " + err.message);
-      updateProfileUI(currentUserData);
-    }
-  };
-
-  function escapeHTML(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function validURL(value) {
-    try {
-      const url = new URL(value);
-      return (url.protocol === "http:" || url.protocol === "https:");
-    } catch {
-      return false;
-    }
-  }
-
-  function loadNewsData() {
-    const newsList = document.getElementById("newsList");
-    if (!newsList) return;
-    const newsRef = ref(newsDb, "news");
-
-    onValue(newsRef, snapshot => {
-      newsList.innerHTML = "";
-
-      if (!snapshot.exists()) {
-        newsList.innerHTML = `
-          <div class="empty">
-            <i class="fa-regular fa-newspaper" style="font-size:32px;"></i>
-            <p>No news or updates available.</p>
+      <div class="batch-grid">
+        <!-- Card 1: Semester 1 Full Batch -->
+        <div class="batch-card">
+          <div class="batch-header purple">
+            <span class="batch-badge">FREE</span>
+            <div class="batch-title-wrap">
+              <i class="fas fa-cubes"></i>
+              <h3>Semester 1 Full Batch</h3>
+            </div>
+            <p class="batch-subtitle">For All Branches (Common)</p>
           </div>
-        `;
-        return;
+          <div class="batch-body">
+            <div>
+              <div class="batch-rating">
+                <i class="fas fa-star"></i> 4.9 <span>(1,240 Reviews)</span>
+              </div>
+              <ul class="batch-features">
+                <li><i class="fas fa-check-circle"></i> Maths-I, Physics-I, Chemistry & CS</li>
+                <li><i class="fas fa-check-circle"></i> Chapter-wise HD Recorded Lectures</li>
+                <li><i class="fas fa-check-circle"></i> Handwritten Printable PDF Notes</li>
+                <li><i class="fas fa-check-circle"></i> Last 5 Years PYQ Video Solutions</li>
+                <li><i class="fas fa-check-circle"></i> Dedicated WhatsApp Doubt Group</li>
+              </ul>
+            </div>
+            <a href="#sem1" onclick="navigateTo('sem1')" class="batch-btn">
+              <i class="fas fa-gift"></i> Access Free Batch
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 2: Civil Engg. Special Batch -->
+        <div class="batch-card">
+          <div class="batch-header green">
+            <span class="batch-badge">FREE</span>
+            <div class="batch-title-wrap">
+              <i class="fas fa-building"></i>
+              <h3>Civil Engg. Special Batch</h3>
+            </div>
+            <p class="batch-subtitle">Core Subjects + Practical Concept</p>
+          </div>
+          <div class="batch-body">
+            <div>
+              <div class="batch-rating">
+                <i class="fas fa-star"></i> 4.8 <span>(890 Reviews)</span>
+              </div>
+              <ul class="batch-features">
+                <li><i class="fas fa-check-circle"></i> SOM, Surveying, Building Materials</li>
+                <li><i class="fas fa-check-circle"></i> 100+ Video lectures & Diagrams</li>
+                <li><i class="fas fa-check-circle"></i> Quick Revision Formula Sheets</li>
+                <li><i class="fas fa-check-circle"></i> Board Exam Important Questions</li>
+                <li><i class="fas fa-check-circle"></i> Practical & Practical File PDFs</li>
+              </ul>
+            </div>
+            <a href="#civil" onclick="navigateTo('civil')" class="batch-btn">
+              <i class="fas fa-gift"></i> Access Free Batch
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 3: CS & IT Master Batch -->
+        <div class="batch-card">
+          <div class="batch-header blue">
+            <span class="batch-badge">FREE</span>
+            <div class="batch-title-wrap">
+              <i class="fas fa-laptop-code"></i>
+              <h3>CS & IT Master Batch</h3>
+            </div>
+            <p class="batch-subtitle">Coding + Syllabus Subjects</p>
+          </div>
+          <div class="batch-body">
+            <div>
+              <div class="batch-rating">
+                <i class="fas fa-star"></i> 4.9 <span>(1,450 Reviews)</span>
+              </div>
+              <ul class="batch-features">
+                <li><i class="fas fa-check-circle"></i> C/C++, Python, DBMS & Web Dev</li>
+                <li><i class="fas fa-check-circle"></i> Practical Live Code Walkthroughs</li>
+                <li><i class="fas fa-check-circle"></i> Complete Board Exam Notes</li>
+                <li><i class="fas fa-check-circle"></i> Final Year Project Guidance</li>
+                <li><i class="fas fa-check-circle"></i> Certificate of Completion</li>
+              </ul>
+            </div>
+            <a href="#computer" onclick="navigateTo('computer')" class="batch-btn">
+              <i class="fas fa-gift"></i> Access Free Batch
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 4: Mech & Electrical Pass -->
+        <div class="batch-card">
+          <div class="batch-header orange">
+            <span class="batch-badge">FREE</span>
+            <div class="batch-title-wrap">
+              <i class="fas fa-cogs"></i>
+              <h3>Mech & Electrical Pass</h3>
+            </div>
+            <p class="batch-subtitle">Thermal, Machine & Circuit Theory</p>
+          </div>
+          <div class="batch-body">
+            <div>
+              <div class="batch-rating">
+                <i class="fas fa-star"></i> 4.8 <span>(970 Reviews)</span>
+              </div>
+              <ul class="batch-features">
+                <li><i class="fas fa-check-circle"></i> Thermodynamics, SOM & Electrical Machines</li>
+                <li><i class="fas fa-check-circle"></i> Step-by-Step Numerical Solutions</li>
+                <li><i class="fas fa-check-circle"></i> High quality Diagram Notes</li>
+              </ul>
+            </div>
+            <a href="#mechanical" onclick="navigateTo('mechanical')" class="batch-btn">
+              <i class="fas fa-gift"></i> Access Free Batch
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 5: PYQ Exam Booster Batch -->
+        <div class="batch-card">
+          <div class="batch-header red">
+            <span class="batch-badge">FREE</span>
+            <div class="batch-title-wrap">
+              <i class="fas fa-fire"></i>
+              <h3>PYQ Exam Booster Batch</h3>
+            </div>
+            <p class="batch-subtitle">Last 15 Days Exam Strategy</p>
+          </div>
+          <div class="batch-body">
+            <div>
+              <div class="batch-rating">
+                <i class="fas fa-star"></i> 5.0 <span>(2,100 Reviews)</span>
+              </div>
+              <ul class="batch-features">
+                <li><i class="fas fa-check-circle"></i> Top 50 Most Repeated Questions</li>
+                <li><i class="fas fa-check-circle"></i> 1-Shot Revision Videos</li>
+                <li><i class="fas fa-check-circle"></i> Exact Exam Pattern Model Papers</li>
+              </ul>
+            </div>
+            <a href="#homePage" onclick="navigateTo('homePage')" class="batch-btn">
+              <i class="fas fa-gift"></i> Access Free Batch
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARGET ROUTE PAGES (SINGLE-PAGE APPLICATION PLACEHOLDERS) -->
+    <div id="homePage" class="page placeholder-page">
+      <h2>Home Page</h2>
+      <p style="color: var(--muted-text); margin-top: 10px;">Welcome to the learning platform.</p>
+      <button onclick="navigateTo('coursePage')">Back to Free Batches</button>
+    </div>
+
+    <div id="sem1" class="page placeholder-page">
+      <h2>Semester 1 Full Batch Content</h2>
+      <button onclick="navigateTo('coursePage')">Back to Courses</button>
+    </div>
+
+    <div id="civil" class="page placeholder-page">
+      <h2>Civil Engineering Special Batch Content</h2>
+      <button onclick="navigateTo('coursePage')">Back to Courses</button>
+    </div>
+
+    <div id="computer" class="page placeholder-page">
+      <h2>CS & IT Master Batch Content</h2>
+      <button onclick="navigateTo('coursePage')">Back to Courses</button>
+    </div>
+
+    <div id="mechanical" class="page placeholder-page">
+      <h2>Mech & Electrical Pass Content</h2>
+      <button onclick="navigateTo('coursePage')">Back to Courses</button>
+    </div>
+  </main>
+
+  <!-- NAVIGATION ROUTER SCRIPT -->
+  <script>
+    function navigateTo(pageId) {
+      const pages = document.querySelectorAll('.page');
+      pages.forEach(page => page.classList.remove('active'));
+
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+        window.scrollTo(0, 0);
       }
-
-      const newsArray = [];
-      snapshot.forEach(child => {
-        newsArray.push({
-          id: child.key,
-          data: child.val() || {}
-        });
-      });
-
-      newsArray.reverse();
-      newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
-    }, error => {
-      console.error(error);
-      newsList.innerHTML = `
-        <div class="error-box">
-          <p>Failed to load notifications. Please try again.</p>
-        </div>
-      `;
-    });
-  }
-
-  function createNewsCard(id, n, container) {
-    const title = n.title || "Untitled News";
-    const description = n.text || n.desc || n.description || "";
-    const category = n.cat || n.category || "NOTIFICATION";
-    const date = n.date || "Recent";
-    const image = n.thumb || n.image || n.thumbnail || "";
-    const externalLink = n.link || n.pdf || n.fileUrl || "";
-
-    const card = document.createElement("article");
-    card.className = "news-card";
-    card.id = `card-${id}`;
-
-    let actionTarget = externalLink && validURL(externalLink) ? 
-      `<a href="${escapeHTML(externalLink)}" target="_blank" class="action-btn">View News <i class="fa-solid fa-arrow-right"></i></a>` : 
-      `<button class="action-btn" onclick="toggleDetails('${id}')">Read More <i class="fa-solid fa-chevron-down"></i></button>`;
-
-    card.innerHTML = `
-      <span class="category">${escapeHTML(category)}</span>
-      
-      <h2 class="news-title">
-        <i class="fa-solid fa-square-check"></i>
-        ${escapeHTML(title)}
-      </h2>
-
-      <p class="news-description">${escapeHTML(description)}</p>
-
-      <div class="card-footer">
-        <div class="news-date">
-          <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
-        </div>
-        <div class="action-links">
-          <button class="action-btn" onclick="toggleDetails('${id}')">
-            <i class="fa-solid fa-share-nodes"></i> Share
-          </button>
-          ${actionTarget}
-        </div>
-      </div>
-
-      <div class="expandable-panel" id="panel-${id}">
-        ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
-        <div class="full-desc">${escapeHTML(description)}</div>
-        
-        <div class="share-grid">
-          <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
-            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-          </button>
-          <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
-            <i class="fa-brands fa-telegram"></i> Telegram
-          </button>
-          <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
-            <i class="fa-regular fa-copy"></i> Copy
-          </button>
-        </div>
-      </div>
-    `;
-
-    container.appendChild(card);
-  }
-
-  window.toggleDetails = function(id) {
-    const panel = document.getElementById(`panel-${id}`);
-    if (panel) {
-      panel.classList.toggle("active");
     }
-  };
-
-  window.shareWhatsApp = function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
-
-  window.shareTelegram = function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
-  };
-
-  window.copyLink = function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    navigator.clipboard.writeText(url).then(() => {
-      alert("Link copied to clipboard!");
-    });
-  };
-</script>
+  </script>
 </body>
 </html>

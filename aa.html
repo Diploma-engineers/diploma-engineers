@@ -18,8 +18,9 @@
     --text-main: #1f2937; /* Dark Gray for readability */
     --text-muted: #6b7280;
     --border: #e5e7eb;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --header-height: 64px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.06);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -32,24 +33,28 @@
 body {
     background: var(--bg-app);
     color: var(--text-main);
-    overflow-x: hidden;
+    overflow: hidden; /* Important for full app feel */
     height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- REUSABLE CLASSES --- */
 .hidden { display: none !important; }
 
-/* --- TOP BAR --- */
+/* --- TOP BAR (FIXED FOR BOTH PAGES) --- */
 .topbar {
-    height: 64px;
+    height: var(--header-height);
     background: var(--bg-card);
     display: flex;
     align-items: center;
     padding: 0 16px;
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0; z-index: 100;
+    position: relative; /* Changed from sticky, parent is flex col */
+    z-index: 100;
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
 .back-btn {
@@ -79,17 +84,18 @@ body {
     transition: var(--transition);
     opacity: 1;
     transform: scale(1);
-    position: absolute;
-    top: 64px; /* below topbar */
-    bottom: 0; left: 0; right: 0;
-    overflow-y: auto;
+    
+    /* Flex item covering remaining height */
+    flex: 1;
+    overflow-y: auto; /* Independent scrolling for pages */
     padding: 16px;
+    -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
 }
 
 /* Zoom Out Animation for exiting page */
 .page-exit {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.9) translateY(20px);
     pointer-events: none;
 }
 
@@ -114,6 +120,16 @@ body {
     text-align: center;
     margin-bottom: 24px;
     box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+}
+
+/* Adding zoom animation to banner itself on load */
+#subjectsPage .hero-banner {
+    animation: bannerZoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bannerZoomIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .hero-title { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
@@ -147,7 +163,7 @@ body {
 
 .subject-item:hover {
     border-color: var(--primary);
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.01);
     box-shadow: var(--shadow-md);
 }
 
@@ -240,7 +256,8 @@ body {
 }
 
 @media (min-width: 992px) {
-    .playlist-card { position: sticky; top: 80px; max-height: calc(100vh - 100px); }
+    /* Sticky playlist on desktop */
+    .playlist-card { position: sticky; top: 16px; max-height: calc(100vh - 96px); }
 }
 
 .pl-header {
@@ -293,7 +310,7 @@ body {
 
 .lec-item.active .play-overlay, .lec-item:hover .play-overlay { opacity: 1; }
 
-.lec-details { display: flex; flex-direction: column; justify-content: center; }
+.lec-details { display: flex; flex-direction: column; justify-content: center; flex: 1; }
 .lec-title {
     font-size: 13px; font-weight: 600; color: var(--text-main);
     line-height: 1.4;
@@ -313,10 +330,10 @@ body {
 </head>
 <body>
 
-<!-- TOP NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR (Fixed for both pages) -->
 <header class="topbar">
-    <!-- Back Button (initially hidden) -->
-    <div class="back-btn hidden" id="globalBackBtn" onclick="goToSubjectsPage()">
+    <!-- Back Button (initially hidden, visible on Lecture page) -->
+    <div class="back-btn hidden" id="globalBackBtn" onclick="handleNavigationBack()">
         <i class="fa-solid fa-arrow-left"></i>
     </div>
     
@@ -325,7 +342,7 @@ body {
         Civil <span>Engineers</span>
     </div>
     
-    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Ashoka Batch</div>
+    <div style="font-size: 11px; font-weight: 600; color: white; background: var(--primary); padding: 3px 8px; border-radius: 10px;">JE Special</div>
 </header>
 
 <!-- =========================================
@@ -335,12 +352,12 @@ body {
     
     <div class="hero-banner">
         <div class="hero-title">Ashoka Batch</div>
-        <div class="hero-subtitle">Complete Civil Engineering Learning Portal (JE/AE)</div>
+        <div class="hero-subtitle">Complete Civil Engineering JE/AE Learning Portal</div>
     </div>
 
     <div class="section-header">
         <i class="fa-solid fa-book-bookmark" style="color: var(--primary);"></i>
-        My Subjects (मेरे विषय)
+        Select Subject (विषय चुनें)
     </div>
 
     <div class="subjects-list" id="subjectsListContainer">
@@ -374,7 +391,7 @@ body {
                 <h1 class="v-title" id="currentVideoTitle">Loading...</h1>
                 <div class="v-meta">
                     <span id="currentSubjectTag"><i class="fa-solid fa-tag"></i> Subject</span>
-                    <span><i class="fa-regular fa-clock"></i> Ashoka Batch</span>
+                    <span><i class="fa-regular fa-user"></i> Ashoka Batch</span>
                 </div>
 
                 <!-- Professional Action Buttons -->
@@ -390,7 +407,7 @@ body {
                         <i class="fa-regular fa-star"></i> Rate
                     </button>
                     <button class="act-btn" onclick="handleDownload()">
-                        <i class="fa-solid fa-file-pdf"></i> PDF Notes
+                        <i class="fa-solid fa-file-pdf"></i> Notes
                     </button>
                     <button class="act-btn" onclick="handleShare()">
                         <i class="fa-solid fa-share-nodes"></i> Share
@@ -409,9 +426,9 @@ body {
                     <i class="fa-regular fa-star" onclick="handleRating(5)"></i>
                 </div>
 
-                <div class="section-header" style="margin-top:25px;"><i class="fa-solid fa-comments"></i> Comments & Doubts</div>
+                <div class="section-header" style="margin-top:25px;"><i class="fa-solid fa-comments"></i> Discussion & Doubts</div>
                 <div class="comment-input-grp">
-                    <input type="text" id="commentInput" placeholder="Ask a question...">
+                    <input type="text" id="commentInput" placeholder="Ask sir a question...">
                     <button class="act-btn" style="background:var(--primary); color:white; flex:none; width:70px;" onclick="addComment()">Post</button>
                 </div>
             </div>
@@ -420,8 +437,8 @@ body {
         <!-- RIGHT COLUMN: PLAYLIST -->
         <aside class="playlist-card">
             <div class="pl-header">
-                <span>Subject Playlist</span>
-                <span style="color:var(--primary); font-size:12px;" id="plCount">0 Videos</span>
+                <span id="playlistHeaderSubject">Subject Playlist</span>
+                <span style="color:var(--primary); font-size:12px; font-weight: 600;" id="plCount">0 Videos</span>
             </div>
             
             <div class="pl-list" id="playlistContainer">
@@ -439,35 +456,36 @@ body {
    DATA ARCHITECTURE (MOCK DATA)
    ========================================= */
 const cloudName = "h7g2sxct";
-// We use the same video ID for demo, in real app, these will be different.
+// Demovideo ID for demonstration.
 const demoVideoId = "VID_20260812_101229_651"; 
 
 const courseData = {
-    "Building Materials (BMC)": {
+    "Building Materials": {
         icon: "fa-trowel-bricks",
         videos: [
             { id: demoVideoId, title: "BMC 14 : Rock and Stone Complete Concept", duration: "1h 15m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
-            { id: demoVideoId, title: "BMC 15 : Bricks - Manufacturing & Testing JE Special", duration: "55m 20s", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
-            { id: demoVideoId, title: "BMC 16 : Cement - Types, Properties & IS Codes", duration: "1h 02m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" }
+            { id: demoVideoId, title: "BMC 15 : Bricks Manufacturing JE Special", duration: "55m 20s", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 16 : Cement IS Codes & Properties", duration: "1h 02m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 17 : Concrete Mix Design", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" }
         ]
     },
     "Soil Mechanics": {
         icon: "fa-mountain",
         videos: [
-            { id: demoVideoId, title: "Soil 01 : Origin, Three Phase System & Properties", duration: "1h 20m", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" },
-            { id: demoVideoId, title: "Soil 02 : Index Properties & Inter-relationships", duration: "58m 10s", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" }
+            { id: demoVideoId, title: "Soil 01 : Properties & Phase System", duration: "1h 20m", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" },
+            { id: demoVideoId, title: "Soil 02 : Classification & Permeability", duration: "58m 10s", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" }
         ]
     },
     "Surveying": {
         icon: "fa-compass-drafting",
         videos: [
-            { id: demoVideoId, title: "Survey 01 : Fundamental Principles & Classification", duration: "45m 30s", thumb: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=300&q=80" }
+            { id: demoVideoId, title: "Survey 01 : Fundamental Principles", duration: "45m 30s", thumb: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=300&q=80" }
         ]
     },
     "Fluid Mechanics": {
         icon: "fa-droplet",
         videos: [
-            { id: demoVideoId, title: "FM 01 : Fluid Properties - Density, Viscosity, Surface Tension", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300&q=80" }
+            { id: demoVideoId, title: "FM 01 : Fluid Properties - Density & Viscosity", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300&q=80" }
         ]
     }
 };
@@ -488,13 +506,32 @@ let isLiked = false;
    ========================================= */
 window.onload = function() {
     renderSubjectsMenu();
+    // Initialize history state on load
+    history.replaceState({page: 'subjects'}, 'Ashoka Batch', '');
 };
 
 /* =========================================
-   CORE NAVIGATION LOGIC (APP-LIKE)
+   MOBILE BACK BUTTON INTEGRATION (CORE FIX)
    ========================================= */
 
-// 1. Render main Subject menu page
+// Intercept browser back button event
+window.onpopstate = function(event) {
+    if (event.state && event.state.page === 'subjects') {
+        // State is subjects, so we should be on subjects page
+        performTransitionToSubjects();
+    } else if (event.state && event.state.page === 'lecture') {
+        // State is lecture (occurs if user goes 'forward' after back)
+        if(event.state.subject) {
+            performTransitionToLecture(event.state.subject, false); // false = don't push state again
+        }
+    }
+};
+
+/* =========================================
+   PROFESSIONAL APP NAVIGATION
+   ========================================= */
+
+// 1. Render main Subject menu
 function renderSubjectsMenu() {
     const container = document.getElementById('subjectsListContainer');
     container.innerHTML = "";
@@ -505,7 +542,12 @@ function renderSubjectsMenu() {
 
         const item = document.createElement('div');
         item.className = "subject-item";
-        item.onclick = () => goToLecturePage(subjectName); // Click sets up Page 2
+        item.onclick = () => {
+            // Action 1: Handle State for Back Button support
+            history.pushState({page: 'lecture', subject: subjectName}, subjectName, '#' + subjectName.replace(/\s+/g, '-'));
+            // Action 2: Perform the view change
+            performTransitionToLecture(subjectName, true); 
+        };
 
         item.innerHTML = `
             <div class="sub-info">
@@ -521,13 +563,20 @@ function renderSubjectsMenu() {
     });
 }
 
-// 2. Navigation: Go to Lecture Page (Zoom In Animation)
-function goToLecturePage(subjectName) {
+// 2. Navigation Action: Global Header Back Button Click
+function handleNavigationBack() {
+    // Mimic device back button press to trigger popstate
+    history.back();
+}
+
+// 3. INTERNAL: View Transition logic from Subjects -> Lecture
+function performTransitionToLecture(subjectName, shouldLoadVideo) {
     currentSubjectName = subjectName;
     
     // Setup Page 2 Content before showing
-    loadPlaylist(subjectName);
+    loadPlaylist(subjectName, shouldLoadVideo);
     document.getElementById('currentSubjectTag').innerHTML = `<i class="fa-solid fa-tag"></i> ${subjectName}`;
+    document.getElementById('playlistHeaderSubject').innerText = subjectName;
     
     // Professional Transition: Zoom Out Page 1
     subjectsPage.classList.add('page-exit');
@@ -535,7 +584,7 @@ function goToLecturePage(subjectName) {
     // After animation ends, hide Page 1, show Page 2 with Zoom In
     setTimeout(() => {
         subjectsPage.classList.add('hidden');
-        subjectsPage.classList.remove('page-exit'); // reset for back nav
+        subjectsPage.classList.remove('page-exit'); // reset for future use
         
         lecturePage.classList.remove('hidden');
         lecturePage.classList.add('page-enter'); // trigger zoom in
@@ -546,18 +595,18 @@ function goToLecturePage(subjectName) {
     }, 300);
 }
 
-// 3. Navigation: Go Back to Subjects (Zoom Out Animation)
-function goToSubjectsPage() {
+// 4. INTERNAL: View Transition logic from Lecture -> Subjects
+function performTransitionToSubjects() {
     // Professional Transition: Zoom Out Page 2
     lecturePage.classList.add('page-exit');
     
-    // Stop video
+    // Stop video playback immediately
     videoPlayer.src = "";
 
     setTimeout(() => {
         lecturePage.classList.add('hidden');
         lecturePage.classList.remove('page-exit');
-        backBtn.classList.add('hidden'); // hide back button
+        backBtn.classList.add('hidden'); // hide topbar back button
         
         subjectsPage.classList.remove('hidden');
         subjectsPage.classList.add('page-enter'); // Zoom in subjects
@@ -570,8 +619,8 @@ function goToSubjectsPage() {
    LECTURE PAGE LOGIC (PLAYLIST & PLAYER)
    ========================================= */
 
-// 1. Load the Playlist sidebar (Thumb Left, Title Right)
-function loadPlaylist(subjectName) {
+// 1. Load the Playlist sidebar
+function loadPlaylist(subjectName, loadFirstVideo) {
     const container = document.getElementById('playlistContainer');
     container.innerHTML = "";
     const videos = courseData[subjectName].videos;
@@ -580,7 +629,7 @@ function loadPlaylist(subjectName) {
 
     videos.forEach((video, index) => {
         const item = document.createElement('div');
-        item.className = `lec-item ${index === 0 ? 'active' : ''}`;
+        item.className = `lec-item ${index === 0 && loadFirstVideo ? 'active' : ''}`;
         item.onclick = () => playVideo(video, item);
 
         item.innerHTML = `
@@ -598,15 +647,17 @@ function loadPlaylist(subjectName) {
         container.appendChild(item);
     });
 
-    // Play first video automatically on load
-    if (videos.length > 0) {
+    // Play first video automatically if transitioning from Subject Page
+    if (videos.length > 0 && loadFirstVideo) {
         playVideo(videos[0], container.children[0]);
+    } else if (videos.length > 0 && !loadFirstVideo) {
+        // Just load the title if coming back via forward state
+        document.getElementById('currentVideoTitle').innerText = videos[0].title;
     }
 }
 
 // 2. Play selected video in Cloudinary player
 function playVideo(video, element) {
-    // Professional look: Don't reload iframe if same ID (though usually different)
     const newSrc = `https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${video.id}&autoplay=true`;
     if(videoPlayer.src !== newSrc) {
         videoPlayer.src = newSrc;
@@ -619,28 +670,27 @@ function playVideo(video, element) {
     document.querySelectorAll('.lec-item').forEach(el => el.classList.remove('active'));
     if(element) element.classList.add('active');
     
-    // Scroll player into view on mobile
+    // Smooth scroll to top on mobile to see player
     if(window.innerWidth < 992) {
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        lecturePage.scrollTo({top: 0, behavior: 'smooth'});
     }
 }
 
 /* =========================================
-   INTERACTIVE INTERACTIONS
+   INTERACTIVE BUTTONS LOGIC
    ========================================= */
 
 function handleLike() {
     const btn = document.getElementById('likeBtn');
     const countSpan = document.getElementById('likeCount');
-    let count = parseFloat(countSpan.innerText);
-
+    
     if (!isLiked) {
-        countSpan.innerText = (count + 0.1).toFixed(1) + "K";
+        countSpan.innerText = "1.3K";
         btn.classList.add('liked');
         btn.querySelector('i').className = "fa-solid fa-thumbs-up";
         isLiked = true;
     } else {
-        countSpan.innerText = "1.2K"; // reset to default
+        countSpan.innerText = "1.2K"; 
         btn.classList.remove('liked');
         btn.querySelector('i').className = "fa-regular fa-thumbs-up";
         isLiked = false;
@@ -652,23 +702,17 @@ function scrollToExtras() {
 }
 
 function handleRating(stars) {
-    const starsDiv = document.querySelector('.star-rating');
-    const icons = starsDiv.querySelectorAll('i');
-    
+    const icons = document.getElementById('extrasSection').querySelectorAll('.star-rating i');
     icons.forEach((icon, index) => {
-        if (index < stars) {
-            icon.className = "fa-solid fa-star"; // Filled star
-        } else {
-            icon.className = "fa-regular fa-star"; // Empty star
-        }
+        icon.className = index < stars ? "fa-solid fa-star" : "fa-regular fa-star";
     });
-    alert(`Thank you for rating ${stars} Stars!`);
+    alert(`Rated ${stars} Stars!`);
 }
 
 function addComment() {
     const input = document.getElementById('commentInput');
     if(input.value.trim() !== "") {
-        alert("Doubt posted. Teacher will reply soon.");
+        alert("Question posted.");
         input.value = "";
     }
 }
@@ -681,11 +725,10 @@ function handleShare() {
     if (navigator.share) {
         navigator.share({
             title: document.getElementById('currentVideoTitle').innerText,
-            text: 'Check out this lecture from Ashoka Batch',
             url: window.location.href,
-        });
+        }).catch(console.error);
     } else {
-        alert("Link copied to clipboard!");
+        alert("Link copied!");
     }
 }
 </script>

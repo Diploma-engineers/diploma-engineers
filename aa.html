@@ -1,365 +1,539 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMC 14 : Rock and Stone (Part 04)</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Portal - Ashoka Batch</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #22c55e;
+            --border-color: #334155;
+        }
 
-    body {
-      background-color: #f2f3f7;
-      color: #333;
-      padding: 10px;
-      display: flex;
-      justify-content: center;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    .app-container {
-      width: 100%;
-      max-width: 480px; /* Mobile App View Layout */
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-    /* Video Player Area */
-    .player-wrapper {
-      position: relative;
-      width: 100%;
-      background: #000;
-    }
+        /* Header */
+        header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-    .player-wrapper iframe {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 640 / 360;
-      display: block;
-      border: 0;
-    }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    /* Video Player Overlay Icons Matching PW Theme */
-    .video-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 10px 14px;
-      z-index: 2;
-    }
+        .batch-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-    .overlay-top {
-      display: flex;
-      justify-content: flex-end;
-    }
+        .batch-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
 
-    .gear-icon {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 18px;
-    }
+        /* Main Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-    .overlay-center {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 25px;
-    }
+        @media (min-width: 992px) {
+            .container {
+                grid-template-columns: 2.5fr 1fr;
+            }
+        }
 
-    .btn-circle {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1.5px solid rgba(255, 255, 255, 0.6);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 10px;
-      font-weight: bold;
-      pointer-events: auto;
-      cursor: pointer;
-    }
+        /* Video Section */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-    .btn-circle.pause {
-      width: 48px;
-      height: 48px;
-      font-size: 18px;
-      background: rgba(0, 0, 0, 0.45);
-    }
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
 
-    .overlay-bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
 
-    .time-stamp {
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: bold;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    }
+        .video-details {
+            background-color: var(--card-bg);
+            padding: 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
 
-    /* Custom Purple Seekbar */
-    .seekbar-bg {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.35);
-      border-radius: 2px;
-      position: relative;
-    }
+        .video-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
 
-    .seekbar-fill {
-      width: 75%; /* Set matching 1:33:12 / 2:03:50 */
-      height: 100%;
-      background: #8e7bf1;
-      border-radius: 2px;
-      position: relative;
-    }
+        .video-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
 
-    .seekbar-thumb {
-      width: 10px;
-      height: 10px;
-      background: #8e7bf1;
-      border-radius: 50%;
-      position: absolute;
-      right: -5px;
-      top: -3px;
-    }
+        /* Action Buttons */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-color);
+        }
 
-    /* Title Box */
-    .title-box {
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #555;
-      line-height: 1.3;
-      border-bottom: 1px solid #f0f0f0;
-    }
+        .action-btn {
+            background-color: #2d3748;
+            color: var(--text-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
 
-    /* App Tab Bar */
-    .tab-bar {
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      border-bottom: 1px solid #eef0f3;
-    }
+        .action-btn:hover {
+            background-color: var(--primary-color);
+        }
 
-    .tab-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #888;
-      font-size: 12px;
-      gap: 4px;
-      cursor: pointer;
-    }
+        .action-btn.liked {
+            color: #ef4444;
+        }
 
-    .tab-btn.active {
-      color: #6c5ce7;
-      font-weight: 600;
-    }
+        /* Subject Navigation */
+        .subjects-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
 
-    .tab-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #f4f5f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 16px;
-    }
+        .subject-chip {
+            background-color: var(--card-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
 
-    .tab-btn.active .tab-icon {
-      background: #eef0fd;
-      color: #6c5ce7;
-    }
+        .subject-chip.active, .subject-chip:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
 
-    /* Comments Section */
-    .comments-section {
-      padding: 14px;
-    }
+        /* Playlist Sidebar */
+        .playlist-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .comments-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
+        .playlist-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    .comments-header h3 {
-      font-size: 15px;
-      color: #333;
-    }
+        .playlist-items {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-    .comments-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 220px;
-      overflow-y: auto;
-    }
+        .playlist-item {
+            display: flex;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
 
-    .comment-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+        .playlist-item:hover, .playlist-item.active {
+            background-color: rgba(79, 70, 229, 0.2);
+            border-left: 3px solid var(--primary-color);
+        }
 
-    .user-name {
-      font-size: 12px;
-      color: #777;
-    }
+        .item-thumb {
+            width: 80px;
+            height: 50px;
+            background-color: #000;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
 
-    .comment-content {
-      font-size: 14px;
-      color: #222;
-      margin: 2px 0;
-    }
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-    .timestamp-link {
-      color: #6c5ce7;
-      text-decoration: none;
-      font-weight: 500;
-    }
+        .item-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-clamp: 2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
-    .action-row {
-      display: flex;
-      gap: 12px;
-      font-size: 11px;
-      color: #999;
-      margin-top: 2px;
-    }
+        .item-duration {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
 
-    .action-btn {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-    }
+        /* Modal for Comments */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
 
-    .action-btn.like {
-      color: #e74c3c;
-    }
-  </style>
+        .modal-content {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: #0f172a;
+            color: white;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- Cloudinary Player Container -->
-    <div class="player-wrapper">
-      <iframe
-        src="https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651"
-        width="640"
-        height="360" 
-        style="height: auto; width: 100%; aspect-ratio: 640 / 360;"
-        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-        allowfullscreen
-        frameborder="0"
-      ></iframe>
-
-      <!-- Screen Theme Overlay Controls -->
-      <div class="video-overlay">
-        <div class="overlay-top">
-          <span class="gear-icon">⚙️</span>
+    <!-- Top Header -->
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-graduation-cap"></i> EdTech Portal
         </div>
+        <button class="batch-btn" onclick="selectBatch('Ashoka Batch')">
+            <i class="fa-solid fa-layer-group"></i> Ashoka Batch
+        </button>
+    </header>
 
-        <div class="overlay-center">
-          <div class="btn-circle">
-            <span>⟲</span>
-            <span>10</span>
-          </div>
-          <div class="btn-circle pause">
-            <span>❚❚</span>
-          </div>
-          <div class="btn-circle">
-            <span>⟳</span>
-            <span>10</span>
-          </div>
-        </div>
-
-        <div class="overlay-bottom">
-          <div class="time-stamp">1:33:12 / 2:03:50</div>
-          <div class="seekbar-bg">
-            <div class="seekbar-fill">
-              <div class="seekbar-thumb"></div>
+    <div class="container">
+        <!-- Main Streaming Section -->
+        <div class="main-content">
+            <!-- Subject Selection Filter -->
+            <div class="subjects-bar" id="subjectBar">
+                <!-- Subjects populated dynamically -->
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Title Section -->
-    <div class="title-box">
-      BMC (Building Materials) 14 : Rock and Stone (Part 04)
-    </div>
+            <!-- Cloudinary Embedded Video Player -->
+            <div class="video-container">
+                <iframe id="cloudinaryPlayer" 
+                    src="https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651" 
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
 
-    <!-- App Navigation Tabs -->
-    <div class="tab-bar">
-      <div class="tab-btn active">
-        <div class="tab-icon">💬</div>
-        <span>Comments</span>
-      </div>
-      <div class="tab-btn">
-        <div class="tab-icon">⏱️</div>
-        <span>Timeline</span>
-      </div>
-      <div class="tab-btn">
-        <div class="tab-icon">📥</div>
-        <span>Download</span>
-      </div>
-      <div class="tab-btn">
-        <div class="tab-icon">⭐</div>
-        <span>Rating</span>
-      </div>
-    </div>
-
-    <!-- Comments Section -->
-    <div class="comments-section">
-      <div class="comments-header">
-        <h3>Comments</h3>
-        <span style="color: #888; font-size: 14px;">⚙️ ✖</span>
-      </div>
-
-      <div class="comments-list">
-        <!-- Comment 1 -->
-        <div class="comment-item">
-          <span class="user-name">Rahul Kumar • 2 days ago</span>
-          <div class="comment-content">gjyutuul</div>
-          <div class="action-row">
-            <span class="action-btn like">♥ Like</span>
-            <span class="action-btn">⚠️ Report</span>
-          </div>
+            <!-- Video Info & Interactive Actions -->
+            <div class="video-details">
+                <h2 class="video-title" id="currentVideoTitle">Select a lecture to play</h2>
+                <p class="video-subtitle" id="currentVideoSub">Ashoka Batch - Civil Engineering</p>
+                
+                <div class="action-bar">
+                    <button class="action-btn" id="likeBtn" onclick="toggleLike()">
+                        <i class="fa-regular fa-thumbs-up"></i> <span id="likeCount">124</span> Likes
+                    </button>
+                    <button class="action-btn" onclick="openCommentModal()">
+                        <i class="fa-regular fa-comment"></i> Comment
+                    </button>
+                    <button class="action-btn" onclick="shareVideo()">
+                        <i class="fa-solid fa-share"></i> Share
+                    </button>
+                    <button class="action-btn" onclick="downloadVideo()">
+                        <i class="fa-solid fa-download"></i> Download Notes/Video
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Comment 2 -->
-        <div class="comment-item">
-          <span class="user-name">Shashwat Sharma • 1 day ago</span>
-          <div class="comment-content">
-            <a href="#" class="timestamp-link">1:15:25</a>
-          </div>
-          <div class="action-row">
-            <span class="action-btn like">♥ Like</span>
-            <span class="action-btn">⚠️ Report</span>
-          </div>
+        <!-- Sidebar Playlist -->
+        <div class="playlist-card">
+            <div class="playlist-header">
+                <span id="playlistTitle">Subject Playlist</span>
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div class="playlist-items" id="playlistItems">
+                <!-- Playlist items populated dynamically -->
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
+    <!-- Comment Modal -->
+    <div class="modal" id="commentModal">
+        <div class="modal-content">
+            <h3>Add a Comment</h3>
+            <input type="text" id="commentInput" placeholder="Write your question or comment here...">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn" onclick="closeCommentModal()">Cancel</button>
+                <button class="action-btn" style="background: var(--primary-color);" onclick="submitComment()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure for Subjects & Videos
+        const batchData = {
+            "Soil Mechanics": [
+                {
+                    title: "Lecture 01: Introduction & Soil Classification",
+                    publicId: "VID_20260812_101229_651",
+                    duration: "45:20"
+                },
+                {
+                    title: "Lecture 02: Permeability & Seepage Analysis",
+                    publicId: "VID_20260812_101229_651", // Reused public ID for demo
+                    duration: "50:15"
+                }
+            ],
+            "Fluid Mechanics": [
+                {
+                    title: "Lecture 01: Fluid Properties & Hydrostatic Pressure",
+                    publicId: "VID_20260812_101229_651",
+                    duration: "40:10"
+                }
+            ],
+            "Structural Analysis": [
+                {
+                    title: "Lecture 01: Beams, Trusses & Loads",
+                    publicId: "VID_20260812_101229_651",
+                    duration: "55:00"
+                }
+            ]
+        };
+
+        const cloudName = "h7g2sxct";
+        let currentSubject = "Soil Mechanics";
+        let isLiked = false;
+
+        // Initialize Page
+        window.onload = function() {
+            renderSubjects();
+            loadSubjectPlaylist(currentSubject);
+        };
+
+        function selectBatch(batchName) {
+            alert(`Switched to: ${batchName}`);
+        }
+
+        // Render Subject Chips
+        function renderSubjects() {
+            const subjectBar = document.getElementById('subjectBar');
+            subjectBar.innerHTML = '';
+            
+            Object.keys(batchData).forEach((subject, index) => {
+                const chip = document.createElement('div');
+                chip.className = `subject-chip ${index === 0 ? 'active' : ''}`;
+                chip.innerText = subject;
+                chip.onclick = () => {
+                    document.querySelectorAll('.subject-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    loadSubjectPlaylist(subject);
+                };
+                subjectBar.appendChild(chip);
+            });
+        }
+
+        // Load Videos for Selected Subject
+        function loadSubjectPlaylist(subject) {
+            currentSubject = subject;
+            document.getElementById('playlistTitle').innerText = subject;
+            const playlistContainer = document.getElementById('playlistItems');
+            playlistContainer.innerHTML = '';
+
+            const videos = batchData[subject];
+            
+            videos.forEach((video, index) => {
+                const item = document.createElement('div');
+                item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
+                item.onclick = () => playVideo(video, item);
+
+                item.innerHTML = `
+                    <div class="item-thumb"><i class="fa-solid fa-play"></i></div>
+                    <div class="item-info">
+                        <div class="item-title">${video.title}</div>
+                        <div class="item-duration">${video.duration}</div>
+                    </div>
+                `;
+                playlistContainer.appendChild(item);
+            });
+
+            // Play first video by default
+            if (videos.length > 0) {
+                playVideo(videos[0], playlistContainer.children[0]);
+            }
+        }
+
+        // Play Cloudinary Video
+        function playVideo(video, element) {
+            // Update iframe source dynamically
+            const iframe = document.getElementById('cloudinaryPlayer');
+            iframe.src = `https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${video.publicId}`;
+            
+            // Update Title Details
+            document.getElementById('currentVideoTitle').innerText = video.title;
+            document.getElementById('currentVideoSub').innerText = `Ashoka Batch • ${currentSubject}`;
+
+            // Update active state in list
+            document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
+        }
+
+        // Action Handlers
+        function toggleLike() {
+            const likeBtn = document.getElementById('likeBtn');
+            const likeCount = document.getElementById('likeCount');
+            let count = parseInt(likeCount.innerText);
+
+            if (!isLiked) {
+                likeCount.innerText = count + 1;
+                likeBtn.classList.add('liked');
+                likeBtn.querySelector('i').className = "fa-solid fa-thumbs-up";
+                isLiked = true;
+            } else {
+                likeCount.innerText = count - 1;
+                likeBtn.classList.remove('liked');
+                likeBtn.querySelector('i').className = "fa-regular fa-thumbs-up";
+                isLiked = false;
+            }
+        }
+
+        function openCommentModal() {
+            document.getElementById('commentModal').style.display = 'flex';
+        }
+
+        function closeCommentModal() {
+            document.getElementById('commentModal').style.display = 'none';
+        }
+
+        function submitComment() {
+            const comment = document.getElementById('commentInput').value;
+            if (comment.trim() !== "") {
+                alert("Comment posted successfully!");
+                document.getElementById('commentInput').value = "";
+                closeCommentModal();
+            }
+        }
+
+        function shareVideo() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.getElementById('currentVideoTitle').innerText,
+                    url: window.location.href
+                });
+            } else {
+                alert("Video link copied to clipboard!");
+            }
+        }
+
+        function downloadVideo() {
+            alert("Starting download for lecture resources...");
+        }
+    </style>
+</head>
+<body>
 </body>
-</html>
+    </html>
+      

@@ -2,681 +2,581 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ashoka Batch | Civil Engineering Light App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ashoka Batch | Civil Engineering Portal</title>
 
 <!-- Font Awesome Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-/* LIGHT THEME VARIABLES (DEFAULT) */
+/* --- CSS VARIABLES (LIGHT WHITE THEME) --- */
 :root {
-    --bg-main: #f8fafc;
-    --card-bg: #ffffff;
-    --text-primary: #1e293b;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --accent-purple: #6c5ce7;
-    --accent-hover: #5b4bc4;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* DARK THEME (LIGHT OFF) VARIABLES */
-body.dark-mode {
-    --bg-main: #0f172a;
-    --card-bg: #1e293b;
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --border-color: #334155;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --primary: #6c5ce7; /* Professional Purple */
+    --primary-light: #f3f0ff;
+    --bg-app: #f9fafb;   /* Light Grayish White */
+    --bg-card: #ffffff;  /* Pure White */
+    --text-main: #1f2937; /* Dark Gray for readability */
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0; padding: 0; box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    -webkit-tap-highlight-color: transparent; /* Moblie click highlight remove */
 }
 
 body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    min-height: 100vh;
+    background: var(--bg-app);
+    color: var(--text-main);
+    overflow-x: hidden;
+    height: 100vh;
 }
 
-/* TOP BAR */
+/* --- REUSABLE CLASSES --- */
+.hidden { display: none !important; }
+
+/* --- TOP BAR --- */
 .topbar {
-    height: 60px;
-    background: var(--card-bg);
+    height: 64px;
+    background: var(--bg-card);
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 0 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 0;
-    z-index: 100;
+    top: 0; z-index: 100;
     box-shadow: var(--shadow-sm);
-}
-
-.logo {
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.logo span {
-    color: var(--accent-purple);
-}
-
-/* POWER / LIGHT OFF TOGGLE BUTTON */
-.power-btn {
-    background: var(--bg-main);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    box-shadow: var(--shadow-sm);
-}
-
-.power-btn:hover {
-    background: var(--accent-purple);
-    color: white;
-    border-color: var(--accent-purple);
-}
-
-/* HERO ZOOMING HEADER */
-.hero-header {
-    background: linear-gradient(135deg, #6c5ce7, #8b5cf6);
-    padding: 24px 16px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
-    overflow: hidden;
-}
-
-.hero-content {
-    animation: zoomAnimation 0.8s ease-out forwards;
-}
-
-.hero-title {
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 4px;
-}
-
-.hero-subtitle {
-    font-size: 13px;
-    opacity: 0.9;
-}
-
-@keyframes zoomAnimation {
-    0% {
-        transform: scale(0.85);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-/* MAIN APP CONTAINER */
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 16px;
-}
-
-/* SECTION HEADERS */
-.section-header {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* 1. SUBJECTS PAGE (FIRST VIEW) */
-.subject-page {
-    display: block; /* Visible by default */
-}
-
-.subjects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-}
-
-.subject-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
-}
-
-.subject-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent-purple);
-}
-
-.subject-icon {
-    font-size: 32px;
-    color: var(--accent-purple);
-    margin-bottom: 12px;
-}
-
-.subject-name {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.subject-count {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-/* 2. LECTURES & PLAYER PAGE (HIDDEN INITIALLY) */
-.lecture-page {
-    display: none; /* Hidden until subject click */
 }
 
 .back-btn {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 20px;
+    color: var(--text-main);
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    margin-right: 16px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.back-btn:hover { background: var(--primary-light); color: var(--primary); }
+
+.logo {
+    font-size: 19px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    flex: 1;
+}
+
+.logo span { color: var(--primary); }
+
+/* --- PAGE TRANSITIONS (ZOOMING EFFECT) --- */
+.page-container {
+    width: 100%;
+    transition: var(--transition);
+    opacity: 1;
+    transform: scale(1);
+    position: absolute;
+    top: 64px; /* below topbar */
+    bottom: 0; left: 0; right: 0;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* Zoom Out Animation for exiting page */
+.page-exit {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+/* Zoom In Animation for entering page */
+.page-enter {
+    animation: zoomIn 0.4s forwards;
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(1.1); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================
+   PAGE 1: SUBJECT SELECTION (पहले यह दिखेगा)
+   ========================================= */
+.hero-banner {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    color: white;
+    padding: 30px 20px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+}
+
+.hero-title { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.hero-subtitle { font-size: 14px; opacity: 0.9; }
+
+.section-header {
+    font-size: 16px; font-weight: 700;
+    color: var(--text-main);
     margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.subjects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.subject-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: var(--transition);
     box-shadow: var(--shadow-sm);
 }
 
-.back-btn:hover {
-    background: var(--accent-purple);
-    color: white;
-    border-color: var(--accent-purple);
-}
-
-/* LAYOUT GRID */
-.video-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-}
-
-@media (min-width: 850px) {
-    .video-layout {
-        grid-template-columns: 1.8fr 1.2fr;
-    }
-}
-
-/* VIDEO PLAYER */
-.video-wrapper {
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
+.subject-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
 }
 
-.video-wrapper iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
+.sub-info { display: flex; align-items: center; gap: 14px; }
+.sub-icon {
+    width: 45px; height: 45px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
 }
 
-.video-details {
-    background: var(--card-bg);
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    margin-top: 12px;
+.sub-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+.sub-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.go-icon { color: var(--text-muted); font-size: 18px; transition: var(--transition); }
+.subject-item:hover .go-icon { color: var(--primary); transform: translateX(3px); }
+
+/* =========================================
+   PAGE 2: LECTURE PLAYER (विषय क्लिक पर दिखेगा)
+   ========================================= */
+.content-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 1400px; margin: 0 auto;
+}
+
+@media (min-width: 992px) {
+    .content-layout { grid-template-columns: 2fr 1fr; }
+}
+
+/* VIDEO AREA */
+.video-main { display: flex; flex-direction: column; gap: 16px; }
+
+.video-frame-container {
+    width: 100%; aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+}
+
+.video-frame-container iframe { width: 100%; height: 100%; border: 0; }
+
+.video-details-card {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
 }
 
-.video-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
+.v-title { font-size: 18px; font-weight: 700; color: var(--text-main); line-height: 1.4; }
+.v-meta { font-size: 13px; color: var(--text-muted); margin: 6px 0 16px 0; display: flex; gap: 10px; }
 
-.video-sub {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-}
-
-/* ACTIONS BAR */
-.actions-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    border-top: 1px solid var(--border-color);
-    padding-top: 10px;
+/* ACTION BUTTONS */
+.actions-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding-top: 16px; border-top: 1px solid var(--border);
 }
 
 .act-btn {
-    flex: 1;
-    min-width: 75px;
-    background: var(--bg-main);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 8px;
+    flex: 1; min-width: 100px;
+    background: var(--bg-app);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 10px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 13px; font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: var(--transition);
 }
 
-.act-btn:hover {
-    background: var(--accent-purple);
-    color: white;
-}
+.act-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.act-btn.liked { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
 
-.act-btn.liked {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
-
-/* PLAYLIST SIDEBAR */
+/* PLAYLIST AREA */
 .playlist-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px;
-    max-height: 500px;
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    display: flex; flex-direction: column;
     box-shadow: var(--shadow-sm);
+    height: fit-content;
 }
 
-.playlist-title {
-    font-size: 14px;
-    font-weight: 700;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+@media (min-width: 992px) {
+    .playlist-card { position: sticky; top: 80px; max-height: calc(100vh - 100px); }
 }
 
-.playlist-items {
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.pl-header {
+    font-size: 15px; font-weight: 700;
+    padding-bottom: 12px; margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
 }
 
-.lecture-item {
-    display: flex;
-    gap: 10px;
+.pl-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+/* Scrollbar styling */
+.pl-list::-webkit-scrollbar { width: 4px; }
+.pl-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* LECTURE ITEM (Thumb Left, Title Right) */
+.lec-item {
+    display: flex; gap: 12px;
     padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-main);
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
+    border: 1px solid transparent;
 }
 
-.lecture-item:hover, .lecture-item.active {
-    border-color: var(--accent-purple);
-    background: rgba(108, 92, 231, 0.08);
+.lec-item:hover { background: var(--bg-app); }
+.lec-item.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
 }
 
-.thumb-box {
-    width: 85px;
-    height: 50px;
-    background: #000;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 12px;
-    flex-shrink: 0;
-}
-
-.lecture-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.lecture-info-title {
-    font-size: 12px;
-    font-weight: 600;
-    line-clamp: 2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+.lec-thumb {
+    width: 100px; height: 60px;
+    border-radius: 8px;
     overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    background: #000;
 }
 
-.lecture-duration {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
+.lec-thumb img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+.lec-item:hover .lec-thumb img { transform: scale(1.05); }
+
+.play-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(108, 92, 231, 0.6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+    opacity: 0; transition: var(--transition);
 }
 
-/* COMMENTS */
-.comments-box {
-    margin-top: 14px;
-    background: var(--card-bg);
-    padding: 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+.lec-item.active .play-overlay, .lec-item:hover .play-overlay { opacity: 1; }
+
+.lec-details { display: flex; flex-direction: column; justify-content: center; }
+.lec-title {
+    font-size: 13px; font-weight: 600; color: var(--text-main);
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-.comment-input {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-}
+.lec-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 
-.comment-input input {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-main);
-    color: var(--text-primary);
-    outline: none;
-}
+/* --- EXTRA SECTIONS (COMMENTS, RATING) --- */
+.extra-card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 20px; margin-top: 16px; box-shadow: var(--shadow-sm); }
+.comment-input-grp { display: flex; gap: 10px; margin: 15px 0; }
+.comment-input-grp input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); outline: none; }
+.comment-input-grp input:focus { border-color: var(--primary); }
+
+.star-rating { display: flex; gap: 6px; color: #f59e0b; font-size: 20px; cursor: pointer; margin-top: 8px; }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
+<!-- TOP NAVIGATION BAR -->
 <header class="topbar">
-    <div class="logo">
-        <i class="fa-solid fa-graduation-cap" style="color: var(--accent-purple);"></i>
-        Diploma <span>Engineers</span>
+    <!-- Back Button (initially hidden) -->
+    <div class="back-btn hidden" id="globalBackBtn" onclick="goToSubjectsPage()">
+        <i class="fa-solid fa-arrow-left"></i>
     </div>
     
-    <!-- LIGHT OFF / POWER BUTTON -->
-    <button class="power-btn" onclick="toggleLightOff()" title="Toggle Light Off (Dark Mode)">
-        <i class="fa-solid fa-power-off"></i>
-    </button>
+    <div class="logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        Civil <span>Engineers</span>
+    </div>
+    
+    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Ashoka Batch</div>
 </header>
 
-<!-- HERO ZOOMING HEADER -->
-<section class="hero-header">
-    <div class="hero-content">
-        <h1 class="hero-title">🏗️ Ashoka Batch : Civil Engineering</h1>
-        <p class="hero-subtitle">BTEUP Diploma Online Video Classes & Notes</p>
-    </div>
-</section>
-
-<!-- APP BODY CONTAINER -->
-<div class="container">
-
-    <!-- 1. SUBJECTS PAGE (FIRST SCREEN) -->
-    <div class="subject-page" id="subjectsPage">
-        <div class="section-header">
-            <i class="fa-solid fa-book-open" style="color: var(--accent-purple);"></i>
-            Select Subject (सब्जेक्ट चुनें)
-        </div>
-        
-        <div class="subjects-grid" id="subjectsGrid">
-            <!-- Subjects will load dynamically -->
-        </div>
+<!-- =========================================
+     PAGE 1: SUBJECTS PAGE (VISIBLE BY DEFAULT)
+     ========================================= -->
+<main class="page-container" id="subjectsPage">
+    
+    <div class="hero-banner">
+        <div class="hero-title">Ashoka Batch</div>
+        <div class="hero-subtitle">Complete Civil Engineering Learning Portal (JE/AE)</div>
     </div>
 
-    <!-- 2. LECTURES & VIDEO PLAYER PAGE (PLAYLIST VIEW) -->
-    <div class="lecture-page" id="lecturesPage">
-        
-        <!-- BACK BUTTON -->
-        <button class="back-btn" onclick="goBackToSubjects()">
-            <i class="fa-solid fa-arrow-left"></i> ← Back to Subjects
-        </button>
+    <div class="section-header">
+        <i class="fa-solid fa-book-bookmark" style="color: var(--primary);"></i>
+        My Subjects (मेरे विषय)
+    </div>
 
-        <div class="video-layout">
+    <div class="subjects-list" id="subjectsListContainer">
+        <!-- Dynamic Subjects will be loaded here by JS -->
+    </div>
+
+</main>
+
+
+<!-- =========================================
+     PAGE 2: LECTURE PLAYER PAGE (HIDDEN BY DEFAULT)
+     ========================================= -->
+<main class="page-container hidden" id="lecturePage">
+    
+    <div class="content-layout">
+        
+        <!-- LEFT COLUMN: VIDEO PLAYER & DETAILS -->
+        <div class="video-main">
             
-            <!-- LEFT: VIDEO PLAYER & DETAILS -->
-            <div>
-                <div class="video-wrapper">
-                    <iframe id="cloudinaryPlayer" 
-                        src="https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651" 
-                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+            <!-- Player Wrapper -->
+            <div class="video-frame-container">
+                <iframe id="mainVideoPlayer" 
+                    src="" 
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+
+            <!-- Video Info Card -->
+            <div class="video-details-card">
+                <h1 class="v-title" id="currentVideoTitle">Loading...</h1>
+                <div class="v-meta">
+                    <span id="currentSubjectTag"><i class="fa-solid fa-tag"></i> Subject</span>
+                    <span><i class="fa-regular fa-clock"></i> Ashoka Batch</span>
                 </div>
 
-                <div class="video-details">
-                    <div class="video-title" id="activeTitle">Select Lecture</div>
-                    <div class="video-sub" id="activeMeta">Ashoka Batch • Civil Engineering</div>
-
-                    <!-- Actions -->
-                    <div class="actions-bar">
-                        <button class="act-btn" id="likeBtn" onclick="toggleLike()">
-                            <i class="fa-regular fa-thumbs-up"></i> <span id="likeCount">120</span>
-                        </button>
-                        <button class="act-btn" onclick="focusComment()">
-                            <i class="fa-regular fa-comment"></i> Comment
-                        </button>
-                        <button class="act-btn" onclick="rateVideo()">
-                            <i class="fa-regular fa-star"></i> Rating
-                        </button>
-                        <button class="act-btn" onclick="downloadPdf()">
-                            <i class="fa-solid fa-file-pdf"></i> Download PDF
-                        </button>
-                        <button class="act-btn" onclick="shareVideo()">
-                            <i class="fa-solid fa-share-nodes"></i> Share
-                        </button>
-                    </div>
-                </div>
-
-                <!-- COMMENTS BOX -->
-                <div class="comments-box">
-                    <div style="font-size: 13px; font-weight: 700;">Lecture Discussion</div>
-                    <div class="comment-input">
-                        <input type="text" id="commentField" placeholder="Ask a doubt or comment...">
-                        <button class="act-btn" style="background: var(--accent-purple); color: white;" onclick="postComment()">Post</button>
-                    </div>
-                    <div id="commentList" style="margin-top: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
-                        <div><strong>Rahul Kumar:</strong> Excellent explanation sir!</div>
-                    </div>
+                <!-- Professional Action Buttons -->
+                <div class="actions-row">
+                    <button class="act-btn" id="likeBtn" onclick="handleLike()">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        <span id="likeCount">1.2K</span> Likes
+                    </button>
+                    <button class="act-btn" onclick="scrollToExtras()">
+                        <i class="fa-regular fa-comment"></i> Doubt
+                    </button>
+                    <button class="act-btn" onclick="scrollToExtras()">
+                        <i class="fa-regular fa-star"></i> Rate
+                    </button>
+                    <button class="act-btn" onclick="handleDownload()">
+                        <i class="fa-solid fa-file-pdf"></i> PDF Notes
+                    </button>
+                    <button class="act-btn" onclick="handleShare()">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
                 </div>
             </div>
 
-            <!-- RIGHT: LECTURE PLAYLIST -->
-            <div class="playlist-card">
-                <div class="playlist-title" id="selectedSubjectTitle">Subject Playlist</div>
-                <div class="playlist-items" id="playlistItems">
-                    <!-- Lectures list dynamically loads -->
+            <!-- COMMENTS & RATING SECTIONS -->
+            <div class="extra-card" id="extrasSection">
+                <div class="section-header"><i class="fa-solid fa-star" style="color: #f59e0b;"></i> Rate this Lecture</div>
+                <div class="star-rating">
+                    <i class="fa-regular fa-star" onclick="handleRating(1)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(2)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(3)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(4)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(5)"></i>
+                </div>
+
+                <div class="section-header" style="margin-top:25px;"><i class="fa-solid fa-comments"></i> Comments & Doubts</div>
+                <div class="comment-input-grp">
+                    <input type="text" id="commentInput" placeholder="Ask a question...">
+                    <button class="act-btn" style="background:var(--primary); color:white; flex:none; width:70px;" onclick="addComment()">Post</button>
                 </div>
             </div>
-
         </div>
+
+        <!-- RIGHT COLUMN: PLAYLIST -->
+        <aside class="playlist-card">
+            <div class="pl-header">
+                <span>Subject Playlist</span>
+                <span style="color:var(--primary); font-size:12px;" id="plCount">0 Videos</span>
+            </div>
+            
+            <div class="pl-list" id="playlistContainer">
+                <!-- Dynamic Playlist Items loaded here by JS -->
+            </div>
+        </aside>
+
     </div>
 
-</div>
+</main>
+
 
 <script>
-// Data Architecture for Ashoka Batch
-const civilBatchData = {
+/* =========================================
+   DATA ARCHITECTURE (MOCK DATA)
+   ========================================= */
+const cloudName = "h7g2sxct";
+// We use the same video ID for demo, in real app, these will be different.
+const demoVideoId = "VID_20260812_101229_651"; 
+
+const courseData = {
     "Building Materials (BMC)": {
-        icon: "fa-building",
+        icon: "fa-trowel-bricks",
         videos: [
-            { id: "VID_20260812_101229_651", title: "BMC 14 : Rock and Stone (Part 04)", time: "1h 15m" },
-            { id: "VID_20260812_101229_651", title: "BMC 15 : Bricks Classification & Testing", time: "48m" },
-            { id: "VID_20260812_101229_651", title: "BMC 16 : Cement Composition & Manufacture", time: "55m" }
+            { id: demoVideoId, title: "BMC 14 : Rock and Stone Complete Concept", duration: "1h 15m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 15 : Bricks - Manufacturing & Testing JE Special", duration: "55m 20s", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 16 : Cement - Types, Properties & IS Codes", duration: "1h 02m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" }
         ]
     },
     "Soil Mechanics": {
-        icon: "fa-mountain-city",
+        icon: "fa-mountain",
         videos: [
-            { id: "VID_20260812_101229_651", title: "Soil Mechanics 01 : Physical Properties of Soil", time: "50m" },
-            { id: "VID_20260812_101229_651", title: "Soil Mechanics 02 : Permeability & Seepage Analysis", time: "1h 02m" }
-        ]
-    },
-    "Fluid Mechanics": {
-        icon: "fa-droplet",
-        videos: [
-            { id: "VID_20260812_101229_651", title: "FM 01 : Fluid Properties & Hydrostatic Forces", time: "42m" },
-            { id: "VID_20260812_101229_651", title: "FM 02 : Bernoulli's Theorem Applications", time: "58m" }
+            { id: demoVideoId, title: "Soil 01 : Origin, Three Phase System & Properties", duration: "1h 20m", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" },
+            { id: demoVideoId, title: "Soil 02 : Index Properties & Inter-relationships", duration: "58m 10s", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" }
         ]
     },
     "Surveying": {
         icon: "fa-compass-drafting",
         videos: [
-            { id: "VID_20260812_101229_651", title: "Surveying 01 : Linear Measurements & Ranging", time: "45m" }
+            { id: demoVideoId, title: "Survey 01 : Fundamental Principles & Classification", duration: "45m 30s", thumb: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=300&q=80" }
+        ]
+    },
+    "Fluid Mechanics": {
+        icon: "fa-droplet",
+        videos: [
+            { id: demoVideoId, title: "FM 01 : Fluid Properties - Density, Viscosity, Surface Tension", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300&q=80" }
         ]
     }
 };
 
-const cloudName = "h7g2sxct";
+/* =========================================
+   APP APP STATE & DOM ELEMENTS
+   ========================================= */
+const subjectsPage = document.getElementById('subjectsPage');
+const lecturePage = document.getElementById('lecturePage');
+const backBtn = document.getElementById('globalBackBtn');
+const videoPlayer = document.getElementById('mainVideoPlayer');
+
+let currentSubjectName = "";
 let isLiked = false;
 
-// Initialize
+/* =========================================
+   INITIALIZATION
+   ========================================= */
 window.onload = function() {
-    renderSubjectsPage();
+    renderSubjectsMenu();
 };
 
-// Render Subjects Grid (First Page)
-function renderSubjectsPage() {
-    const grid = document.getElementById("subjectsGrid");
-    grid.innerHTML = "";
+/* =========================================
+   CORE NAVIGATION LOGIC (APP-LIKE)
+   ========================================= */
 
-    Object.keys(civilBatchData).forEach(subjectKey => {
-        const item = civilBatchData[subjectKey];
-        const card = document.createElement("div");
-        card.className = "subject-card";
-        card.onclick = () => openSubjectPlaylist(subjectKey);
+// 1. Render main Subject menu page
+function renderSubjectsMenu() {
+    const container = document.getElementById('subjectsListContainer');
+    container.innerHTML = "";
 
-        card.innerHTML = `
-            <div class="subject-icon"><i class="fa-solid ${item.icon}"></i></div>
-            <div class="subject-name">${subjectKey}</div>
-            <div class="subject-count">${item.videos.length} Lectures</div>
-        `;
-        grid.appendChild(card);
-    });
-}
+    Object.keys(courseData).forEach(subjectName => {
+        const data = courseData[subjectName];
+        const videoCount = data.videos.length;
 
-// Open Lecture Playlist & Player Page
-function openSubjectPlaylist(subjectKey) {
-    document.getElementById("subjectsPage").style.display = "none";
-    document.getElementById("lecturesPage").style.display = "block";
-    document.getElementById("selectedSubjectTitle").innerText = subjectKey;
-
-    const playlistContainer = document.getElementById("playlistItems");
-    playlistContainer.innerHTML = "";
-
-    const videos = civilBatchData[subjectKey].videos;
-
-    videos.forEach((vid, index) => {
-        const item = document.createElement("div");
-        item.className = `lecture-item ${index === 0 ? 'active' : ''}`;
-        item.onclick = () => playLecture(vid, subjectKey, item);
+        const item = document.createElement('div');
+        item.className = "subject-item";
+        item.onclick = () => goToLecturePage(subjectName); // Click sets up Page 2
 
         item.innerHTML = `
-            <div class="thumb-box"><i class="fa-solid fa-play"></i></div>
-            <div class="lecture-info">
-                <div class="lecture-info-title">${vid.title}</div>
-                <div class="lecture-duration"><i class="fa-regular fa-clock"></i> ${vid.time}</div>
+            <div class="sub-info">
+                <div class="sub-icon"><i class="fa-solid ${data.icon}"></i></div>
+                <div>
+                    <div class="sub-name">${subjectName}</div>
+                    <div class="sub-count">${videoCount} Lectures</div>
+                </div>
             </div>
+            <i class="fa-solid fa-chevron-right go-icon"></i>
         `;
-        playlistContainer.appendChild(item);
+        container.appendChild(item);
     });
-
-    // Auto Play First Video
-    if(videos.length > 0) {
-        playLecture(videos[0], subjectKey, playlistContainer.children[0]);
-    }
 }
 
-// Back to Subjects Page
-function goBackToSubjects() {
-    document.getElementById("lecturesPage").style.display = "none";
-    document.getElementById("subjectsPage").style.display = "block";
+// 2. Navigation: Go to Lecture Page (Zoom In Animation)
+function goToLecturePage(subjectName) {
+    currentSubjectName = subjectName;
+    
+    // Setup Page 2 Content before showing
+    loadPlaylist(subjectName);
+    document.getElementById('currentSubjectTag').innerHTML = `<i class="fa-solid fa-tag"></i> ${subjectName}`;
+    
+    // Professional Transition: Zoom Out Page 1
+    subjectsPage.classList.add('page-exit');
+    
+    // After animation ends, hide Page 1, show Page 2 with Zoom In
+    setTimeout(() => {
+        subjectsPage.classList.add('hidden');
+        subjectsPage.classList.remove('page-exit'); // reset for back nav
+        
+        lecturePage.classList.remove('hidden');
+        lecturePage.classList.add('page-enter'); // trigger zoom in
+        backBtn.classList.remove('hidden'); // show topbar back button
+        
+        // Remove animation class after it finishes
+        setTimeout(() => lecturePage.classList.remove('page-enter'), 400);
+    }, 300);
 }
 
-// Play Video
-function playLecture(video, subjectName, element) {
-    const player = document.getElementById("cloudinaryPlayer");
-    player.src = `https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${video.id}`;
+// 3. Navigation: Go Back to Subjects (Zoom Out Animation)
+function goToSubjectsPage() {
+    // Professional Transition: Zoom Out Page 2
+    lecturePage.classList.add('page-exit');
+    
+    // Stop video
+    videoPlayer.src = "";
 
-    document.getElementById("activeTitle").innerText = video.title;
-    document.getElementById("activeMeta").innerText = `Ashoka Batch • ${subjectName}`;
-
-    document.querySelectorAll('.lecture-item').forEach(el => el.classList.remove('active'));
-    if(element) element.classList.add('active');
+    setTimeout(() => {
+        lecturePage.classList.add('hidden');
+        lecturePage.classList.remove('page-exit');
+        backBtn.classList.add('hidden'); // hide back button
+        
+        subjectsPage.classList.remove('hidden');
+        subjectsPage.classList.add('page-enter'); // Zoom in subjects
+        
+        setTimeout(() => subjectsPage.classList.remove('page-enter'), 400);
+    }, 300);
 }
 
-// LIGHT OFF / DARK MODE TOGGLE (POWER BUTTON)
-function toggleLightOff() {
-    document.body.classList.toggle("dark-mode");
-}
+/* =========================================
+   LECTURE PAGE LOGIC (PLAYLIST & PLAYER)
+   ========================================= */
 
-// ACTIONS
-function toggleLike() {
-    const countSpan = document.getElementById("likeCount");
-    const btn = document.getElementById("likeBtn");
-    let count = parseInt(countSpan.innerText);
+// 1. Load the Playlist sidebar (Thumb Left, Title Right)
+function loadPlaylist(subjectName) {
+    const container = document.getElementById('playlistContainer');
+    container.innerHTML = "";
+    const videos = courseData[subjectName].videos;
+    
+    document.getElementById('plCount').innerText = `${videos.length} Videos`;
 
-    if(!isLiked) {
-        countSpan.innerText = count + 1;
-        btn.classList.add("liked");
-        isLiked = true;
-    } else {
-        countSpan.innerText = count - 1;
-        btn.classList.remove("liked");
-        isLiked = false;
-    }
-}
-
-function focusComment() {
-    document.getElementById("commentField").focus();
-}
-
-function postComment() {
-    const field = document.getElementById("commentField");
-    if(field.value.trim() !== "") {
-        const list = document.getElementById("commentList");
-        const comment = document.createElement("div");
-        comment.innerHTML = `<strong>You:</strong> ${field.value}`;
-        list.prepend(comment);
-        field.value = "";
-    }
-}
-
-function rateVideo() {
-    alert("Thank you for rating this lecture 5 Stars!");
-}
-
-function downloadPdf() {
-    alert("Downloading PDF Lecture Notes...");
-}
-
-function shareVideo() {
-    alert("Lecture Link copied to clipboard!");
-}
-</script>
-</body>
-</html>
+    videos.forEach((video, index) => {
+        

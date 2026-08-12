@@ -44,7 +44,7 @@
 
     .subject-card:hover {
       transform: translateY(-3px);
-      border-color: #e5ac00;
+      border-color: #5c5be5;
     }
 
     /* SECTION 2: Main Player & Interface */
@@ -72,7 +72,7 @@
       flex: 2;
     }
 
-    /* Dark Screen / Video Player Box */
+    /* Player Container with Overlay Controls */
     .video-wrapper {
       position: relative;
       width: 100%;
@@ -90,28 +90,111 @@
       width: 110%;
       height: 110%;
       border: 0;
+      pointer-events: none; /* Allows click through to custom overlay controls */
     }
 
-    /* PW Style Yellow Top Badge Header */
-    .lecture-header-badge {
-      background-color: #ffd600;
-      color: #000;
-      padding: 8px 16px;
-      border-radius: 20px;
-      display: inline-block;
+    /* App Video Overlay Controls (Rewind, Pause, Forward, Seekbar) */
+    .video-overlay-controls {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 15px;
+      z-index: 10;
+    }
+
+    .center-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-auto: auto;
+      height: 100%;
+    }
+
+    .control-btn {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
       font-weight: bold;
       font-size: 14px;
-      margin: 15px 0 10px 0;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .control-btn.play-btn {
+      width: 60px;
+      height: 60px;
+      font-size: 22px;
+    }
+
+    /* Custom Progress Bar & Time Bar */
+    .bottom-seekbar-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .time-display {
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    .seekbar {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .seekbar-fill {
+      width: 67%; /* Matched to photo timing 1:22:33 / 2:03:50 */
+      height: 100%;
+      background: #8c52ff;
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .seekbar-handle {
+      width: 12px;
+      height: 12px;
+      background: #8c52ff;
+      border-radius: 50%;
+      position: absolute;
+      right: -6px;
+      top: -3px;
     }
 
     .lecture-title {
       font-size: 18px;
       font-weight: 700;
       color: #222;
-      margin-bottom: 15px;
+      margin: 15px 0;
     }
 
-    /* App Style Tab Bar (Comments, Timeline, Download, Rating) */
+    /* PW App Tabs Bar */
     .app-tabs {
       display: flex;
       justify-content: space-around;
@@ -141,7 +224,7 @@
       margin-bottom: 3px;
     }
 
-    /* Comments Area */
+    /* Comments Section */
     .comments-container {
       background: #ffffff;
       border-radius: 10px;
@@ -259,7 +342,7 @@
     <div id="subjectSection" class="subjects-grid">
       <div class="subject-card" onclick="openSubject('bmc')">
         <h3>Building Materials (BMC)</h3>
-        <p>Rock, Stone & Artificial Stones</p>
+        <p>Rock, Stone & Ransome Stone</p>
       </div>
       <div class="subject-card" onclick="openSubject('som')">
         <h3>Strength of Materials (SOM)</h3>
@@ -272,21 +355,40 @@
       <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
 
       <div class="player-layout">
-        <!-- Main Player & Content -->
+        <!-- Main Player Area -->
         <div class="main-content">
-          <!-- Video Frame -->
+          <!-- Video Frame with App Overlay -->
           <div class="video-wrapper">
             <iframe id="mainPlayer" src="" allowfullscreen allow="autoplay"></iframe>
-          </div>
 
-          <!-- Yellow Top Header Badge -->
-          <div class="lecture-header-badge">ARTIFICIAL STONES / कृत्रिम पत्थर</div>
+            <!-- Player Overlay Controls -->
+            <div class="video-overlay-controls">
+              <div></div>
+              
+              <!-- Center Rewind, Pause, Forward Controls -->
+              <div class="center-controls">
+                <div class="control-btn">↺ 10</div>
+                <div class="control-btn play-btn">❚❚</div>
+                <div class="control-btn">10 ↻</div>
+              </div>
+
+              <!-- Bottom Seekbar & Timing -->
+              <div class="bottom-seekbar-container">
+                <div class="time-display">1:22:33 / 2:03:50</div>
+                <div class="seekbar">
+                  <div class="seekbar-fill">
+                    <div class="seekbar-handle"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="lecture-title" id="lectureTitle">
             BMC (Building Materials) 14 : Rock and Stone (Part 04)
           </div>
 
-          <!-- PW App Tabs Bar -->
+          <!-- App Navigation Tabs -->
           <div class="app-tabs">
             <div class="tab-item active">
               <span class="tab-icon">💬</span>
@@ -330,7 +432,6 @@
               </div>
             </div>
 
-            <!-- Comment Input -->
             <div class="comment-input-box">
               <input type="text" id="commentInput" placeholder="Add Comment">
               <button onclick="addComment()">Send</button>
@@ -348,13 +449,12 @@
   </div>
 
   <script>
-    // ScreenPal Link Data configured for Ashoka Batch
     const coursesData = {
       bmc: {
         title: "BMC (Building Materials)",
         videos: [
           { id: "cOjlfPnv4F3", title: "BMC 14 : Rock and Stone (Part 04)" },
-          { id: "cOjlfPnv4F3", title: "BMC 15 : Concrete Block & Artificial Stones" }
+          { id: "cOjlfPnv4F3", title: "BMC 15 : Ransome Stone & Chemical Stones" }
         ]
       },
       som: {
@@ -390,7 +490,7 @@
 
     function playVideo(screenPalCode, title, element) {
       const player = document.getElementById("mainPlayer");
-      player.src = `https://go.screenpal.com/player/${screenPalCode}?width=100%&height=100%&title=0&controls=1`;
+      player.src = `https://go.screenpal.com/player/${screenPalCode}?width=100%&height=100%&title=0&controls=0`;
       document.getElementById("lectureTitle").innerText = title;
 
       document.querySelectorAll(".playlist-item").forEach(el => el.classList.remove("active"));
@@ -425,5 +525,4 @@
     }
   </script>
 </body>
-                  </html>
-                  
+</html>

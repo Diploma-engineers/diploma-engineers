@@ -1,2265 +1,573 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0,
-      maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ashoka Batch | Civil Engineering Portal</title>
 
-<title>Diploma Engineers | Premium Courses</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
+/* --- CSS VARIABLES (LIGHT WHITE THEME) --- */
+:root {
+    --primary: #6c5ce7;
+    --primary-light: #f3f0ff;
+    --bg-app: #f9fafb;
+    --bg-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --header-height: 64px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --transition: all 0.15s ease-out; /* Accelerated for Fast UI */
+}
+
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: var(--bg-app);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden { display: none !important; }
+
+/* --- TOP BAR --- */
+.topbar {
+    height: var(--header-height);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.back-btn {
+    font-size: 20px;
+    color: var(--text-main);
+    cursor: pointer;
+    margin-right: 16px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.back-btn:hover { background: var(--primary-light); color: var(--primary); }
+
+.logo {
+    font-size: 19px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    flex: 1;
+}
+
+.logo span { color: var(--primary); }
+
+/* --- FAST PAGE TRANSITIONS --- */
+.page-container {
+    width: 100%;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    opacity: 1;
+    transform: scale(1);
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.page-exit {
+    opacity: 0;
+    transform: scale(0.97);
+    pointer-events: none;
+}
+
+.page-enter {
+    animation: fastZoomIn 0.15s ease-out forwards;
+}
+
+@keyframes fastZoomIn {
+    from { opacity: 0; transform: scale(1.02); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================
+   PAGE 1: SUBJECT SELECTION
+   ========================================= */
+.hero-banner {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    color: white;
+    padding: 30px 20px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+}
+
+.hero-title { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.hero-subtitle { font-size: 14px; opacity: 0.9; }
 
-:root{
-  --primary:#2563eb;
-  --primary-dark:#1d4ed8;
-  --green:#16a34a;
-  --green-dark:#15803d;
-  --orange:#f97316;
-  --dark:#0f172a;
-  --muted:#64748b;
-  --border:#e2e8f0;
-  --bg:#f1f5ff;
-  --white:#fff;
-  --danger:#dc2626;
-  --shadow:0 15px 40px rgba(15,23,42,.09);
+.section-header {
+    font-size: 16px; font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
 }
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Plus Jakarta Sans',sans-serif;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  min-height:100vh;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(37,99,235,.12),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(124,58,237,.10),
-      transparent 35%
-    ),
-    var(--bg);
-  color:var(--dark);
-}
-
-/* ================= HEADER ================= */
-
-header{
-  position:sticky;
-  top:0;
-  z-index:1000;
-  background:rgba(15,23,42,.97);
-  backdrop-filter:blur(15px);
-  color:#fff;
-  box-shadow:0 5px 25px rgba(0,0,0,.15);
-}
-
-.header-inner{
-  max-width:1200px;
-  margin:auto;
-  padding:14px 18px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:18px;
-  font-weight:800;
-}
-
-.brand i{
-  color:#60a5fa;
-}
-
-.user-badge{
-  padding:7px 12px;
-  border-radius:30px;
-  background:rgba(255,255,255,.1);
-  font-size:11px;
-  font-weight:700;
-  max-width:230px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-/* ================= MAIN ================= */
-
-main{
-  width:100%;
-  max-width:1200px;
-  margin:auto;
-  padding:25px 16px 50px;
-}
-
-/* ================= HERO ================= */
-
-.hero{
-  background:
-    linear-gradient(
-      135deg,
-      #172554,
-      #2563eb,
-      #4f46e5
-    );
-  border-radius:25px;
-  padding:30px 25px;
-  color:#fff;
-  margin-bottom:25px;
-  position:relative;
-  overflow:hidden;
-  box-shadow:0 20px 50px rgba(37,99,235,.25);
-}
-
-.hero:before,
-.hero:after{
-  content:"";
-  position:absolute;
-  border-radius:50%;
-  background:rgba(255,255,255,.08);
-}
-
-.hero:before{
-  width:220px;
-  height:220px;
-  right:-70px;
-  top:-90px;
-}
-
-.hero:after{
-  width:150px;
-  height:150px;
-  left:-70px;
-  bottom:-80px;
-}
-
-.hero-content{
-  position:relative;
-  z-index:2;
-}
-
-.hero-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  background:rgba(255,255,255,.14);
-  border:1px solid rgba(255,255,255,.2);
-  padding:7px 12px;
-  border-radius:30px;
-  font-size:11px;
-  font-weight:700;
-  margin-bottom:13px;
-}
-
-.hero h1{
-  font-size:clamp(26px,5vw,40px);
-  line-height:1.15;
-  margin-bottom:10px;
-  font-weight:800;
-}
-
-.hero p{
-  font-size:13px;
-  opacity:.9;
-  max-width:650px;
-  line-height:1.7;
-}
-
-/* ================= LOGIN MESSAGE ================= */
-
-.login-message{
-  display:none;
-  background:#fff7ed;
-  border:1px solid #fed7aa;
-  color:#9a3412;
-  border-radius:15px;
-  padding:13px 15px;
-  margin-bottom:20px;
-  font-size:13px;
-  font-weight:600;
-}
-
-.login-message.show{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-/* ================= SECTION ================= */
-
-.section-title{
-  margin:25px 0 15px;
-}
-
-.section-title h2{
-  font-size:22px;
-  font-weight:800;
-}
-
-.section-title p{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:4px;
-}
-
-/* ================= GRID ================= */
-
-.course-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(280px,1fr));
-  gap:20px;
-}
-
-/* ================= CARD ================= */
-
-.course-card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:22px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-  transition:.25s ease;
-  display:flex;
-  flex-direction:column;
-}
-
-.course-card:hover{
-  transform:translateY(-5px);
-  box-shadow:
-    0 25px 50px rgba(15,23,42,.13);
-}
-
-/* ================= CARD TOP ================= */
-
-.course-top{
-  padding:21px 19px;
-  color:#fff;
-  position:relative;
-}
-
-.course-top .badge{
-  position:absolute;
-  right:13px;
-  top:13px;
-  background:rgba(255,255,255,.18);
-  padding:5px 9px;
-  border-radius:20px;
-  font-size:9px;
-  font-weight:800;
-  text-transform:uppercase;
-}
-
-.course-title{
-  display:flex;
-  align-items:center;
-  gap:11px;
-  padding-right:65px;
-}
-
-.course-title i{
-  font-size:24px;
-}
-
-.course-title h3{
-  font-size:17px;
-  line-height:1.3;
-  font-weight:800;
-}
-
-.course-subtitle{
-  margin-top:9px;
-  font-size:11.5px;
-  opacity:.9;
-}
-
-/* ================= BODY ================= */
-
-.course-body{
-  padding:18px;
-  flex:1;
-}
-
-.rating{
-  display:flex;
-  gap:6px;
-  align-items:center;
-  font-size:12px;
-  font-weight:700;
-  padding-bottom:12px;
-  margin-bottom:13px;
-  border-bottom:1px dashed var(--border);
-}
-
-.rating i{
-  color:#facc15;
-}
-
-.rating span{
-  color:var(--muted);
-  font-weight:500;
-}
-
-.features{
-  list-style:none;
-  display:flex;
-  flex-direction:column;
-  gap:9px;
-}
-
-.features li{
-  display:flex;
-  align-items:flex-start;
-  gap:8px;
-  font-size:12px;
-  line-height:1.45;
-  color:#334155;
-  font-weight:600;
-}
-
-.features li i{
-  color:#16a34a;
-  margin-top:2px;
-}
-
-/* ================= FOOTER ================= */
-
-.course-footer{
-  padding:15px 18px;
-  background:#f8fafc;
-  border-top:1px solid var(--border);
-}
-
-.price-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.price{
-  display:flex;
-  align-items:baseline;
-  gap:7px;
-}
-
-.current{
-  font-size:20px;
-  font-weight:800;
-}
-
-.old{
-  color:var(--muted);
-  font-size:11px;
-  text-decoration:line-through;
-}
-
-.discount{
-  background:#dcfce7;
-  color:#15803d;
-  font-size:9px;
-  font-weight:800;
-  padding:4px 6px;
-  border-radius:6px;
-}
-
-/* ================= BUTTON ================= */
-
-.btn{
-  width:100%;
-  border:0;
-  padding:11px 15px;
-  border-radius:12px;
-  color:#fff;
-  font-size:12px;
-  font-weight:800;
-  cursor:pointer;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:7px;
-  margin-top:12px;
-  transition:.2s;
-}
-
-.btn-enroll{
-  background:var(--green);
-  box-shadow:
-    0 7px 18px rgba(22,163,74,.22);
-}
-
-.btn-enroll:hover{
-  background:var(--green-dark);
-  transform:translateY(-1px);
-}
-
-.btn-view{
-  background:var(--primary);
-  box-shadow:
-    0 7px 18px rgba(37,99,235,.22);
-}
-
-.btn-view:hover{
-  background:var(--primary-dark);
-  transform:translateY(-1px);
-}
-
-/* ================= PURCHASED ================= */
-
-.purchased-label{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  color:#15803d;
-  font-size:10px;
-  font-weight:800;
-  margin-top:8px;
-}
-
-/* ================= COLORS ================= */
-
-.purple{
-  background:
-    linear-gradient(135deg,#4f46e5,#6366f1);
-}
-
-.green{
-  background:
-    linear-gradient(135deg,#059669,#10b981);
+
+.subjects-list { display: flex; flex-direction: column; gap: 12px; }
+
+.subject-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
 }
 
-.blue{
-  background:
-    linear-gradient(135deg,#2563eb,#3b82f6);
+.subject-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.orange{
-  background:
-    linear-gradient(135deg,#c2410c,#ea580c);
+.sub-info { display: flex; align-items: center; gap: 14px; }
+.sub-icon {
+    width: 45px; height: 45px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
 }
 
-/* ================= MODAL ================= */
-
-.modal{
-  position:fixed;
-  inset:0;
-  z-index:3000;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:15px;
-  background:rgba(2,6,23,.72);
-  backdrop-filter:blur(5px);
-}
-
-.modal.show{
-  display:flex;
-}
-
-.modal-box{
-  width:100%;
-  max-width:500px;
-  max-height:90vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:24px;
-  box-shadow:0 30px 80px rgba(0,0,0,.3);
-  animation:modalIn .25s ease;
-}
-
-@keyframes modalIn{
-
-  from{
-    opacity:0;
-    transform:translateY(25px) scale(.97);
-  }
-
-  to{
-    opacity:1;
-    transform:none;
-  }
-
-}
-
-.modal-head{
-  padding:20px;
-  color:#fff;
-  position:relative;
-}
-
-.modal-head h2{
-  font-size:20px;
-  padding-right:35px;
-}
-
-.modal-head p{
-  font-size:11px;
-  opacity:.9;
-  margin-top:5px;
-}
-
-.close{
-  position:absolute;
-  right:15px;
-  top:15px;
-  width:32px;
-  height:32px;
-  border:0;
-  border-radius:50%;
-  background:rgba(255,255,255,.18);
-  color:#fff;
-  cursor:pointer;
-  font-size:16px;
-}
+.sub-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+.sub-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.go-icon { color: var(--text-muted); font-size: 18px; transition: var(--transition); }
 
-.modal-body{
-  padding:20px;
+/* =========================================
+   PAGE 2: LECTURE PLAYER
+   ========================================= */
+.content-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 1400px; margin: 0 auto;
 }
 
-.detail-list{
-  list-style:none;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  margin-bottom:18px;
+@media (min-width: 992px) {
+    .content-layout { grid-template-columns: 2fr 1fr; }
 }
 
-.detail-list li{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  font-size:12px;
-  color:#334155;
-  line-height:1.5;
-}
+.video-main { display: flex; flex-direction: column; gap: 16px; }
 
-.detail-list i{
-  color:var(--green);
-  margin-top:2px;
+.video-frame-container {
+    width: 100%; aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
 }
-
-/* PAYMENT BOX */
 
-.payment-box{
-  background:#f8fafc;
-  border:1px solid var(--border);
-  padding:15px;
-  border-radius:15px;
-}
+.video-frame-container iframe { width: 100%; height: 100%; border: 0; }
 
-.payment-line{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:7px;
-  font-size:12px;
-  color:var(--muted);
+.video-details-card {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
-.payment-line strong{
-  text-align:right;
-  color:var(--dark);
-  max-width:65%;
-}
+.v-title { font-size: 18px; font-weight: 700; color: var(--text-main); line-height: 1.4; }
+.v-meta { font-size: 13px; color: var(--text-muted); margin: 6px 0 16px 0; display: flex; gap: 10px; }
 
-.payment-total{
-  display:flex;
-  justify-content:space-between;
-  font-size:18px;
-  font-weight:800;
-  color:var(--dark);
-  border-top:1px dashed var(--border);
-  padding-top:10px;
-  margin-top:8px;
+.actions-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding-top: 16px; border-top: 1px solid var(--border);
 }
 
-/* CASHFREE */
-
-.cashfree-btn{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  width:100%;
-  margin-top:15px;
-  padding:13px;
-  border-radius:13px;
-  background:#16a34a;
-  color:#fff;
-  text-decoration:none;
-  font-size:13px;
-  font-weight:800;
-  box-shadow:
-    0 8px 20px rgba(22,163,74,.25);
+.act-btn {
+    flex: 1; min-width: 100px;
+    background: var(--bg-app);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: var(--transition);
 }
 
-.cashfree-btn:hover{
-  background:#15803d;
-}
+.act-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.act-btn.liked { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
 
-.cashfree-btn:active{
-  transform:scale(.98);
+.playlist-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
 }
 
-/* NOTE */
-
-.note{
-  margin-top:12px;
-  padding:10px;
-  background:#eff6ff;
-  border-radius:10px;
-  color:#1e40af;
-  font-size:10.5px;
-  line-height:1.6;
+@media (min-width: 992px) {
+    .playlist-card { position: sticky; top: 16px; max-height: calc(100vh - 96px); }
 }
 
-.warning{
-  margin-top:10px;
-  padding:10px;
-  background:#fff7ed;
-  color:#9a3412;
-  border-radius:10px;
-  font-size:10px;
-  line-height:1.6;
+.pl-header {
+    font-size: 15px; font-weight: 700;
+    padding-bottom: 12px; margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
 }
 
-/* ================= LOADING ================= */
-
-.loading{
-  position:fixed;
-  inset:0;
-  z-index:5000;
-  background:#f8fafc;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  gap:12px;
-}
+.pl-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.pl-list::-webkit-scrollbar { width: 4px; }
+.pl-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-.loading.hide{
-  display:none;
+.lec-item {
+    display: flex; gap: 12px;
+    padding: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
 }
 
-.spinner{
-  width:42px;
-  height:42px;
-  border:4px solid #dbeafe;
-  border-top-color:#2563eb;
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-}
+.lec-item:hover { background: var(--bg-app); }
+.lec-item.active { background: var(--primary-light); border-color: var(--primary); }
 
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
+.lec-thumb {
+    width: 100px; height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    background: #000;
 }
 
-/* ================= ERROR ================= */
-
-.error-box{
-  display:none;
-  background:#fff;
-  border:1px solid #fecaca;
-  color:#991b1b;
-  border-radius:15px;
-  padding:15px;
-  margin-bottom:20px;
-  font-size:12px;
-  line-height:1.6;
-}
+.lec-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-.error-box.show{
-  display:block;
+.play-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(108, 92, 231, 0.6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+    opacity: 0; transition: var(--transition);
 }
 
-/* ================= TOAST ================= */
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:25px;
-  transform:
-    translateX(-50%)
-    translateY(20px);
-  background:#0f172a;
-  color:#fff;
-  padding:11px 17px;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:700;
-  opacity:0;
-  pointer-events:none;
-  z-index:6000;
-  transition:.3s;
-  width:max-content;
-  max-width:90%;
-  text-align:center;
-}
+.lec-item.active .play-overlay, .lec-item:hover .play-overlay { opacity: 1; }
 
-.toast.show{
-  opacity:1;
-  transform:
-    translateX(-50%)
-    translateY(0);
+.lec-details { display: flex; flex-direction: column; justify-content: center; flex: 1; }
+.lec-title {
+    font-size: 13px; font-weight: 600; color: var(--text-main);
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* ================= MOBILE ================= */
+.lec-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 
-@media(max-width:600px){
-
-  .header-inner{
-    padding:12px 13px;
-  }
-
-  .brand{
-    font-size:14px;
-  }
-
-  .user-badge{
-    max-width:125px;
-    font-size:9px;
-  }
-
-  main{
-    padding:15px 12px 40px;
-  }
-
-  .hero{
-    padding:24px 18px;
-    border-radius:20px;
-  }
-
-  .hero h1{
-    font-size:25px;
-  }
-
-  .course-grid{
-    grid-template-columns:1fr;
-    gap:15px;
-  }
-
-  .modal-box{
-    max-height:92vh;
-    border-radius:20px;
-  }
-
-}
+.extra-card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 20px; margin-top: 16px; box-shadow: var(--shadow-sm); }
+.comment-input-grp { display: flex; gap: 10px; margin: 15px 0; }
+.comment-input-grp input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); outline: none; }
+.comment-input-grp input:focus { border-color: var(--primary); }
 
+.star-rating { display: flex; gap: 6px; color: #f59e0b; font-size: 20px; cursor: pointer; margin-top: 8px; }
 </style>
 </head>
-
 <body>
 
-<!-- ================= LOADING ================= -->
-
-<div class="loading" id="loadingScreen">
-
-  <div class="spinner"></div>
-
-  <strong>Loading Courses...</strong>
-
-  <small id="loadingText">
-    Checking your account
-  </small>
-
-</div>
-
-
-<!-- ================= HEADER ================= -->
-
-<header>
-
-  <div class="header-inner">
-
-    <div class="brand">
-
-      <i class="fas fa-graduation-cap"></i>
-
-      Diploma Engineers
-
+<header class="topbar">
+    <div class="back-btn hidden" id="globalBackBtn" onclick="handleNavigationBack()">
+        <i class="fa-solid fa-arrow-left"></i>
     </div>
-
-    <div
-      class="user-badge"
-      id="userStatus">
-
-      Checking Login...
-
+    
+    <div class="logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        Civil <span>Engineers</span>
     </div>
-
-  </div>
-
+    
+    <div style="font-size: 11px; font-weight: 600; color: white; background: var(--primary); padding: 3px 8px; border-radius: 10px;">JE Special</div>
 </header>
 
-
-<!-- ================= MAIN ================= -->
-
-<main>
-
-  <section class="hero">
-
-    <div class="hero-content">
-
-      <div class="hero-badge">
-
-        <i class="fas fa-crown"></i>
-
-        PREMIUM LEARNING BATCHES
-
-      </div>
-
-      <h1>
-        Learn Better.<br>
-        Score Better.
-      </h1>
-
-      <p>
-        Structured courses, notes, video lectures,
-        PYQs and exam-focused study material
-        for Diploma Engineers.
-      </p>
-
+<main class="page-container" id="subjectsPage">
+    <div class="hero-banner">
+        <div class="hero-title">Ashoka Batch</div>
+        <div class="hero-subtitle">Complete Civil Engineering JE/AE Learning Portal</div>
     </div>
 
-  </section>
+    <div class="section-header">
+        <i class="fa-solid fa-book-bookmark" style="color: var(--primary);"></i>
+        Select Subject (विषय चुनें)
+    </div>
 
-
-  <!-- LOGIN MESSAGE -->
-
-  <div
-    class="login-message"
-    id="loginMessage">
-
-    <i class="fas fa-lock"></i>
-
-    <span>
-      Please login to your Diploma Engineers
-      account before enrolling.
-    </span>
-
-  </div>
-
-
-  <!-- ERROR -->
-
-  <div
-    class="error-box"
-    id="errorBox">
-
-  </div>
-
-
-  <div class="section-title">
-
-    <h2>
-      Explore Online Batches
-    </h2>
-
-    <p>
-      Choose your batch and start learning.
-    </p>
-
-  </div>
-
-
-  <!-- COURSES -->
-
-  <section
-    class="course-grid"
-    id="courseGrid">
-
-  </section>
-
+    <div class="subjects-list" id="subjectsListContainer"></div>
 </main>
 
+<main class="page-container hidden" id="lecturePage">
+    <div class="content-layout">
+        <div class="video-main">
+            <div class="video-frame-container">
+                <iframe id="mainVideoPlayer" src="" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            </div>
 
-<!-- ================= BATCH DETAILS MODAL ================= -->
+            <div class="video-details-card">
+                <h1 class="v-title" id="currentVideoTitle">Loading...</h1>
+                <div class="v-meta">
+                    <span id="currentSubjectTag"><i class="fa-solid fa-tag"></i> Subject</span>
+                    <span><i class="fa-regular fa-user"></i> Ashoka Batch</span>
+                </div>
 
-<div
-  class="modal"
-  id="batchModal">
+                <div class="actions-row">
+                    <button class="act-btn" id="likeBtn" onclick="handleLike()">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        <span id="likeCount">1.2K</span> Likes
+                    </button>
+                    <button class="act-btn" onclick="scrollToExtras()">
+                        <i class="fa-regular fa-comment"></i> Doubt
+                    </button>
+                    <button class="act-btn" onclick="scrollToExtras()">
+                        <i class="fa-regular fa-star"></i> Rate
+                    </button>
+                    <button class="act-btn" onclick="handleDownload()">
+                        <i class="fa-solid fa-file-pdf"></i> Notes
+                    </button>
+                    <button class="act-btn" onclick="handleShare()">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+                </div>
+            </div>
 
-  <div class="modal-box">
+            <div class="extra-card" id="extrasSection">
+                <div class="section-header"><i class="fa-solid fa-star" style="color: #f59e0b;"></i> Rate this Lecture</div>
+                <div class="star-rating">
+                    <i class="fa-regular fa-star" onclick="handleRating(1)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(2)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(3)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(4)"></i>
+                    <i class="fa-regular fa-star" onclick="handleRating(5)"></i>
+                </div>
 
-    <div
-      class="modal-head"
-      id="modalHeader">
+                <div class="section-header" style="margin-top:25px;"><i class="fa-solid fa-comments"></i> Discussion & Doubts</div>
+                <div class="comment-input-grp">
+                    <input type="text" id="commentInput" placeholder="Ask sir a question...">
+                    <button class="act-btn" style="background:var(--primary); color:white; flex:none; width:70px;" onclick="addComment()">Post</button>
+                </div>
+            </div>
+        </div>
 
-      <button
-        class="close"
-        type="button"
-        onclick="closeBatchModal()">
-
-        <i class="fas fa-times"></i>
-
-      </button>
-
-      <h2 id="modalTitle">
-        Course Details
-      </h2>
-
-      <p id="modalSubtitle">
-        Premium Batch
-      </p>
-
+        <aside class="playlist-card">
+            <div class="pl-header">
+                <span id="playlistHeaderSubject">Subject Playlist</span>
+                <span style="color:var(--primary); font-size:12px; font-weight: 600;" id="plCount">0 Videos</span>
+            </div>
+            
+            <div class="pl-list" id="playlistContainer"></div>
+        </aside>
     </div>
+</main>
 
+<script>
+const cloudName = "h7g2sxct";
+const demoVideoId = "VID_20260812_101229_651"; 
 
-    <div class="modal-body">
-
-      <ul
-        class="detail-list"
-        id="modalFeatures">
-      </ul>
-
-
-      <div class="payment-box">
-
-        <div class="payment-line">
-
-          <span>
-            Course
-          </span>
-
-          <strong id="modalCourseName">
-            ---
-          </strong>
-
-        </div>
-
-
-        <div class="payment-line">
-
-          <span>
-            Access
-          </span>
-
-          <strong>
-            Premium Course
-          </strong>
-
-        </div>
-
-
-        <div class="payment-total">
-
-          <span>
-            Pay
-          </span>
-
-          <span id="modalPrice">
-            ₹0
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <!-- CASHFREE PAYMENT LINK -->
-
-      <a
-        id="cashfreeButton"
-        class="cashfree-btn"
-        href="https://payments.cashfree.com/links?code=Sar2v6qk7m8g_AAAAAAAU08I"
-        target="_blank"
-        rel="noopener noreferrer"
-        onclick="return startPayment();">
-
-        <i class="fas fa-lock"></i>
-
-        Continue to Cashfree
-
-      </a>
-
-
-      <div class="note">
-
-        Payment करने के बाद आपके purchase status
-        को Firebase में verify करके course unlock
-        किया जाएगा।
-
-      </div>
-
-
-      <div class="warning">
-
-        Important: केवल Cashfree page खोलने से
-        course unlock नहीं होगा। Successful payment
-        के बाद backend/webhook को Firebase में
-        selected course का purchase status update
-        करना होगा।
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- ================= TOAST ================= -->
-
-<div
-  class="toast"
-  id="toast">
-</div>
-
-
-<!-- ================= FIREBASE ================= -->
-
-<script type="module">
-
-import {
-  initializeApp
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-
-import {
-  getAuth,
-  onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-
-import {
-  getDatabase,
-  ref,
-  get
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-
-/*
-=========================================================
-FIREBASE CONFIG
-=========================================================
-
-IMPORTANT:
-Ye same project configuration hai jo aapke
-main Diploma Engineers app me use ho raha hai.
-=========================================================
-*/
-
-const firebaseConfig = {
-
-  apiKey:
-    "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-
-  authDomain:
-    "diploma-app-9a378.firebaseapp.com",
-
-  databaseURL:
-    "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-
-  projectId:
-    "diploma-app-9a378",
-
-  storageBucket:
-    "diploma-app-9a378.firebasestorage.app",
-
-  messagingSenderId:
-    "160233059797",
-
-  appId:
-    "1:160233059797:web:be38130ed64f8bd0afb95c"
-
+const courseData = {
+    "Building Materials": {
+        icon: "fa-trowel-bricks",
+        videos: [
+            { id: demoVideoId, title: "BMC 14 : Rock and Stone Complete Concept", duration: "1h 15m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 15 : Bricks Manufacturing JE Special", duration: "55m 20s", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 16 : Cement IS Codes & Properties", duration: "1h 02m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" },
+            { id: demoVideoId, title: "BMC 17 : Concrete Mix Design", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1590050856218-c0b7e1975e53?w=300&q=80" }
+        ]
+    },
+    "Soil Mechanics": {
+        icon: "fa-mountain",
+        videos: [
+            { id: demoVideoId, title: "Soil 01 : Properties & Phase System", duration: "1h 20m", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" },
+            { id: demoVideoId, title: "Soil 02 : Classification & Permeability", duration: "58m 10s", thumb: "https://images.unsplash.com/photo-1581093196867-9f4c3e87364b?w=300&q=80" }
+        ]
+    },
+    "Surveying": {
+        icon: "fa-compass-drafting",
+        videos: [
+            { id: demoVideoId, title: "Survey 01 : Fundamental Principles", duration: "45m 30s", thumb: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=300&q=80" }
+        ]
+    },
+    "Fluid Mechanics": {
+        icon: "fa-droplet",
+        videos: [
+            { id: demoVideoId, title: "FM 01 : Fluid Properties - Density & Viscosity", duration: "1h 10m", thumb: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300&q=80" }
+        ]
+    }
 };
 
-
-/*
-=========================================================
-INITIALIZE FIREBASE
-=========================================================
-*/
-
-let app;
-let auth;
-let db;
-
-try{
-
-  app = initializeApp(firebaseConfig);
-
-  auth = getAuth(app);
-
-  db = getDatabase(app);
-
-}catch(error){
-
-  console.error(
-    "Firebase initialization error:",
-    error
-  );
-
-  showError(
-    "Firebase initialize नहीं हो पाया। Firebase configuration check करें."
-  );
-
-  hideLoading();
-
-}
-
-
-/*
-=========================================================
-CASHFREE
-=========================================================
-*/
-
-const CASHFREE_LINK =
-"https://payments.cashfree.com/links?code=Sar2v6qk7m8g_AAAAAAAU08I";
-
-
-/*
-=========================================================
-COURSES
-=========================================================
-*/
-
-const courses = [
-
-  {
-
-    id:"civil_special",
-
-    title:
-      "Civil Engineering Special Batch",
-
-    subtitle:
-      "Core Subjects + Practical Concepts",
-
-    icon:
-      "fas fa-hard-hat",
-
-    badge:
-      "POPULAR",
-
-    theme:
-      "green",
-
-    price:
-      "₹599",
-
-    oldPrice:
-      "₹1,999",
-
-    discount:
-      "70% OFF",
-
-    rating:
-      "4.8",
-
-    reviews:
-      "890 Reviews",
-
-    contentUrl:
-      "civil-course.html",
-
-    features:[
-
-      "SOM, Surveying & Building Materials",
-
-      "100+ Video Lectures",
-
-      "Quick Revision Notes",
-
-      "Board Exam Important Questions",
-
-      "Practical File & PDF Material"
-
-    ]
-
-  },
-
-
-  {
-
-    id:"cs_master",
-
-    title:
-      "CS & IT Master Batch",
-
-    subtitle:
-      "Coding + Diploma Syllabus",
-
-    icon:
-      "fas fa-laptop-code",
-
-    badge:
-      "FEATURED",
-
-    theme:
-      "blue",
-
-    price:
-      "₹699",
-
-    oldPrice:
-      "₹2,499",
-
-    discount:
-      "72% OFF",
-
-    rating:
-      "4.9",
-
-    reviews:
-      "1,450 Reviews",
-
-    contentUrl:
-      "cs-course.html",
-
-    features:[
-
-      "C/C++, Python, DBMS & Web Development",
-
-      "Practical Code Walkthroughs",
-
-      "Complete Board Exam Notes",
-
-      "Project Guidance",
-
-      "Certificate of Completion"
-
-    ]
-
-  },
-
-
-  {
-
-    id:"mech_batch",
-
-    title:
-      "Mechanical Engineering Batch",
-
-    subtitle:
-      "Core Mechanical Subjects",
-
-    icon:
-      "fas fa-gears",
-
-    badge:
-      "NEW",
-
-    theme:
-      "orange",
-
-    price:
-      "₹599",
-
-    oldPrice:
-      "₹1,999",
-
-    discount:
-      "70% OFF",
-
-    rating:
-      "4.8",
-
-    reviews:
-      "700+ Reviews",
-
-    contentUrl:
-      "mech-course.html",
-
-    features:[
-
-      "Thermodynamics & SOM",
-
-      "Manufacturing Process",
-
-      "Theory of Machines",
-
-      "Board Exam Questions",
-
-      "Revision Notes & PDFs"
-
-    ]
-
-  },
-
-
-  {
-
-    id:"pyq_batch",
-
-    title:
-      "Diploma PYQ Master Batch",
-
-    subtitle:
-      "Previous Year Questions",
-
-    icon:
-      "fas fa-file-circle-question",
-
-    badge:
-      "BEST VALUE",
-
-    theme:
-      "purple",
-
-    price:
-      "₹299",
-
-    oldPrice:
-      "₹999",
-
-    discount:
-      "70% OFF",
-
-    rating:
-      "4.9",
-
-    reviews:
-      "1,000+ Reviews",
-
-    contentUrl:
-      "pyq-course.html",
-
-    features:[
-
-      "Last Years PYQ Collection",
-
-      "Important Repeated Questions",
-
-      "Solved Question Papers",
-
-      "Exam-Focused Practice",
-
-      "Quick Revision Material"
-
-    ]
-
-  }
-
-];
-
-
-/*
-=========================================================
-CURRENT USER
-=========================================================
-*/
-
-let currentUser = null;
-
-
-/*
-=========================================================
-SELECTED COURSE
-=========================================================
-*/
-
-let selectedCourse = null;
-
-
-/*
-=========================================================
-SHOW TOAST
-=========================================================
-*/
-
-function showToast(message){
-
-  const toast =
-    document.getElementById("toast");
-
-  toast.textContent =
-    message;
-
-  toast.classList.add("show");
-
-  setTimeout(()=>{
-
-    toast.classList.remove("show");
-
-  },3000);
-
-}
-
-
-/*
-=========================================================
-SHOW ERROR
-=========================================================
-*/
-
-function showError(message){
-
-  const box =
-    document.getElementById("errorBox");
-
-  if(!box){
-    return;
-  }
-
-  box.textContent =
-    message;
-
-  box.classList.add("show");
-
-}
-
-
-/*
-=========================================================
-HIDE LOADING
-=========================================================
-*/
-
-function hideLoading(){
-
-  const loading =
-    document.getElementById(
-      "loadingScreen"
-    );
-
-  if(loading){
-
-    loading.classList.add("hide");
-
-  }
-
-}
-
-
-/*
-=========================================================
-GET USER PURCHASES
-=========================================================
-*/
-
-async function getPurchasedCourses(user){
-
-  if(!user){
-    return {};
-  }
-
-  try{
-
-    const courseRef =
-      ref(
-        db,
-        "users/" +
-        user.uid +
-        "/courses"
-      );
-
-    const snapshot =
-      await get(courseRef);
-
-    if(
-      snapshot.exists()
-    ){
-
-      return snapshot.val() || {};
-
-    }
-
-    return {};
-
-  }catch(error){
-
-    console.error(
-      "Purchase read error:",
-      error
-    );
-
-    showError(
-      "Course purchase status Firebase से load नहीं हो पाया."
-    );
-
-    return {};
-
-  }
-
-}
-
-
-/*
-=========================================================
-CHECK PURCHASE
-=========================================================
-*/
-
-function isPurchased(
-  courseId,
-  purchases
-){
-
-  const value =
-    purchases?.[courseId];
-
-
-  /*
-  FORMAT 1
-
-  courses:
-    civil_special: true
-  */
-
-  if(value === true){
-
-    return true;
-
-  }
-
-
-  /*
-  FORMAT 2
-
-  courses:
-    civil_special:
-      purchased: true
-  */
-
-  if(
-    value &&
-    typeof value === "object" &&
-    value.purchased === true
-  ){
-
-    return true;
-
-  }
-
-
-  /*
-  FORMAT 3
-
-  courses:
-    civil_special:
-      paymentStatus: SUCCESS
-  */
-
-  if(
-    value &&
-    typeof value === "object" &&
-    String(
-      value.paymentStatus || ""
-    ).toUpperCase() === "SUCCESS"
-  ){
-
-    return true;
-
-  }
-
-
-  return false;
-
-}
-
-
-/*
-=========================================================
-AUTH STATE
-=========================================================
-*/
-
-if(auth){
-
-  onAuthStateChanged(
-    auth,
-    async (user)=>{
-
-      currentUser =
-        user;
-
-
-      if(user){
-
-        document.getElementById(
-          "userStatus"
-        ).textContent =
-          user.displayName ||
-          user.email ||
-          "Logged In";
-
-
-        document
-          .getElementById(
-            "loginMessage"
-          )
-          .classList.remove("show");
-
-
-        await renderCourses(user);
-
-
-      }else{
-
-        document.getElementById(
-          "userStatus"
-        ).textContent =
-          "Not Logged In";
-
-
-        document
-          .getElementById(
-            "loginMessage"
-          )
-          .classList.add("show");
-
-
-        await renderCourses(null);
-
-      }
-
-
-      hideLoading();
-
-    }
-  );
-
-}
-
-
-/*
-=========================================================
-RENDER COURSES
-=========================================================
-*/
-
-async function renderCourses(user){
-
-  const container =
-    document.getElementById(
-      "courseGrid"
-    );
-
-  container.innerHTML = "";
-
-
-  let purchases = {};
-
-
-  if(user){
-
-    purchases =
-      await getPurchasedCourses(user);
-
-  }
-
-
-  courses.forEach(course=>{
-
-    const purchased =
-      isPurchased(
-        course.id,
-        purchases
-      );
-
-
-    const card =
-      document.createElement(
-        "article"
-      );
-
-    card.className =
-      "course-card";
-
-
-    let actionButton;
-
-
-    /*
-    PURCHASED
-    */
-
-    if(purchased){
-
-      actionButton = `
-
-        <button
-          type="button"
-          class="btn btn-view"
-          onclick="openCourse('${course.id}')"
-        >
-
-          <i class="fas fa-play-circle"></i>
-
-          VIEW COURSE
-
-        </button>
-
-        <div class="purchased-label">
-
-          <i class="fas fa-circle-check"></i>
-
-          Purchased & Unlocked
-
-        </div>
-
-      `;
-
-    }
-
-
-    /*
-    NOT PURCHASED
-    */
-
-    else{
-
-      actionButton = `
-
-        <button
-          type="button"
-          class="btn btn-enroll"
-          onclick="openBatch('${course.id}')"
-        >
-
-          ENROLL NOW
-
-          <i class="fas fa-arrow-right"></i>
-
-        </button>
-
-      `;
-
-    }
-
-
-    card.innerHTML = `
-
-      <div>
-
-        <div class="course-top ${course.theme}">
-
-          <span class="badge">
-            ${course.badge}
-          </span>
-
-
-          <div class="course-title">
-
-            <i class="${course.icon}"></i>
-
-            <h3>
-              ${course.title}
-            </h3>
-
-          </div>
-
-
-          <div class="course-subtitle">
-
-            ${course.subtitle}
-
-          </div>
-
-        </div>
-
-
-        <div class="course-body">
-
-          <div class="rating">
-
-            <i class="fas fa-star"></i>
-
-            ${course.rating}
-
-            <span>
-              ${course.reviews}
-            </span>
-
-          </div>
-
-
-          <ul class="features">
-
-            ${
-              course.features
-                .map(feature=>`
-
-                  <li>
-
-                    <i
-                      class="fas fa-check-circle">
-                    </i>
-
-                    <span>
-                      ${feature}
-                    </span>
-
-                  </li>
-
-                `)
-                .join("")
-            }
-
-          </ul>
-
-        </div>
-
-      </div>
-
-
-      <div class="course-footer">
-
-        <div class="price-row">
-
-          <div class="price">
-
-            <span class="current">
-              ${course.price}
-            </span>
-
-            <span class="old">
-              ${course.oldPrice}
-            </span>
-
-            <span class="discount">
-              ${course.discount}
-            </span>
-
-          </div>
-
-        </div>
-
-        ${actionButton}
-
-      </div>
-
-    `;
-
-
-    container.appendChild(card);
-
-  });
-
-}
-
-
-/*
-=========================================================
-OPEN BATCH
-=========================================================
-*/
-
-window.openBatch =
-function(courseId){
-
-  /*
-  LOGIN CHECK
-  */
-
-  if(!currentUser){
-
-    showToast(
-      "पहले Diploma Engineers में Login करें"
-    );
-
-    return;
-
-  }
-
-
-  selectedCourse =
-    courses.find(
-      course =>
-        course.id === courseId
-    );
-
-
-  if(!selectedCourse){
-
-    showToast(
-      "Course नहीं मिला"
-    );
-
-    return;
-
-  }
-
-
-  /*
-  MODAL DATA
-  */
-
-  document.getElementById(
-    "modalTitle"
-  ).textContent =
-    selectedCourse.title;
-
-
-  document.getElementById(
-    "modalSubtitle"
-  ).textContent =
-    selectedCourse.subtitle;
-
-
-  document.getElementById(
-    "modalCourseName"
-  ).textContent =
-    selectedCourse.title;
-
-
-  document.getElementById(
-    "modalPrice"
-  ).textContent =
-    selectedCourse.price;
-
-
-  /*
-  FEATURES
-  */
-
-  const featureContainer =
-    document.getElementById(
-      "modalFeatures"
-    );
-
-
-  featureContainer.innerHTML =
-    selectedCourse.features
-      .map(feature=>`
-
-        <li>
-
-          <i
-            class="fas fa-check-circle">
-          </i>
-
-          <span>
-            ${feature}
-          </span>
-
-        </li>
-
-      `)
-      .join("");
-
-
-  /*
-  HEADER THEME
-  */
-
-  const modalHeader =
-    document.getElementById(
-      "modalHeader"
-    );
-
-
-  modalHeader.className =
-    "modal-head " +
-    selectedCourse.theme;
-
-
-  /*
-  SHOW MODAL
-  */
-
-  document
-    .getElementById(
-      "batchModal"
-    )
-    .classList.add("show");
-
+const subjectsPage = document.getElementById('subjectsPage');
+const lecturePage = document.getElementById('lecturePage');
+const backBtn = document.getElementById('globalBackBtn');
+const videoPlayer = document.getElementById('mainVideoPlayer');
+
+let currentSubjectName = "";
+let isLiked = false;
+
+window.onload = function() {
+    renderSubjectsMenu();
+    history.replaceState({page: 'subjects'}, 'Ashoka Batch', '');
 };
 
-
-/*
-=========================================================
-CLOSE MODAL
-=========================================================
-*/
-
-window.closeBatchModal =
-function(){
-
-  document
-    .getElementById(
-      "batchModal"
-    )
-    .classList.remove("show");
-
-  selectedCourse =
-    null;
-
-};
-
-
-/*
-=========================================================
-START PAYMENT
-=========================================================
-*/
-
-window.startPayment =
-function(){
-
-  if(!currentUser){
-
-    showToast(
-      "Payment से पहले Login करें"
-    );
-
-    return false;
-
-  }
-
-
-  if(!selectedCourse){
-
-    showToast(
-      "Course select नहीं हुआ"
-    );
-
-    return false;
-
-  }
-
-
-  /*
-  PAYMENT INTENT
-
-  Browser में केवल pending course
-  save किया जा रहा है।
-
-  यह payment success नहीं है.
-  */
-
-  sessionStorage.setItem(
-    "pendingCourse",
-    selectedCourse.id
-  );
-
-
-  sessionStorage.setItem(
-    "pendingCourseName",
-    selectedCourse.title
-  );
-
-
-  sessionStorage.setItem(
-    "pendingUserUid",
-    currentUser.uid
-  );
-
-
-  /*
-  Cashfree same link open hoga.
-  */
-
-  return true;
-
-};
-
-
-/*
-=========================================================
-OPEN COURSE
-=========================================================
-*/
-
-window.openCourse =
-async function(courseId){
-
-  if(!currentUser){
-
-    showToast(
-      "पहले Login करें"
-    );
-
-    return;
-
-  }
-
-
-  /*
-  Firebase se fresh purchase status
-  */
-
-  const purchases =
-    await getPurchasedCourses(
-      currentUser
-    );
-
-
-  const purchased =
-    isPurchased(
-      courseId,
-      purchases
-    );
-
-
-  if(!purchased){
-
-    showToast(
-      "यह course अभी purchased नहीं है"
-    );
-
-    return;
-
-  }
-
-
-  /*
-  COURSE FIND
-  */
-
-  const course =
-    courses.find(
-      c =>
-        c.id === courseId
-    );
-
-
-  if(!course){
-
-    showToast(
-      "Course page नहीं मिला"
-    );
-
-    return;
-
-  }
-
-
-  /*
-  OPEN INDIVIDUAL COURSE PAGE
-  */
-
-  window.location.href =
-    course.contentUrl;
-
-};
-
-
-/*
-=========================================================
-MODAL OUTSIDE CLICK
-=========================================================
-*/
-
-document
-  .getElementById("batchModal")
-  .addEventListener(
-    "click",
-    function(event){
-
-      if(
-        event.target === this
-      ){
-
-        closeBatchModal();
-
-      }
-
+/* --- ACCELERATED NAVIGATION BACK LOGIC --- */
+window.onpopstate = function(event) {
+    if (event.state && event.state.page === 'subjects') {
+        performTransitionToSubjects();
+    } else if (event.state && event.state.page === 'lecture') {
+        if(event.state.subject) {
+            performTransitionToLecture(event.state.subject, false);
+        }
     }
-  );
+};
 
+function renderSubjectsMenu() {
+    const container = document.getElementById('subjectsListContainer');
+    container.innerHTML = "";
 
-/*
-=========================================================
-ESC KEY
-=========================================================
-*/
+    Object.keys(courseData).forEach(subjectName => {
+        const data = courseData[subjectName];
+        const item = document.createElement('div');
+        item.className = "subject-item";
+        item.onclick = () => {
+            history.pushState({page: 'lecture', subject: subjectName}, subjectName, '#' + subjectName.replace(/\s+/g, '-'));
+            performTransitionToLecture(subjectName, true); 
+        };
 
-document.addEventListener(
-  "keydown",
-  function(event){
+        item.innerHTML = `
+            <div class="sub-info">
+                <div class="sub-icon"><i class="fa-solid ${data.icon}"></i></div>
+                <div>
+                    <div class="sub-name">${subjectName}</div>
+                    <div class="sub-count">${data.videos.length} Lectures</div>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right go-icon"></i>
+        `;
+        container.appendChild(item);
+    });
+}
 
-    if(
-      event.key === "Escape"
-    ){
+function handleNavigationBack() {
+    history.back();
+}
 
-      closeBatchModal();
+/* Instant Transition To Lecture */
+function performTransitionToLecture(subjectName, shouldLoadVideo) {
+    currentSubjectName = subjectName;
+    loadPlaylist(subjectName, shouldLoadVideo);
+    document.getElementById('currentSubjectTag').innerHTML = `<i class="fa-solid fa-tag"></i> ${subjectName}`;
+    document.getElementById('playlistHeaderSubject').innerText = subjectName;
+    
+    subjectsPage.classList.add('page-exit');
+    
+    setTimeout(() => {
+        subjectsPage.classList.add('hidden');
+        subjectsPage.classList.remove('page-exit');
+        
+        lecturePage.classList.remove('hidden');
+        lecturePage.classList.add('page-enter');
+        backBtn.classList.remove('hidden');
+        
+        setTimeout(() => lecturePage.classList.remove('page-enter'), 150);
+    }, 150);
+}
 
+/* Fast Transition Back To Subjects */
+function performTransitionToSubjects() {
+    // 1. Immediately kill video stream for fast unload
+    videoPlayer.src = "";
+    
+    // 2. Hide lecture page & show subjects instantly
+    lecturePage.classList.add('page-exit');
+
+    setTimeout(() => {
+        lecturePage.classList.add('hidden');
+        lecturePage.classList.remove('page-exit');
+        backBtn.classList.add('hidden');
+        
+        subjectsPage.classList.remove('hidden');
+        subjectsPage.classList.add('page-enter');
+        
+        setTimeout(() => subjectsPage.classList.remove('page-enter'), 150);
+    }, 150);
+}
+
+function loadPlaylist(subjectName, loadFirstVideo) {
+    const container = document.getElementById('playlistContainer');
+    container.innerHTML = "";
+    const videos = courseData[subjectName].videos;
+    
+    document.getElementById('plCount').innerText = `${videos.length} Videos`;
+
+    videos.forEach((video, index) => {
+        const item = document.createElement('div');
+        item.className = `lec-item ${index === 0 && loadFirstVideo ? 'active' : ''}`;
+        item.onclick = () => playVideo(video, item);
+
+        item.innerHTML = `
+            <div class="lec-thumb">
+                <img src="${video.thumb}" alt="thumb">
+                <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+            </div>
+            <div class="lec-details">
+                <div class="lec-title">${video.title}</div>
+                <div class="lec-meta">
+                    <i class="fa-regular fa-circle-play"></i> ${video.duration}
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+
+    if (videos.length > 0 && loadFirstVideo) {
+        playVideo(videos[0], container.children[0]);
+    } else if (videos.length > 0 && !loadFirstVideo) {
+        document.getElementById('currentVideoTitle').innerText = videos[0].title;
+    }
+}
+
+function playVideo(video, element) {
+    const newSrc = `https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${video.id}&autoplay=true`;
+    if(videoPlayer.src !== newSrc) {
+        videoPlayer.src = newSrc;
     }
 
-  }
-);
+    document.getElementById('currentVideoTitle').innerText = video.title;
+    document.querySelectorAll('.lec-item').forEach(el => el.classList.remove('active'));
+    if(element) element.classList.add('active');
+    
+    if(window.innerWidth < 992) {
+        lecturePage.scrollTo({top: 0, behavior: 'smooth'});
+    }
+}
 
-
-/*
-=========================================================
-FAILSAFE LOADER
-
-Firebase agar 8 sec me response na de,
-page loading screen me stuck nahi rahega.
-=========================================================
-*/
-
-setTimeout(()=>{
-
-  const loading =
-    document.getElementById(
-      "loadingScreen"
-    );
-
-  if(
-    loading &&
-    !loading.classList.contains("hide")
-  ){
-
-    hideLoading();
-
-    showError(
-      "Firebase response देर से आ रहा है. Page को refresh करके फिर try करें."
-    );
-
-    /*
-    Courses at least display kar do.
-    */
-
-    renderCourses(null);
-
-  }
-
-},8000);
-
-
-/*
-=========================================================
-CASHFREE LINK FIX
-
-Always use same payment link.
-=========================================================
-*/
-
-document
-  .getElementById(
-    "cashfreeButton"
-  )
-  .href =
-  CASHFREE_LINK;
-
-</script>
-
-</body>
-</html>
+function handleLike() {
+    const btn = document.getElementById('likeBtn');
+    

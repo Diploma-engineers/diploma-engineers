@@ -1,359 +1,330 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<div class="result-container-wrapper">
+    <div class="bg-circle circle1"></div>
+    <div class="bg-circle circle2"></div>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class="card">
+        <!-- Category Selector Tabs -->
+        <div class="category-tabs">
+            <button class="tab-btn active" id="tabFinal" onclick="switchCategory('final')">Final Year</button>
+            <button class="tab-btn" id="tabFirst" onclick="switchCategory('first')">1st &amp; 2nd Year</button>
+        </div>
 
-<title>BTEUP Result Portal | Diploma Engineers</title>
+        <div class="icon">
+            <i class="fa-solid fa-graduation-cap" id="portalIcon"></i>
+        </div>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <h2 id="portalTitle">Final Year Result</h2>
+        <p id="portalDesc">
+            Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Result Link[cite: 5].
+        </p>
 
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <div class="input-box">
+            <i class="fa-solid fa-id-card"></i>
+            <input type="text" id="enroll" placeholder="Enrollment Number" autocomplete="off">
+        </div>
+
+        <div class="input-box">
+            <i class="fa-solid fa-calendar-days"></i>
+            <input type="text" id="dob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+        </div>
+
+        <button class="action-btn generate-btn" onclick="generate()">
+            <i class="fa-solid fa-link"></i> Generate Result Link
+        </button>
+
+        <div class="success" id="msg">
+            ✅ Result Link Generated Successfully
+        </div>
+
+        <button class="action-btn view" id="openBtn" onclick="openResult()">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Result
+        </button>
+
+        <div class="footer">
+            Developed by <b>DIPLOMA ENGINEERS</b>
+        </div>
+    </div>
+</div>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
+.result-container-wrapper {
+    background: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
 }
 
-body{
-    background:#f1f5f9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    padding:20px;
-    overflow-x:hidden;
+.result-container-wrapper .bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    z-index: 0;
 }
 
-.bg-circle{
-    position:absolute;
-    border-radius:50%;
-    filter:blur(90px);
-    z-index:0;
+.result-container-wrapper .circle1 {
+    width: 260px;
+    height: 260px;
+    background: #2563eb;
+    top: -80px;
+    left: -80px;
+    opacity: .20;
 }
 
-.circle1{
-    width:260px;
-    height:260px;
-    background:#2563eb;
-    top:-80px;
-    left:-80px;
-    opacity:.20;
+.result-container-wrapper .circle2 {
+    width: 260px;
+    height: 260px;
+    background: #22c55e;
+    bottom: -80px;
+    right: -80px;
+    opacity: .20;
 }
 
-.circle2{
-    width:260px;
-    height:260px;
-    background:#22c55e;
-    bottom:-80px;
-    right:-80px;
-    opacity:.20;
+.result-container-wrapper .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    padding: 30px 25px;
+    border-radius: 28px;
+    box-shadow: 0 15px 40px rgba(0,0,0,.08);
+    border: 1px solid #e2e8f0;
+    text-align: center;
 }
 
-.card{
-    position:relative;
-    z-index:1;
-    width:100%;
-    max-width:440px;
-    background:#fff;
-    padding:30px 25px;
-    border-radius:28px;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
-    border:1px solid #e2e8f0;
-    text-align:center;
+.result-container-wrapper .category-tabs {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 14px;
+    padding: 5px;
+    margin-bottom: 20px;
+    gap: 5px;
 }
 
-/* Category Tabs */
-.category-tabs{
-    display:flex;
-    background:#f1f5f9;
-    border-radius:14px;
-    padding:5px;
-    margin-bottom:20px;
-    gap:5px;
+.result-container-wrapper .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #64748b;
+    transition: .3s;
 }
 
-.tab-btn{
-    flex:1;
-    padding:10px;
-    border:none;
-    border-radius:10px;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    background:transparent;
-    color:#64748b;
-    transition:.3s;
+.result-container-wrapper .tab-btn.active {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37,99,235,.25);
 }
 
-.tab-btn.active{
-    background:#2563eb;
-    color:#fff;
-    box-shadow:0 4px 12px rgba(37,99,235,.25);
+.result-container-wrapper .icon {
+    width: 75px;
+    height: 75px;
+    margin: auto;
+    border-radius: 20px;
+    background: #eff6ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    color: #2563eb;
+    margin-bottom: 15px;
 }
 
-.icon{
-    width:75px;
-    height:75px;
-    margin:auto;
-    border-radius:20px;
-    background:#eff6ff;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:30px;
-    color:#2563eb;
-    margin-bottom:15px;
+.result-container-wrapper h2 {
+    font-size: 26px;
+    color: #0f172a;
+    margin-bottom: 8px;
 }
 
-h2{
-    font-size:26px;
-    color:#0f172a;
-    margin-bottom:8px;
+.result-container-wrapper p {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 20px;
 }
 
-p{
-    font-size:13px;
-    color:#64748b;
-    line-height:1.6;
-    margin-bottom:20px;
+.result-container-wrapper .input-box {
+    position: relative;
+    margin-bottom: 16px;
 }
 
-.input-box{
-    position:relative;
-    margin-bottom:16px;
+.result-container-wrapper .input-box i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
 }
 
-.input-box i{
-    position:absolute;
-    left:16px;
-    top:50%;
-    transform:translateY(-50%);
-    color:#64748b;
+.result-container-wrapper input {
+    width: 100%;
+    padding: 14px 14px 14px 45px;
+    border-radius: 14px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    transition: .3s;
 }
 
-input{
-    width:100%;
-    padding:14px 14px 14px 45px;
-    border-radius:14px;
-    border:1px solid #cbd5e1;
-    background:#f8fafc;
-    font-size:14px;
-    outline:none;
-    transition:.3s;
+.result-container-wrapper input:focus {
+    border-color: #2563eb;
+    background: #fff;
 }
 
-input:focus{
-    border-color:#2563eb;
-    background:#fff;
+.result-container-wrapper button.action-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .3s;
 }
 
-button.action-btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:14px;
-    font-size:15px;
-    font-weight:600;
-    cursor:pointer;
-    transition:.3s;
+.result-container-wrapper .generate-btn {
+    background: #2563eb;
+    color: #fff;
 }
 
-.generate-btn{
-    background:#2563eb;
-    color:#fff;
+.result-container-wrapper .generate-btn:hover {
+    background: #1d4ed8;
 }
 
-.generate-btn:hover{
-    background:#1d4ed8;
+.result-container-wrapper .view {
+    display: none;
+    background: #16a34a;
+    color: #fff;
+    margin-top: 12px;
 }
 
-.view{
-    display:none;
-    background:#16a34a;
-    color:#fff;
-    margin-top:12px;
+.result-container-wrapper .view.active {
+    display: block;
 }
 
-.view.active{
-    display:block;
+.result-container-wrapper .view:hover {
+    background: #15803d;
 }
 
-.view:hover{
-    background:#15803d;
+.result-container-wrapper .success {
+    display: none;
+    margin-top: 14px;
+    padding: 12px;
+    background: #ecfdf5;
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    color: #15803d;
+    font-size: 13px;
 }
 
-.success{
-    display:none;
-    margin-top:14px;
-    padding:12px;
-    background:#ecfdf5;
-    border:1px solid #bbf7d0;
-    border-radius:14px;
-    color:#15803d;
-    font-size:13px;
+.result-container-wrapper .success.active {
+    display: block;
 }
 
-.success.active{
-    display:block;
-}
-
-.footer{
-    margin-top:18px;
-    font-size:12px;
-    color:#94a3b8;
+.result-container-wrapper .footer {
+    margin-top: 18px;
+    font-size: 12px;
+    color: #94a3b8;
 }
 
 @media(max-width:600px){
-    .card{
-        padding:24px 18px;
+    .result-container-wrapper .card {
+        padding: 24px 18px;
     }
-    h2{
-        font-size:23px;
+    .result-container-wrapper h2 {
+        font-size: 23px;
     }
 }
 </style>
-</head>
-
-<body>
-
-<div class="bg-circle circle1"></div>
-<div class="bg-circle circle2"></div>
-
-<div class="card">
-
-    <!-- Category Selector Tabs -->
-    <div class="category-tabs">
-        <button class="tab-btn active" id="tabFinal" onclick="switchCategory('final')">Final Year</button>
-        <button class="tab-btn" id="tabFirst" onclick="switchCategory('first')">1st &amp; 2nd Year</button>
-    </div>
-
-    <div class="icon">
-        <i class="fa-solid fa-graduation-cap" id="portalIcon"></i>
-    </div>
-
-    <h2 id="portalTitle">Final Year Result</h2>
-    <p id="portalDesc">
-        Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Result Link[cite: 5].
-    </p>
-
-    <div class="input-box">
-        <i class="fa-solid fa-id-card"></i>
-        <input type="text" id="enroll" placeholder="Enrollment Number" autocomplete="off">
-    </div>
-
-    <div class="input-box">
-        <i class="fa-solid fa-calendar-days"></i>
-        <input type="text" id="dob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
-    </div>
-
-    <button class="action-btn generate-btn" onclick="generate()">
-        <i class="fa-solid fa-link"></i> Generate Result Link
-    </button>
-
-    <div class="success" id="msg">
-        ✅ Result Link Generated Successfully
-    </div>
-
-    <button class="action-btn view" id="openBtn" onclick="openResult()">
-        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Result
-    </button>
-
-    <div class="footer">
-        Developed by <b>DIPLOMA ENGINEERS</b>
-    </div>
-
-</div>
 
 <script>
-let currentCategory = 'final'; // 'final' or 'first'
-let finalURL = "";
+(function() {
+    let currentCategory = 'final';
+    let finalURL = "";
 
-// Switch Tabs Function
-function switchCategory(cat) {
-    currentCategory = cat;
-    finalURL = "";
-    document.getElementById("msg").classList.remove("active");
-    document.getElementById("openBtn").classList.remove("active");
-    document.getElementById("enroll").value = "";
-    document.getElementById("dob").value = "";
+    window.switchCategory = function(cat) {
+        currentCategory = cat;
+        finalURL = "";
+        document.getElementById("msg").classList.remove("active");
+        document.getElementById("openBtn").classList.remove("active");
+        document.getElementById("enroll").value = "";
+        document.getElementById("dob").value = "";
 
-    const tabFinal = document.getElementById("tabFinal");
-    const tabFirst = document.getElementById("tabFirst");
-    const portalTitle = document.getElementById("portalTitle");
-    const portalDesc = document.getElementById("portalDesc");
+        const tabFinal = document.getElementById("tabFinal");
+        const tabFirst = document.getElementById("tabFirst");
+        const portalTitle = document.getElementById("portalTitle");
+        const portalDesc = document.getElementById("portalDesc");
 
-    if (cat === 'final') {
-        tabFinal.classList.add("active");
-        tabFirst.classList.remove("active");
-        portalTitle.innerText = "Final Year Result";
-        portalDesc.innerText = "Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Result Link[cite: 5].";
-    } else {
-        tabFirst.classList.add("active");
-        tabFinal.classList.remove("active");
-        portalTitle.innerText = "1st & 2nd Year Result";
-        portalDesc.innerText = "Check your BTE UP 1st & 2nd Year Examination Result quickly and securely[cite: 6].";
-    }
-}
+        if (cat === 'final') {
+            tabFinal.classList.add("active");
+            tabFirst.classList.remove("active");
+            portalTitle.innerText = "Final Year Result";
+            portalDesc.innerText = "Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Result Link[cite: 5].";
+        } else {
+            tabFirst.classList.add("active");
+            tabFinal.classList.remove("active");
+            portalTitle.innerText = "1st & 2nd Year Result";
+            portalDesc.innerText = "Check your BTE UP 1st & 2nd Year Examination Result quickly and securely[cite: 6].";
+        }
+    };
 
-/* Auto DOB Format */
-document.getElementById("dob").addEventListener("input", function(e){
-    let v = e.target.value.replace(/\D/g,"");
-    if(v.length > 2) v = v.slice(0,2) + "/" + v.slice(2);
-    if(v.length > 5) v = v.slice(0,5) + "/" + v.slice(5,9);
-    e.target.value = v;
-});
-
-/* Validate DOB */
-function validDOB(d){
-    return /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/\d{4}$/.test(d);
-}
-
-/* Generate Link */
-function generate(){
-    const enroll = document.getElementById("enroll").value.trim().toUpperCase();
-    const dob = document.getElementById("dob").value.trim();
-
-    if(enroll === ""){
-        alert("Please Enter Enrollment Number");
-        return;
+    const dobInput = document.getElementById("dob");
+    if (dobInput) {
+        dobInput.addEventListener("input", function(e){
+            let v = e.target.value.replace(/\D/g,"");
+            if(v.length > 2) v = v.slice(0,2) + "/" + v.slice(2);
+            if(v.length > 5) v = v.slice(0,5) + "/" + v.slice(5,9);
+            e.target.value = v;
+        });
     }
 
-    if(!validDOB(dob)){
-        alert("Please Enter Valid DOB (DD/MM/YYYY)");
-        return;
+    function validDOB(d){
+        return /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/\d{4}$/.test(d);
     }
 
-    const id = btoa(enroll);
-    const id2 = btoa(dob);
+    window.generate = function(){
+        const enroll = document.getElementById("enroll").value.trim().toUpperCase();
+        const dob = document.getElementById("dob").value.trim();
 
-    if (currentCategory === 'final') {
-        // Final Year URL structure (from source[cite: 5])
-        finalURL = `https://result.bteexam.com/even/main/CS_RESULT.aspx?id=${encodeURIComponent(id)}&id2=${encodeURIComponent(id2)}`;
-    } else {
-        // 1st & 2nd Year URL structure (from source[cite: 6])
-        finalURL = `https://result.bteexam.com/even/main/oddresult.aspx?id=${id}&id2=${id2}`;
-    }
+        if(enroll === ""){
+            alert("Please Enter Enrollment Number");
+            return;
+        }
 
-    document.getElementById("msg").classList.add("active");
-    document.getElementById("openBtn").classList.add("active");
-}
+        if(!validDOB(dob)){
+            alert("Please Enter Valid DOB (DD/MM/YYYY)");
+            return;
+        }
 
-/* Open Result */
-function openResult(){
-    if(finalURL !== ""){
-        window.open(finalURL, "_blank");
-    } else {
-        alert("Generate Result Link First");
-    }
-}
+        const id = btoa(enroll);
+        const id2 = btoa(dob);
+
+        if (currentCategory === 'final') {
+            finalURL = `https://result.bteexam.com/even/main/CS_RESULT.aspx?id=${encodeURIComponent(id)}&id2=${encodeURIComponent(id2)}`;
+        } else {
+            finalURL = `https://result.bteexam.com/even/main/oddresult.aspx?id=${id}&id2=${id2}`;
+        }
+
+        document.getElementById("msg").classList.add("active");
+        document.getElementById("openBtn").classList.add("active");
+    };
+
+    window.openResult = function(){
+        if(finalURL !== ""){
+            window.open(finalURL, "_blank");
+        } else {
+            alert("Generate Result Link First");
+        }
+    };
+})();
 </script>
-
-</body>
-</html>

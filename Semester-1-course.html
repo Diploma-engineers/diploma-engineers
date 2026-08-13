@@ -2,7 +2,8 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Mobile Pinch-to-Zoom Allowed -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>EduApp - Mobile UI</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
@@ -23,10 +24,9 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding-bottom: 20px;
-            user-select: none;
         }
 
-        /* App Top Bar */
+        /* Top Header Navigation */
         .app-header {
             position: sticky;
             top: 0;
@@ -56,7 +56,7 @@
             background: var(--border);
         }
 
-        /* App Cards */
+        /* Subject Cards */
         .app-card {
             background: var(--surface);
             border-radius: 16px;
@@ -64,12 +64,11 @@
             margin-bottom: 12px;
             border: 1px solid var(--border);
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            transition: transform 0.1s active;
             cursor: pointer;
         }
 
         .app-card:active {
-            transform: scale(0.98);
+            opacity: 0.8;
         }
 
         .icon-circle {
@@ -103,7 +102,7 @@
             border: 0;
         }
 
-        /* Interactive Action Buttons */
+        /* Action Buttons */
         .action-chip {
             background: var(--bg-app);
             padding: 8px 14px;
@@ -124,7 +123,7 @@
             color: #e11d48;
         }
 
-        /* Playlist Item (App Style) */
+        /* Playlist Cards */
         .playlist-card {
             background: var(--surface);
             border-radius: 12px;
@@ -158,7 +157,7 @@
             color: white;
         }
 
-        /* Star Rating */
+        /* Stars Rating */
         .star-rating .fa-star {
             color: #cbd5e0;
             cursor: pointer;
@@ -174,10 +173,9 @@
 </head>
 <body>
 
-    <!-- App Header Bar -->
+    <!-- Header Area -->
     <div class="app-header">
         <div class="d-flex align-items-center gap-2">
-            <!-- Back button always visible -->
             <div id="backBtn" class="back-circle-btn" onclick="handleBackAction()">
                 <i class="fas fa-chevron-left"></i>
             </div>
@@ -188,14 +186,13 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
+    <!-- Main Content Container -->
     <div class="p-3">
 
         <!-- SCREEN 1: SUBJECTS LIST VIEW -->
         <div id="subjectsView">
             <p class="text-muted small mb-3">Chuniye apna vishay aur padhai shuru kijiye</p>
 
-            <!-- Subject 1 -->
             <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('python')">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon-circle"><i class="fas fa-code"></i></div>
@@ -207,7 +204,6 @@
                 <i class="fas fa-chevron-right text-muted"></i>
             </div>
 
-            <!-- Subject 2 -->
             <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('math')">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon-circle" style="background:#fef3c7; color:#d97706"><i class="fas fa-calculator"></i></div>
@@ -219,7 +215,6 @@
                 <i class="fas fa-chevron-right text-muted"></i>
             </div>
 
-            <!-- Subject 3 -->
             <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('electronics')">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon-circle" style="background:#e0f2fe; color:#0284c7"><i class="fas fa-microchip"></i></div>
@@ -237,15 +232,14 @@
             
             <!-- Video Frame -->
             <div class="video-box mb-3 shadow-sm">
-                <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+                <iframe id="videoPlayer" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
 
-            <!-- Video Details & Actions -->
+            <!-- Video Details -->
             <div class="bg-white p-3 rounded-4 border mb-3">
                 <h6 id="videoTitle" class="fw-bold mb-1">Lecture Title</h6>
                 <p id="videoDesc" class="text-muted small mb-3">Description...</p>
 
-                <!-- Like, Rate & Download Actions -->
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
                     <button id="likeBtn" class="action-chip" onclick="toggleLike()">
                         <i class="far fa-heart"></i> <span id="likeText">Like</span> (<span id="likeCount">85</span>)
@@ -256,7 +250,6 @@
                     </a>
                 </div>
 
-                <!-- Rating Sheet -->
                 <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top">
                     <span class="small text-muted font-weight-bold">Rate Video:</span>
                     <div class="star-rating">
@@ -269,11 +262,9 @@
                 </div>
             </div>
 
-            <!-- Next Lectures (Playlist) -->
+            <!-- Playlist -->
             <h6 class="fw-bold mb-2 text-muted px-1">Next Lectures</h6>
-            <div id="playlistContainer">
-                <!-- Dynamic Playlist -->
-            </div>
+            <div id="playlistContainer"></div>
 
             <!-- Comments Section -->
             <div class="bg-white p-3 rounded-4 border mt-3">
@@ -296,7 +287,7 @@
 
     </div>
 
-    <!-- JavaScript Data and Interactivity -->
+    <!-- JavaScript Navigation Logic -->
     <script>
         const appData = {
             python: {
@@ -326,21 +317,44 @@
         let currentSubjectKey = '';
         let currentVideoIndex = 0;
         let isLiked = false;
-        let currentScreen = 'subjects'; // Global state tracking
+        let currentScreen = 'subjects';
 
-        // Universal Back Action
+        // Set initial browser state
+        try {
+            history.replaceState({ page: 'subjects' }, "Subjects", "#subjects");
+        } catch (e) {
+            console.log("History API handled");
+        }
+
+        // Mobile Hardware/Browser Back Button event listener
+        window.onpopstate = function(event) {
+            if (event.state && event.state.page === 'subjects') {
+                showSubjectsUI();
+            } else if (!event.state) {
+                showSubjectsUI();
+            }
+        };
+
+        // App Top Bar Back Action
         function handleBackAction() {
             if (currentScreen === 'lecture') {
-                showSubjectsView();
+                window.history.back();
             } else {
-                alert("Aap pahle se hi Home / Subjects Page par hain!");
+                alert("Aap pehle se hi Subjects Page par hain.");
             }
         }
 
+        // Subject Click Handler
         function openSubject(key) {
+            if(!appData[key]) return;
+
             currentSubjectKey = key;
             currentVideoIndex = 0;
             currentScreen = 'lecture';
+
+            try {
+                history.pushState({ page: 'lecture', subject: key }, appData[key].title, "#" + key);
+            } catch(e) {}
 
             document.getElementById('subjectsView').classList.add('hidden');
             document.getElementById('lectureView').classList.remove('hidden');
@@ -350,7 +364,8 @@
             playVideo(0);
         }
 
-        function showSubjectsView() {
+        // Switch to Main View
+        function showSubjectsUI() {
             currentScreen = 'subjects';
             document.getElementById('lectureView').classList.add('hidden');
             document.getElementById('subjectsView').classList.remove('hidden');
@@ -358,6 +373,7 @@
             document.getElementById('videoPlayer').src = ""; 
         }
 
+        // Video Play Function
         function playVideo(index) {
             currentVideoIndex = index;
             const video = appData[currentSubjectKey].videos[index];
@@ -376,22 +392,22 @@
             renderPlaylist();
         }
 
+        // Playlist Generator
         function renderPlaylist() {
             const container = document.getElementById('playlistContainer');
-            container.innerHTML = '';
+            let htmlContent = '';
 
             appData[currentSubjectKey].videos.forEach((vid, idx) => {
                 const isActive = idx === currentVideoIndex ? 'active' : '';
-                container.innerHTML += `
-                    <div class="playlist-card ${isActive}" onclick="playVideo(${idx})">
-                        <div class="play-badge"><i class="fas ${idx === currentVideoIndex ? 'fa-play' : 'fa-film'}"></i></div>
-                        <div>
-                            <h6 class="mb-0 fw-bold small">${vid.title}</h6>
-                            <span class="text-muted" style="font-size:0.7rem;">Video Lecture</span>
-                        </div>
-                    </div>
-                `;
+                const iconClass = idx === currentVideoIndex ? 'fa-play' : 'fa-film';
+                
+                htmlContent += '<div class="playlist-card ' + isActive + '" onclick="playVideo(' + idx + ')">';
+                htmlContent += '<div class="play-badge"><i class="fas ' + iconClass + '"></i></div>';
+                htmlContent += '<div><h6 class="mb-0 fw-bold small">' + vid.title + '</h6><span class="text-muted" style="font-size:0.7rem;">Video Lecture</span></div>';
+                htmlContent += '</div>';
             });
+
+            container.innerHTML = htmlContent;
         }
 
         function toggleLike() {
@@ -426,12 +442,7 @@
             const input = document.getElementById('commentInput');
             if(input.value.trim() !== "") {
                 const list = document.getElementById('commentsList');
-                list.innerHTML = `
-                    <div class="bg-light p-2 rounded-3 small">
-                        <span class="fw-bold d-block">You</span>
-                        <span class="text-muted">${input.value.trim()}</span>
-                    </div>
-                ` + list.innerHTML;
+                list.innerHTML = '<div class="bg-light p-2 rounded-3 small"><span class="fw-bold d-block">You</span><span class="text-muted">' + input.value.trim() + '</span></div>' + list.innerHTML;
                 input.value = "";
             }
         }

@@ -1,1 +1,145 @@
+<div class="result-container-wrapper">
+    <div class="bg-circle circle1"></div>
+    <div class="bg-circle circle2"></div>
 
+    <div class="card">
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <button class="tab-btn active" id="tabAdmitFinal" onclick="switchAdmitCategory('final')">Final Year</button>
+            <button class="tab-btn" id="tabAdmitFirst" onclick="switchAdmitCategory('first')">1st &amp; 2nd Year</button>
+        </div>
+
+        <div class="icon">
+            <i class="fa-solid fa-id-card-clip"></i>
+        </div>
+
+        <h2 id="admitPortalTitle">Final Year Admit Card</h2>
+        <p id="admitPortalDesc">
+            Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Admit Card Link.
+        </p>
+
+        <div class="input-box">
+            <i class="fa-solid fa-id-card"></i>
+            <input type="text" id="admitEnroll" placeholder="Enrollment Number" autocomplete="off">
+        </div>
+
+        <div class="input-box">
+            <i class="fa-solid fa-calendar-days"></i>
+            <input type="text" id="admitDob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+        </div>
+
+        <button class="action-btn generate-btn" onclick="generateAdmitCard()">
+            <i class="fa-solid fa-link"></i> Generate Admit Card Link
+        </button>
+
+        <div class="success" id="admitMsg">
+            ✅ Admit Card Link Generated Successfully
+        </div>
+
+        <button class="action-btn view" id="admitOpenBtn" onclick="openAdmitCard()">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Admit Card
+        </button>
+
+        <div class="footer">
+            Developed by <b>DIPLOMA ENGINEERS</b>
+        </div>
+    </div>
+</div>
+
+<style>
+.result-container-wrapper {
+    background: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px; position: relative; overflow: hidden; width: 100%;
+}
+.result-container-wrapper .bg-circle { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 0; }
+.result-container-wrapper .circle1 { width: 260px; height: 260px; background: #2563eb; top: -80px; left: -80px; opacity: .20; }
+.result-container-wrapper .circle2 { width: 260px; height: 260px; background: #22c55e; bottom: -80px; right: -80px; opacity: .20; }
+.result-container-wrapper .card { position: relative; z-index: 1; width: 100%; max-width: 440px; background: #fff; padding: 30px 25px; border-radius: 28px; box-shadow: 0 15px 40px rgba(0,0,0,.08); border: 1px solid #e2e8f0; text-align: center; }
+.result-container-wrapper .category-tabs { display: flex; background: #f1f5f9; border-radius: 14px; padding: 5px; margin-bottom: 20px; gap: 5px; }
+.result-container-wrapper .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #64748b; transition: .3s; }
+.result-container-wrapper .tab-btn.active { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.25); }
+.result-container-wrapper .icon { width: 75px; height: 75px; margin: auto; border-radius: 20px; background: #eff6ff; display: flex; justify-content: center; align-items: center; font-size: 30px; color: #2563eb; margin-bottom: 15px; }
+.result-container-wrapper h2 { font-size: 26px; color: #0f172a; margin-bottom: 8px; }
+.result-container-wrapper p { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 20px; }
+.result-container-wrapper .input-box { position: relative; margin-bottom: 16px; }
+.result-container-wrapper .input-box i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; }
+.result-container-wrapper input { width: 100%; padding: 14px 14px 14px 45px; border-radius: 14px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 14px; outline: none; transition: .3s; }
+.result-container-wrapper input:focus { border-color: #2563eb; background: #fff; }
+.result-container-wrapper button.action-btn { width: 100%; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: .3s; }
+.result-container-wrapper .generate-btn { background: #2563eb; color: #fff; }
+.result-container-wrapper .generate-btn:hover { background: #1d4ed8; }
+.result-container-wrapper .view { display: none; background: #16a34a; color: #fff; margin-top: 12px; }
+.result-container-wrapper .view.active { display: block; }
+.result-container-wrapper .view:hover { background: #15803d; }
+.result-container-wrapper .success { display: none; margin-top: 14px; padding: 12px; background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 14px; color: #15803d; font-size: 13px; }
+.result-container-wrapper .success.active { display: block; }
+.result-container-wrapper .footer { margin-top: 18px; font-size: 12px; color: #94a3b8; }
+</style>
+
+<script>
+(function() {
+    let currentAdmitCategory = 'final';
+    let admitCardURL = "";
+
+    window.switchAdmitCategory = function(cat) {
+        currentAdmitCategory = cat;
+        admitCardURL = "";
+        document.getElementById("admitMsg").classList.remove("active");
+        document.getElementById("admitOpenBtn").classList.remove("active");
+        document.getElementById("admitEnroll").value = "";
+        document.getElementById("admitDob").value = "";
+
+        const tabFinal = document.getElementById("tabAdmitFinal");
+        const tabFirst = document.getElementById("tabAdmitFirst");
+        const portalTitle = document.getElementById("admitPortalTitle");
+        const portalDesc = document.getElementById("admitPortalDesc");
+
+        if (cat === 'final') {
+            tabFinal.classList.add("active");
+            tabFirst.classList.remove("active");
+            portalTitle.innerText = "Final Year Admit Card";
+            portalDesc.innerText = "Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Admit Card Link.";
+        } else {
+            tabFirst.classList.add("active");
+            tabFinal.classList.remove("active");
+            portalTitle.innerText = "1st & 2nd Year Admit Card";
+            portalDesc.innerText = "Check your BTE UP 1st & 2nd Year Examination Admit Card quickly and securely.";
+        }
+    };
+
+    document.getElementById("admitDob").addEventListener("input", function(e){
+        let v = e.target.value.replace(/\D/g,"");
+        if(v.length > 2) v = v.slice(0,2) + "/" + v.slice(2);
+        if(v.length > 5) v = v.slice(0,5) + "/" + v.slice(5,9);
+        e.target.value = v;
+    });
+
+    function validDOB(d){
+        return /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/\d{4}$/.test(d);
+    }
+
+    window.generateAdmitCard = function(){
+        const enroll = document.getElementById("admitEnroll").value.trim().toUpperCase();
+        const dob = document.getElementById("admitDob").value.trim();
+
+        if(enroll === ""){ alert("Please Enter Enrollment Number"); return; }
+        if(!validDOB(dob)){ alert("Please Enter Valid DOB (DD/MM/YYYY)"); return; }
+
+        const id = btoa(enroll);
+        const id2 = btoa(dob);
+
+        if (currentAdmitCategory === 'final') {
+            admitCardURL = `https://result.bteexam.com/even/main/admit_card.aspx?id=${encodeURIComponent(id)}&id2=${encodeURIComponent(id2)}`;
+        } else {
+            admitCardURL = `https://result.bteexam.com/even/main/admit_card_1st.aspx?id=${id}&id2=${id2}`;
+        }
+
+        document.getElementById("admitMsg").classList.add("active");
+        document.getElementById("admitOpenBtn").classList.add("active");
+    };
+
+    window.openAdmitCard = function(){
+        if(admitCardURL !== ""){ window.open(admitCardURL, "_blank"); }
+        else { alert("Generate Admit Card Link First"); }
+    };
+})();
+</script>

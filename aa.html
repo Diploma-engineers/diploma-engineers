@@ -1,1223 +1,2273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diploma Engineers Portal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Diploma Engineers Portal</title>
 
-  <!-- FONTS & ICONS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- External Frameworks & Fonts -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --accent: #f59e0b;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --text: #0f172a;
-      --muted-text: #64748b;
-      --border: #e2e8f0;
-      --radius: 16px;
-      --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
-    }
+<style>
+:root {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light: #3B82F6;
+  
+  --blue-bg: #EFF6FF;
+  --blue-border: #BFDBFE;
+  --blue-text: #1E40AF;
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+  --bg-white: #ffffff;
+  --surface-gray: #f8fafc;
+  --dark-text: #0F172A;
+  --muted-text: #64748B;
+  --border-light: #e2e8f0;
+  
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      padding-bottom: 75px;
-    }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    /* LOADER */
-    #page-loader {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--surface);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
-    #page-loader.hide {
-      opacity: 0;
-      visibility: hidden;
-    }
-    .loader-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    .progress-bar-container {
-      width: 200px;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      margin-top: 20px;
-      overflow: hidden;
-    }
-    .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: var(--primary);
-      transition: width 0.1s linear;
-    }
-    .progress-percent {
-      margin-top: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted-text);
-    }
+body {
+  background-color: var(--bg-white);
+  color: var(--dark-text);
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+::-webkit-scrollbar { display: none; }
 
-    /* AUTH PAGE */
-    #authPage {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    }
-    .auth-card {
-      background: var(--surface);
-      width: 100%;
-      max-width: 400px;
-      padding: 30px;
-      border-radius: 24px;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
-      text-align: center;
-    }
-    .auth-card h2 {
-      margin-bottom: 20px;
-      font-size: 24px;
-      color: var(--text);
-    }
-    .form-group {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: var(--muted-text);
-    }
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      outline: none;
-      font-size: 14px;
-      transition: border-color 0.2s;
-    }
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--primary);
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 10px;
-    }
-    .btn:hover { background: var(--primary-dark); }
-    .btn-google {
-      background: #fff;
-      color: #333;
-      border: 1.5px solid var(--border);
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .switch-link {
-      margin-top: 15px;
-      font-size: 13px;
-      color: var(--primary);
-      cursor: pointer;
-      font-weight: 600;
-    }
+/* LOADER */
+#page-loader {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .6s ease, visibility .6s ease;
+}
+#page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-content { width: min(90%, 500px); text-align: center; }
+.loader-logo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 25px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loader-ring {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 4px solid #edf1f6;
+  border-top-color: #2864e8;
+  border-right-color: #ff6500;
+  border-bottom-color: #2864e8;
+  animation: loaderRotate 1.8s linear infinite;
+}
+.loader-ring:after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 28px;
+  background: #ff6500;
+  border-radius: 10px;
+  top: -4px;
+  right: 5px;
+}
+@keyframes loaderRotate { to { transform: rotate(360deg); } }
+.loader-logo img {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  padding: 7px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 5px 25px rgba(0,0,0,.06);
+}
+.loader-title { font-size: 28px; font-weight: 800; line-height: 1.2; }
+.orange-text { color: #ff6500; }
+.blue-text { color: #2864e8; }
+.loader-subtitle { margin: 10px 0 30px; color: #64748b; font-size: 15px; }
+.progress-container { width: 100%; height: 7px; background: #e4e9ef; border-radius: 20px; overflow: hidden; }
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #2864e8, #2864e8, #ff6500);
+  border-radius: 20px;
+  transition: width .12s linear;
+}
+.loading-status {
+  margin-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 14px;
+}
+#progress-percent { color: #2864e8; font-weight: 700; }
 
-    /* HEADER */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 15px 20px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header-title-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .back-btn {
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: var(--text);
-      display: none;
-    }
+/* AUTH PAGE */
+#authPage {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-white);
+}
 
-    /* NAVIGATION */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      z-index: 100;
-    }
-    .nav-link-btn {
-      background: none;
-      border: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted-text);
-      cursor: pointer;
-      gap: 4px;
-    }
-    .nav-link-btn i { font-size: 18px; }
-    .nav-link-btn.active { color: var(--primary); }
+.auth-box {
+  background: var(--bg-white);
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-    /* PAGE LAYOUTS */
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .page { display: none; }
-    .page.active-page { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-    /* DASHBOARD GRID */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .card {
-      background: var(--surface);
-      padding: 20px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      text-align: center;
-      transition: transform 0.2s;
-    }
-    .card:active { transform: scale(0.98); }
-    .card i {
-      font-size: 28px;
-      color: var(--primary);
-      margin-bottom: 10px;
-    }
-    .card h3 { font-size: 15px; }
+.logo {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  color: var(--dark-text);
+}
 
-    /* PROFILE */
-    .profile-card {
-      background: var(--surface);
-      padding: 25px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
-      position: relative;
-    }
-    .avatar-wrapper {
-      position: relative;
-      width: 90px;
-      height: 90px;
-      margin: 0 auto 15px;
-    }
-    .avatar-box {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      color: var(--muted-text);
-      overflow: hidden;
-    }
-    .avatar-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .upload-icon-btn {
-      position: absolute;
-      bottom: 0; right: 0;
-      background: var(--primary);
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 14px;
-      border: 2px solid var(--surface);
-    }
-    .info-list {
-      text-align: left;
-      margin-top: 20px;
-    }
-    .info-item {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-    }
-    .info-item span:first-child { color: var(--muted-text); }
-    .info-item span:last-child { font-weight: 600; }
+.logo span { color: var(--primary); }
 
-    /* NEWS FEED */
-    .news-card {
-      background: var(--surface);
-      padding: 18px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 15px;
-      border: 1px solid var(--border);
-    }
-    .news-card .category {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--primary);
-      text-transform: uppercase;
-    }
-    .news-title {
-      font-size: 16px;
-      margin: 8px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .news-description {
-      font-size: 13.5px;
-      color: var(--muted-text);
-      margin-bottom: 12px;
-    }
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--muted-text);
-    }
-    .action-links { display: flex; gap: 8px; }
-    .action-btn {
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .expandable-panel {
-      display: none;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px dashed var(--border);
-    }
-    .expandable-panel.active { display: block; }
-    .card-thumbnail {
-      width: 100%;
-      border-radius: 12px;
-      margin-bottom: 10px;
-    }
-    .share-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .share-icon-btn {
-      padding: 8px;
-      border-radius: 8px;
-      border: none;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      color: #fff;
-    }
-    .share-whatsapp { background: #25D366; }
-    .share-telegram { background: #0088cc; }
-    .share-copy { background: #64748b; }
-  </style>
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--dark-text);
+}
+
+.form-group { margin-bottom: 12px; }
+
+.auth-box input, .auth-box select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-light);
+  outline: none;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  background-color: var(--surface-gray);
+  color: var(--dark-text);
+}
+
+.auth-box input:focus, .auth-box select:focus {
+  border-color: var(--primary);
+  background-color: var(--bg-white);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.btn-main {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 0.1s, box-shadow 0.1s;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+}
+
+.btn-main:active { transform: scale(0.98); }
+
+.btn-google {
+  width: 100%;
+  padding: 12px;
+  background: #ffffff;
+  color: #374151;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  transition: background 0.15s;
+}
+
+.btn-google:active { background: var(--surface-gray); }
+
+.switch {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+/* MAIN APP WRAPPER */
+#app {
+  display: none;
+  min-height: 100vh;
+  width: 100%;
+  padding-bottom: 90px;
+}
+
+/* TOP NAVBAR */
+.navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  border-bottom: 1px solid var(--border-light);
+  width: 100%;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-back-btn {
+  background: var(--surface-gray);
+  border: 1px solid var(--border-light);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nav-logo {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--dark-text);
+}
+
+.nav-logo span { color: var(--primary); }
+
+.profile-icon i {
+  font-size: 26px;
+  color: var(--dark-text);
+  cursor: pointer;
+}
+
+/* PAGES */
+.page {
+  display: none;
+  padding: 8px 10px 20px 10px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: pageSlide 0.1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.active-page { display: block; }
+
+@keyframes pageSlide {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* HERO BANNER */
+.banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  top: -40px;
+  right: -40px;
+}
+
+.banner h2 { font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
+.banner p { font-size: 13px; opacity: 0.95; margin-top: 4px; margin-bottom: 0; position: relative; z-index: 1; }
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 16px 0 10px 0;
+  color: var(--dark-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title span { color: var(--primary); }
+
+.scroll-container {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.subject-card {
+  min-width: 160px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-subtle);
+  flex-shrink: 0;
+}
+
+.subject-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.subject-card .overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+.subject-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.grid-2, .grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .grid-2, .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+}
+
+@media (min-width: 992px) {
+  .grid-2, .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+
+@media (min-width: 1200px) {
+  .grid-2 { grid-template-columns: repeat(6, 1fr); }
+}
+
+.card-box, .card {
+  background: var(--bg-white);
+  padding: 16px 12px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.1s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--dark-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-box:active, .card:hover { transform: scale(0.97); }
+
+.card-box i {
+  font-size: 24px;
+  margin-bottom: 6px;
+  color: var(--primary);
+  display: inline-block;
+}
+
+.card-box p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* SEMESTER BANNER CARDS */
+.sem-banner-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (min-width: 768px) {
+  .sem-banner-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.sem-card-orange {
+  background: linear-gradient(135deg, #FF7A00, #FF9933);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(255, 122, 0, 0.25);
+  transition: transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+}
+
+.sem-card-dark {
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  transition: transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+}
+
+.sem-card-orange:active, .sem-card-dark:active { transform: scale(0.98); }
+
+.sem-card-icon {
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.sem-card-content h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 2px;
+  letter-spacing: -0.3px;
+}
+
+.sem-card-content p {
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.sem-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 700;
+  width: max-content;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* BLUE THEME SECTION 1 */
+.blue-theme-card-1 {
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.blue-theme-card-1:active { transform: scale(0.98); }
+
+.blue-theme-card-1 .content h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue-text);
+  margin-bottom: 2px;
+}
+
+.blue-theme-card-1 .content p {
+  font-size: 12px;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.blue-theme-card-1 .icon-box {
+  width: 42px;
+  height: 42px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.notice {
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-border);
+  border-left: 4px solid var(--primary);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  margin-top: 14px;
+}
+
+.notice h5 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-text);
+  margin-bottom: 4px;
+}
+
+.notice p {
+  font-size: 12px;
+  color: var(--blue-text);
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .notes-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 992px) {
+  .notes-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+
+.book-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-subtle);
+  text-decoration: none;
+  color: var(--dark-text);
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  background: var(--surface-gray);
+}
+
+.book-card-content { padding: 10px; }
+
+.book-card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.book-card p {
+  font-size: 11px;
+  color: var(--muted-text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.profile-box {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-subtle);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface-gray);
+  border: 2px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 32px;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-icon-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--primary);
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-subtle);
+}
+
+.profile-details {
+  margin-top: 14px;
+  text-align: left;
+  background: var(--surface-gray);
+  border: 1px solid var(--border-light);
+  padding: 14px;
+  border-radius: var(--radius-md);
+}
+
+.profile-row {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-row:last-child { margin-bottom: 0; }
+.profile-row .label { color: var(--muted-text); font-weight: 600; }
+.profile-row .value { font-weight: 700; color: var(--dark-text); font-size: 13px; }
+
+.profile-details input, .profile-details select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+}
+
+.premium-buy-card {
+  background: var(--bg-white);
+  padding: 24px 20px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.nav-wrapper {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.top-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-gray);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border-light);
+  overflow-x: auto;
+}
+
+.branch-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-text);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.branch-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* COURSE SECTION / BATCH CARDS STYLES */
+.course-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+@media (min-width: 768px) {
+  .course-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .course-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
+.card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
+.card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
+.card-header-banner.green{background:linear-gradient(135deg,#059669,#10B981)}
+.card-header-banner.blue{background:linear-gradient(135deg,#2563EB,#3B82F6)}
+.card-header-banner.orange{background:linear-gradient(135deg,#EA580C,#F97316)}
+.card-header-banner.red{background:linear-gradient(135deg,#DC2626,#EF4444)}
+.free-badge{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(5px);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.5px}
+.header-title-box{display:flex;align-items:center;gap:10px;padding-right:55px;margin-bottom:7px}
+.header-title-box i{font-size:20px}
+.header-title-box h2{font-size:16px;font-weight:800;margin:0;line-height:1.25;letter-spacing:-.2px}
+.card-header-banner>p{font-size:12px;opacity:.95;margin:0;line-height:1.4}
+.course-body{padding:16px;display:flex;flex-direction:column;flex:1}
+.rating-bar{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-bottom:12px}
+.rating-bar i{color:#F59E0B}
+.rating-bar .reviews{color:#64748B;font-size:11px;font-weight:500}
+.feature-list{list-style:none;padding:12px 0 0;margin:0 0 16px;border-top:1px dashed #e2e8f0;display:flex;flex-direction:column;gap:8px}
+.feature-list li{display:flex;align-items:flex-start;gap:8px;color:#334155;font-size:12px;line-height:1.4;font-weight:500}
+.feature-list li i{color:#10B981;font-size:12px;margin-top:2px;flex-shrink:0}
+.course-body .action-btn{margin-top:auto;width:100%;padding:10px;border:none;border-radius:12px;background:#2563EB;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;box-shadow:0 4px 12px rgba(37,99,235,.20);transition:transform .1s ease,background .15s ease}
+.course-body .action-btn:hover{background:#1D4ED8}
+.course-body .action-btn:active{transform:scale(.98)}
+
+/* NEWS & NOTIFICATION STYLES */
+.news-page {
+  width: 100%;
+  max-width: 650px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 10px 0px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.header-icon {
+  width: 42px;
+  height: 42px;
+  background: #eef2ff;
+  color: #3b82f6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+#newsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.news-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid #2563eb;
+  padding: 16px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+.news-card:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); }
+
+.category {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.news-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.news-title i {
+  color: #2563eb;
+  font-size: 15px;
+}
+
+.news-description {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 12px;
+}
+
+.news-date {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.action-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-btn {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.action-btn:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.expandable-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+  background: #ffffff;
+  border-radius: 10px;
+  margin-top: 0;
+  padding: 0 12px;
+  border: 0px solid #e2e8f0;
+}
+
+.expandable-panel.active {
+  max-height: 500px;
+  transition: max-height 0.3s ease-in-out;
+  margin-top: 12px;
+  padding: 12px;
+  border-width: 1px;
+}
+
+.card-thumbnail {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.full-desc {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.share-grid {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.share-icon-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.share-whatsapp { background: #25D366; }
+.share-telegram { background: #229ED9; }
+.share-copy { background: #64748b; }
+
+.loading, .empty, .error-box {
+  text-align: center;
+  padding: 30px;
+  color: #64748b;
+}
+.loading i { font-size: 24px; color: #2563eb; margin-bottom: 8px; }
+
+/* BOTTOM NAVIGATION BAR */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 6px;
+  border-top: 1px solid var(--border-light);
+  z-index: 99;
+}
+
+.bottom-nav .nav-link-btn {
+  text-decoration: none;
+  color: var(--muted-text);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  background: none;
+  padding: 0;
+  flex: 1;
+  cursor: pointer;
+}
+
+.bottom-nav .nav-link-btn i {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.bottom-nav .nav-link-btn.active { color: var(--primary); }
+</style>
 </head>
 <body>
 
-  <!-- PAGE LOADER -->
-  <div id="page-loader">
-    <div class="loader-spinner"></div>
-    <div class="progress-bar-container">
-      <div class="progress-bar" id="progress-bar"></div>
+<!-- FULL PAGE LOADER -->
+<div id="page-loader">
+    <div class="loader-content">
+        <div class="loader-logo">
+            <div class="loader-ring"></div>
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
+        </div>
+
+        <h1 class="loader-title">
+            <span class="orange-text">DIPLOMA</span>
+            <span class="blue-text">ENGINEERS</span>
+        </h1>
+
+        <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="loading-status">
+            <span>Loading...</span>
+            <span id="progress-percent">0%</span>
+        </div>
     </div>
-    <div class="progress-percent" id="progress-percent">0%</div>
+</div>
+
+<!-- AUTH PAGE -->
+<div id="authPage" style="display:none;">
+  <div class="auth-box">
+    <div class="logo">Diploma <span>Engineers</span></div>
+    <h2 id="formTitle">Login</h2>
+    
+    <div id="registerFields" style="display:none;">
+      <div class="form-group">
+        <input type="text" id="name" placeholder="Full Name">
+      </div>
+      <div class="form-group">
+        <select id="branch">
+          <option value="Civil Engineering" selected>Civil Engineering</option>
+          <option value="Computer Science Engineering">Computer Science Engineering</option>
+          <option value="Electrical Engineering">Electrical Engineering</option>
+          <option value="Electronics Engineering">Electronics Engineering</option>
+          <option value="Mechanical Engineering">Mechanical Engineering</option>
+          <option value="Information Technology">Information Technology</option>
+          <option value="Agriculture Engineering">Agriculture Engineering</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="text" id="mobile" placeholder="Mobile Number">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <input type="email" id="email" placeholder="Email Address">
+    </div>
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password">
+    </div>
+    
+    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
+    
+    <button class="btn-google" onclick="googleLogin()">
+      <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
+    </button>
+
+    <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
+  </div>
+</div>
+
+<!-- MAIN APP INTERFACE -->
+<div id="app">
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="nav-left">
+      <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+      <div class="nav-logo">Diploma <span>Engineers</span></div>
+    </div>
+    <div class="profile-icon" onclick="navigateTo('profilePage')">
+      <i class="fas fa-user-circle"></i>
+    </div>
   </div>
 
-  <!-- AUTHENTICATION PAGE -->
-  <div id="authPage">
-    <div class="auth-card">
-      <h2 id="formTitle">Login</h2>
-      <div id="registerFields" style="display: none;">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="name" placeholder="John Doe">
+  <!-- HOME PAGE -->
+  <div id="homePage" class="page active-page">
+    <section class="hero">
+      <div class="banner">
+        <h2>Welcome, <span id="userName">Engineer</span> 👋</h2>
+        <p>Study Materials • Branch Notes • E-Books • Updates</p>
+      </div>
+    </section>
+
+    <!-- TRENDING SUBJECTS -->
+    <div class="section-title">Trending <span>Subjects</span></div>
+    <div class="scroll-container">
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="subject-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
+        <div class="overlay"><h4>Applied Mathematics 2nd</h4></div>
+      </a>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf" target="_blank" class="subject-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png" alt="Mechanics">
+        <div class="overlay"><h4>Engineering Mechanics</h4></div>
+      </a>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf" target="_blank" class="subject-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png" alt="Steel Structure">
+        <div class="overlay"><h4>Design Of Steel Structures</h4></div>
+      </a>
+    </div>
+
+    <!-- EXPLORE GRID -->
+    <div class="section-title">Explore</div>
+    <div class="grid-2">
+      <div class="card-box" onclick="navigateTo('notesPage')">
+        <i class="fas fa-code-branch"></i>
+        <p>Branch</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('jobPage')">
+        <i class="fas fa-briefcase"></i>
+        <p>Jobs</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('admitPage')">
+        <i class="fas fa-id-card"></i>
+        <p>Admit Card</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('resultPage')">
+        <i class="fas fa-square-poll-vertical"></i>
+        <p>Result</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('updatePage')">
+        <i class="fas fa-bell"></i>
+        <p>Updates</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('communityPage')">
+        <i class="fas fa-users"></i>
+        <p>Community</p>
+      </div>
+    </div>
+
+    <!-- PREMIUM ACCESS CARD -->
+    <div class="blue-theme-card-1" onclick="navigateTo('coursePage')">
+      <div class="content">
+        <h4>Unlock Courses 🚀</h4>
+        <p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>
+      </div>
+      <div class="icon-box">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+    </div>
+
+    <!-- SEMESTER CARDS -->
+    <div class="sem-banner-grid">
+      <div class="sem-card-orange" onclick="navigateTo('sem1')">
+        <div class="sem-card-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div class="sem-card-content">
+          <h3>1ST SEMESTER (COMMON)</h3>
+          <p>All 42 Branches Foundation</p>
         </div>
-        <div class="form-group">
-          <label>Branch</label>
-          <select id="branch">
+        <div class="sem-card-btn">ACCESS MATERIAL <i class="fas fa-arrow-right"></i></div>
+      </div>
+
+      <div class="sem-card-dark" onclick="navigateTo('sem2')">
+        <div class="sem-card-icon"><i class="fas fa-book-open"></i></div>
+        <div class="sem-card-content">
+          <h3>2ND SEMESTER (COMMON)</h3>
+          <p>Core Engineering Basics</p>
+        </div>
+        <div class="sem-card-btn">ACCESS MATERIAL <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </div>
+
+    <div class="notice">
+      <h5>Latest Announcement 📢</h5>
+      <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
+    </div>
+  </div>
+  
+  <!-- BRANCH PAGE LIST -->
+  <div id="notesPage" class="page">
+    <div class="section-title">Engineering Branches</div>
+    <div class="grid-2">
+      <div class="card-box" onclick="navigateTo('civil')"><i class="fas fa-building"></i><p>Civil Engineering</p></div>
+      <div class="card-box" onclick="navigateTo('computer')"><i class="fas fa-laptop-code"></i><p>Computer Science</p></div>
+      <div class="card-box" onclick="navigateTo('electrical')"><i class="fas fa-bolt"></i><p>Electrical Engineering</p></div>
+      <div class="card-box" onclick="navigateTo('electronics')"><i class="fas fa-microchip"></i><p>Electronics Engineering</p></div>
+      <div class="card-box" onclick="navigateTo('mechanical')"><i class="fas fa-cogs"></i><p>Mechanical Engineering</p></div>
+      <div class="card-box" onclick="navigateTo('it')"><i class="fas fa-network-wired"></i><p>Information Technology</p></div>
+      <div class="card-box" onclick="navigateTo('agricultural')"><i class="fas fa-seedling"></i><p>Agriculture Engineering</p></div>
+    </div>
+  </div>
+
+  <!-- DYNAMICALLY LOADED BRANCH & SEMESTER PAGES -->
+  <div id="civil" class="page"></div>
+  <div id="computer" class="page"></div>
+  <div id="electrical" class="page"></div>
+  <div id="electronics" class="page"></div>
+  <div id="mechanical" class="page"></div>
+  <div id="it" class="page"></div>
+  <div id="agricultural" class="page"></div>
+  <div id="sem1" class="page"></div>
+  <div id="sem2" class="page"></div>
+  <div id="admitPage" class="page"></div>
+  <div id="resultPage" class="page"></div>
+
+  <!-- COURSE DETAIL PAGES -->
+  <div id="Semester-1-course" class="page"></div>
+  <div id="Civil-course" class="page"></div>
+  <div id="CS&IT-course" class="page"></div>
+  <div id="Mech&Electrical-course" class="page"></div>
+  <div id="PYQ-course" class="page"></div>
+
+  <!-- COURSE PAGE SECTION -->
+  <div id="coursePage" class="page">
+    <div class="section-title">Explore Free <span>Batches</span></div>
+    <p style="font-size: 13px; color: var(--muted-text); margin-bottom: 14px;">High-quality structured programs designed for academic excellence</p>
+
+    <div class="course-grid">
+
+      <!-- Card 1: Semester 1 Full Batch -->
+      <div class="course-card">
+        <div class="card-header-banner purple">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-shapes"></i>
+            <h2>Semester 1 Full Batch</h2>
+          </div>
+          <p>For All Branches (Common)</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(1,240 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Maths-I, Physics-I, Chemistry & CS</li>
+            <li><i class="fa-solid fa-circle-check"></i> Chapter-wise HD Recorded Lectures</li>
+            <li><i class="fa-solid fa-circle-check"></i> Handwritten Printable PDF Notes</li>
+            <li><i class="fa-solid fa-circle-check"></i> Last 5 Years PYQ Video Solutions</li>
+            <li><i class="fa-solid fa-circle-check"></i> Dedicated WhatsApp Doubt Group</li>
+          </ul>
+          <button type="button" onclick="navigateTo('Semester-1-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Free Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: Civil Engg. Special Batch -->
+      <div class="course-card">
+        <div class="card-header-banner green">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-hard-hat"></i>
+            <h2>Civil Engg. Special Batch</h2>
+          </div>
+          <p>Core Subjects + Practical Concept</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(890 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> SOM, Surveying, Building Materials</li>
+            <li><i class="fa-solid fa-circle-check"></i> 100+ Video lectures & Diagrams</li>
+            <li><i class="fa-solid fa-circle-check"></i> Quick Revision Formula Sheets</li>
+            <li><i class="fa-solid fa-circle-check"></i> Board Exam Important Questions</li>
+            <li><i class="fa-solid fa-circle-check"></i> Practical & Practical File PDFs</li>
+          </ul>
+          <button type="button" onclick="navigateTo('Civil-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Free Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3: CS & IT Master Batch -->
+      <div class="course-card">
+        <div class="card-header-banner blue">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-laptop-code"></i>
+            <h2>CS & IT Master Batch</h2>
+          </div>
+          <p>Coding + Syllabus Subjects</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(1,450 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> C/C++, Python, DBMS & Web Dev</li>
+            <li><i class="fa-solid fa-circle-check"></i> Practical Live Code Walkthroughs</li>
+            <li><i class="fa-solid fa-circle-check"></i> Complete Board Exam Notes</li>
+            <li><i class="fa-solid fa-circle-check"></i> Final Year Project Guidance</li>
+            <li><i class="fa-solid fa-circle-check"></i> Certificate of Completion</li>
+          </ul>
+          <button type="button" onclick="navigateTo('CS&IT-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Free Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 4: Mech & Electrical Pass -->
+      <div class="course-card">
+        <div class="card-header-banner orange">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-gears"></i>
+            <h2>Mech & Electrical Pass</h2>
+          </div>
+          <p>Thermal, Machine & Circuit Theory</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(970 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Thermodynamics, SOM & Electrical Machines</li>
+            <li><i class="fa-solid fa-circle-check"></i> Step-by-Step Numerical Solutions</li>
+            <li><i class="fa-solid fa-circle-check"></i> High Quality Machine Drawing Notes</li>
+          </ul>
+          <button type="button" onclick="navigateTo('Mech&Electrical-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Free Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 5: PYQ Exam Booster Batch -->
+      <div class="course-card">
+        <div class="card-header-banner red">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-fire"></i>
+            <h2>PYQ Exam Booster Batch</h2>
+          </div>
+          <p>Last 15 Days Exam Strategy</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>5.0</span>
+            <span class="reviews">(2,100 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Top 50 Most Repeated Questions</li>
+            <li><i class="fa-solid fa-circle-check"></i> 1-Shot Revision Videos</li>
+            <li><i class="fa-solid fa-circle-check"></i> Exact Exam Pattern Model Papers</li>
+          </ul>
+          <button type="button" onclick="navigateTo('PYQ-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Free Batch
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- UPDATE & NOTIFICATIONS PAGE -->
+  <div id="updatePage" class="page">
+    <div class="news-page">
+      <div class="page-header">
+        <div class="header-icon">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <h1>Notifications & News</h1>
+      </div>
+
+      <div id="newsList">
+        <div class="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading Notifications...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKS PAGE -->
+  <div id="booksPage" class="page">
+    <div class="section-title">E-Books Library</div>
+    <div class="notes-grid">
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" target="_blank" class="book-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
+        <div class="book-card-content">
+          <h3>Applied Physics 2nd</h3>
+          <p>Diploma Engineering Physics PDF</p>
+        </div>
+      </a>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="book-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
+        <div class="book-card-content">
+          <h3>Applied Mathematics 2nd</h3>
+          <p>Diploma Engineering Maths PDF</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="profilePage" class="page">
+    <div class="profile-box">
+      <div class="profile-avatar-wrapper">
+        <div class="profile-avatar" id="profileAvatarBox">
+          <i class="fas fa-user"></i>
+        </div>
+        <label for="profileImageInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;">
+          <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
+      </div>
+      
+      <h3 id="profileName" style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">Engineer</h3>
+      <p id="profileBranch" style="font-size: 12px; color: var(--muted-text); margin: 0;">Diploma Member</p>
+
+      <div class="profile-details" id="profileDisplayView">
+        <div class="profile-row"><span class="label">Full Name</span><span class="value" id="profileFullName">-</span></div>
+        <div class="profile-row"><span class="label">Email</span><span class="value" id="profileEmail">-</span></div>
+        <div class="profile-row"><span class="label">Mobile Number</span><span class="value" id="profileMobile">-</span></div>
+        <div class="profile-row"><span class="label">Engineering Branch</span><span class="value" id="profileBranchName">-</span></div>
+        <div class="profile-row"><span class="label">College Name</span><span class="value" id="profileCollege">-</span></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><span class="value" id="profileEnrollment">-</span></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><span class="value" id="profileSemester">-</span></div>
+        <div class="profile-row"><span class="label">Address</span><span class="value" id="profileAddress">-</span></div>
+      </div>
+
+      <div class="profile-details" id="profileEditView" style="display:none;">
+        <div class="profile-row"><span class="label">Full Name</span><input type="text" id="editName"></div>
+        <div class="profile-row"><span class="label">Mobile Number</span><input type="text" id="editMobile"></div>
+        <div class="profile-row"><span class="label">Engineering Branch</span>
+          <select id="editBranch">
             <option value="Civil Engineering">Civil Engineering</option>
-            <option value="Computer Science">Computer Science</option>
+            <option value="Computer Science Engineering">Computer Science Engineering</option>
             <option value="Electrical Engineering">Electrical Engineering</option>
             <option value="Electronics Engineering">Electronics Engineering</option>
             <option value="Mechanical Engineering">Mechanical Engineering</option>
             <option value="Information Technology">Information Technology</option>
+            <option value="Agriculture Engineering">Agriculture Engineering</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Mobile Number</label>
-          <input type="tel" id="mobile" placeholder="10 Digit Number">
-        </div>
+        <div class="profile-row"><span class="label">College Name</span><input type="text" id="editCollege" placeholder="Enter College Name"></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><input type="text" id="editEnrollment" placeholder="Enter Enrollment Number"></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><input type="text" id="editSemester" placeholder="e.g. 2nd Semester"></div>
+        <div class="profile-row"><span class="label">Address</span><input type="text" id="editAddress" placeholder="Enter Address"></div>
       </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="email" placeholder="name@example.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="••••••••">
-      </div>
-      <button class="btn" onclick="submitAuthForm()" id="submitBtnText">Login</button>
-      <button class="btn btn-google" onclick="googleLogin()">
-        <i class="fa-brands fa-google"></i> Continue with Google
-      </button>
-      <div class="switch-link" id="switchText" onclick="toggleForm()">New User? Register Here</div>
-    </div>
-  </div>
-
-  <!-- APPLICATION INTERFACE -->
-  <div id="app" style="display: none;">
-    <!-- HEADER -->
-    <header>
-      <div class="header-title-box">
-        <button class="back-btn" id="headerBackBtn" onclick="goBack()">
-          <i class="fa-solid fa-arrow-left"></i>
-        </button>
-        <h3 style="font-size: 18px;">Diploma Engineers</h3>
-      </div>
-      <button class="action-btn" onclick="logoutFirebase()">
-        <i class="fa-solid fa-right-from-bracket"></i> Logout
-      </button>
-    </header>
-
-    <!-- CONTENT PAGES CONTAINER -->
-    <div class="container">
       
-      <!-- HOME PAGE -->
-      <div id="homePage" class="page active-page">
-        <h2>Welcome Back, <span id="userName">Engineer</span> 👋</h2>
-        <p style="color: var(--muted-text); font-size: 14px;">Select a department or resources below</p>
-        
-        <div class="grid">
-          <div class="card" onclick="navigateTo('civil')">
-            <i class="fa-solid fa-building-columns"></i>
-            <h3>Civil Eng.</h3>
-          </div>
-          <div class="card" onclick="navigateTo('computer')">
-            <i class="fa-solid fa-laptop-code"></i>
-            <h3>CS & IT</h3>
-          </div>
-          <div class="card" onclick="navigateTo('electrical')">
-            <i class="fa-solid fa-bolt"></i>
-            <h3>Electrical</h3>
-          </div>
-          <div class="card" onclick="navigateTo('mechanical')">
-            <i class="fa-solid fa-gears"></i>
-            <h3>Mechanical</h3>
-          </div>
-          <div class="card" onclick="navigateTo('sem1')">
-            <i class="fa-solid fa-book-open"></i>
-            <h3>1st Semester</h3>
-          </div>
-          <div class="card" onclick="navigateTo('sem2')">
-            <i class="fa-solid fa-graduation-cap"></i>
-            <h3>2nd Semester</h3>
-          </div>
-          <div class="card" onclick="navigateTo('admitPage')">
-            <i class="fa-solid fa-id-card"></i>
-            <h3>Admit Card</h3>
-          </div>
-          <div class="card" onclick="navigateTo('resultPage')">
-            <i class="fa-solid fa-square-poll-vertical"></i>
-            <h3>Results</h3>
-          </div>
-        </div>
-      </div>
-
-      <!-- NEWS & UPDATES PAGE -->
-      <div id="newsPage" class="page">
-        <h2 style="margin-bottom: 15px;">Latest Board Updates</h2>
-        <div id="newsList">
-          <!-- News Content Loaded Dynamically -->
-        </div>
-      </div>
-
-      <!-- PROFILE PAGE -->
-      <div id="profilePage" class="page">
-        <div class="profile-card">
-          <div class="avatar-wrapper">
-            <div class="avatar-box" id="profileAvatarBox">
-              <i class="fas fa-user"></i>
-            </div>
-            <label for="imageUploadInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;">
-              <i class="fas fa-camera"></i>
-            </label>
-            <input type="file" id="imageUploadInput" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
-          </div>
-
-          <h3 id="profileName">Engineer Name</h3>
-          <p id="profileBranch" style="color: var(--muted-text); font-size: 13px;">Branch</p>
-
-          <button class="btn" id="profileToggleBtn" onclick="toggleProfileEditMode()" style="margin-top:15px;">Edit Profile</button>
-
-          <!-- DISPLAY VIEW -->
-          <div id="profileDisplayView" class="info-list">
-            <div class="info-item"><span>Full Name</span><span id="profileFullName">-</span></div>
-            <div class="info-item"><span>Email</span><span id="profileEmail">-</span></div>
-            <div class="info-item"><span>Mobile</span><span id="profileMobile">-</span></div>
-            <div class="info-item"><span>Branch</span><span id="profileBranchName">-</span></div>
-            <div class="info-item"><span>College</span><span id="profileCollege">-</span></div>
-            <div class="info-item"><span>Enrollment</span><span id="profileEnrollment">-</span></div>
-            <div class="info-item"><span>Semester</span><span id="profileSemester">-</span></div>
-            <div class="info-item"><span>Address</span><span id="profileAddress">-</span></div>
-          </div>
-
-          <!-- EDIT VIEW -->
-          <div id="profileEditView" style="display:none; text-align:left; margin-top:15px;">
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" id="editName">
-            </div>
-            <div class="form-group">
-              <label>Mobile Number</label>
-              <input type="text" id="editMobile">
-            </div>
-            <div class="form-group">
-              <label>Branch</label>
-              <select id="editBranch">
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
-                <option value="Electronics Engineering">Electronics Engineering</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Information Technology">Information Technology</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>College Name</label>
-              <input type="text" id="editCollege">
-            </div>
-            <div class="form-group">
-              <label>Enrollment No.</label>
-              <input type="text" id="editEnrollment">
-            </div>
-            <div class="form-group">
-              <label>Current Semester</label>
-              <input type="text" id="editSemester">
-            </div>
-            <div class="form-group">
-              <label>Address</label>
-              <input type="text" id="editAddress">
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- DYNAMIC BRANCH/PORTAL CONTAINERS -->
-      <div id="civil" class="page"></div>
-      <div id="computer" class="page"></div>
-      <div id="electrical" class="page"></div>
-      <div id="electronics" class="page"></div>
-      <div id="mechanical" class="page"></div>
-      <div id="it" class="page"></div>
-      <div id="agricultural" class="page"></div>
-      <div id="sem1" class="page"></div>
-      <div id="sem2" class="page"></div>
-      <div id="admitPage" class="page"></div>
-      <div id="resultPage" class="page"></div>
-      <div id="Semester-1-course" class="page"></div>
-      <div id="Civil-course" class="page"></div>
-      <div id="CS&IT-course" class="page"></div>
-      <div id="Mech&Electrical-course" class="page"></div>
-      <div id="PYQ-course" class="page"></div>
-
+      <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
+      <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
     </div>
-
-    <!-- BOTTOM NAVIGATION -->
-    <nav class="bottom-nav">
-      <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
-        <i class="fa-solid fa-house"></i>
-        <span>Home</span>
-      </button>
-      <button class="nav-link-btn" id="tab-newsPage" onclick="navigateTo('newsPage')">
-        <i class="fa-solid fa-newspaper"></i>
-        <span>Updates</span>
-      </button>
-      <button class="nav-link-btn" id="tab-profilePage" onclick="navigateTo('profilePage')">
-        <i class="fa-solid fa-user"></i>
-        <span>Profile</span>
-      </button>
-    </nav>
   </div>
 
-  <!-- FIREBASE & CORE APPLICATION SCRIPT -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, update, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <!-- COMMUNITY PAGE -->
+  <div id="communityPage" class="page">
+    <div class="section-title">Branch Groups</div>
+    <div class="grid-2">
+      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box">
+        <i class="fab fa-whatsapp"></i>
+        <p>WhatsApp Channel</p>
+      </a>
+      <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-telegram"></i>
+        <p>Telegram Channel</p>
+      </a>
+      <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-youtube"></i>
+        <p>YouTube Channel</p>
+      </a>
+      <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box">
+        <i class="fas fa-laptop-code"></i>
+        <p>CSE / IT Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box">
+        <i class="fas fa-bolt"></i>
+        <p>Electrical Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box">
+        <i class="fas fa-microchip"></i>
+        <p>Electronics Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box">
+        <i class="fas fa-building"></i>
+        <p>Civil Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box">
+        <i class="fas fa-cogs"></i>
+        <p>Mechanical Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box">
+        <i class="fas fa-seedling"></i>
+        <p>Agriculture Group</p>
+      </a>
+    </div>
+  </div>
 
-    /* LOADER TIMEOUT & ANIMATION */
-    document.addEventListener("DOMContentLoaded", function(){
-      const loader = document.getElementById("page-loader");
-      const bar = document.getElementById("progress-bar");
-      const percent = document.getElementById("progress-percent");
+  <!-- JOBS PAGE -->
+  <div id="jobPage" class="page">
+    <div class="section-title">Job Openings</div>
+    <div class="grid-2">
+      <div class="card-box" onclick="navigateTo('privatejob')"><i class="fas fa-building"></i><p>Private Jobs</p></div>
+      <div class="card-box" onclick="navigateTo('gov-job')"><i class="fas fa-briefcase"></i><p>Government Jobs</p></div>
+      <div class="card-box" onclick="navigateTo('apprenticeship')"><i class="fas fa-graduation-cap"></i><p>Apprenticeship</p></div>
+      <a href="https://internshala.com/" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>Internships</p></a>
+    </div>
+  </div>
 
-      let progress = 0;
-      document.body.style.overflow = "hidden";
+  <!-- PRIVATE JOBS -->
+  <div id="privatejob" class="page">
+    <div class="section-title">Private Jobs</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-building"></i><p><b>Construction</b><br><small>Civil/Mech • ₹15k-60k</small></p></div>
+      <div class="card-box"><i class="fas fa-industry"></i><p><b>Manufacturing</b><br><small>Mech/Elec • ₹12k-50k</small></p></div>
+    </div>
+  </div>
 
-      const timer = setInterval(function(){
-        progress += Math.floor(Math.random() * 5) + 2;
+  <!-- GOVT JOBS -->
+  <div id="gov-job" class="page">
+    <div class="section-title">Government Jobs</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-landmark"></i><p><b>SSC JE</b><br><small>Civil, Mech, Elec</small></p></div>
+      <div class="card-box"><i class="fas fa-train"></i><p><b>RRB JE</b><br><small>Railways Core Branches</small></p></div>
+    </div>
+  </div>
 
-        if(progress >= 100){
-          progress = 100;
-          clearInterval(timer);
+  <!-- APPRENTICESHIP -->
+  <div id="apprenticeship" class="page">
+    <div class="section-title">Apprenticeships</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-train"></i><p><b>Railway</b><br><small>Stipend: ₹8k - ₹15k</small></p></div>
+      <div class="card-box"><i class="fas fa-industry"></i><p><b>PSU Sector</b><br><small>Stipend: ₹10k - ₹18k</small></p></div>
+    </div>
+  </div>
 
-          if (bar) bar.style.width = progress + "%";
-          if (percent) percent.textContent = progress + "%";
+  <!-- FEEDBACK PAGE -->
+  <div id="feedbackPage" class="page">
+    <div class="premium-buy-card">
+      <h2 style="font-size:20px; font-weight:800;">
+        <i class="fas fa-comment-dots"></i> Send Feedback
+      </h2>
+      <p style="font-size:13px; color:var(--muted-text); margin-top:6px; line-height:1.6;">
+        Help us improve Diploma Engineers by sharing your valuable feedback.
+      </p>
 
-          setTimeout(function(){
-            if (loader) loader.classList.add("hide");
-            document.body.style.overflow = "";
-          }, 450);
+      <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST" style="margin-top:16px;">
+        <input type="hidden" name="_subject" value="New Feedback - Diploma Engineers">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" value="https://diplomaengineers.vercel.app/?feedback=success#feedbackPage">
 
-          return;
-        }
+        <input type="hidden" id="feedbackName" name="Name">
+        <input type="hidden" id="feedbackEmail" name="Email">
+        <input type="hidden" id="feedbackBranch" name="Branch">
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <select name="Rating" required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; font-family:inherit; font-size:13px; background:white;">
+            <option value="">Select Rating</option>
+            <option value="5 - Excellent">★★★★★ Excellent</option>
+            <option value="4 - Very Good">★★★★ Very Good</option>
+            <option value="3 - Good">★★★ Good</option>
+            <option value="2 - Need Improvement">★★ Need Improvement</option>
+            <option value="1 - Poor">★ Poor</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <textarea name="Feedback" rows="5" placeholder="Write your feedback..." required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; resize:vertical; font-family:inherit; font-size:13px;"></textarea>
+        </div>
+
+        <button type="submit" class="btn-main" style="width:100%;">
+          <i class="fas fa-paper-plane"></i> Send Feedback
+        </button>
+      </form>
+
+      <!-- THANK YOU MESSAGE -->
+      <div id="feedbackThanks" style="display:none; margin-top:16px; padding:14px; border-radius:12px; background:#ecfdf5; border:1px solid #bbf7d0; color:#15803d; text-align:center; font-size:14px; font-weight:700;">
+        <i class="fas fa-check-circle"></i> Thanks for your Feedback!<br>
+        <span style="font-size:12px;font-weight:500;">Your feedback has been received successfully.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <div class="bottom-nav">
+    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
+      <i class="fas fa-home"></i>Home
+    </button>
+    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
+      <i class="fas fa-code-branch"></i>Branch
+    </button>
+    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
+      <i class="fas fa-book"></i>Books
+    </button>
+    <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')">
+      <i class="fas fa-graduation-cap"></i>Courses
+    </button>
+    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')">
+      <i class="fas fa-comment-dots"></i>Feedback
+    </button>
+  </div>
+
+</div>
+
+<!-- FIREBASE & CORE APPLICATION SCRIPT -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, update, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  /* LOADER TIMEOUT & ANIMATION */
+  document.addEventListener("DOMContentLoaded", function(){
+    const loader = document.getElementById("page-loader");
+    const bar = document.getElementById("progress-bar");
+    const percent = document.getElementById("progress-percent");
+
+    let progress = 0;
+    document.body.style.overflow = "hidden";
+
+    const timer = setInterval(function(){
+      progress += Math.floor(Math.random() * 5) + 2;
+
+      if(progress >= 100){
+        progress = 100;
+        clearInterval(timer);
 
         if (bar) bar.style.width = progress + "%";
         if (percent) percent.textContent = progress + "%";
-      }, 45);
-    });
 
-    setTimeout(function(){
-      const loader = document.getElementById("page-loader");
-      if(loader && !loader.classList.contains("hide")){
-        loader.classList.add("hide");
-        document.body.style.overflow = "";
-      }
-    }, 5000);
+        setTimeout(function(){
+          if (loader) loader.classList.add("hide");
+          document.body.style.overflow = "";
+        }, 450);
 
-    /* FIREBASE CONFIGS */
-    const firebaseConfig = {
-      apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-      authDomain: "diploma-app-9a378.firebaseapp.com",
-      databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-      projectId: "diploma-app-9a378",
-      storageBucket: "diploma-app-9a378.firebasestorage.app",
-      messagingSenderId: "160233059797",
-      appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
-    };
-
-    const newsFirebaseConfig = {
-      apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-      authDomain: "diplomaengineers-869df.firebaseapp.com",
-      databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-      projectId: "diplomaengineers-869df",
-      storageBucket: "diplomaengineers-869df.appspot.com",
-      messagingSenderId: "356779436080",
-      appId: "1:356779436080:web:4b28da380e547420d0e5f5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const provider = new GoogleAuthProvider();
-
-    const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
-    const newsDb = getDatabase(newsApp);
-
-    let isRegister = false;
-    let isEditingProfile = false;
-    let currentUserData = {};
-    const defaultPage = "homePage";
-    const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 'Semester-1-course', 'Civil-course', 'CS&IT-course', 'Mech&Electrical-course', 'PYQ-course'];
-
-    /* ROUTER & NAVIGATION SYSTEM */
-    window.navigateTo = function(pageId, pushToHistory = true) {
-      if (externalBranches.includes(pageId)) {
-        loadPortalFromFile(pageId);
-      }
-      renderPageUI(pageId);
-      if (pushToHistory) {
-        history.pushState({ pageId: pageId }, "", "#" + pageId);
-      }
-    };
-
-    window.goBack = function() {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        navigateTo("homePage", false);
-      }
-    };
-
-    window.addEventListener("popstate", (e) => {
-      const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
-      if (externalBranches.includes(pageId)) {
-        loadPortalFromFile(pageId);
-      }
-      renderPageUI(pageId);
-    });
-
-    function renderPageUI(targetPage) {
-      const pages = document.querySelectorAll(".page");
-      pages.forEach(p => p.classList.remove("active-page"));
-
-      const activeEl = document.getElementById(targetPage);
-      if (activeEl) {
-        activeEl.classList.add("active-page");
-      } else {
-        document.getElementById(defaultPage).classList.add("active-page");
-      }
-
-      const backBtn = document.getElementById("headerBackBtn");
-      if (backBtn) {
-        backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
-      }
-
-      const navBtns = document.querySelectorAll(".bottom-nav .nav-link-btn");
-      navBtns.forEach(btn => btn.classList.remove("active"));
-      const activeTab = document.getElementById("tab-" + targetPage);
-      if (activeTab) {
-        activeTab.classList.add("active");
-      }
-
-      window.scrollTo(0, 0);
-    }
-
-    window.toggleForm = function() {
-      isRegister = !isRegister;
-      document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
-      document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
-      document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
-      document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
-    };
-
-    window.submitAuthForm = async function() {
-      let email = document.getElementById("email").value.trim();
-      let password = document.getElementById("password").value.trim();
-      
-      if (!email || !password) {
-        alert("Please enter Email and Password");
         return;
       }
 
-      try {
-        if (isRegister) {
-          let name = document.getElementById("name").value.trim();
-          let branch = document.getElementById("branch").value;
-          let mobile = document.getElementById("mobile").value.trim();
-          
-          if (!name || !mobile) {
-            alert("Please fill all details");
-            return;
-          }
+      if (bar) bar.style.width = progress + "%";
+      if (percent) percent.textContent = progress + "%";
+    }, 45);
+  });
 
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          await set(ref(db, "users/" + cred.user.uid), { 
-            name, email, branch, mobile, 
-            college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-          });
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
-      } catch (e) {
-        alert("Auth Error: " + e.message);
-      }
-    };
+  setTimeout(function(){
+    const loader = document.getElementById("page-loader");
+    if(loader && !loader.classList.contains("hide")){
+      loader.classList.add("hide");
+      document.body.style.overflow = "";
+    }
+  }, 5000);
 
-    window.googleLogin = async function() {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
-        if (!snapshot.exists()) {
-          await set(ref(db, "users/" + result.user.uid), {
-            name: result.user.displayName || "Google User",
-            email: result.user.email,
-            branch: "Civil Engineering",
-            mobile: "N/A",
-            college: "", enrollment: "", address: "", semester: "", profilePic: ""
-          });
-        }
-      } catch (e) {
-        alert("Google Login Error: " + e.message);
-      }
-    };
+  /* FIREBASE CONFIGS */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+    authDomain: "diploma-app-9a378.firebaseapp.com",
+    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+    projectId: "diploma-app-9a378",
+    storageBucket: "diploma-app-9a378.firebasestorage.app",
+    messagingSenderId: "160233059797",
+    appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
+  };
 
-    window.logoutFirebase = function() {
-      signOut(auth);
-    };
+  const newsFirebaseConfig = {
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+  };
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const snapshot = await get(child(ref(db), `users/${user.uid}`));
-        currentUserData = snapshot.exists() ? snapshot.val() : { 
-          name: user.displayName || "Engineer", 
-          email: user.email, 
-          branch: "Diploma Member", 
-          mobile: "N/A",
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-        };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const provider = new GoogleAuthProvider();
+
+  const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
+  const newsDb = getDatabase(newsApp);
+
+  let isRegister = false;
+  let isEditingProfile = false;
+  let currentUserData = {};
+  const defaultPage = "homePage";
+  const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 'Semester-1-course', 'Civil-course', 'CS&IT-course', 'Mech&Electrical-course', 'PYQ-course'];
+
+  /* ROUTER & NAVIGATION SYSTEM */
+  window.navigateTo = function(pageId, pushToHistory = true) {
+    if (externalBranches.includes(pageId)) {
+      loadPortalFromFile(pageId);
+    }
+    renderPageUI(pageId);
+    if (pushToHistory) {
+      history.pushState({ pageId: pageId }, "", "#" + pageId);
+    }
+  };
+
+  window.goBack = function() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigateTo("homePage", false);
+    }
+  };
+
+  window.addEventListener("popstate", (e) => {
+    const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
+    if (externalBranches.includes(pageId)) {
+      loadPortalFromFile(pageId);
+    }
+    renderPageUI(pageId);
+  });
+
+  function renderPageUI(targetPage) {
+    const pages = document.querySelectorAll(".page");
+    pages.forEach(p => p.classList.remove("active-page"));
+
+    const activeEl = document.getElementById(targetPage);
+    if (activeEl) {
+      activeEl.classList.add("active-page");
+    } else {
+      document.getElementById(defaultPage).classList.add("active-page");
+    }
+
+    const backBtn = document.getElementById("headerBackBtn");
+    if (backBtn) {
+      backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
+    }
+
+    const navBtns = document.querySelectorAll(".bottom-nav .nav-link-btn");
+    navBtns.forEach(btn => btn.classList.remove("active"));
+    const activeTab = document.getElementById("tab-" + targetPage);
+    if (activeTab) {
+      activeTab.classList.add("active");
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  window.toggleForm = function() {
+    isRegister = !isRegister;
+    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
+    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
+    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
+    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
+  };
+
+  window.submitAuthForm = async function() {
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value.trim();
+    
+    if (!email || !password) {
+      alert("Please enter Email and Password");
+      return;
+    }
+
+    try {
+      if (isRegister) {
+        let name = document.getElementById("name").value.trim();
+        let branch = document.getElementById("branch").value;
+        let mobile = document.getElementById("mobile").value.trim();
         
-        updateProfileUI(currentUserData);
-
-        document.getElementById("authPage").style.display = "none";
-        document.getElementById("app").style.display = "block";
-
-        const initialHash = window.location.hash.substring(1);
-        const targetPage = initialHash || defaultPage;
-        if (externalBranches.includes(targetPage)) {
-          loadPortalFromFile(targetPage);
-        }
-        history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
-        renderPageUI(targetPage);
-        loadNewsData();
-      } else {
-        document.getElementById("app").style.display = "none";
-        document.getElementById("authPage").style.display = "flex";
-      }
-    });
-
-    function updateProfileUI(data) {
-      document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-      document.getElementById("profileName").innerText = data.name || "Engineer";
-      document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
-      
-      document.getElementById("profileFullName").innerText = data.name || "-";
-      document.getElementById("profileEmail").innerText = data.email || "-";
-      document.getElementById("profileMobile").innerText = data.mobile || "-";
-      document.getElementById("profileBranchName").innerText = data.branch || "-";
-      document.getElementById("profileCollege").innerText = data.college || "-";
-      document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
-      document.getElementById("profileSemester").innerText = data.semester || "-";
-      document.getElementById("profileAddress").innerText = data.address || "-";
-
-      const avatarBox = document.getElementById("profileAvatarBox");
-      if (data.profilePic) {
-        avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
-      } else {
-        avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
-      }
-
-      const nameField = document.getElementById("feedbackName");
-      const emailField = document.getElementById("feedbackEmail");
-      const branchField = document.getElementById("feedbackBranch");
-
-      if (nameField) nameField.value = data.name || "";
-      if (emailField) emailField.value = data.email || "";
-      if (branchField) branchField.value = data.branch || "Diploma Member";
-    }
-
-    window.toggleProfileEditMode = async function() {
-      const displayView = document.getElementById("profileDisplayView");
-      const editView = document.getElementById("profileEditView");
-      const toggleBtn = document.getElementById("profileToggleBtn");
-      const uploadBtn = document.getElementById("uploadIconBtn");
-
-      isEditingProfile = !isEditingProfile;
-
-      if (isEditingProfile) {
-        document.getElementById("editName").value = currentUserData.name || "";
-        document.getElementById("editMobile").value = currentUserData.mobile || "";
-        document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
-        document.getElementById("editCollege").value = currentUserData.college || "";
-        document.getElementById("editEnrollment").value = currentUserData.enrollment || "";
-        document.getElementById("editSemester").value = currentUserData.semester || "";
-        document.getElementById("editAddress").value = currentUserData.address || "";
-
-        displayView.style.display = "none";
-        editView.style.display = "block";
-        uploadBtn.style.display = "flex";
-        toggleBtn.innerText = "Save Changes";
-        toggleBtn.style.background = "#16a34a";
-      } else {
-        const updatedData = {
-          name: document.getElementById("editName").value.trim(),
-          mobile: document.getElementById("editMobile").value.trim(),
-          branch: document.getElementById("editBranch").value,
-          college: document.getElementById("editCollege").value.trim(),
-          enrollment: document.getElementById("editEnrollment").value.trim(),
-          semester: document.getElementById("editSemester").value.trim(),
-          address: document.getElementById("editAddress").value.trim()
-        };
-
-        const user = auth.currentUser;
-        if (user) {
-          try {
-            await update(ref(db, "users/" + user.uid), updatedData);
-            currentUserData = { ...currentUserData, ...updatedData };
-            updateProfileUI(currentUserData);
-            alert("Profile updated successfully!");
-          } catch (e) {
-            alert("Error updating profile: " + e.message);
-          }
-        }
-
-        displayView.style.display = "block";
-        editView.style.display = "none";
-        uploadBtn.style.display = "none";
-        toggleBtn.innerText = "Edit Profile";
-        toggleBtn.style.background = "";
-      }
-    };
-
-    /* FIXED CLOUDINARY UPLOAD FUNCTION */
-    window.uploadProfileImage = async function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "mypreset");
-
-      const avatarBox = document.getElementById("profileAvatarBox");
-      avatarBox.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-
-      try {
-        const response = await fetch("https://api.cloudinary.com/v1_1/ddxfmmfko/image/upload", {
-          method: "POST",
-          body: formData
-        });
-        const data = await response.json();
-        
-        if (data.secure_url) {
-          const imageUrl = data.secure_url;
-          const user = auth.currentUser;
-          if (user) {
-            await update(ref(db, "users/" + user.uid), { profilePic: imageUrl });
-            currentUserData.profilePic = imageUrl;
-            updateProfileUI(currentUserData);
-            alert("Profile picture uploaded successfully!");
-          }
-        } else {
-          throw new Error(data.error?.message || "Cloudinary upload failed");
-        }
-      } catch (err) {
-        alert("Image Upload Error: " + err.message);
-        updateProfileUI(currentUserData);
-      }
-    };
-
-    function escapeHTML(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function validURL(value) {
-      try {
-        const url = new URL(value);
-        return (url.protocol === "http:" || url.protocol === "https:");
-      } catch {
-        return false;
-      }
-    }
-
-    function loadNewsData() {
-      const newsList = document.getElementById("newsList");
-      if (!newsList) return;
-      const newsRef = ref(newsDb, "news");
-
-      onValue(newsRef, snapshot => {
-        newsList.innerHTML = "";
-
-        if (!snapshot.exists()) {
-          newsList.innerHTML = `
-            <div style="text-align:center; padding: 30px; color: var(--muted-text);">
-              <i class="fa-regular fa-newspaper" style="font-size:32px;"></i>
-              <p style="margin-top: 10px;">No news or updates available.</p>
-            </div>
-          `;
+        if (!name || !mobile) {
+          alert("Please fill all details");
           return;
         }
 
-        const newsArray = [];
-        snapshot.forEach(child => {
-          newsArray.push({
-            id: child.key,
-            data: child.val() || {}
-          });
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await set(ref(db, "users/" + cred.user.uid), { 
+          name, email, branch, mobile, 
+          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
         });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (e) {
+      alert("Auth Error: " + e.message);
+    }
+  };
 
-        newsArray.reverse();
-        newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
-      }, error => {
-        console.error(error);
-        newsList.innerHTML = `
-          <div style="text-align:center; padding:20px; color:#ef4444;">
-            <p>Failed to load notifications. Please try again.</p>
-          </div>
-        `;
-      });
+  window.googleLogin = async function() {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
+      if (!snapshot.exists()) {
+        await set(ref(db, "users/" + result.user.uid), {
+          name: result.user.displayName || "Google User",
+          email: result.user.email,
+          branch: "Civil Engineering",
+          mobile: "N/A",
+          college: "", enrollment: "", address: "", semester: "", profilePic: ""
+        });
+      }
+    } catch (e) {
+      alert("Google Login Error: " + e.message);
+    }
+  };
+
+  window.logoutFirebase = function() {
+    signOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const snapshot = await get(child(ref(db), `users/${user.uid}`));
+      currentUserData = snapshot.exists() ? snapshot.val() : { 
+        name: user.displayName || "Engineer", 
+        email: user.email, 
+        branch: "Diploma Member", 
+        mobile: "N/A",
+        college: "", enrollment: "", address: "", semester: "", profilePic: "" 
+      };
+      
+      updateProfileUI(currentUserData);
+
+      document.getElementById("authPage").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
+      const initialHash = window.location.hash.substring(1);
+      const targetPage = initialHash || defaultPage;
+      if (externalBranches.includes(targetPage)) {
+        loadPortalFromFile(targetPage);
+      }
+      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+      renderPageUI(targetPage);
+      loadNewsData();
+    } else {
+      document.getElementById("app").style.display = "none";
+      document.getElementById("authPage").style.display = "flex";
+    }
+  });
+
+  function updateProfileUI(data) {
+    document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
+    document.getElementById("profileName").innerText = data.name || "Engineer";
+    document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+    
+    document.getElementById("profileFullName").innerText = data.name || "-";
+    document.getElementById("profileEmail").innerText = data.email || "-";
+    document.getElementById("profileMobile").innerText = data.mobile || "-";
+    document.getElementById("profileBranchName").innerText = data.branch || "-";
+    document.getElementById("profileCollege").innerText = data.college || "-";
+    document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
+    document.getElementById("profileSemester").innerText = data.semester || "-";
+    document.getElementById("profileAddress").innerText = data.address || "-";
+
+    const avatarBox = document.getElementById("profileAvatarBox");
+    if (data.profilePic) {
+      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
+    } else {
+      avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
     }
 
-    function createNewsCard(id, n, container) {
-      const title = n.title || "Untitled News";
-      const description = n.text || n.desc || n.description || "";
-      const category = n.cat || n.category || "NOTIFICATION";
-      const date = n.date || "Recent";
-      const image = n.thumb || n.image || n.thumbnail || "";
-      const externalLink = n.link || n.pdf || n.fileUrl || "";
+    const nameField = document.getElementById("feedbackName");
+    const emailField = document.getElementById("feedbackEmail");
+    const branchField = document.getElementById("feedbackBranch");
 
-      const card = document.createElement("article");
-      card.className = "news-card";
-      card.id = `card-${id}`;
+    if (nameField) nameField.value = data.name || "";
+    if (emailField) emailField.value = data.email || "";
+    if (branchField) branchField.value = data.branch || "Diploma Member";
+  }
 
-      let actionTarget = externalLink && validURL(externalLink) ? 
-        `<a href="${escapeHTML(externalLink)}" target="_blank" class="action-btn">View News <i class="fa-solid fa-arrow-right"></i></a>` : 
-        `<button class="action-btn" onclick="toggleDetails('${id}')">Read More <i class="fa-solid fa-chevron-down"></i></button>`;
+  window.toggleProfileEditMode = async function() {
+    const displayView = document.getElementById("profileDisplayView");
+    const editView = document.getElementById("profileEditView");
+    const toggleBtn = document.getElementById("profileToggleBtn");
+    const uploadBtn = document.getElementById("uploadIconBtn");
 
-      card.innerHTML = `
-        <span class="category">${escapeHTML(category)}</span>
-        
-        <h2 class="news-title">
-          <i class="fa-solid fa-square-check" style="color:var(--primary);"></i>
-          ${escapeHTML(title)}
-        </h2>
+    isEditingProfile = !isEditingProfile;
 
-        <p class="news-description">${escapeHTML(description)}</p>
+    if (isEditingProfile) {
+      document.getElementById("editName").value = currentUserData.name || "";
+      document.getElementById("editMobile").value = currentUserData.mobile || "";
+      document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
+      document.getElementById("editCollege").value = currentUserData.college || "";
+      document.getElementById("editEnrollment").value = currentUserData.enrollment || "";
+      document.getElementById("editSemester").value = currentUserData.semester || "";
+      document.getElementById("editAddress").value = currentUserData.address || "";
 
-        <div class="card-footer">
-          <div class="news-date">
-            <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
-          </div>
-          <div class="action-links">
-            <button class="action-btn" onclick="toggleDetails('${id}')">
-              <i class="fa-solid fa-share-nodes"></i> Share
-            </button>
-            ${actionTarget}
-          </div>
-        </div>
+      displayView.style.display = "none";
+      editView.style.display = "block";
+      uploadBtn.style.display = "flex";
+      toggleBtn.innerText = "Save Changes";
+      toggleBtn.style.background = "#16a34a";
+    } else {
+      const updatedData = {
+        name: document.getElementById("editName").value.trim(),
+        mobile: document.getElementById("editMobile").value.trim(),
+        branch: document.getElementById("editBranch").value,
+        college: document.getElementById("editCollege").value.trim(),
+        enrollment: document.getElementById("editEnrollment").value.trim(),
+        semester: document.getElementById("editSemester").value.trim(),
+        address: document.getElementById("editAddress").value.trim()
+      };
 
-        <div class="expandable-panel" id="panel-${id}">
-          ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
-          <div class="full-desc" style="font-size:13px; color:var(--text); margin-bottom:10px;">${escapeHTML(description)}</div>
-          
-          <div class="share-grid">
-            <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
-              <i class="fa-brands fa-whatsapp"></i> WhatsApp
-            </button>
-            <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
-              <i class="fa-brands fa-telegram"></i> Telegram
-            </button>
-            <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
-              <i class="fa-regular fa-copy"></i> Copy
-            </button>
-          </div>
-        </div>
-      `;
-
-      container.appendChild(card);
-    }
-
-    window.toggleDetails = function(id) {
-      const panel = document.getElementById(`panel-${id}`);
-      if (panel) {
-        panel.classList.toggle("active");
-      }
-    };
-
-    window.shareWhatsApp = function(title, id) {
-      const url = window.location.href.split('#')[0] + '#card-' + id;
-      const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
-      window.open(`https://wa.me/?text=${text}`, '_blank');
-    };
-
-    window.shareTelegram = function(title, id) {
-      const url = window.location.href.split('#')[0] + '#card-' + id;
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
-    };
-
-    window.copyLink = async function(title, id) {
-      const url = window.location.href.split('#')[0] + '#card-' + id;
-      try {
-        await navigator.clipboard.writeText(`${title} - ${url}`);
-        alert("Link Copied!");
-      } catch (err) {
-        prompt("Copy Link:", url);
-      }
-    };
-
-    /* DYNAMIC HTML & SCRIPT FETCHING LOADER */
-    async function loadPortalFromFile(portalId) {
-      const container = document.getElementById(portalId);
-      if (!container) return;
-
-      if (container.dataset.loaded === "true") return;
-
-      container.innerHTML = `
-        <div style="text-align:center; padding: 40px 20px; color: var(--muted-text);">
-          <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i>
-          <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
-        </div>`;
-
-      let fileName = `${portalId}.html`;
-      if (portalId === 'sem1') fileName = '1st-sem.html';
-      if (portalId === 'sem2') fileName = '2nd-sem.html';
-      if (portalId === 'admitPage') fileName = 'admitcard.html';
-      if (portalId === 'resultPage') fileName = 'result.html';
-
-      /* COURSE DETAIL FILES */
-      if (portalId === 'Semester-1-course') fileName = 'Semester-1-course.html';
-      if (portalId === 'Civil-course') fileName = 'Civil-course.html';
-      if (portalId === 'CS&IT-course') fileName = 'CS&IT-course.html';
-      if (portalId === 'Mech&Electrical-course') fileName = 'Mech&Electrical-course.html';
-      if (portalId === 'PYQ-course') fileName = 'PYQ-course.html';
-
-      try {
-        const response = await fetch(fileName);
-        if (!response.ok) throw new Error(`File ${fileName} not found`);
-        
-        const htmlText = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, "text/html");
-
-        doc.querySelectorAll("link[rel='stylesheet'], style").forEach(node => {
-          document.head.appendChild(node.cloneNode(true));
-        });
-
-        container.innerHTML = doc.body ? doc.body.innerHTML : htmlText;
-        container.dataset.loaded = "true";
-
-        const scripts = doc.querySelectorAll("script");
-        scripts.forEach(script => {
-          const newScript = document.createElement("script");
-          if (script.src) {
-            newScript.src = script.src;
-          } else {
-            newScript.textContent = script.textContent;
-          }
-          document.body.appendChild(newScript);
-        });
-
-      } catch (err) {
-        if (portalId === 'sem1' || portalId === 'sem2') {
-          renderDefaultSemLayout(container, portalId);
-        } else if (portalId === 'admitPage') {
-          renderDefaultAdmitLayout(container);
-        } else if (portalId === 'resultPage') {
-          renderDefaultResultLayout(container);
-        } else if (
-          portalId === 'Semester-1-course' ||
-          portalId === 'Civil-course' ||
-          portalId === 'CS&IT-course' ||
-          portalId === 'Mech&Electrical-course' ||
-          portalId === 'PYQ-course'
-        ) {
-          container.innerHTML = `
-            <div style="background:#fff; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
-              <h3 style="color:#ef4444;">Course File Not Found</h3>
-              <p style="margin-top:8px; font-size:14px;">Please make sure <b>${fileName}</b> is uploaded in the root folder alongside this index file.</p>
-            </div>`;
-        } else {
-          renderDefaultBranchLayout(container, portalId);
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await update(ref(db, "users/" + user.uid), updatedData);
+          currentUserData = { ...currentUserData, ...updatedData };
+          updateProfileUI(currentUserData);
+          alert("Profile updated successfully!");
+        } catch (e) {
+          alert("Error updating profile: " + e.message);
         }
       }
-    }
 
-    function renderDefaultSemLayout(container, semId) {
-      const title = semId === 'sem1' ? '1st Semester (Common)' : '2nd Semester (Common)';
-      container.innerHTML = `
-        <div style="background:#fff; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
-          <h3>${title}</h3>
-          <p style="margin-top:8px; font-size:14px; color:var(--muted-text);">Dynamic syllabus & notes for ${title} will be populated here.</p>
-        </div>`;
-      container.dataset.loaded = "true";
+      displayView.style.display = "block";
+      editView.style.display = "none";
+      uploadBtn.style.display = "none";
+      toggleBtn.innerText = "Edit Profile";
+      toggleBtn.style.background = "";
     }
+  };
 
-    function renderDefaultAdmitLayout(container) {
-      container.innerHTML = `
-        <div style="background:#fff; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
-          <h3>Admit Card Portal</h3>
-          <p style="margin-top:8px; font-size:14px; color:var(--muted-text);">BTEUP & Board Admit Cards links and updates.</p>
-        </div>`;
-      container.dataset.loaded = "true";
-    }
+  window.uploadProfileImage = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    function renderDefaultResultLayout(container) {
-      container.innerHTML = `
-        <div style="background:#fff; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
-          <h3>Result Portal</h3>
-          <p style="margin-top:8px; font-size:14px; color:var(--muted-text);">Check BTEUP Diploma Semester examination results here.</p>
-        </div>`;
-      container.dataset.loaded = "true";
-    }
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "news_upload");
 
-    function renderDefaultBranchLayout(container, branchId) {
-      container.innerHTML = `
-        <div style="background:#fff; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
-          <h3>${branchId.toUpperCase()} Notes</h3>
-          <p style="margin-top:8px; font-size:14px; color:var(--muted-text);">Handwritten & Printed notes for ${branchId.toUpperCase()}.</p>
-        </div>`;
-      container.dataset.loaded = "true";
+    const avatarBox = document.getElementById("profileAvatarBox");
+    avatarBox.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+
+    try {
+      const response = await fetch("https://api.cloudinary.com/v1_1/ub0qgzwa/auto/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      
+      if (data.secure_url) {
+        const imageUrl = data.secure_url;
+        const user = auth.currentUser;
+        if (user) {
+          await update(ref(db, "users/" + user.uid), { profilePic: imageUrl });
+          currentUserData.profilePic = imageUrl;
+          updateProfileUI(currentUserData);
+          alert("Profile picture uploaded successfully!");
+        }
+      } else {
+        throw new Error("Cloudinary upload failed");
+      }
+    } catch (err) {
+      alert("Image Upload Error: " + err.message);
+      updateProfileUI(currentUserData);
     }
-  </script>
+  };
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function validURL(value) {
+    try {
+      const url = new URL(value);
+      return (url.protocol === "http:" || url.protocol === "https:");
+    } catch {
+      return false;
+    }
+  }
+
+  function loadNewsData() {
+    const newsList = document.getElementById("newsList");
+    if (!newsList) return;
+    const newsRef = ref(newsDb, "news");
+
+    onValue(newsRef, snapshot => {
+      newsList.innerHTML = "";
+
+      if (!snapshot.exists()) {
+        newsList.innerHTML = `
+          <div class="empty">
+            <i class="fa-regular fa-newspaper" style="font-size:32px;"></i>
+            <p>No news or updates available.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const newsArray = [];
+      snapshot.forEach(child => {
+        newsArray.push({
+          id: child.key,
+          data: child.val() || {}
+        });
+      });
+
+      newsArray.reverse();
+      newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
+    }, error => {
+      console.error(error);
+      newsList.innerHTML = `
+        <div class="error-box">
+          <p>Failed to load notifications. Please try again.</p>
+        </div>
+      `;
+    });
+  }
+
+  function createNewsCard(id, n, container) {
+    const title = n.title || "Untitled News";
+    const description = n.text || n.desc || n.description || "";
+    const category = n.cat || n.category || "NOTIFICATION";
+    const date = n.date || "Recent";
+    const image = n.thumb || n.image || n.thumbnail || "";
+    const externalLink = n.link || n.pdf || n.fileUrl || "";
+
+    const card = document.createElement("article");
+    card.className = "news-card";
+    card.id = `card-${id}`;
+
+    let actionTarget = externalLink && validURL(externalLink) ? 
+      `<a href="${escapeHTML(externalLink)}" target="_blank" class="action-btn">View News <i class="fa-solid fa-arrow-right"></i></a>` : 
+      `<button class="action-btn" onclick="toggleDetails('${id}')">Read More <i class="fa-solid fa-chevron-down"></i></button>`;
+
+    card.innerHTML = `
+      <span class="category">${escapeHTML(category)}</span>
+      
+      <h2 class="news-title">
+        <i class="fa-solid fa-square-check"></i>
+        ${escapeHTML(title)}
+      </h2>
+
+      <p class="news-description">${escapeHTML(description)}</p>
+
+      <div class="card-footer">
+        <div class="news-date">
+          <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
+        </div>
+        <div class="action-links">
+          <button class="action-btn" onclick="toggleDetails('${id}')">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+          ${actionTarget}
+        </div>
+      </div>
+
+      <div class="expandable-panel" id="panel-${id}">
+        ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
+        <div class="full-desc">${escapeHTML(description)}</div>
+        
+        <div class="share-grid">
+          <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </button>
+          <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </button>
+          <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  }
+
+  window.toggleDetails = function(id) {
+    const panel = document.getElementById(`panel-${id}`);
+    if (panel) {
+      panel.classList.toggle("active");
+    }
+  };
+
+  window.shareWhatsApp = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  window.shareTelegram = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+  };
+
+  window.copyLink = async function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    try {
+      await navigator.clipboard.writeText(`${title} - ${url}`);
+      alert("Link Copied!");
+    } catch (err) {
+      prompt("Copy Link:", url);
+    }
+  };
+
+  /* DYNAMIC HTML & SCRIPT FETCHING LOADER */
+  async function loadPortalFromFile(portalId) {
+    const container = document.getElementById(portalId);
+    if (!container) return;
+
+    if (container.dataset.loaded === "true") return;
+
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px 20px; color: var(--muted-text);">
+        <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i>
+        <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
+      </div>`;
+
+    let fileName = `${portalId}.html`;
+    if (portalId === 'sem1') fileName = '1st-sem.html';
+    if (portalId === 'sem2') fileName = '2nd-sem.html';
+    if (portalId === 'admitPage') fileName = 'admitcard.html';
+    if (portalId === 'resultPage') fileName = 'result.html';
+
+    /* COURSE DETAIL FILES */
+    if (portalId === 'Semester-1-course') fileName = 'Semester-1-course.html';
+    if (portalId === 'Civil-course') fileName = 'Civil-course.html';
+    if (portalId === 'CS&IT-course') fileName = 'CS&IT-course.html';
+    if (portalId === 'Mech&Electrical-course') fileName = 'Mech&Electrical-course.html';
+    if (portalId === 'PYQ-course') fileName = 'PYQ-course.html';
+
+    try {
+      const response = await fetch(fileName);
+      if (!response.ok) throw new Error(`File ${fileName} not found`);
+      
+      const htmlText = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, "text/html");
+
+      // Inject stylesheets if present in external doc
+      doc.querySelectorAll("link[rel='stylesheet'], style").forEach(node => {
+        document.head.appendChild(node.cloneNode(true));
+      });
+
+      // Insert main HTML content body
+      container.innerHTML = doc.body ? doc.body.innerHTML : htmlText;
+      container.dataset.loaded = "true";
+
+      // Re-execute all embedded script tags for interactivity
+      const scripts = doc.querySelectorAll("script");
+      scripts.forEach(script => {
+        const newScript = document.createElement("script");
+        if (script.src) {
+          newScript.src = script.src;
+        } else {
+          newScript.textContent = script.textContent;
+        }
+        document.body.appendChild(newScript);
+      });
+
+    } catch (err) {
+      if (portalId === 'sem1' || portalId === 'sem2') {
+        renderDefaultSemLayout(container, portalId);
+      } else if (portalId === 'admitPage') {
+        renderDefaultAdmitLayout(container);
+      } else if (portalId === 'resultPage') {
+        renderDefaultResultLayout(container);
+      } else if (
+        portalId === 'Semester-1-course' ||
+        portalId === 'Civil-course' ||
+        portalId === 'CS&IT-course' ||
+        portalId === 'Mech&Electrical-course' ||
+        portalId === 'PYQ-course'
+      ) {
+        container.innerHTML = `
+          <div class="notice">
+            <h5>Course Not Found</h5>
+            <p>Please make sure <b>${fileName}</b> is uploaded in the root folder alongside this index file.</p>
+          </div>`;
+      } else {
+        renderDefaultBranchLayout(container, portalId);
+      }
+    }
+  }
+
+  function renderDefaultSemLayout(container, semId) {
+    const title = semId === 'sem1' ? '1st Semester (Common)' : '2nd Semester (Common)';
+    container.innerHTML = `
+      <div class="section-title">${title}</div>
+      <div class="notice">
+        <h5>Semester Study Material</h5>
+        <p>Dynamic syllabus & notes for ${title} will be populated here.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  function renderDefaultAdmitLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Admit Card Portal</div>
+      <div class="notice">
+        <h5>Admit Card Portal</h5>
+        <p>BTEUP & Board Admit Cards links and updates.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  function renderDefaultResultLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Result Portal</div>
+      <div class="notice">
+        <h5>Semester Results</h5>
+        <p>Check BTEUP Diploma Semester examination results here.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  function renderDefaultBranchLayout(container, branchId) {
+    container.innerHTML = `
+      <div class="section-title">${branchId.toUpperCase()} Notes</div>
+      <div class="notice">
+        <h5>Study Material</h5>
+        <p>Handwritten & Printed notes for ${branchId.toUpperCase()}.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+</script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -787,6 +788,125 @@ body {
   .course-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+.card-header {
+  padding: 18px;
+  color: #ffffff;
+  position: relative;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
+.card-header.purple { background: linear-gradient(135deg, #7C3AED, #8B5CF6); }
+.card-header.green { background: linear-gradient(135deg, #059669, #10B981); }
+.card-header.blue { background: linear-gradient(135deg, #2563EB, #3B82F6); }
+.card-header.orange { background: linear-gradient(135deg, #EA580C, #F97316); }
+.card-header.red { background: linear-gradient(135deg, #DC2626, #EF4444); }
+
+.card-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.card-title-wrap i { font-size: 20px; }
+.card-title-wrap h2.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+}
+.card-subtitle {
+  font-size: 12px;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.rating-row {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rating-row i { color: #F59E0B; }
+.rating-count {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 12px;
+}
+.features-list li {
+  font-size: 12px;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.features-list li i {
+  color: #10B981;
+  font-size: 12px;
+}
+
+.access-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #2563EB;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transition: transform 0.1s ease;
+}
+.access-btn:active { transform: scale(0.98); }
+
+
+/* INLINE COURSES - LOCAL */
+.course-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:12px}
+@media (min-width:768px){.course-grid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1024px){.course-grid{grid-template-columns:repeat(3,1fr)}}
 .course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
 .card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
 .card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
@@ -1052,6 +1172,9 @@ body {
 }
 
 .bottom-nav .nav-link-btn.active { color: var(--primary); }
+
+
+@keyframes portalSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -1740,59 +1863,6 @@ body {
   const defaultPage = "homePage";
   const externalBranches = ['civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 'Semester-1-course', 'Civil-course', 'CS&IT-course', 'Mech&Electrical-course', 'PYQ-course'];
 
-  /* ROUTER & NAVIGATION SYSTEM */
-  window.navigateTo = function(pageId, pushToHistory = true) {
-    if (externalBranches.includes(pageId)) {
-      loadPortalFromFile(pageId);
-    }
-    renderPageUI(pageId);
-    if (pushToHistory) {
-      history.pushState({ pageId: pageId }, "", "#" + pageId);
-    }
-  };
-
-  window.goBack = function() {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigateTo("homePage", false);
-    }
-  };
-
-  window.addEventListener("popstate", (e) => {
-    const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
-    if (externalBranches.includes(pageId)) {
-      loadPortalFromFile(pageId);
-    }
-    renderPageUI(pageId);
-  });
-
-  function renderPageUI(targetPage) {
-    const pages = document.querySelectorAll(".page");
-    pages.forEach(p => p.classList.remove("active-page"));
-
-    const activeEl = document.getElementById(targetPage);
-    if (activeEl) {
-      activeEl.classList.add("active-page");
-    } else {
-      document.getElementById(defaultPage).classList.add("active-page");
-    }
-
-    const backBtn = document.getElementById("headerBackBtn");
-    if (backBtn) {
-      backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
-    }
-
-    const navBtns = document.querySelectorAll(".bottom-nav .nav-link-btn");
-    navBtns.forEach(btn => btn.classList.remove("active"));
-    const activeTab = document.getElementById("tab-" + targetPage);
-    if (activeTab) {
-      activeTab.classList.add("active");
-    }
-
-    window.scrollTo(0, 0);
-  }
-
   window.toggleForm = function() {
     isRegister = !isRegister;
     document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
@@ -1874,9 +1944,6 @@ body {
 
       const initialHash = window.location.hash.substring(1);
       const targetPage = initialHash || defaultPage;
-      if (externalBranches.includes(targetPage)) {
-        loadPortalFromFile(targetPage);
-      }
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
       loadNewsData();
@@ -2148,82 +2215,210 @@ body {
     }
   };
 
-  /* DYNAMIC HTML & SCRIPT FETCHING LOADER */
-  async function loadPortalFromFile(portalId) {
+  /* =========================================================
+     ROBUST EXTERNAL HTML LOADER
+     - Fetches complete HTML files from the same folder.
+     - Extracts <body>, <style>, <link> and <script> correctly.
+     - Executes inline scripts because innerHTML alone does NOT execute them.
+     - Caches loaded pages so scripts are not executed twice.
+     - If fetch is blocked (common with file://), automatically opens the
+       real HTML file directly as a fallback.
+     ========================================================= */
+  const PORTAL_FILES = Object.freeze({
+    sem1: '1st-sem.html',
+    sem2: '2nd-sem.html',
+    admitPage: 'admitcard.html',
+    resultPage: 'result.html',
+    'Semester-1-course': 'Semester-1-course.html',
+    'Civil-course': 'Civil-course.html',
+    'CS&IT-course': 'CS&IT-course.html',
+    'Mech&Electrical-course': 'Mech&Electrical-course.html',
+    'PYQ-course': 'PYQ-course.html'
+  });
+
+  const loadedPortalScripts = new Set();
+
+  function getPortalFileName(portalId) {
+    return PORTAL_FILES[portalId] || `${portalId}.html`;
+  }
+
+  function escapePortalHtml(value) {
+    return String(value).replace(/[&<>'"]/g, ch => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+    }[ch]));
+  }
+
+  function showPortalLoading(container, fileName) {
+    container.innerHTML = `
+      <div class="portal-loader" style="text-align:center;padding:55px 20px;color:var(--muted-text)">
+        <div style="width:48px;height:48px;margin:0 auto 14px;border:4px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:portalSpin .8s linear infinite"></div>
+        <div style="font-weight:800;color:var(--dark-text);font-size:15px">Opening course...</div>
+        <div style="font-size:12px;margin-top:5px">${escapePortalHtml(fileName)}</div>
+      </div>`;
+  }
+
+  async function executeExternalScripts(scriptNodes, baseUrl) {
+    for (const oldScript of scriptNodes) {
+      const src = oldScript.getAttribute('src');
+
+      if (src) {
+        const absoluteSrc = new URL(src, baseUrl).href;
+        if (loadedPortalScripts.has('src:' + absoluteSrc)) continue;
+
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = absoluteSrc;
+          script.async = false;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('Unable to load script: ' + absoluteSrc));
+          document.body.appendChild(script);
+        });
+
+        loadedPortalScripts.add('src:' + absoluteSrc);
+        continue;
+      }
+
+      const code = oldScript.textContent || '';
+      if (!code.trim()) continue;
+
+      /* Each external inline script gets its own scope. This prevents
+         repeated loading from throwing duplicate const/let declaration errors. */
+      const run = new Function(code);
+      run();
+    }
+  }
+
+  async function injectFetchedHtml(container, htmlContent, fileName) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const baseUrl = new URL(fileName, window.location.href);
+
+    /* Inject only stylesheets that are not already present. */
+    doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      const absoluteHref = new URL(href, baseUrl).href;
+      const exists = [...document.querySelectorAll('link[rel="stylesheet"]')]
+        .some(x => x.href === absoluteHref);
+      if (!exists) {
+        const styleLink = document.createElement('link');
+        styleLink.rel = 'stylesheet';
+        styleLink.href = absoluteHref;
+        document.head.appendChild(styleLink);
+      }
+    });
+
+    doc.querySelectorAll('style').forEach(style => {
+      const marker = 'portal-style-' + btoa(unescape(encodeURIComponent(style.textContent || ''))).slice(0, 32);
+      if (!document.querySelector(`[data-portal-style="${marker}"]`)) {
+        const styleTag = document.createElement('style');
+        styleTag.setAttribute('data-portal-style', marker);
+        styleTag.textContent = style.textContent || '';
+        document.head.appendChild(styleTag);
+      }
+    });
+
+    /* Remove the previous page content before inserting the fetched body. */
+    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    [...doc.body.childNodes].forEach(node => {
+      if (node.nodeName.toLowerCase() !== 'script') fragment.appendChild(node.cloneNode(true));
+    });
+    container.appendChild(fragment);
+
+    /* Execute scripts AFTER the HTML exists in the DOM. */
+    const scripts = [...doc.querySelectorAll('script')];
+    await executeExternalScripts(scripts, baseUrl);
+
+    container.dataset.loaded = 'true';
+    container.dataset.file = fileName;
+    container.dataset.error = '';
+  }
+
+  function showPortalError(container, portalId, fileName, error) {
+    const safeFile = escapePortalHtml(fileName);
+    const isCourse = Object.prototype.hasOwnProperty.call(PORTAL_FILES, portalId);
+
+    container.innerHTML = `
+      <div class="notice" style="margin-top:12px">
+        <h5 style="color:#dc2626"><i class="fas fa-triangle-exclamation"></i> ${isCourse ? 'Course Loading Error' : 'Page Loading Error'}</h5>
+        <p style="margin-bottom:12px">
+          <b>${safeFile}</b> load nahi ho paayi. File ko <b>app (20).html</b> ke same folder/root me rakhein.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="action-btn" style="background:#2563eb;color:#fff;padding:10px 14px;border-radius:10px" onclick="window.retryPortal('${portalId}')">
+            <i class="fas fa-rotate-right"></i> Retry Fetch
+          </button>
+          <button type="button" class="action-btn" style="background:#0f172a;color:#fff;padding:10px 14px;border-radius:10px" onclick="window.openPortalDirect('${portalId}')">
+            <i class="fas fa-up-right-from-square"></i> Open File Directly
+          </button>
+        </div>
+        <small style="display:block;margin-top:10px;color:#94a3b8">${escapePortalHtml(error && error.message ? error.message : 'Unknown loading error')}</small>
+      </div>`;
+    container.dataset.error = 'true';
+  }
+
+  window.openPortalDirect = function(portalId) {
+    const fileName = getPortalFileName(portalId);
+    window.location.href = new URL(fileName, window.location.href).href;
+  };
+
+  window.retryPortal = function(portalId) {
+    const container = document.getElementById(portalId);
+    if (!container) return;
+    container.dataset.loaded = 'false';
+    container.dataset.error = '';
+    loadPortalFromFile(portalId, true);
+  };
+
+  async function loadPortalFromFile(portalId, forceReload = false) {
     const container = document.getElementById(portalId);
     if (!container) return;
 
-    if (container.dataset.loaded === "true") return;
+    const fileName = getPortalFileName(portalId);
 
-    container.innerHTML = `
-      <div style="text-align:center; padding: 40px 20px; color: var(--muted-text);">
-        <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i>
-        <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
-      </div>`;
+    if (!forceReload && container.dataset.loaded === 'true') return;
 
-    let fileName = `${portalId}.html`;
-    if (portalId === 'sem1') fileName = '1st-sem.html';
-    if (portalId === 'sem2') fileName = '2nd-sem.html';
-    if (portalId === 'admitPage') fileName = 'admitcard.html';
-    if (portalId === 'resultPage') fileName = 'result.html';
+    showPortalLoading(container, fileName);
 
-    /* COURSE DETAIL FILES */
-    if (portalId === 'Semester-1-course') fileName = 'Semester-1-course.html';
-    if (portalId === 'Civil-course') fileName = 'Civil-course.html';
-    if (portalId === 'CS&IT-course') fileName = 'CS&IT-course.html';
-    if (portalId === 'Mech&Electrical-course') fileName = 'Mech&Electrical-course.html';
-    if (portalId === 'PYQ-course') fileName = 'PYQ-course.html';
+    /* A file:// page may be prevented from using fetch by browser CORS rules.
+       In that case opening the actual HTML page is the reliable fallback. */
+    if (window.location.protocol === 'file:') {
+      window.setTimeout(() => {
+        if (container.dataset.loaded !== 'true') window.openPortalDirect(portalId);
+      }, 350);
+    }
 
     try {
-      const response = await fetch(fileName);
-      if (!response.ok) throw new Error(`File ${fileName} not found`);
-      
-      const htmlText = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, "text/html");
-
-      // Inject stylesheets if present in external doc
-      doc.querySelectorAll("link[rel='stylesheet'], style").forEach(node => {
-        document.head.appendChild(node.cloneNode(true));
+      const response = await fetch(fileName, {
+        method: 'GET',
+        cache: 'no-cache',
+        credentials: 'same-origin'
       });
 
-      // Insert main HTML content body
-      container.innerHTML = doc.body ? doc.body.innerHTML : htmlText;
-      container.dataset.loaded = "true";
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${fileName}`);
+      }
 
-      // Re-execute all embedded script tags for interactivity
-      const scripts = doc.querySelectorAll("script");
-      scripts.forEach(script => {
-        const newScript = document.createElement("script");
-        if (script.src) {
-          newScript.src = script.src;
-        } else {
-          newScript.textContent = script.textContent;
-        }
-        document.body.appendChild(newScript);
-      });
+      const htmlContent = await response.text();
+      if (!htmlContent || !htmlContent.trim()) {
+        throw new Error('Empty HTML response');
+      }
 
-    } catch (err) {
+      await injectFetchedHtml(container, htmlContent, fileName);
+    } catch (error) {
+      /* For course/detail pages, direct opening is the final fallback so the
+         user still gets the exact standalone Semester-1-course.html page. */
+      if (window.location.protocol === 'file:') return;
+
       if (portalId === 'sem1' || portalId === 'sem2') {
         renderDefaultSemLayout(container, portalId);
       } else if (portalId === 'admitPage') {
         renderDefaultAdmitLayout(container);
       } else if (portalId === 'resultPage') {
         renderDefaultResultLayout(container);
-      } else if (
-        portalId === 'Semester-1-course' ||
-        portalId === 'Civil-course' ||
-        portalId === 'CS&IT-course' ||
-        portalId === 'Mech&Electrical-course' ||
-        portalId === 'PYQ-course'
-      ) {
-        container.innerHTML = `
-          <div class="notice">
-            <h5>Course Not Found</h5>
-            <p>Please make sure <b>${fileName}</b> is uploaded in the root folder alongside this index file.</p>
-          </div>`;
       } else {
-        renderDefaultBranchLayout(container, portalId);
+        showPortalError(container, portalId, fileName, error);
       }
     }
   }
@@ -2231,43 +2426,157 @@ body {
   function renderDefaultSemLayout(container, semId) {
     const title = semId === 'sem1' ? '1st Semester (Common)' : '2nd Semester (Common)';
     container.innerHTML = `
-      <div class="section-title">${title}</div>
+      <div class="section-title">${title} <span>Portal</span></div>
       <div class="notice">
-        <h5>Semester Study Material</h5>
-        <p>Dynamic syllabus & notes for ${title} will be populated here.</p>
-      </div>`;
-    container.dataset.loaded = "true";
+        <h5>Content Ready 📚</h5>
+        <p>Explore your foundation and core engineering notes, syllabus, and study materials here.</p>
+      </div>
+    `;
   }
 
   function renderDefaultAdmitLayout(container) {
     container.innerHTML = `
-      <div class="section-title">Admit Card Portal</div>
+      <div class="section-title">Admit Card Downloads</div>
+      <div class="grid-2">
+        <div class="card-box"><i class="fas fa-id-badge"></i><p>Semester Admit Card</p></div>
+      </div>
       <div class="notice">
-        <h5>Admit Card Portal</h5>
-        <p>BTEUP & Board Admit Cards links and updates.</p>
-      </div>`;
-    container.dataset.loaded = "true";
+        <h5>Important Notice 📢</h5>
+        <p>Download your admit card prior to exam dates. College ID card is mandatory in the examination hall.</p>
+      </div>
+    `;
   }
 
   function renderDefaultResultLayout(container) {
     container.innerHTML = `
-      <div class="section-title">Result Portal</div>
-      <div class="notice">
-        <h5>Semester Results</h5>
-        <p>Check BTEUP Diploma Semester examination results here.</p>
-      </div>`;
-    container.dataset.loaded = "true";
+      <div class="section-title">Results Portal</div>
+      <div class="grid-2">
+        <div class="card-box"><i class="fas fa-square-poll-vertical"></i><p>Main Result</p></div>
+        <div class="card-box"><i class="fas fa-file-circle-check"></i><p>Revaluation Result</p></div>
+      </div>
+    `;
   }
 
   function renderDefaultBranchLayout(container, branchId) {
+    const formattedTitle = branchId.toUpperCase();
     container.innerHTML = `
-      <div class="section-title">${branchId.toUpperCase()} Notes</div>
-      <div class="notice">
-        <h5>Study Material</h5>
-        <p>Handwritten & Printed notes for ${branchId.toUpperCase()}.</p>
-      </div>`;
-    container.dataset.loaded = "true";
+      <div class="section-title">${formattedTitle} <span>Portal</span></div>
+      <div class="nav-wrapper">
+        <div class="top-btns">
+          <button class="branch-btn active" onclick="showSection('${branchId}-notes', this)"><i class="fas fa-file-alt"></i> Notes</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-pyq', this)"><i class="fas fa-history"></i> PYQ Papers</button>
+          <button class="branch-btn" onclick="showSection('${branchId}-syllabus', this)"><i class="fas fa-list-check"></i> Syllabus</button>
+        </div>
+      </div>
+      <div id="${branchId}-notes" class="${branchId}-section">
+        <div class="notice">
+          <h5>${formattedTitle} Notes Ready 📚</h5>
+          <p>Access all semester handwritten notes and standard books directly from your mobile portal.</p>
+        </div>
+      </div>
+      <div id="${branchId}-pyq" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Previous Year Questions 📝</h5>
+          <p>Previous 5 year board examination question papers are updated below.</p>
+        </div>
+      </div>
+      <div id="${branchId}-syllabus" class="${branchId}-section" style="display:none;">
+        <div class="notice">
+          <h5>Curriculum Syllabus 📋</h5>
+          <p>Download the latest official state board syllabus pdf.</p>
+        </div>
+      </div>
+    `;
   }
+
+  window.showSection = function(sectionId, btnElement) {
+    const parentContainer = btnElement.closest('.page');
+    const sections = parentContainer.querySelectorAll('[class$="-section"]');
+    sections.forEach(sec => sec.style.display = 'none');
+
+    const buttons = parentContainer.querySelectorAll('.branch-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    const target = parentContainer.querySelector('#' + sectionId);
+    if (target) target.style.display = 'block';
+    if (btnElement) btnElement.classList.add('active');
+  };
+
+  window.addEventListener("popstate", function(event) {
+    if (event.state && event.state.pageId) {
+      renderPageUI(event.state.pageId);
+    } else {
+      renderPageUI(defaultPage);
+    }
+  });
+
+  window.navigateTo = function(pageId) {
+    if (!document.getElementById(pageId)) {
+      const fileName = getPortalFileName(pageId);
+      window.location.href = new URL(fileName, window.location.href).href;
+      return;
+    }
+    if (history.state && history.state.pageId === pageId) {
+      renderPageUI(pageId);
+      return;
+    }
+    history.pushState({ pageId: pageId }, "", "#" + pageId);
+    renderPageUI(pageId);
+  };
+
+  window.goBack = function() {
+    window.history.back();
+  };
+
+  function renderPageUI(pageId) {
+    let pages = document.querySelectorAll(".page");
+    pages.forEach(page => page.classList.remove("active-page"));
+
+    let targetPage = document.getElementById(pageId);
+    if (targetPage) {
+      targetPage.classList.add("active-page");
+    } else {
+      document.getElementById(defaultPage).classList.add("active-page");
+      pageId = defaultPage;
+    }
+
+    if (externalBranches.includes(pageId)) {
+      loadPortalFromFile(pageId);
+    }
+
+    let navBtns = document.querySelectorAll(".nav-link-btn");
+    navBtns.forEach(btn => btn.classList.remove("active"));
+    let activeTab = document.getElementById("tab-" + pageId);
+    if (activeTab) activeTab.classList.add("active");
+
+    let backBtn = document.getElementById("headerBackBtn");
+    if (backBtn) backBtn.style.display = (pageId === defaultPage) ? "none" : "flex";
+
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const hashPage = window.location.hash ? window.location.hash.slice(1) : "";
+    if (hashPage && document.getElementById(hashPage)) {
+      history.replaceState({ pageId: hashPage }, "", "#" + hashPage);
+      renderPageUI(hashPage);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("feedback") === "success") {
+      const thanks = document.getElementById("feedbackThanks");
+      if (thanks) thanks.style.display = "block";
+      if (typeof navigateTo === "function") {
+        setTimeout(function () {
+          navigateTo("feedbackPage");
+        }, 300);
+      }
+      setTimeout(function () {
+        const cleanURL = window.location.origin + window.location.pathname + "#feedbackPage";
+        window.history.replaceState({}, document.title, cleanURL);
+      }, 5000);
+    }
+  });
 </script>
 </body>
 </html>

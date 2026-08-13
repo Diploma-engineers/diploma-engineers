@@ -1,381 +1,440 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semester 1 Course Overview | Computer Science & Engineering</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduApp - Mobile UI</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --bg-light: #f8f9fa;
+            --bg-app: #f4f5f9;
+            --surface: #ffffff;
+            --primary: #4f46e5;
+            --primary-light: #eeeffe;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-light);
-            color: #333;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding-bottom: 20px;
+            user-select: none;
         }
 
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 3rem 0;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
+        /* App Top Bar */
+        .app-header {
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 1000;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .course-card {
-            border: none;
+        .back-circle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-app);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .back-circle-btn:active {
+            background: var(--border);
+        }
+
+        /* App Cards */
+        .app-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.1s active;
+            cursor: pointer;
+        }
+
+        .app-card:active {
+            transform: scale(0.98);
+        }
+
+        .icon-circle {
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Video Container */
+        .video-box {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .video-box iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
+            border: 0;
         }
 
-        .course-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        /* Interactive Action Buttons */
+        .action-chip {
+            background: var(--bg-app);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border: none;
+            color: var(--text-main);
+            text-decoration: none;
         }
 
-        .badge-credit {
-            background-color: var(--secondary-color);
-            font-weight: 500;
+        .action-chip.liked {
+            background: #ffe4e6;
+            color: #e11d48;
         }
 
-        .schedule-table th {
-            background-color: var(--primary-color);
+        /* Playlist Item (App Style) */
+        .playlist-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .playlist-card.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .play-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .playlist-card.active .play-badge {
+            background: var(--primary);
             color: white;
         }
 
-        .accordion-button:not(.collapsed) {
-            background-color: rgba(52, 152, 219, 0.1);
-            color: var(--primary-color);
+        /* Star Rating */
+        .star-rating .fa-star {
+            color: #cbd5e0;
+            cursor: pointer;
+        }
+        .star-rating .fa-star.active {
+            color: #f59e0b;
         }
 
-        footer {
-            background-color: var(--primary-color);
-            color: white;
-            margin-top: 4rem;
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Hero Section -->
-    <header class="hero-section text-center text-md-start">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <span class="badge bg-light text-dark mb-2">B.Sc. Computer Science</span>
-                    <h1 class="display-5 fw-bold mb-2">Semester 1 Curriculum</h1>
-                    <p class="lead mb-0">Foundational courses designed to build core concepts in programming, mathematics, and systems engineering.</p>
-                </div>
-                <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <a href="#schedule" class="btn btn-light btn-lg me-2"><i class="fas fa-calendar-alt me-2"></i>Schedule</a>
-                    <a href="#resources" class="btn btn-outline-light btn-lg"><i class="fas fa-download me-2"></i>Syllabus</a>
-                </div>
+    <!-- App Header Bar -->
+    <div class="app-header">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Back button always visible -->
+            <div id="backBtn" class="back-circle-btn" onclick="handleBackAction()">
+                <i class="fas fa-chevron-left"></i>
             </div>
+            <span id="headerTitle" class="fw-bold fs-5">Subjects</span>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="container my-5">
-
-        <!-- Semester Overview Stats -->
-        <section class="row text-center mb-5">
-            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                <div class="p-3 bg-white rounded shadow-sm">
-                    <h3 class="fw-bold text-primary mb-1">18</h3>
-                    <p class="text-muted mb-0">Total Credits</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                <div class="p-3 bg-white rounded shadow-sm">
-                    <h3 class="fw-bold text-primary mb-1">5</h3>
-                    <p class="text-muted mb-0">Core Subjects</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                <div class="p-3 bg-white rounded shadow-sm">
-                    <h3 class="fw-bold text-primary mb-1">2</h3>
-                    <p class="text-muted mb-0">Lab Sessions</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="p-3 bg-white rounded shadow-sm">
-                    <h3 class="fw-bold text-primary mb-1">16</h3>
-                    <p class="text-muted mb-0">Weeks Duration</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Course Cards Section -->
-        <section class="mb-5">
-            <h2 class="fw-bold mb-4"><i class="fas fa-book-open me-2 text-primary"></i>Enrolled Courses</h2>
-            <div class="row g-4">
-
-                <!-- Course 1 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">4 Credits</span>
-                                <small class="text-muted">CS101</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Introduction to Programming</h5>
-                            <p class="card-text text-muted">Learn problem-solving techniques, algorithm design, and core programming using Python.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Dr. Alan Turing
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#course1Modal">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course 2 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">4 Credits</span>
-                                <small class="text-muted">MATH101</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Calculus & Linear Algebra</h5>
-                            <p class="card-text text-muted">Fundamental mathematical structures including matrices, vectors, derivatives, and integrals.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Prof. Ada Lovelace
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#course2Modal">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course 3 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">3 Credits</span>
-                                <small class="text-muted">CS102</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Digital Logic & Design</h5>
-                            <p class="card-text text-muted">Binary systems, Boolean algebra, logic gates, combinational and sequential circuit design.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Dr. Claude Shannon
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course 4 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">3 Credits</span>
-                                <small class="text-muted">ENG101</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Technical Communication</h5>
-                            <p class="card-text text-muted">Development of professional writing, presentation skills, and technical documentation.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Prof. Mary Shelley
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course 5 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">2 Credits</span>
-                                <small class="text-muted">CS101L</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Programming Fundamentals Lab</h5>
-                            <p class="card-text text-muted">Hands-on practical laboratory session covering basic control structures, data types, and functions.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Dr. Alan Turing
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course 6 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="card course-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge badge-credit rounded-pill">2 Credits</span>
-                                <small class="text-muted">CS102L</small>
-                            </div>
-                            <h5 class="card-title fw-bold">Digital Systems Lab</h5>
-                            <p class="card-text text-muted">Practical hardware testing and simulation of logic gates, flip-flops, and counters.</p>
-                            <hr>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-user-tie me-2"></i> Dr. Claude Shannon
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-0 pb-3">
-                            <button class="btn btn-outline-primary btn-sm w-100">View Syllabus</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Schedule Section -->
-        <section id="schedule" class="mb-5">
-            <h2 class="fw-bold mb-4"><i class="fas fa-clock me-2 text-primary"></i>Weekly Schedule</h2>
-            <div class="table-responsive bg-white rounded shadow-sm p-3">
-                <table class="table table-bordered schedule-table align-middle text-center mb-0">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Monday</th>
-                            <th>Tuesday</th>
-                            <th>Wednesday</th>
-                            <th>Thursday</th>
-                            <th>Friday</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="fw-bold bg-light">09:00 - 10:30</td>
-                            <td>CS101 (Lecture)</td>
-                            <td>MATH101</td>
-                            <td>CS101 (Lecture)</td>
-                            <td>MATH101</td>
-                            <td>ENG101</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold bg-light">10:45 - 12:15</td>
-                            <td>CS102</td>
-                            <td>ENG101</td>
-                            <td>CS102</td>
-                            <td>-</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold bg-light">12:15 - 01:15</td>
-                            <td colspan="5" class="table-secondary text-uppercase fw-bold">Lunch Break</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold bg-light">01:15 - 03:15</td>
-                            <td>-</td>
-                            <td>CS101L (Lab)</td>
-                            <td>-</td>
-                            <td>CS102L (Lab)</td>
-                            <td>Study Hour</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Resources & Downloads Section -->
-        <section id="resources" class="mb-5">
-            <h2 class="fw-bold mb-4"><i class="fas fa-folder-open me-2 text-primary"></i>Resources & Downloads</h2>
-            <div class="accordion" id="resourcesAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                            CS101: Introduction to Programming
-                        </button>
-                    </h2>
-                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#resourcesAccordion">
-                        <div class="accordion-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Course Syllabus PDF
-                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> Download</a>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Python Environment Setup Guide
-                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> View</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
-                            MATH101: Calculus & Linear Algebra
-                        </button>
-                    </h2>
-                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#resourcesAccordion">
-                        <div class="accordion-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Recommended Textbook List
-                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> Download</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="py-4">
-        <div class="container text-center">
-            <p class="mb-1">&copy; 2026 Department of Computer Science. All rights reserved.</p>
-            <small class="text-light-50">For queries, contact <a href="mailto:academic@university.edu" class="text-white">academic@university.edu</a></small>
-        </div>
-    </footer>
-
-    <!-- Course Modal Example -->
-    <div class="modal fade" id="course1Modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">CS101 Syllabus Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>Key Modules:</h6>
-                    <ul>
-                        <li>Module 1: Basic syntax, variables, and data types</li>
-                        <li>Module 2: Control flow (if/else, loops)</li>
-                        <li>Module 3: Functions, scope, and recursion</li>
-                        <li>Module 4: Data structures (Lists, Tuples, Dictionaries)</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
+        <div>
+            <i class="far fa-bell fs-5 text-muted"></i>
         </div>
     </div>
 
-    <script href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <!-- MAIN APP CONTAINER -->
+    <div class="p-3">
+
+        <!-- SCREEN 1: SUBJECTS LIST VIEW -->
+        <div id="subjectsView">
+            <p class="text-muted small mb-3">Chuniye apna vishay aur padhai shuru kijiye</p>
+
+            <!-- Subject 1 -->
+            <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('python')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle"><i class="fas fa-code"></i></div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Python Programming</h6>
+                        <span class="text-muted small">3 Lectures • Notes Included</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-muted"></i>
+            </div>
+
+            <!-- Subject 2 -->
+            <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('math')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle" style="background:#fef3c7; color:#d97706"><i class="fas fa-calculator"></i></div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Applied Mathematics</h6>
+                        <span class="text-muted small">2 Lectures • Notes Included</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-muted"></i>
+            </div>
+
+            <!-- Subject 3 -->
+            <div class="app-card d-flex align-items-center justify-content-between" onclick="openSubject('electronics')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle" style="background:#e0f2fe; color:#0284c7"><i class="fas fa-microchip"></i></div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Digital Electronics</h6>
+                        <span class="text-muted small">2 Lectures • Notes Included</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-muted"></i>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: LECTURE PLAYER & PLAYLIST VIEW -->
+        <div id="lectureView" class="hidden">
+            
+            <!-- Video Frame -->
+            <div class="video-box mb-3 shadow-sm">
+                <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+            </div>
+
+            <!-- Video Details & Actions -->
+            <div class="bg-white p-3 rounded-4 border mb-3">
+                <h6 id="videoTitle" class="fw-bold mb-1">Lecture Title</h6>
+                <p id="videoDesc" class="text-muted small mb-3">Description...</p>
+
+                <!-- Like, Rate & Download Actions -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
+                    <button id="likeBtn" class="action-chip" onclick="toggleLike()">
+                        <i class="far fa-heart"></i> <span id="likeText">Like</span> (<span id="likeCount">85</span>)
+                    </button>
+
+                    <a id="pdfDownloadBtn" href="#" download class="action-chip bg-primary text-white">
+                        <i class="fas fa-file-pdf"></i> PDF Notes
+                    </a>
+                </div>
+
+                <!-- Rating Sheet -->
+                <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top">
+                    <span class="small text-muted font-weight-bold">Rate Video:</span>
+                    <div class="star-rating">
+                        <i class="fas fa-star" onclick="rateVideo(1)"></i>
+                        <i class="fas fa-star" onclick="rateVideo(2)"></i>
+                        <i class="fas fa-star" onclick="rateVideo(3)"></i>
+                        <i class="fas fa-star" onclick="rateVideo(4)"></i>
+                        <i class="fas fa-star" onclick="rateVideo(5)"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Lectures (Playlist) -->
+            <h6 class="fw-bold mb-2 text-muted px-1">Next Lectures</h6>
+            <div id="playlistContainer">
+                <!-- Dynamic Playlist -->
+            </div>
+
+            <!-- Comments Section -->
+            <div class="bg-white p-3 rounded-4 border mt-3">
+                <h6 class="fw-bold mb-2"><i class="far fa-comments me-1"></i> Comments</h6>
+                
+                <div class="input-group mb-3">
+                    <input type="text" id="commentInput" class="form-control form-control-sm" placeholder="Ask a question...">
+                    <button class="btn btn-primary btn-sm" onclick="addComment()">Send</button>
+                </div>
+
+                <div id="commentsList" class="d-flex flex-column gap-2">
+                    <div class="bg-light p-2 rounded-3 small">
+                        <span class="fw-bold d-block">Amit Sharma</span>
+                        <span class="text-muted">Thanks sir, smooth explanation!</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Data and Interactivity -->
+    <script>
+        const appData = {
+            python: {
+                title: "Python Lectures",
+                videos: [
+                    { title: "1. Intro & Installation", desc: "Python environment setup & First Code.", url: "https://www.youtube.com/embed/rfscV00zUVU", pdf: "python_lec1.pdf" },
+                    { title: "2. Variables & Data Types", desc: "Learn Numbers, Strings & Lists.", url: "https://www.youtube.com/embed/k9TUPpGqYTo", pdf: "python_lec2.pdf" },
+                    { title: "3. If-Else & Loops", desc: "Control structures in Python.", url: "https://www.youtube.com/embed/PqFKRqpHrX8", pdf: "python_lec3.pdf" }
+                ]
+            },
+            math: {
+                title: "Mathematics Lectures",
+                videos: [
+                    { title: "1. Matrix Basics", desc: "Types of matrices & Determinants.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "math_lec1.pdf" },
+                    { title: "2. Vector Space", desc: "Eigen values and vectors explained.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "math_lec2.pdf" }
+                ]
+            },
+            electronics: {
+                title: "Digital Electronics",
+                videos: [
+                    { title: "1. Logic Gates", desc: "AND, OR, NOT Gate Truth tables.", url: "https://www.youtube.com/embed/m06D_a2L9pE", pdf: "elec_lec1.pdf" },
+                    { title: "2. Boolean Laws", desc: "Simplifying Boolean functions.", url: "https://www.youtube.com/embed/m06D_a2L9pE", pdf: "elec_lec2.pdf" }
+                ]
+            }
+        };
+
+        let currentSubjectKey = '';
+        let currentVideoIndex = 0;
+        let isLiked = false;
+        let currentScreen = 'subjects'; // Global state tracking
+
+        // Universal Back Action
+        function handleBackAction() {
+            if (currentScreen === 'lecture') {
+                showSubjectsView();
+            } else {
+                alert("Aap pahle se hi Home / Subjects Page par hain!");
+            }
+        }
+
+        function openSubject(key) {
+            currentSubjectKey = key;
+            currentVideoIndex = 0;
+            currentScreen = 'lecture';
+
+            document.getElementById('subjectsView').classList.add('hidden');
+            document.getElementById('lectureView').classList.remove('hidden');
+            document.getElementById('headerTitle').innerText = appData[key].title;
+
+            renderPlaylist();
+            playVideo(0);
+        }
+
+        function showSubjectsView() {
+            currentScreen = 'subjects';
+            document.getElementById('lectureView').classList.add('hidden');
+            document.getElementById('subjectsView').classList.remove('hidden');
+            document.getElementById('headerTitle').innerText = "Subjects";
+            document.getElementById('videoPlayer').src = ""; 
+        }
+
+        function playVideo(index) {
+            currentVideoIndex = index;
+            const video = appData[currentSubjectKey].videos[index];
+
+            document.getElementById('videoPlayer').src = video.url;
+            document.getElementById('videoTitle').innerText = video.title;
+            document.getElementById('videoDesc').innerText = video.desc;
+            document.getElementById('pdfDownloadBtn').href = video.pdf;
+
+            isLiked = false;
+            document.getElementById('likeBtn').classList.remove('liked');
+            document.getElementById('likeText').innerText = "Like";
+            document.getElementById('likeCount').innerText = "85";
+
+            rateVideo(0);
+            renderPlaylist();
+        }
+
+        function renderPlaylist() {
+            const container = document.getElementById('playlistContainer');
+            container.innerHTML = '';
+
+            appData[currentSubjectKey].videos.forEach((vid, idx) => {
+                const isActive = idx === currentVideoIndex ? 'active' : '';
+                container.innerHTML += `
+                    <div class="playlist-card ${isActive}" onclick="playVideo(${idx})">
+                        <div class="play-badge"><i class="fas ${idx === currentVideoIndex ? 'fa-play' : 'fa-film'}"></i></div>
+                        <div>
+                            <h6 class="mb-0 fw-bold small">${vid.title}</h6>
+                            <span class="text-muted" style="font-size:0.7rem;">Video Lecture</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleLike() {
+            const likeBtn = document.getElementById('likeBtn');
+            let count = parseInt(document.getElementById('likeCount').innerText);
+            
+            if(!isLiked) {
+                likeBtn.classList.add('liked');
+                document.getElementById('likeText').innerText = "Liked";
+                document.getElementById('likeCount').innerText = count + 1;
+                isLiked = true;
+            } else {
+                likeBtn.classList.remove('liked');
+                document.getElementById('likeText').innerText = "Like";
+                document.getElementById('likeCount').innerText = count - 1;
+                isLiked = false;
+            }
+        }
+
+        function rateVideo(stars) {
+            const iconList = document.querySelectorAll('.star-rating .fa-star');
+            iconList.forEach((star, index) => {
+                if(index < stars) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function addComment() {
+            const input = document.getElementById('commentInput');
+            if(input.value.trim() !== "") {
+                const list = document.getElementById('commentsList');
+                list.innerHTML = `
+                    <div class="bg-light p-2 rounded-3 small">
+                        <span class="fw-bold d-block">You</span>
+                        <span class="text-muted">${input.value.trim()}</span>
+                    </div>
+                ` + list.innerHTML;
+                input.value = "";
+            }
+        }
+    </script>
 </body>
-                  </html>
-                  
+</html>

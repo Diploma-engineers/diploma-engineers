@@ -1804,7 +1804,6 @@ body {
 
 </div>
 
-<!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -2036,7 +2035,6 @@ body {
       renderPageUI(targetPage);
       loadNewsData();
 
-      // Start Minute Usage Coin Counter
       startCoinUsageTracker(user.uid);
     } else {
       if (usageTimerInterval) clearInterval(usageTimerInterval);
@@ -2045,7 +2043,6 @@ body {
     }
   });
 
-  /* COIN REWARD TIMER (1 MIN = 1 COIN) */
   function startCoinUsageTracker(uid) {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
 
@@ -2076,15 +2073,15 @@ body {
 
   function updateProfileUI(data) {
     const coins = data.coins || 0;
-    document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-    document.getElementById("profileName").innerText = data.name || "Engineer";
+    document.getElementById("userName").innerText = (data.name || data.fullName || "Engineer").split(' ')[0];
+    document.getElementById("profileName").innerText = data.name || data.fullName || "Engineer";
     document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
     
     document.getElementById("profileCoins").innerText = coins;
     document.getElementById("navCoinCount").innerText = `${coins} Coins`;
     document.getElementById("bannerCoinCount").innerText = `${coins} Coins`;
 
-    document.getElementById("profileFullName").innerText = data.name || "-";
+    document.getElementById("profileFullName").innerText = data.name || data.fullName || "-";
     document.getElementById("profileEmail").innerText = data.email || "-";
     document.getElementById("profileMobile").innerText = data.mobile || "-";
     document.getElementById("profileBranchName").innerText = data.branch || "-";
@@ -2095,10 +2092,11 @@ body {
 
     const avatarBox = document.getElementById("profileAvatarBox");
     const navProfileIcon = document.getElementById("navProfileIcon");
+    const pic = data.profilePic || data.photoURL || "";
 
-    if (data.profilePic) {
-      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
-      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${data.profilePic}" alt="User">`;
+    if (pic) {
+      avatarBox.innerHTML = `<img src="${pic}" alt="Profile Pic">`;
+      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${pic}" alt="User">`;
     } else {
       avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
       if (navProfileIcon) navProfileIcon.innerHTML = `<i class="fas fa-user-circle"></i>`;
@@ -2108,12 +2106,12 @@ body {
     const emailField = document.getElementById("feedbackEmail");
     const branchField = document.getElementById("feedbackBranch");
 
-    if (nameField) nameField.value = data.name || "";
+    if (nameField) nameField.value = data.name || data.fullName || "";
     if (emailField) emailField.value = data.email || "";
     if (branchField) branchField.value = data.branch || "Diploma Member";
   }
 
-  /* LEADERBOARD DATA LOADER */
+  /* FIXED LEADERBOARD DATA LOADER */
   function loadLeaderboardData() {
     const listContainer = document.getElementById("leaderboardList");
     if (!listContainer) return;
@@ -2132,7 +2130,7 @@ body {
       });
 
       // Sort Users by Coins (Descending Order)
-      users.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+      users.sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0));
 
       users.forEach((u, index) => {
         const rank = index + 1;
@@ -2141,8 +2139,13 @@ body {
         else if (rank === 2) rankClass = "rank-2";
         else if (rank === 3) rankClass = "rank-3";
 
-        const avatarHTML = u.profilePic ? 
-          `<img src="${escapeHTML(u.profilePic)}" alt="${escapeHTML(u.name)}">` : 
+        // Fallbacks added to securely fetch name and branch across all user record formats
+        const userName = u.name || u.fullName || u.username || u.displayName || "Engineer";
+        const userBranch = u.branch || u.course || "Diploma Member";
+        const userPic = u.profilePic || u.photoURL || "";
+
+        const avatarHTML = userPic ? 
+          `<img src="${escapeHTML(userPic)}" alt="${escapeHTML(userName)}">` : 
           `<i class="fas fa-user"></i>`;
 
         const card = document.createElement("div");
@@ -2152,8 +2155,8 @@ body {
           <div class="leader-user-info">
             <div class="leader-avatar">${avatarHTML}</div>
             <div class="leader-name-box">
-              <h4>${escapeHTML(u.name || "Engineer")}</h4>
-              <p>${escapeHTML(u.branch || "Diploma Member")}</p>
+              <h4>${escapeHTML(userName)}</h4>
+              <p>${escapeHTML(userBranch)}</p>
             </div>
           </div>
           <div class="leader-coin-count">
@@ -2174,7 +2177,7 @@ body {
     isEditingProfile = !isEditingProfile;
 
     if (isEditingProfile) {
-      document.getElementById("editName").value = currentUserData.name || "";
+      document.getElementById("editName").value = currentUserData.name || currentUserData.fullName || "";
       document.getElementById("editMobile").value = currentUserData.mobile || "";
       document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
       document.getElementById("editCollege").value = currentUserData.college || "";
@@ -2397,7 +2400,6 @@ body {
     }
   };
 
-  /* DYNAMIC HTML & SCRIPT FETCHING LOADER */
   async function loadPortalFromFile(portalId) {
     const container = document.getElementById(portalId);
     if (!container) return;
@@ -2416,7 +2418,6 @@ body {
     if (portalId === 'admitPage') fileName = 'admitcard.html';
     if (portalId === 'resultPage') fileName = 'result.html';
 
-    /* COURSE DETAIL FILES */
     if (portalId === 'Semester-1-course') fileName = 'Semester-1-course.html';
     if (portalId === 'Civil-course') fileName = 'Civil-course.html';
     if (portalId === 'CS&IT-course') fileName = 'CS&IT-course.html';

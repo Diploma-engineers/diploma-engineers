@@ -635,7 +635,78 @@ body {
   font-size: 12px;
   line-height: 1.3;
 }
+/* Faculty Horizontal Slider Styles */
+.faculty-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+.faculty-scroll::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
+}
 
+.faculty-card {
+  min-width: 220px;
+  flex: 0 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid #f0f0f0;
+}
+
+.faculty-arch-bg {
+  background: linear-gradient(180deg, #fffcf0 0%, #fff4cc 100%);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding-top: 15px;
+  position: relative;
+  border-bottom: 2px solid #ffea9f;
+}
+
+.faculty-arch-bg img {
+  width: 130px;
+  height: 140px;
+  object-fit: cover;
+  border-top-left-radius: 90px;
+  border-top-right-radius: 90px;
+}
+
+.faculty-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.faculty-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.faculty-sub {
+  font-size: 12px;
+  color: #666;
+}
+
+.exp-badge {
+  background: #f1f3f5;
+  color: #333;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-top: 6px;
+  align-self: center;
+}
 /* SEMESTER BANNER CARDS */
 .sem-banner-grid {
   display: grid;
@@ -1412,6 +1483,73 @@ body {
       <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
     </div>
 
+   <!-- EXPERT FACULTY SLIDER (AUTO RIGHT-TO-LEFT) -->
+    <div class="section-title">Expert <span>Faculty</span></div>
+    <div class="faculty-slider-wrapper">
+      <div class="scroll-container faculty-scroll" id="facultySlider">
+        
+        <!-- Faculty 1 -->
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://via.placeholder.com/150" alt="Satyajeet Sahu Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Satyajeet Sahu Sir</h4>
+            <span class="faculty-sub">Geotechnical / Structures</span>
+            <div class="exp-badge">13+ Years Exp</div>
+          </div>
+        </div>
+
+        <!-- Faculty 2 -->
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://via.placeholder.com/150" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Krishna Yadav Sir</h4>
+            <span class="faculty-sub">Fluid Mechanics</span>
+            <div class="exp-badge">11+ Years Exp</div>
+          </div>
+        </div>
+
+        <!-- Faculty 3 -->
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://via.placeholder.com/150" alt="Rajat Johari Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Rajat Johari Sir</h4>
+            <span class="faculty-sub">RCC Design</span>
+            <div class="exp-badge">13+ Years Exp</div>
+          </div>
+        </div>
+
+        <!-- Duplicate items to create a seamless infinite loop effect -->
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://via.placeholder.com/150" alt="Satyajeet Sahu Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Satyajeet Sahu Sir</h4>
+            <span class="faculty-sub">Geotechnical / Structures</span>
+            <div class="exp-badge">13+ Years Exp</div>
+          </div>
+        </div>
+
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://via.placeholder.com/150" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Krishna Yadav Sir</h4>
+            <span class="faculty-sub">Fluid Mechanics</span>
+            <div class="exp-badge">11+ Years Exp</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
     <!-- FOOTER SECTION -->
     <footer class="app-footer">
       <div class="footer-social-icons">
@@ -2076,7 +2214,30 @@ body {
     'civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 
     'year-1-course', 'civil-year-2-course', 'mechanical-year-2-course', 'it-year-2-course', 'cs-year-2-course', 'electrical-year-2-course', 'electronics-year-2-course', 'agriculture-year-2-course', 'chemical-year-2-course'
   ];
+// Optional JS for continuous Auto-Scroll Right-to-Left effect
+window.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('facultySlider');
+  if (!slider) return;
 
+  let scrollSpeed = 1; // Speed of movement
+  let isHovered = false;
+
+  // Pause auto-scroll when user touches or hovers over the slider
+  slider.addEventListener('mouseenter', () => isHovered = true);
+  slider.addEventListener('mouseleave', () => isHovered = false);
+  slider.addEventListener('touchstart', () => isHovered = true);
+  slider.addEventListener('touchend', () => isHovered = false);
+
+  setInterval(() => {
+    if (!isHovered) {
+      slider.scrollLeft += scrollSpeed;
+      // If it reaches the end, smoothly loop back to the start
+      if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth)) {
+        slider.scrollLeft = 0;
+      }
+    }
+  }, 30);
+});
   /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = function(pageId, pushToHistory = true) {
     if (externalBranches.includes(pageId)) {

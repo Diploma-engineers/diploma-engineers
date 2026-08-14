@@ -236,7 +236,7 @@
 
                         <!-- Like & PDF Download Buttons -->
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 pt-1 border-top">
-                            <button id="likeBtn" class="action-chip" onclick="window.toggleLike()">
+                            <button id="likeBtn" class="action-chip" onclick="toggleLike()">
                                 <i class="far fa-heart"></i> <span id="likeText">Like</span> (<span id="likeCount">156</span>)
                             </button>
 
@@ -249,11 +249,11 @@
                         <div class="d-flex align-items-center justify-content-between mt-1 pt-1 border-top">
                             <span class="text-muted fw-bold" style="font-size: 0.6rem;">Rate:</span>
                             <div class="star-rating d-flex gap-1">
-                                <i class="fas fa-star" onclick="window.rateVideo(1)"></i>
-                                <i class="fas fa-star" onclick="window.rateVideo(2)"></i>
-                                <i class="fas fa-star" onclick="window.rateVideo(3)"></i>
-                                <i class="fas fa-star" onclick="window.rateVideo(4)"></i>
-                                <i class="fas fa-star" onclick="window.rateVideo(5)"></i>
+                                <i class="fas fa-star" onclick="rateVideo(1)"></i>
+                                <i class="fas fa-star" onclick="rateVideo(2)"></i>
+                                <i class="fas fa-star" onclick="rateVideo(3)"></i>
+                                <i class="fas fa-star" onclick="rateVideo(4)"></i>
+                                <i class="fas fa-star" onclick="rateVideo(5)"></i>
                             </div>
                         </div>
                     </div>
@@ -269,7 +269,7 @@
                         <h6 class="fw-bold mb-1" style="font-size: 0.65rem;"><i class="far fa-comments me-1 text-primary"></i> Comments</h6>
                         <div class="input-group input-group-sm mb-1">
                             <input type="text" id="commentInput" class="form-control" placeholder="Sawaal likhein..." style="font-size: 0.65rem; height: 26px;">
-                            <button class="btn btn-primary px-2 fw-bold" style="font-size: 0.65rem; height: 26px;" onclick="window.addComment()">Send</button>
+                            <button class="btn btn-primary px-2 fw-bold" style="font-size: 0.65rem; height: 26px;" onclick="addComment()">Send</button>
                         </div>
                         <div id="commentsList" class="d-flex flex-column gap-1">
                             <div class="bg-light rounded-2" style="font-size: 0.6rem; padding: 4px;">
@@ -378,7 +378,7 @@
             document.getElementById('likeBtn').classList.remove('liked');
             document.getElementById('likeText').innerText = "Like";
             document.getElementById('likeCount').innerText = "156";
-            window.rateVideo(0);
+            rateVideo(0);
 
             let listHtml = '';
             appData[key].videos.forEach((v, i) => {
@@ -390,6 +390,42 @@
                 </div>`;
             });
             document.getElementById('playlistContainer').innerHTML = listHtml;
+        }
+
+        function toggleLike() {
+            const likeBtn = document.getElementById('likeBtn');
+            let count = parseInt(document.getElementById('likeCount').innerText);
+            if(!isLiked) {
+                likeBtn.classList.add('liked');
+                document.getElementById('likeText').innerText = "Liked";
+                document.getElementById('likeCount').innerText = count + 1;
+                isLiked = true;
+            } else {
+                likeBtn.classList.remove('liked');
+                document.getElementById('likeText').innerText = "Like";
+                document.getElementById('likeCount').innerText = count - 1;
+                isLiked = false;
+            }
+        }
+
+        function rateVideo(stars) {
+            const iconList = document.querySelectorAll('.star-rating .fa-star');
+            iconList.forEach((star, index) => {
+                if(index < stars) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function addComment() {
+            const input = document.getElementById('commentInput');
+            if(input.value.trim() !== "") {
+                const list = document.getElementById('commentsList');
+                list.innerHTML = `<div class="bg-light rounded-2" style="font-size: 0.6rem; padding: 4px;"><span class="fw-bold d-block text-dark" style="font-size: 0.55rem;">You</span><span class="text-muted">${input.value.trim()}</span></div>` + list.innerHTML;
+                input.value = "";
+            }
         }
 
         let listHtml = '';

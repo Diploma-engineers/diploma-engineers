@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTEUP Diploma - Sem 1 & Sem 2</title>
+    <title>BTEUP Diploma - First Year (Sem 1 & Sem 2)</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
@@ -35,9 +35,40 @@
             width: 100%;
             max-width: 100%;
             min-height: 100vh;
-            padding: 4px;
+            padding: 6px;
             margin: 0;
             overflow-x: hidden;
+        }
+
+        /* Stylish Semester Switcher Container */
+        .sem-toggle-container {
+            background: #e2e8f0;
+            border-radius: 25px;
+            padding: 3px;
+            display: flex;
+            gap: 3px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .sem-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 6px 0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #64748b;
+            border-radius: 22px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .sem-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         }
 
         .subjects-grid {
@@ -67,6 +98,11 @@
             cursor: pointer;
             width: 100%;
             max-width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .app-card:active {
+            transform: scale(0.98);
         }
 
         .icon-circle {
@@ -209,11 +245,18 @@
             <div class="d-flex align-items-center justify-content-between mb-2 px-1">
                 <div>
                     <h6 class="fw-bold mb-0" style="font-size: 0.75rem;">BTEUP Diploma</h6>
-                    <span class="text-muted" style="font-size: 0.55rem;">Sem 1 & Sem 2 All Subjects</span>
+                    <span class="text-muted" style="font-size: 0.55rem;">First Year Portal (Sem 1 & Sem 2)</span>
                 </div>
                 <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.5rem;">2026</span>
             </div>
 
+            <!-- Stylish Sliding Semester Switcher Buttons -->
+            <div class="sem-toggle-container">
+                <button id="btnSem1" class="sem-btn active" onclick="switchSemester(1)">Semester 1</button>
+                <button id="btnSem2" class="sem-btn" onclick="switchSemester(2)">Semester 2</button>
+            </div>
+
+            <!-- Subjects Grid container -->
             <div class="subjects-grid" id="subjectListContainer"></div>
         </div>
 
@@ -294,100 +337,129 @@
     <script>
         const appData = {
             // Semester 1 Subjects
-            math1: { 
-                title: "Sem 1: Mathematics-I", 
-                videos: [
-                    { title: "1. Math-I | Complete (Part I)", desc: "Matrices & determinants.", url: "https://www.youtube.com/embed/Rt1OY5gfDVc", pdf: "#" },
-                    { title: "2. Math-I | Complete (Part II)", desc: "Binomial theorem.", url: "https://www.youtube.com/embed/-ISId5bQc2U", pdf: "#" }
-                ]
-            },
-            physics1: { 
-                title: "Sem 1: Applied Physics-I", 
-                videos: [
-                    { title: "1. Physics-I | Complete", desc: "SI units & dimensions.", url: "https://www.youtube.com/embed/7osNMH9Wv2c", pdf: "#" },
-                    { title: "2. Work, Power & Energy", desc: "Energy conservation.", url: "https://www.youtube.com/embed/rfscV00zUVU", pdf: "#" }
-                ]
-            },
-            chemistry: { 
-                title: "Sem 1: Applied Chemistry", 
-                videos: [
-                    { title: "1. Chemistry | Complete", desc: "Atomic models & bonding.", url: "https://www.youtube.com/embed/eqChfO1jaI8", pdf: "#" }
-                ]
-            },
-            comm: { 
-                title: "Sem 1: Communication Skills", 
-                videos: [
-                    { title: "1. Comm. Skills | Complete", desc: "Process & barriers.", url: "https://www.youtube.com/embed/OZziS2WuA0c", pdf: "#" }
-                ]
-            },
-            graphics: { 
-                title: "Sem 1: Engineering Graphics", 
-                videos: [
-                    { title: "1. Engg Graphics | Basics", desc: "Instruments & dimensioning.", url: "https://www.youtube.com/embed/dDOWJCqXuNA", pdf: "#" }
-                ]  
-            },
-            workshop: { 
-                title: "Sem 1: Workshop Practice", 
-                videos: [
-                    { title: "1. Carpentry & Fitting", desc: "Tools & safety measures.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "#" },
-                    { title: "2. Welding & Sheet Metal", desc: "Arc welding basics.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "#" }
-                ]
-            },
-            sports: { 
-                title: "Sem 1: Sports & Yoga", 
-                videos: [
-                    { title: "1. Yoga & Asanas", desc: "Physical fitness & health.", url: "https://www.youtube.com/embed/rfscV00zUVU", pdf: "#" }
-                ]
+            sem1: {
+                math1: { 
+                    title: "Mathematics-I",
+                    videos: [
+                        { title: "1. Math-I | Complete (Part I)", desc: "Matrices & determinants.", url: "https://www.youtube.com/embed/Rt1OY5gfDVc", pdf: "#" },
+                        { title: "2. Math-I | Complete (Part II)", desc: "Binomial theorem.", url: "https://www.youtube.com/embed/-ISId5bQc2U", pdf: "#" }
+                    ]
+                },
+                physics1: { 
+                    title: "Applied Physics-I",
+                    videos: [
+                        { title: "1. Physics-I | Complete", desc: "SI units & dimensions.", url: "https://www.youtube.com/embed/7osNMH9Wv2c", pdf: "#" },
+                        { title: "2. Work, Power & Energy", desc: "Energy conservation.", url: "https://www.youtube.com/embed/rfscV00zUVU", pdf: "#" }
+                    ]
+                },
+                chemistry: { 
+                    title: "Applied Chemistry",
+                    videos: [
+                        { title: "1. Chemistry | Complete", desc: "Atomic models & bonding.", url: "https://www.youtube.com/embed/eqChfO1jaI8", pdf: "#" }
+                    ]
+                },
+                comm: { 
+                    title: "Communication Skills",
+                    videos: [
+                        { title: "1. Comm. Skills | Complete", desc: "Process & barriers.", url: "https://www.youtube.com/embed/OZziS2WuA0c", pdf: "#" }
+                    ]
+                },
+                graphics: { 
+                    title: "Engineering Graphics",
+                    videos: [
+                        { title: "1. Engg Graphics | Basics", desc: "Instruments & dimensioning.", url: "https://www.youtube.com/embed/dDOWJCqXuNA", pdf: "#" }
+                    ]  
+                },
+                workshop: { 
+                    title: "Workshop Practice",
+                    videos: [
+                        { title: "1. Carpentry & Fitting", desc: "Tools & safety measures.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "#" },
+                        { title: "2. Welding & Sheet Metal", desc: "Arc welding basics.", url: "https://www.youtube.com/embed/uS18y4JkE3Y", pdf: "#" }
+                    ]
+                },
+                sports: { 
+                    title: "Sports & Yoga",
+                    videos: [
+                        { title: "1. Yoga & Asanas", desc: "Physical fitness & health.", url: "https://www.youtube.com/embed/rfscV00zUVU", pdf: "#" }
+                    ]
+                }
             },
 
             // Semester 2 Subjects
-            math2: { 
-                title: "Sem 2: Mathematics-II", 
-                videos: [
-                    { title: "1. Mathematics-II | COMPLETE", desc: "Indefinite and definite integrals.", url: "https://www.youtube.com/embed/S_5Bd2C1YqM", pdf: "#" }
-                ]
-            },
-            physics2: { 
-                title: "Sem 2: Applied Physics-II", 
-                videos: [
-                    { title: "1. Applied Physics-II | COMPLETE", desc: "Wave optics and interference.", url: "https://www.youtube.com/embed/KU9Or1Fu_VQ", pdf: "#" }
-                ]
-            },
-            it: { 
-                title: "Sem 2: Introduction to IT Systems", 
-                videos: [
-                    { title: "1. IT Systems | COMPLETE", desc: "Hardware, software & peripherals.", url: "https://www.youtube.com/embed/st_Vz8ZR2Ns", pdf: "#" }
-                ]
-            },
-            ee: { 
-                title: "Sem 2: Fundamentals of Electrical & Electronics Engineering", 
-                videos: [
-                    { title: "1. Fundamentals of Electrical & Electronics Engineering | COMPLETE", desc: "Ohm's law, KCL & KVL.", url: "https://www.youtube.com/embed/NtQ2Ifzrd-E", pdf: "#" }
-                ]
-            },
-            mechanics: { 
-                title: "Sem 2: Engineering Mechanics", 
-                videos: [
-                    { title: "1. Engineering Mechanics | COMPLETE", desc: "Coplanar forces and moments.", url: "https://www.youtube.com/embed/_csfZ10d2Z0", pdf: "#" }
-                ]  
-            },
-            env: { 
-                title: "Sem 2: Environmental Sciences", 
-                videos: [
-                    { title: "1. Environmental Sciences | COMPLETE", desc: "Flow of energy and ecological balance.", url: "https://www.youtube.com/embed/D-_oOr-dQr8", pdf: "#" }
-                ]
+            sem2: {
+                math2: { 
+                    title: "Mathematics-II",
+                    videos: [
+                        { title: "1. Mathematics-II | COMPLETE", desc: "Indefinite and definite integrals.", url: "https://www.youtube.com/embed/S_5Bd2C1YqM", pdf: "#" }
+                    ]
+                },
+                physics2: { 
+                    title: "Applied Physics-II",
+                    videos: [
+                        { title: "1. Applied Physics-II | COMPLETE", desc: "Wave optics and interference.", url: "https://www.youtube.com/embed/KU9Or1Fu_VQ", pdf: "#" }
+                    ]
+                },
+                it: { 
+                    title: "Introduction to IT Systems",
+                    videos: [
+                        { title: "1. IT Systems | COMPLETE", desc: "Hardware, software & peripherals.", url: "https://www.youtube.com/embed/st_Vz8ZR2Ns", pdf: "#" }
+                    ]
+                },
+                ee: { 
+                    title: "Fundamentals of Electrical & Electronics",
+                    videos: [
+                        { title: "1. Fundamentals of Electrical Engineering | COMPLETE", desc: "Ohm's law, KCL & KVL.", url: "https://www.youtube.com/embed/NtQ2Ifzrd-E", pdf: "#" }
+                    ]
+                },
+                mechanics: { 
+                    title: "Engineering Mechanics",
+                    videos: [
+                        { title: "1. Engineering Mechanics | COMPLETE", desc: "Coplanar forces and moments.", url: "https://www.youtube.com/embed/_csfZ10d2Z0", pdf: "#" }
+                    ]  
+                },
+                env: { 
+                    title: "Environmental Sciences",
+                    videos: [
+                        { title: "1. Environmental Sciences | COMPLETE", desc: "Flow of energy and ecological balance.", url: "https://www.youtube.com/embed/D-_oOr-dQr8", pdf: "#" }
+                    ]
+                }
             }
         };
 
+        let currentSem = 1;
         let currentSubjectKey = '';
         let currentVideoIndex = 0;
         let isLiked = false;
 
-        function openSubject(key) {
+        function switchSemester(sem) {
+            currentSem = sem;
+            document.getElementById('btnSem1').classList.toggle('active', sem === 1);
+            document.getElementById('btnSem2').classList.toggle('active', sem === 2);
+            renderSubjects(sem);
+        }
+
+        function renderSubjects(sem) {
+            const semKey = 'sem' + sem;
+            const subjects = appData[semKey];
+            let listHtml = '';
+            
+            for(let key in subjects) {
+                listHtml += `<div class="app-card d-flex align-items-center" style="gap: 6px;" onclick="openSubject('${semKey}', '${key}')">
+                    <div class="icon-circle"><i class="fas fa-book-open"></i></div>
+                    <div style="overflow: hidden; flex-grow: 1;">
+                        <h6 class="mb-0 fw-bold text-truncate" style="font-size:0.7rem;">${subjects[key].title}</h6>
+                        <span class="text-muted" style="font-size:0.55rem;">${subjects[key].videos.length} Lectures & Notes</span>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('subjectListContainer').innerHTML = listHtml;
+        }
+
+        function openSubject(semKey, key) {
             currentSubjectKey = key;
-            history.pushState({ view: 'lecture', subject: key }, "", "#lecture");
+            history.pushState({ view: 'lecture', sem: semKey, subject: key }, "", "#lecture");
             showLectureView();
-            playVideo(key, 0);
+            playVideo(semKey, key, 0);
         }
 
         function goBackToSubjects() {
@@ -413,9 +485,9 @@
             }
         });
 
-        function playVideo(key, index) {
+        function playVideo(semKey, key, index) {
             currentVideoIndex = index;
-            const vid = appData[key].videos[index];
+            const vid = appData[semKey][key].videos[index];
             
             document.getElementById('videoPlayer').src = vid.url;
             document.getElementById('videoTitle').innerText = vid.title;
@@ -429,10 +501,10 @@
             rateVideo(0);
 
             let listHtml = '';
-            appData[key].videos.forEach((v, i) => {
+            appData[semKey][key].videos.forEach((v, i) => {
                 const isActive = i === index ? 'active' : '';
                 const iconClass = i === index ? 'fa-play' : 'fa-film';
-                listHtml += `<div class="playlist-card ${isActive}" onclick="playVideo('${key}', ${i})">
+                listHtml += `<div class="playlist-card ${isActive}" onclick="playVideo('${semKey}', '${key}', ${i})">
                     <div class="play-badge"><i class="fas ${iconClass}"></i></div>
                     <div style="overflow: hidden;"><h6 class="mb-0 fw-bold text-truncate" style="font-size:0.6rem; line-height: 1.1;">${v.title}</h6><span class="text-muted" style="font-size:0.5rem;">Lecture</span></div>
                 </div>`;
@@ -476,17 +548,8 @@
             }
         }
 
-        let listHtml = '';
-        for(let key in appData) {
-            listHtml += `<div class="app-card d-flex align-items-center" style="gap: 6px;" onclick="openSubject('${key}')">
-                <div class="icon-circle"><i class="fas fa-book-open"></i></div>
-                <div style="overflow: hidden; flex-grow: 1;">
-                    <h6 class="mb-0 fw-bold text-truncate" style="font-size:0.7rem;">${appData[key].title}</h6>
-                    <span class="text-muted" style="font-size:0.55rem;">${appData[key].videos.length} Lectures & Notes</span>
-                </div>
-            </div>`;
-        }
-        document.getElementById('subjectListContainer').innerHTML = listHtml;
+        // Initial Load for Semester 1
+        renderSubjects(1);
     </script>
 </body>
 </html>

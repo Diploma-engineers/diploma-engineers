@@ -1,0 +1,1630 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2563eb">
+<title>Books | Diploma Engineers</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+:root{
+  --blue:#2563eb;
+  --blue-dark:#1d4ed8;
+  --blue-soft:#eff6ff;
+  --green:#16a34a;
+  --red:#ef4444;
+  --dark:#0f172a;
+  --text:#334155;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --bg:#f8fafc;
+  --white:#fff;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  width:100%;
+  min-height:0;
+  background:transparent!important;
+  font-family:"Plus Jakarta Sans",sans-serif;
+  color:var(--text);
+  overflow-x:hidden;
+}
+body.reader-open{overflow:hidden}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+a{text-decoration:none;color:inherit}
+
+.books-wrap{width:100%;margin:0;padding:0}
+.books-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:0 0 10px;
+}
+.books-title{font-size:16px;font-weight:800;color:var(--dark)}
+.books-title span{color:var(--blue)}
+.books-subtitle{font-size:10px;color:var(--muted);font-weight:700}
+
+.books-grid{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.book-card{
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  transition:transform .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.book-card:active{transform:scale(.985)}
+
+.book-cover{
+  position:relative;
+  width:100%;
+  aspect-ratio:3/4;
+  overflow:hidden;
+  background:#eef2ff;
+}
+.book-cover canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  background:#fff;
+}
+.cover-loader{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#eff6ff,#f8fafc);
+  color:var(--blue);
+  font-size:10px;
+  font-weight:800;
+}
+.spinner{
+  width:18px;height:18px;
+  border:3px solid #dbeafe;
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+  margin-right:7px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.book-shade{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.08) 70%,transparent);
+}
+.book-content{
+  position:absolute;
+  left:9px;right:9px;bottom:9px;z-index:3;
+}
+.book-name{
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+  margin-bottom:6px;
+  text-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.open-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:#fff;
+  font-size:8px;
+  font-weight:800;
+  padding:5px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.35);
+  backdrop-filter:blur(7px);
+}
+.book-meta{
+  padding:9px 10px 10px;
+}
+.book-meta-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+}
+.book-type{font-size:9px;color:var(--muted);font-weight:700}
+.book-pages{
+  font-size:8px;
+  padding:4px 7px;
+  border-radius:999px;
+  color:#1d4ed8;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  font-weight:800;
+}
+
+/* Reader */
+.reader{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:none;
+  flex-direction:column;
+  background:#111827;
+}
+.reader.active{display:flex}
+
+.reader-top{
+  height:58px;
+  flex:0 0 58px;
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 10px;
+}
+.icon-btn{
+  width:38px;height:38px;flex:0 0 38px;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:#f8fafc;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--dark);
+  font-size:15px;
+}
+.reader-title{
+  min-width:0;
+  flex:1;
+}
+.reader-title strong{
+  display:block;
+  color:var(--dark);
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.reader-title small{
+  display:block;
+  color:var(--muted);
+  font-size:9px;
+  margin-top:2px;
+}
+
+.reader-main{
+  flex:1;
+  min-height:0;
+  display:flex;
+  overflow:hidden;
+  background:#525252;
+}
+
+.pdf-pane{
+  flex:1;
+  min-width:0;
+  overflow:auto;
+  padding:10px;
+}
+.pdf-page{
+  display:block;
+  width:min(100%,900px);
+  height:auto;
+  margin:0 auto 12px;
+  background:#fff;
+  box-shadow:0 8px 25px rgba(0,0,0,.25);
+}
+
+.side-panel{
+  width:360px;
+  flex:0 0 360px;
+  background:#fff;
+  border-left:1px solid var(--border);
+  overflow:auto;
+  padding:15px;
+}
+.book-info{
+  border-bottom:1px solid var(--border);
+  padding-bottom:12px;
+  margin-bottom:12px;
+}
+.book-info h2{
+  font-size:16px;
+  color:var(--dark);
+  margin-bottom:5px;
+}
+.book-info p{
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.engagement{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+.engage-btn{
+  flex:1;
+  height:42px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font-size:11px;
+  font-weight:800;
+}
+.engage-btn.active.like{
+  color:#2563eb;
+  background:#eff6ff;
+  border-color:#bfdbfe;
+}
+.engage-btn.active.save{
+  color:#16a34a;
+  background:#f0fdf4;
+  border-color:#bbf7d0;
+}
+.engage-btn:active{transform:scale(.98)}
+
+.comment-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:9px;
+}
+.comment-head h3{
+  font-size:13px;
+  color:var(--dark);
+}
+.comment-count{
+  font-size:9px;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.comment-form{
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
+  margin-bottom:13px;
+}
+.comment-avatar{
+  width:34px;height:34px;
+  flex:0 0 34px;
+  border-radius:50%;
+  overflow:hidden;
+  background:#eff6ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--blue);
+  border:1px solid #dbeafe;
+}
+.comment-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.comment-input-wrap{flex:1;min-width:0}
+.comment-input{
+  width:100%;
+  min-height:40px;
+  max-height:110px;
+  resize:vertical;
+  border:1px solid var(--border);
+  border-radius:12px;
+  outline:none;
+  padding:10px 11px;
+  font-size:11px;
+  color:var(--dark);
+  background:#f8fafc;
+}
+.comment-input:focus{
+  border-color:#93c5fd;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+}
+.comment-submit{
+  height:40px;
+  width:40px;
+  border:0;
+  border-radius:12px;
+  background:var(--blue);
+  color:#fff;
+}
+.comment-submit:disabled{opacity:.55;cursor:not-allowed}
+
+.comments{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.comment{
+  display:flex;
+  gap:8px;
+}
+.comment-body{
+  flex:1;
+  min-width:0;
+  background:#f8fafc;
+  border:1px solid #eef2f7;
+  border-radius:13px;
+  padding:9px 10px;
+}
+.comment-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+.comment-name{
+  font-size:10px;
+  color:var(--dark);
+  font-weight:800;
+}
+.comment-date{
+  font-size:8px;
+  color:#94a3b8;
+  white-space:nowrap;
+}
+.comment-text{
+  font-size:10px;
+  color:var(--text);
+  line-height:1.55;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.empty-comments{
+  padding:20px 10px;
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.reader-status{
+  min-height:44px;
+  flex:0 0 44px;
+  background:#fff;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  padding:8px 10px;
+}
+
+.login-note{
+  padding:10px 11px;
+  margin-bottom:12px;
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  background:#eff6ff;
+  color:#1e40af;
+  font-size:10px;
+  line-height:1.5;
+  font-weight:700;
+}
+
+@media(max-width:900px){
+  .reader-main{
+    flex-direction:column;
+    overflow:auto;
+  }
+  .pdf-pane{
+    flex:0 0 55vh;
+    min-height:260px;
+  }
+  .side-panel{
+    width:100%;
+    flex:0 0 auto;
+    border-left:0;
+    border-top:1px solid var(--border);
+  }
+}
+
+@media(max-width:420px){
+  .books-grid{gap:9px}
+  .book-name{font-size:10px}
+  .book-meta{padding:8px}
+  .side-panel{padding:12px}
+  .pdf-pane{padding:7px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="books-wrap">
+  <div class="books-head">
+    <div class="books-title">Books <span>Library</span></div>
+    <div class="books-subtitle">2 books per row on mobile</div>
+  </div>
+  <div class="books-grid" id="booksGrid"></div>
+</div>
+
+
+<!-- In-app book reader -->
+<section class="reader" id="reader" aria-hidden="true">
+
+  <header class="reader-top">
+    <button class="icon-btn" id="readerBack" aria-label="Back">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+
+    <div class="reader-title">
+      <strong id="readerTitle">Book</strong>
+      <small>Diploma Engineers • Online Reader</small>
+    </div>
+
+    <button class="icon-btn" id="readerClose" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </header>
+
+  <div class="reader-main">
+
+    <div class="pdf-pane" id="pdfPane"></div>
+
+    <aside class="side-panel">
+
+      <div class="book-info">
+        <h2 id="sideBookTitle">Book</h2>
+        <p>Read this book online and share your feedback with other students.</p>
+      </div>
+
+      <div class="engagement">
+
+        <button class="engage-btn like" id="likeBtn">
+          <i class="fa-solid fa-thumbs-up"></i>
+          <span>Like</span>
+          <b id="likeCount">0</b>
+        </button>
+
+        <button class="engage-btn save" id="saveBtn">
+          <i class="fa-solid fa-bookmark"></i>
+          <span>Save</span>
+          <b id="saveCount">0</b>
+        </button>
+
+      </div>
+
+      <div class="login-note" id="loginNote" style="display:none;"></div>
+
+      <div class="comment-head">
+        <h3>Comments</h3>
+        <span class="comment-count" id="commentCount">0 comments</span>
+      </div>
+
+      <form class="comment-form" id="commentForm">
+
+        <div class="comment-avatar" id="commentUserAvatar">
+          <i class="fa-solid fa-user"></i>
+        </div>
+
+        <div class="comment-input-wrap">
+          <textarea
+            class="comment-input"
+            id="commentInput"
+            maxlength="500"
+            placeholder="Write a comment..."
+          ></textarea>
+        </div>
+
+        <button class="comment-submit" id="commentSubmit" type="submit">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+
+      </form>
+
+      <div class="comments" id="commentsList"></div>
+
+    </aside>
+
+  </div>
+
+  <div class="reader-status" id="readerStatus">
+    Ready
+  </div>
+
+</section>
+
+
+<script type="module">
+
+/* ============================================================
+   PDF.JS
+   ============================================================ */
+
+import * as pdfjsLib from
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+
+/* ============================================================
+   FIREBASE
+   Same Firebase project used by Diploma Engineers app.
+   ============================================================ */
+
+import { initializeApp, getApps, getApp }
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  remove,
+  runTransaction,
+  push,
+  serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+  authDomain: "diploma-app-9a378.firebaseapp.com",
+  databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+  projectId: "diploma-app-9a378",
+  storageBucket: "diploma-app-9a378.firebasestorage.app",
+  messagingSenderId: "160233059797",
+  appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
+};
+
+const firebaseApp =
+  getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+const auth = getAuth(firebaseApp);
+const db = getDatabase(firebaseApp);
+
+
+/* ============================================================
+   BOOK LIST
+   Just add:
+   {
+      name: "Book Name",
+      pdf: "PDF LINK"
+   }
+
+   Thumbnail is generated automatically from PDF first page.
+   ============================================================ */
+
+const BOOKS = [
+
+  {
+    name: "Applied Physics 2nd",
+    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
+  },
+
+  {
+    name: "Applied Mathematics 2nd",
+    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+  },
+
+  {
+    name: "Engineering Mechanics",
+    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
+  },
+
+  {
+    name: "Design Of Steel Structures",
+    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+  }
+
+];
+
+
+const grid = document.getElementById("booksGrid");
+
+const reader = document.getElementById("reader");
+const readerTitle = document.getElementById("readerTitle");
+const sideBookTitle = document.getElementById("sideBookTitle");
+const pdfPane = document.getElementById("pdfPane");
+const readerStatus = document.getElementById("readerStatus");
+
+const likeBtn = document.getElementById("likeBtn");
+const likeCount = document.getElementById("likeCount");
+
+const saveBtn = document.getElementById("saveBtn");
+const saveCount = document.getElementById("saveCount");
+
+const commentForm = document.getElementById("commentForm");
+const commentInput = document.getElementById("commentInput");
+const commentSubmit = document.getElementById("commentSubmit");
+const commentsList = document.getElementById("commentsList");
+const commentCount = document.getElementById("commentCount");
+
+const loginNote = document.getElementById("loginNote");
+const commentUserAvatar = document.getElementById("commentUserAvatar");
+
+
+let currentBook = null;
+let currentBookId = "";
+let currentUser = null;
+
+let likeUnsubscribe = null;
+let saveUnsubscribe = null;
+let commentsUnsubscribe = null;
+
+let pdfToken = 0;
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function escapeHTML(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function slugify(value){
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"")
+    .slice(0,80);
+}
+
+function getBookId(book,index){
+  return slugify(book.name) || ("book-"+index);
+}
+
+function formatDate(value){
+  if(!value) return "Just now";
+
+  const d =
+    typeof value === "number"
+      ? new Date(value)
+      : new Date(value);
+
+  if(Number.isNaN(d.getTime())) return "Just now";
+
+  return d.toLocaleDateString("en-IN",{
+    day:"2-digit",
+    month:"short",
+    year:"numeric"
+  });
+}
+
+function setReaderStatus(text){
+  readerStatus.textContent = text;
+}
+
+
+/* ============================================================
+   USER UI
+   ============================================================ */
+
+function updateUserUI(){
+
+  if(currentUser){
+
+    loginNote.style.display = "none";
+
+    const data =
+      window.parent &&
+      window.parent.currentUserData
+        ? window.parent.currentUserData
+        : null;
+
+    const name =
+      data?.name ||
+      currentUser.displayName ||
+      "User";
+
+    const photo =
+      data?.profilePic ||
+      currentUser.photoURL ||
+      "";
+
+    if(photo){
+
+      commentUserAvatar.innerHTML =
+        `<img src="${escapeHTML(photo)}" alt="User">`;
+
+    }else{
+
+      const first =
+        name.charAt(0).toUpperCase();
+
+      commentUserAvatar.innerHTML =
+        `<span style="font-size:13px;font-weight:800">${escapeHTML(first)}</span>`;
+    }
+
+  }else{
+
+    loginNote.style.display = "block";
+
+    loginNote.textContent =
+      "Login to your Diploma Engineers account to Like, Save and post comments.";
+
+    commentUserAvatar.innerHTML =
+      `<i class="fa-solid fa-user"></i>`;
+  }
+}
+
+
+/* ============================================================
+   BOOK THUMBNAIL
+   ============================================================ */
+
+async function renderCover(book, canvas, loader){
+
+  try{
+
+    const task =
+      pdfjsLib.getDocument({
+        url:book.pdf,
+        disableAutoFetch:false,
+        disableStream:false,
+        withCredentials:false
+      });
+
+    const pdf =
+      await task.promise;
+
+    const page =
+      await pdf.getPage(1);
+
+    const width =
+      Math.max(180,canvas.parentElement.clientWidth);
+
+    const base =
+      page.getViewport({scale:1});
+
+    const scale =
+      width / base.width;
+
+    const viewport =
+      page.getViewport({
+        scale:Math.max(.25,scale)
+      });
+
+    const ratio =
+      Math.min(window.devicePixelRatio || 1,2);
+
+    canvas.width =
+      Math.floor(viewport.width * ratio);
+
+    canvas.height =
+      Math.floor(viewport.height * ratio);
+
+    canvas.style.width="100%";
+    canvas.style.height="100%";
+    canvas.style.objectFit="cover";
+
+    await page.render({
+      canvasContext:canvas.getContext("2d",{alpha:false}),
+      viewport,
+      transform:ratio !== 1
+        ? [ratio,0,0,ratio,0,0]
+        : null
+    }).promise;
+
+    loader.style.display="none";
+
+  }catch(e){
+
+    console.warn("Cover failed:",book.name,e);
+
+    loader.innerHTML =
+      `<span style="color:#64748b">Cover unavailable</span>`;
+  }
+
+}
+
+
+/* ============================================================
+   CREATE BOOK CARDS
+   ============================================================ */
+
+function renderCards(){
+
+  grid.innerHTML="";
+
+  BOOKS.forEach((book,index)=>{
+
+    const card =
+      document.createElement("article");
+
+    card.className="book-card";
+
+    card.innerHTML=`
+      <div class="book-cover">
+
+        <div class="cover-loader">
+          <div class="spinner"></div>
+          Loading cover…
+        </div>
+
+        <canvas></canvas>
+
+        <div class="book-shade"></div>
+
+        <div class="book-content">
+          <div class="book-name">
+            ${escapeHTML(book.name)}
+          </div>
+
+          <span class="open-pill">
+            <i class="fa-solid fa-book-open"></i>
+            Open
+          </span>
+        </div>
+
+      </div>
+
+      <div class="book-meta">
+        <div class="book-meta-line">
+          <span class="book-type">
+            PDF • Online Reader
+          </span>
+
+          <span class="book-pages">
+            Read
+          </span>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener("click",()=>{
+      openBook(book,index);
+    });
+
+    grid.appendChild(card);
+
+    renderCover(
+      book,
+      card.querySelector("canvas"),
+      card.querySelector(".cover-loader")
+    );
+
+  });
+
+}
+
+
+/* ============================================================
+   FIREBASE DATA LISTENERS
+   Structure:
+
+   books/
+      book-id/
+        likes/
+          uid: true
+        saves/
+          uid: true
+        comments/
+          pushId/
+            uid
+            name
+            profilePic
+            text
+            createdAt
+   ============================================================ */
+
+function detachBookListeners(){
+
+  if(likeUnsubscribe) likeUnsubscribe();
+  if(saveUnsubscribe) saveUnsubscribe();
+  if(commentsUnsubscribe) commentsUnsubscribe();
+
+  likeUnsubscribe=null;
+  saveUnsubscribe=null;
+  commentsUnsubscribe=null;
+}
+
+
+function attachBookListeners(){
+
+  detachBookListeners();
+
+  if(!currentBookId) return;
+
+  /* Likes */
+  const likesRef =
+    ref(db,`books/${currentBookId}/likes`);
+
+  likeUnsubscribe =
+    onValue(likesRef,snapshot=>{
+
+      const total =
+        snapshot.exists()
+          ? Object.keys(snapshot.val() || {}).length
+          : 0;
+
+      likeCount.textContent = total;
+
+      const uid =
+        currentUser?.uid;
+
+      const liked =
+        uid &&
+        snapshot.exists() &&
+        snapshot.child(uid).exists();
+
+      likeBtn.classList.toggle("active",!!liked);
+
+    });
+
+
+  /* Saves */
+  const savesRef =
+    ref(db,`books/${currentBookId}/saves`);
+
+  saveUnsubscribe =
+    onValue(savesRef,snapshot=>{
+
+      const total =
+        snapshot.exists()
+          ? Object.keys(snapshot.val() || {}).length
+          : 0;
+
+      saveCount.textContent = total;
+
+      const uid =
+        currentUser?.uid;
+
+      const saved =
+        uid &&
+        snapshot.exists() &&
+        snapshot.child(uid).exists();
+
+      saveBtn.classList.toggle("active",!!saved);
+
+    });
+
+
+  /* Comments */
+  const commentsRef =
+    ref(db,`books/${currentBookId}/comments`);
+
+  commentsUnsubscribe =
+    onValue(commentsRef,snapshot=>{
+
+      commentsList.innerHTML="";
+
+      if(!snapshot.exists()){
+
+        commentCount.textContent="0 comments";
+
+        commentsList.innerHTML =
+          `<div class="empty-comments">
+             No comments yet. Be the first to comment.
+           </div>`;
+
+        return;
+      }
+
+      const comments=[];
+
+      snapshot.forEach(child=>{
+
+        comments.push({
+          id:child.key,
+          ...(child.val() || {})
+        });
+
+      });
+
+      comments.sort(
+        (a,b)=>
+          Number(b.createdAt || 0) -
+          Number(a.createdAt || 0)
+      );
+
+      commentCount.textContent =
+        `${comments.length} comment${comments.length===1?"":"s"}`;
+
+      comments.forEach(comment=>{
+
+        const avatar =
+          comment.profilePic
+            ? `<img src="${escapeHTML(comment.profilePic)}" alt="Profile">`
+            : `<span style="
+                font-size:11px;
+                font-weight:800;
+              ">${escapeHTML(
+                (comment.name || "U")
+                  .charAt(0)
+                  .toUpperCase()
+              )}</span>`;
+
+        const item =
+          document.createElement("div");
+
+        item.className="comment";
+
+        item.innerHTML=`
+
+          <div class="comment-avatar">
+            ${avatar}
+          </div>
+
+          <div class="comment-body">
+
+            <div class="comment-top">
+
+              <span class="comment-name">
+                ${escapeHTML(
+                  comment.name || "Diploma Engineer"
+                )}
+              </span>
+
+              <span class="comment-date">
+                ${formatDate(comment.createdAt)}
+              </span>
+
+            </div>
+
+            <div class="comment-text">
+              ${escapeHTML(comment.text || "")}
+            </div>
+
+          </div>
+        `;
+
+        commentsList.appendChild(item);
+
+      });
+
+    });
+
+}
+
+
+/* ============================================================
+   LIKE
+   ============================================================ */
+
+likeBtn.addEventListener("click",async()=>{
+
+  if(!currentUser){
+
+    showLoginMessage();
+
+    return;
+  }
+
+  if(!currentBookId) return;
+
+  const likeRef =
+    ref(
+      db,
+      `books/${currentBookId}/likes/${currentUser.uid}`
+    );
+
+  try{
+
+    const isActive =
+      likeBtn.classList.contains("active");
+
+    if(isActive){
+      await remove(likeRef);
+    }else{
+      await set(likeRef,true);
+    }
+
+  }catch(error){
+
+    console.error("Like error:",error);
+
+    alert("Unable to update like. Please try again.");
+
+  }
+
+});
+
+
+/* ============================================================
+   SAVE
+   ============================================================ */
+
+saveBtn.addEventListener("click",async()=>{
+
+  if(!currentUser){
+
+    showLoginMessage();
+
+    return;
+  }
+
+  if(!currentBookId) return;
+
+  const saveRef =
+    ref(
+      db,
+      `books/${currentBookId}/saves/${currentUser.uid}`
+    );
+
+  try{
+
+    const isActive =
+      saveBtn.classList.contains("active");
+
+    if(isActive){
+      await remove(saveRef);
+    }else{
+      await set(saveRef,true);
+    }
+
+  }catch(error){
+
+    console.error("Save error:",error);
+
+    alert("Unable to update save. Please try again.");
+
+  }
+
+});
+
+
+/* ============================================================
+   COMMENT SUBMIT
+   ============================================================ */
+
+commentForm.addEventListener("submit",async event=>{
+
+  event.preventDefault();
+
+  if(!currentUser){
+
+    showLoginMessage();
+
+    return;
+  }
+
+  if(!currentBookId) return;
+
+  const text =
+    commentInput.value.trim();
+
+  if(!text) return;
+
+  if(text.length > 500){
+
+    alert("Comment must be 500 characters or less.");
+
+    return;
+  }
+
+  commentSubmit.disabled=true;
+
+  try{
+
+    /*
+      Prefer profile data already stored in the main app.
+      Falls back to Firebase Auth.
+    */
+
+    const profile =
+      window.parent &&
+      window.parent.currentUserData
+        ? window.parent.currentUserData
+        : {};
+
+    const commentRef =
+      push(
+        ref(db,`books/${currentBookId}/comments`)
+      );
+
+    await set(commentRef,{
+      uid:currentUser.uid,
+      name:
+        profile.name ||
+        currentUser.displayName ||
+        "Diploma Engineer",
+      profilePic:
+        profile.profilePic ||
+        currentUser.photoURL ||
+        "",
+      branch:
+        profile.branch ||
+        "",
+      text:text,
+      createdAt:Date.now()
+    });
+
+    commentInput.value="";
+
+  }catch(error){
+
+    console.error("Comment error:",error);
+
+    alert(
+      "Comment could not be saved: "+
+      (error?.message || "Unknown error")
+    );
+
+  }finally{
+
+    commentSubmit.disabled=false;
+
+  }
+
+});
+
+
+function showLoginMessage(){
+
+  loginNote.style.display="block";
+
+  loginNote.textContent =
+    "Please login to Diploma Engineers before using Like, Save or Comments.";
+
+  commentInput.focus();
+
+}
+
+
+/* ============================================================
+   OPEN BOOK READER
+   ============================================================ */
+
+async function openBook(book,index){
+
+  currentBook=book;
+  currentBookId=getBookId(book,index);
+
+  readerTitle.textContent=book.name;
+  sideBookTitle.textContent=book.name;
+
+  reader.classList.add("active");
+  reader.setAttribute("aria-hidden","false");
+
+  document.body.classList.add("reader-open");
+
+  attachBookListeners();
+  updateUserUI();
+
+  pdfPane.scrollTop=0;
+
+  /*
+    Keep browser history usable.
+    Back closes the book reader.
+  */
+  history.pushState(
+    {bookReader:true},
+    "",
+    "#book-"+encodeURIComponent(currentBookId)
+  );
+
+  await renderFullPdf(book.pdf);
+
+}
+
+
+/* ============================================================
+   PDF FULL READER
+   ============================================================ */
+
+async function renderFullPdf(url){
+
+  const token=++pdfToken;
+
+  pdfPane.innerHTML=
+    `<div style="
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:50px 10px;
+      color:#fff;
+      font-size:11px;
+      font-weight:700;
+    ">
+      <div class="spinner"
+        style="border-color:#cbd5e1;border-top-color:#fff">
+      </div>
+      Loading book…
+    </div>`;
+
+  setReaderStatus("Loading PDF…");
+
+  try{
+
+    const task =
+      pdfjsLib.getDocument({
+        url:url,
+        disableAutoFetch:false,
+        disableStream:false,
+        withCredentials:false
+      });
+
+    const pdf =
+      await task.promise;
+
+    if(token!==pdfToken) return;
+
+    pdfPane.innerHTML="";
+
+    const width =
+      Math.min(
+        Math.max(
+          280,
+          pdfPane.clientWidth-20
+        ),
+        900
+      );
+
+    for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
+
+      if(token!==pdfToken) return;
+
+      const page =
+        await pdf.getPage(pageNo);
+
+      const base =
+        page.getViewport({scale:1});
+
+      const scale =
+        width/base.width;
+
+      const viewport =
+        page.getViewport({
+          scale:Math.max(.2,scale)
+        });
+
+      const canvas =
+        document.createElement("canvas");
+
+      canvas.className="pdf-page";
+
+      const ratio =
+        Math.min(window.devicePixelRatio || 1,2);
+
+      canvas.width =
+        Math.floor(viewport.width*ratio);
+
+      canvas.height =
+        Math.floor(viewport.height*ratio);
+
+      canvas.style.width =
+        Math.floor(viewport.width)+"px";
+
+      canvas.style.height =
+        Math.floor(viewport.height)+"px";
+
+      pdfPane.appendChild(canvas);
+
+      await page.render({
+        canvasContext:
+          canvas.getContext("2d",{alpha:false}),
+        viewport,
+        transform:
+          ratio!==1
+            ? [ratio,0,0,ratio,0,0]
+            : null
+      }).promise;
+
+    }
+
+    setReaderStatus(
+      `${pdf.numPages} page${pdf.numPages===1?"":"s"} • Online reading mode`
+    );
+
+  }catch(error){
+
+    console.error("PDF render error:",error);
+
+    pdfPane.innerHTML=`
+      <div style="
+        max-width:540px;
+        margin:45px auto;
+        background:#fff;
+        border-radius:18px;
+        padding:25px;
+        text-align:center;
+        font-size:12px;
+        line-height:1.7;
+        color:#64748b;
+      ">
+        <strong style="
+          display:block;
+          color:#0f172a;
+          font-size:17px;
+          margin-bottom:8px;
+        ">
+          PDF could not be opened
+        </strong>
+
+        The PDF host may block browser CORS access.
+        Please make the PDF publicly readable or use a
+        server/proxy that permits browser PDF rendering.
+
+      </div>
+    `;
+
+    setReaderStatus("PDF unavailable");
+
+  }
+
+}
+
+
+/* ============================================================
+   CLOSE READER
+   ============================================================ */
+
+function closeReader(fromPopstate=false){
+
+  pdfToken++;
+
+  currentBook=null;
+  currentBookId="";
+
+  detachBookListeners();
+
+  reader.classList.remove("active");
+  reader.setAttribute("aria-hidden","true");
+
+  document.body.classList.remove("reader-open");
+
+  pdfPane.innerHTML="";
+
+  if(
+    !fromPopstate &&
+    window.location.hash.startsWith("#book-")
+  ){
+    history.back();
+  }
+
+}
+
+
+/* ============================================================
+   BACK / CLOSE
+   ============================================================ */
+
+document.getElementById("readerBack")
+  .addEventListener("click",()=>closeReader(false));
+
+document.getElementById("readerClose")
+  .addEventListener("click",()=>closeReader(false));
+
+
+window.addEventListener("popstate",()=>{
+
+  if(reader.classList.contains("active")){
+
+    closeReader(true);
+
+  }
+
+});
+
+
+document.addEventListener("keydown",event=>{
+
+  if(!reader.classList.contains("active")) return;
+
+  if(event.key==="Escape"){
+
+    closeReader(false);
+
+  }
+
+  /*
+    No visible download/print UI is provided.
+    These shortcuts are blocked as a basic viewer-level measure.
+  */
+  if(
+    event.ctrlKey &&
+    ["s","p","u"].includes(
+      event.key.toLowerCase()
+    )
+  ){
+
+    event.preventDefault();
+    event.stopPropagation();
+
+  }
+
+});
+
+
+document.addEventListener("contextmenu",event=>{
+
+  if(reader.classList.contains("active")){
+
+    event.preventDefault();
+
+  }
+
+});
+
+
+/* ============================================================
+   AUTH STATE
+   ============================================================ */
+
+onAuthStateChanged(auth,user=>{
+
+  currentUser=user;
+
+  updateUserUI();
+
+  /*
+    Rebind current book listeners so like/save reflects
+    the newly logged-in user's state.
+  */
+  if(currentBookId){
+    attachBookListeners();
+  }
+
+});
+
+
+/* ============================================================
+   INITIAL RENDER
+   ============================================================ */
+
+renderCards();
+
+
+/* ============================================================
+   MOBILE ROTATION / RESIZE
+   ============================================================ */
+
+window.addEventListener("resize",()=>{
+
+  if(
+    reader.classList.contains("active") &&
+    currentBook
+  ){
+
+    clearTimeout(window.__readerResize);
+
+    window.__readerResize =
+      setTimeout(()=>{
+        renderFullPdf(currentBook.pdf);
+      },300);
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>

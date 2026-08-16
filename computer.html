@@ -1,1741 +1,746 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="hi">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Civil Engineering Study Library App</title>
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<title>Notes - Diploma Engineers</title>
-
-
-<!-- =====================================================
-     BOOTSTRAP CSS
-===================================================== -->
-
-<link
-  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  rel="stylesheet"
->
-
-
-<!-- =====================================================
-     GOOGLE FONT
-===================================================== -->
-
-<link
-  href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-  rel="stylesheet"
->
-
-
-<!-- =====================================================
-     FONT AWESOME
-===================================================== -->
-
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
->
-
-
-<!-- =====================================================
-     SWIPER CSS
-===================================================== -->
-
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
->
-
+<!-- Google Fonts & Font Awesome Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-
-/* =====================================================
-   GLOBAL
-===================================================== */
-
-*{
-  box-sizing:border-box;
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary: #0f172a;
+  --accent: #f97316;
+  --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #e0e8ff 50%, #f5f3ff 100%);
+  --card-bg: #ffffff;
+  --text-dark: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 20px 30px -5px rgba(37, 99, 235, 0.15);
 }
 
-html{
-  scroll-behavior:smooth;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body{
-  margin:0;
-  font-family:'Poppins',sans-serif;
-  background:#f4f7fb;
-  color:#0d1b2a;
+body {
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-dark);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-
-/* =====================================================
-   REMOVE TAP FLASH / FOCUS
-===================================================== */
-
-a,
-button,
-.branch-link,
-.branch-card{
-  -webkit-tap-highlight-color:transparent !important;
+/* APP NAVIGATION BAR (TOP HORIZONTAL SCROLL) */
+.nav-wrapper {
+  max-width: 1200px;
+  margin: 16px auto 8px;
+  padding: 0 16px;
+  width: 100%;
 }
 
-a:focus,
-a:focus-visible,
-button:focus,
-button:focus-visible{
-  outline:none !important;
+.top-btns {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 8px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-
-/* =====================================================
-   HERO
-===================================================== */
-
-.hero{
-  padding:120px 20px 60px;
-
-  text-align:center;
-
-  background:
-    linear-gradient(
-      135deg,
-      #0d1b2a,
-      #1b263b
-    );
-
-  color:white;
-
-  border-radius:
-    0 0 35px 35px;
+.top-btns::-webkit-scrollbar {
+  display: none;
 }
 
-.hero h1{
-  font-size:42px;
-  font-weight:700;
-  margin:0 0 12px;
+.branch-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13.5px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.hero p{
-  color:#cbd5e1;
-  font-size:16px;
-  max-width:650px;
-  margin:auto;
-  line-height:1.7;
+.branch-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
-
-/* =====================================================
-   SECTION TITLE
-===================================================== */
-
-.section-title{
-  text-align:center;
-  margin:55px 0 35px;
+.branch-btn:hover:not(.active) {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
 }
 
-.section-title h2{
-  font-size:32px;
-  font-weight:700;
-  color:#0d1b2a;
+/* MAIN CONTENT CONTAINER */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 16px 50px;
+  width: 100%;
+  flex: 1;
 }
 
-.section-title p{
-  color:#64748b;
-  font-size:15px;
+.branch-section {
+  display: none;
+  animation: fadeIn 0.35s ease-in-out forwards;
 }
 
-
-/* =====================================================
-   BRANCH LINK
-===================================================== */
-
-.branch-link{
-  display:block;
-  text-decoration:none;
-  cursor:pointer;
-  outline:none;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-
-/* =====================================================
-   BRANCH CARD
-===================================================== */
-
-.branch-card{
-  background:#fff;
-
-  border-radius:24px;
-
-  padding:28px 22px;
-
-  height:100%;
-
-  position:relative;
-
-  overflow:hidden;
-
-  border:
-    1px solid rgba(0,0,0,.04);
-
-  box-shadow:
-    0 8px 24px
-    rgba(0,0,0,.08);
-
-  transition:
-    transform .22s ease,
-    box-shadow .22s ease;
+.section-header {
+  text-align: center;
+  margin: 20px 0 20px;
 }
 
-.branch-card::before{
-  content:"";
-
-  position:absolute;
-
-  top:0;
-  left:0;
-
-  width:100%;
-  height:5px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #ff9800,
-      #ff5722
-    );
+.section-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--secondary);
+  letter-spacing: -0.5px;
 }
 
-.branch-card:hover{
-  transform:translateY(-8px);
-
-  box-shadow:
-    0 18px 35px
-    rgba(0,0,0,.14);
+.section-header p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 4px;
 }
 
-.branch-card:active{
-  transform:scale(.975);
+/* APP GRID SYSTEM - EXACTLY 2 COLUMNS ON MOBILE */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
-
-/* =====================================================
-   BRANCH ICON
-===================================================== */
-
-.branch-icon{
-  width:75px;
-  height:75px;
-
-  border-radius:20px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  margin:auto auto 18px;
-
-  font-size:34px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fff4e5,
-      #ffe0b2
-    );
+/* APP CARDS */
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+  position: relative;
 }
 
-
-/* =====================================================
-   BRANCH CARD TEXT
-===================================================== */
-
-.branch-card h5{
-  text-align:center;
-
-  color:#0d1b2a;
-
-  font-size:20px;
-
-  font-weight:700;
-
-  margin-bottom:12px;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
-.branch-info{
-  text-align:center;
-
-  color:#64748b;
-
-  font-size:14px;
-
-  line-height:1.8;
+.card-icon-box {
+  width: 40px;
+  height: 40px;
+  background: #eff6ff;
+  color: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 18px;
 }
 
-
-/* =====================================================
-   BRANCH BUTTON
-===================================================== */
-
-.branch-btn-wrap{
-  margin-top:18px;
-
-  display:flex;
-
-  justify-content:center;
+.card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-bottom: 12px;
+  line-height: 1.3;
 }
 
-.branch-btn-wrap span{
-  background:#0d1b2a;
-
-  color:white;
-
-  padding:10px 20px;
-
-  border-radius:12px;
-
-  font-size:13px;
-
-  font-weight:600;
-
-  transition:
-    background .2s ease;
+/* BUTTON GRID INSIDE CARDS */
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: auto;
 }
 
-.branch-card:hover
-.branch-btn-wrap span{
-  background:#ff9800;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: var(--secondary);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
-
-/* =====================================================
-   LOADER
-===================================================== */
-
-.notes-loader{
-
-  min-height:350px;
-
-  display:flex;
-
-  align-items:center;
-
-  justify-content:center;
-
-  flex-direction:column;
-
-  gap:14px;
-
-  color:#64748b;
-
+.btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
-.notes-loader-spinner{
-
-  width:40px;
-
-  height:40px;
-
-  border-radius:50%;
-
-  border:
-    3px solid #e5e7eb;
-
-  border-top-color:#ff9800;
-
-  animation:
-    notesSpin .65s linear infinite;
-
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  grid-column: span 2;
+  padding: 9px;
 }
 
-@keyframes notesSpin{
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
 
-  to{
-    transform:rotate(360deg);
+/* E-NOTES CARD STYLES */
+#enotes .card {
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+#enotes .card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#enotes .card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+#enotes .card h3 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+/* FLOATING FEEDBACK BUTTON */
+.feedback-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 999;
+  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4);
+  transition: all 0.3s ease;
+}
+
+.feedback-btn:hover {
+  transform: scale(1.08);
+}
+
+/* FEEDBACK POPUP */
+.feedback-popup {
+  position: fixed;
+  right: 20px;
+  bottom: 86px;
+  width: 320px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  display: none;
+  z-index: 9999;
+  border: 1px solid var(--border-color);
+  animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-popup h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--secondary);
+}
+
+.feedback-popup input,
+.feedback-popup select,
+.feedback-popup textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.feedback-popup button {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* DESKTOP RESPONSIVENESS (EXPAND COLUMNS LARGER SCREENS) */
+@media(min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
   }
-
+  .card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .card-icon-box {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+  }
+  .card h3 {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .btn {
+    padding: 9px 10px;
+    font-size: 11.5px;
+    border-radius: 12px;
+    gap: 6px;
+  }
 }
-
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-.notes-error{
-
-  max-width:700px;
-
-  margin:70px auto;
-
-  padding:40px 25px;
-
-  background:#fff;
-
-  text-align:center;
-
-  border-radius:20px;
-
-  box-shadow:
-    0 8px 25px
-    rgba(0,0,0,.07);
-
-}
-
-.notes-error-icon{
-
-  font-size:45px;
-
-  color:#dc3545;
-
-  margin-bottom:15px;
-
-}
-
-.notes-error h3{
-  font-weight:700;
-}
-
-.notes-error p{
-
-  color:#64748b;
-
-  font-size:14px;
-
-}
-
-
-/* =====================================================
-   BRANCH IFRAME
-===================================================== */
-
-.branch-frame-wrapper{
-
-  width:100%;
-
-  min-height:
-    calc(100vh - 100px);
-
-  background:#fff;
-
-  overflow:hidden;
-
-  position:relative;
-
-}
-
-
-/*
-   IMPORTANT:
-
-   Branch page अपने पूरे CSS/JS के साथ
-   iframe के अंदर चलेगा।
-
-   इसलिए main page और branch page
-   के बीच कोई CSS conflict नहीं होगा।
-*/
-
-.branch-frame{
-
-  display:block;
-
-  width:100%;
-
-  height:
-    calc(100vh - 100px);
-
-  min-height:700px;
-
-  border:0;
-
-  margin:0;
-
-  padding:0;
-
-  background:#fff;
-
-}
-
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media(max-width:768px){
-
-  .hero{
-
-    padding:
-      105px 18px 50px;
-
-  }
-
-  .hero h1{
-    font-size:32px;
-  }
-
-  .hero p{
-    font-size:14px;
-  }
-
-  .section-title{
-
-    margin:
-      40px 0 25px;
-
-  }
-
-  .section-title h2{
-    font-size:26px;
-  }
-
-  .branch-card{
-
-    padding:
-      24px 18px;
-
-  }
-
-  .branch-frame-wrapper{
-
-    min-height:
-      calc(100vh - 80px);
-
-  }
-
-  .branch-frame{
-
-    height:
-      calc(100vh - 80px);
-
-    min-height:800px;
-
-  }
-
-}
-
-
-/* =====================================================
-   SMALL MOBILE
-===================================================== */
-
-@media(max-width:420px){
-
-  .hero h1{
-    font-size:28px;
-  }
-
-  .branch-card{
-    padding:22px 15px;
-  }
-
-  .branch-icon{
-    width:65px;
-    height:65px;
-    font-size:29px;
-  }
-
-  .branch-card h5{
-    font-size:18px;
-  }
-
-}
-
-
-/* =====================================================
-   PAGE TRANSITION
-===================================================== */
-
-.branch-frame-wrapper{
-  animation:
-    branchFade .22s ease;
-}
-
-@keyframes branchFade{
-
-  from{
-    opacity:0;
-  }
-
-  to{
-    opacity:1;
-  }
-
-}
-
 </style>
-
 </head>
-
 
 <body>
 
+<!-- TOP NAVIGATION BAR -->
+<div class="nav-wrapper">
+  <div class="top-btns">
+    <button class="branch-btn active" onclick="showSection('semester', this)">
+      <i class="fas fa-graduation-cap"></i> Semester
+    </button>
+    <button class="branch-btn" onclick="showSection('enotes', this)">
+      <i class="fas fa-book-open"></i> E-Notes
+    </button>
+    <button class="branch-btn" onclick="showSection('syllabus', this)">
+      <i class="fas fa-scroll"></i> Syllabus
+    </button>
+    <button class="branch-btn" onclick="showSection('join', this)">
+      <i class="fab fa-whatsapp"></i> Join Us
+    </button>
+  </div>
+</div>
 
-<!-- =====================================================
-     HEADER
-===================================================== -->
+<main>
 
-<div id="header"></div>
+  <!-- SEMESTER SECTION -->
+  <div id="semester" class="branch-section" style="display:block;">
+    
+    <!-- SEM 1 -->
+    <div class="section-header">
+      <h2>Semester 1 (Common)</h2>
+      <p>Books, Handwritten Notes, PYQs & Practical Files</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-calculator"></i></div>
+        <h3>Applied Mathematics I</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1dFyBSWMM7M1X87eFsdwd_JtgZWXaZ6w7/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
 
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-atom"></i></div>
+        <h3>Applied Physics I</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1FVUMMrHpT7HwlCbIJGdxBB4ZWr8oI0ra/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="https://drive.google.com/file/d/1hCYeiS3GvpwEQuXq_ov8invYusfwoYix/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
+      </div>
 
-<!-- =====================================================
-     MAIN CONTENT
-===================================================== -->
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-flask-vial"></i></div>
+        <h3>Applied Chemistry</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1TP44D0wNz-aMB8mFH5uyEXhFW5bFk9Hy/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/10uyWxmQu7r3ga17C0-0PNKVMprkbchfN/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="https://drive.google.com/file/d/1rz_IK4OceBZ97ZTdO4SgMXSDDwnOCA8e/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
+      </div>
 
-<main id="main-content">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-comments"></i></div>
+        <h3>Communication Skills</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1YnZDKUHlLi5UA19JD0XTkKnqHy1tWO3k/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1xj5G7fQL61CkcAzFaHZgc5biHGZq1AVh/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="https://drive.google.com/file/d/1bBeaIBephDXpuZ3SNC92_c7EpjfRXtyl/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
+      </div>
 
-
-  <!-- =================================================
-       HERO
-  ================================================== -->
-
-  <section
-    class="hero"
-    id="hero-section"
-  >
-
-    <h1>
-      Diploma Notes Section
-    </h1>
-
-    <p>
-      Select your engineering branch and access
-      notes, books, practicals, PYQs and study materials.
-    </p>
-
-  </section>
-
-
-  <!-- =================================================
-       BRANCH SECTION
-  ================================================== -->
-
-  <div
-    class="container"
-    id="branch-section"
-  >
-
-    <div class="section-title">
-
-      <h2>
-        Choose Your Branch
-      </h2>
-
-      <p>
-        Professional study resources for every
-        diploma engineering branch
-      </p>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-drafting-compass"></i></div>
+        <h3>Engineering Drawing</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1QhQZcp02Ab32GH187Z4ugtBdgTY1y5_X/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
     </div>
 
-
-    <div class="row g-4">
-
-
-      <!-- =================================================
-           COMPUTER
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="computer.html"
-          class="branch-link"
-          data-branch="computer"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              💻
-            </div>
-
-            <h5>
-              Computer Science
-            </h5>
-
-            <div class="branch-info">
-              Code: 355
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+    <!-- SEM 2 -->
+    <div class="section-header" style="margin-top: 30px;">
+      <h2>Semester 2 (Common)</h2>
+      <p>Books, Handwritten Notes & PYQs</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-square-root-variable"></i></div>
+        <h3>Applied Mathematics II</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1TvF0XirtfeU2XBA8hd8z8trk9WeZXr3P/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/147Ny3AcoRTpFUO6DpiXkbryTzzLiQy7s/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
       </div>
 
-
-      <!-- =================================================
-           ELECTRICAL
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="electrical.html"
-          class="branch-link"
-          data-branch="electrical"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              ⚡
-            </div>
-
-            <h5>
-              Electrical Engineering
-            </h5>
-
-            <div class="branch-info">
-              Code: 328
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-magnet"></i></div>
+        <h3>Applied Physics II</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1AtJvINUkXh-8nPFveWchOnHAfZtfSNrC/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/17alDjhiyRV6HelhIlGBllJNWce0faPrh/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="https://drive.google.com/file/d/1m88XqWh6vP2HMQ3wRz9wcFTzOcQ-a4ir/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
       </div>
 
-
-      <!-- =================================================
-           ELECTRONICS
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="electronics.html"
-          class="branch-link"
-          data-branch="electronics"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              📡
-            </div>
-
-            <h5>
-              Electronics Engineering
-            </h5>
-
-            <div class="branch-info">
-              Code: 330
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-bolt"></i></div>
+        <h3>Fundamentals of Electrical & Electronics Engineering</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1U8pT87pzyTYgRShzhhPvNz3YwJoFQ1f9/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1vXDHqFPqe4KEbqEuH2kJrvbazYv0WVEC/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="1" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
       </div>
 
-
-      <!-- =================================================
-           CIVIL
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="civil.html"
-          class="branch-link"
-          data-branch="civil"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              🏗️
-            </div>
-
-            <h5>
-              Civil Engineering
-            </h5>
-
-            <div class="branch-info">
-              Code: 322
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-gears"></i></div>
+        <h3>Engineering Mechanics</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1qxDllH9w3fuaj9Ato_kA-BoyHjAuG-au/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1SqikpX8PYADNTlSjfVJwO21i7qX4AMdT/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="https://drive.google.com/file/d/1feSjyoy8HKTJuyoMRR-xHX2qMYKw3eMR/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
       </div>
 
-
-      <!-- =================================================
-           MECHANICAL
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="mechanical.html"
-          class="branch-link"
-          data-branch="mechanical"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              ⚙️
-            </div>
-
-            <h5>
-              Mechanical Engineering
-            </h5>
-
-            <div class="branch-info">
-              Code: 343
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-leaf"></i></div>
+        <h3>Environmental Studies</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1u_izHlECm2TgL8_Up3yBgLc8EXG8fu4f/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1MYm8jPTBo_ffpVaYm0lnXRWYg_nBUncI/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
       </div>
 
-
-      <!-- =================================================
-           IT
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="it.html"
-          class="branch-link"
-          data-branch="it"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              🌐
-            </div>
-
-            <h5>
-              Information Technology
-            </h5>
-
-            <div class="branch-info">
-              Code: 356
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-laptop-code"></i></div>
+        <h3>Introduction to IT Systems</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/19Jpg4x7VmB5HMhE7vAs4tUoVIHw8Cu_x/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1rMfmqIiPna4ssrhOmYlCRg0NP7Wt_i6Q/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
+          <a href="1" class="btn"><i class="fas fa-flask"></i> Practical</a>
+        </div>
       </div>
-
-
-      <!-- =================================================
-           AGRICULTURAL
-      ================================================== -->
-
-      <div class="col-lg-4 col-md-6">
-
-        <a
-          href="agricultural.html"
-          class="branch-link"
-          data-branch="agricultural"
-        >
-
-          <div class="branch-card">
-
-            <div class="branch-icon">
-              🌱
-            </div>
-
-            <h5>
-              Agricultural Engineering
-            </h5>
-
-            <div class="branch-info">
-              Code: 316
-              <br>
-              Duration: 3 Years
-            </div>
-
-            <div class="branch-btn-wrap">
-              <span>
-                Explore Notes
-              </span>
-            </div>
-
-          </div>
-
-        </a>
-
-      </div>
-
-
     </div>
 
+    <!-- SEM 3 -->
+    <div class="section-header" style="margin-top: 30px;">
+      <h2>Semester 3</h2>
+      <p>Computer Science Core Subjects</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-desktop"></i></div>
+        <h3>Operating Systems</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1Rddlh6aYREcWXwkTOKpY-wzNkRnudhh5/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1h-Cjiu5HxuDtqLDZ4pp7iIlNZiaQbCmS/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1QfaC7VkrbEdIzncpOkoYgNAMTc6rWSIO/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-database"></i></div>
+        <h3>Database Management System</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1do0dIKwq52cTyVzS1MB7d37eU97GfKdH/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="#" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1SvJ4C2hEh1TkQm9cuaKKbeGc7xZ180TU/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-network-wired"></i></div>
+        <h3>Computer Network</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/17yNX5t_oZD9enkGVJi1sVmJOzbOp7lOe/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1IWIqzOXFRMlzF9zgrFcrIT652vcUgKkS/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1oTituWHrFkLan6V1bV5mbWOtcffgAepT/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEM 4 -->
+    <div class="section-header" style="margin-top: 30px;">
+      <h2>Semester 4</h2>
+      <p>Advanced Computer Science Concepts</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-code"></i></div>
+        <h3>Data Structures using C</h3>
+        <div class="btn-grid">
+          <a href="https://drive.google.com/file/d/1gOTadjGjfQ0xqUf2ea0LOj2ryDYx4zcC/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1YGbNUyI2SIzrvFpB5XPzxuLCvSBQm8oK/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/16xlEqz3bJvvBNkOTAt-8lCXzrhel4NMh/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-laptop-code"></i></div>
+        <h3>Software Engineering</h3>
+        <div class="btn-grid">
+          <a href="#" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="https://drive.google.com/file/d/1pHoBkIB4nwZMR43ACrVnuBgdBCvIayyN/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1qSdjxy9GGwtN3GSxqAcOpO37fnLyGhGg/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-landmark"></i></div>
+        <h3>Introduction to E-Governance</h3>
+        <div class="btn-grid">
+          <a href="#" class="btn"><i class="fas fa-book"></i> Book</a>
+          <a href="#" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
+          <a href="https://drive.google.com/file/d/1xVuPMas7b7wxr-oa8Y_GTCzXMLbR8AU5/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- E-NOTES SECTION -->
+  <div id="enotes" class="branch-section">
+    <div class="section-header">
+      <h2>E-Books & Notes</h2>
+      <p>Instant Online Reading & PDF Downloads</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop" alt="Programming Notes">
+        <div class="card-body">
+          <h3>Programming Notes</h3>
+          <a href="#" class="btn btn-primary"><i class="fas fa-folder-open"></i> Open PDF</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop" alt="DBMS Notes">
+        <div class="card-body">
+          <h3>DBMS Notes</h3>
+          <a href="#" class="btn btn-primary"><i class="fas fa-folder-open"></i> Open PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYLLABUS SECTION -->
+  <div id="syllabus" class="branch-section">
+    <div class="section-header">
+      <h2>Syllabus & Curriculum</h2>
+      <p>Download Official BTEUP / Board Syllabus</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
+        <h3>1st Year</h3>
+        <div class="btn-grid">
+          <a href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf" target="_blank" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
+        <h3>2nd Year</h3>
+        <div class="btn-grid">
+          <a href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/355_2025_26.pdf" target="_blank" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
+        <h3>3rd Year</h3>
+        <div class="btn-grid">
+          <a href="#" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN SECTION -->
+  <div id="join" class="branch-section">
+    <div class="section-header">
+      <h2>Join Community</h2>
+      <p>Connect with fellow computer science students</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon-box"><i class="fab fa-whatsapp"></i></div>
+        <h3>WhatsApp Study Group</h3>
+        <div class="btn-grid">
+          <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="btn btn-primary"><i class="fab fa-whatsapp"></i> Join branch Group</a>
+        </div>
+      </div>
+    </div>
   </div>
 
 </main>
 
 
-<!-- =====================================================
-     FOOTER
-===================================================== -->
 
-<div id="footer"></div>
+<!-- WORKABLE FEEDBACK POPUP (EMAIL) -->
+<div class="feedback-popup" id="feedbackPopup">
+  <h3>Send Feedback</h3>
+  <input type="text" id="fbName" placeholder="Your Name" required>
+  
+  <input type="text" id="fbBranch" value="Information Engineering (BTEUP)" readonly style="background:#f1f5f9; font-weight:600; color:#2563eb; cursor:not-allowed;">
 
+  <select id="fbCategory">
+    <option value="Notes/Books Request">Notes/Books Request</option>
+    <option value="Report Issue">Report Issue</option>
+    <option value="Other">Other</option>
+  </select>
 
-<!-- =====================================================
-     BOOTSTRAP JS
-===================================================== -->
-
-<script
-  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-</script>
-
-
-<!-- =====================================================
-     SWIPER JS
-===================================================== -->
-
-<script
-  src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js">
-</script>
-
+  <textarea id="fbMessage" rows="3" placeholder="Your Message..."></textarea>
+  <button onclick="sendFeedbackEmail()">Submit via Email</button>
+</div>
 
 <script>
-
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
-
-let branchLoading = false;
-
-
-/* =====================================================
-   ALLOWED BRANCHES
-===================================================== */
-
-const allowedBranches = [
-
-  "computer",
-  "electrical",
-  "electronics",
-  "civil",
-  "mechanical",
-  "it",
-  "agricultural"
-
-];
-
-
-/* =====================================================
-   LOAD HEADER
-===================================================== */
-
-async function loadHeader(){
-
-  const header =
-    document.getElementById("header");
-
-  if(!header){
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "header.html",
-        {
-          cache:"no-cache"
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "header.html not found"
-      );
-
-    }
-
-
-    header.innerHTML =
-      await response.text();
-
-
-  }catch(error){
-
-    console.error(
-      "Header Error:",
-      error
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   LOAD FOOTER
-===================================================== */
-
-async function loadFooter(){
-
-  const footer =
-    document.getElementById("footer");
-
-  if(!footer){
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "footer.html",
-        {
-          cache:"no-cache"
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "footer.html not found"
-      );
-
-    }
-
-
-    footer.innerHTML =
-      await response.text();
-
-
-  }catch(error){
-
-    console.error(
-      "Footer Error:",
-      error
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   SHOW MAIN NOTES PAGE
-===================================================== */
-
-function showMainPage(){
-
-  const content =
-    document.getElementById(
-      "main-content"
-    );
-
-  if(!content){
-    return;
-  }
-
-
-  content.innerHTML = `
-
-    <section
-      class="hero"
-      id="hero-section"
-    >
-
-      <h1>
-        Diploma Notes Section
-      </h1>
-
-      <p>
-        Select your engineering branch and access
-        notes, books, practicals, PYQs and study materials.
-      </p>
-
-    </section>
-
-
-    <div
-      class="container"
-      id="branch-section"
-    >
-
-      <div class="section-title">
-
-        <h2>
-          Choose Your Branch
-        </h2>
-
-        <p>
-          Professional study resources for every
-          diploma engineering branch
-        </p>
-
-      </div>
-
-
-      <div class="row g-4">
-
-        ${createBranchCard(
-          "computer",
-          "💻",
-          "Computer Science",
-          "355"
-        )}
-
-        ${createBranchCard(
-          "electrical",
-          "⚡",
-          "Electrical Engineering",
-          "328"
-        )}
-
-        ${createBranchCard(
-          "electronics",
-          "📡",
-          "Electronics Engineering",
-          "330"
-        )}
-
-        ${createBranchCard(
-          "civil",
-          "🏗️",
-          "Civil Engineering",
-          "322"
-        )}
-
-        ${createBranchCard(
-          "mechanical",
-          "⚙️",
-          "Mechanical Engineering",
-          "343"
-        )}
-
-        ${createBranchCard(
-          "it",
-          "🌐",
-          "Information Technology",
-          "356"
-        )}
-
-        ${createBranchCard(
-          "agricultural",
-          "🌱",
-          "Agricultural Engineering",
-          "316"
-        )}
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  attachBranchEvents();
-
-}
-
-
-/* =====================================================
-   CREATE BRANCH CARD
-===================================================== */
-
-function createBranchCard(
-  branch,
-  icon,
-  name,
-  code
-){
-
-  return `
-
-    <div class="col-lg-4 col-md-6">
-
-      <a
-        href="${branch}.html"
-        class="branch-link"
-        data-branch="${branch}"
-      >
-
-        <div class="branch-card">
-
-          <div class="branch-icon">
-            ${icon}
-          </div>
-
-          <h5>
-            ${name}
-          </h5>
-
-          <div class="branch-info">
-
-            Code: ${code}
-
-            <br>
-
-            Duration: 3 Years
-
-          </div>
-
-          <div class="branch-btn-wrap">
-
-            <span>
-              Explore Notes
-            </span>
-
-          </div>
-
-        </div>
-
-      </a>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   ATTACH BRANCH EVENTS
-===================================================== */
-
-function attachBranchEvents(){
-
-  document
-    .querySelectorAll(
-      ".branch-link[data-branch]"
-    )
-    .forEach(
-      function(link){
-
-        link.addEventListener(
-          "click",
-          function(event){
-
-            event.preventDefault();
-
-            const branch =
-              this.dataset.branch;
-
-            loadBranchPage(
-              branch
-            );
-
-          }
-        );
-
-      }
-    );
-
-}
-
-
-/* =====================================================
-   LOAD BRANCH PAGE
-   ISOLATED IFRAME
-===================================================== */
-
-async function loadBranchPage(
-  branchName
-){
-
-  if(branchLoading){
-    return;
-  }
-
-
-  if(
-    !allowedBranches.includes(
-      branchName
-    )
-  ){
-
-    console.error(
-      "Invalid branch:",
-      branchName
-    );
-
-    return;
-
-  }
-
-
-  branchLoading = true;
-
-
-  const content =
-    document.getElementById(
-      "main-content"
-    );
-
-
-  if(!content){
-
-    branchLoading = false;
-
-    return;
-
-  }
-
-
-  /* =================================================
-     LOADING SCREEN
-  ================================================= */
-
-  content.innerHTML = `
-
-    <div class="notes-loader">
-
-      <div
-        class="notes-loader-spinner"
-      ></div>
-
-      <div>
-
-        Loading
-        ${capitalize(branchName)}
-        Notes...
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
+function showSection(sectionId, btnElement) {
+  const sections = document.querySelectorAll('.branch-section');
+  sections.forEach(section => {
+    section.style.display = 'none';
   });
 
-
-  try{
-
-    const fileName =
-      `${branchName}.html`;
-
-
-    /* =================================================
-       CHECK FILE
-    ================================================= */
-
-    let fileExists = true;
-
-    try{
-
-      const response =
-        await fetch(
-          fileName,
-          {
-            method:"HEAD",
-            cache:"no-cache"
-          }
-        );
-
-      if(!response.ok){
-        fileExists = false;
-      }
-
-    }catch(error){
-
-      /*
-       * Some hosting/CDN systems may not
-       * properly support HEAD requests.
-       *
-       * In that case iframe load will
-       * determine whether file exists.
-       */
-
-      fileExists = true;
-
-    }
-
-
-    if(!fileExists){
-
-      throw new Error(
-        `${fileName} not found`
-      );
-
-    }
-
-
-    /* =================================================
-       CREATE IFRAME
-    ================================================= */
-
-    content.innerHTML = `
-
-      <div
-        class="branch-frame-wrapper"
-      >
-
-        <iframe
-
-          id="branchFrame"
-
-          class="branch-frame"
-
-          src="${fileName}"
-
-          title="${capitalize(
-            branchName
-          )} Notes"
-
-          loading="eager"
-
-          allowfullscreen
-
-        ></iframe>
-
-      </div>
-
-    `;
-
-
-    /* =================================================
-       UPDATE URL
-    ================================================= */
-
-    history.pushState(
-
-      {
-        branch:
-          branchName
-      },
-
-      "",
-
-      `#${branchName}`
-
-    );
-
-
-    /* =================================================
-       FRAME
-    ================================================= */
-
-    const frame =
-      document.getElementById(
-        "branchFrame"
-      );
-
-
-    if(frame){
-
-      frame.addEventListener(
-        "load",
-        function(){
-
-          branchLoading = false;
-
-          console.log(
-            `${fileName} loaded successfully`
-          );
-
-        },
-        {
-          once:true
-        }
-      );
-
-
-      /*
-       * Fallback
-       *
-       * Prevent loader lock if browser
-       * doesn't fire expected events.
-       */
-
-      setTimeout(
-        function(){
-
-          branchLoading = false;
-
-        },
-        5000
-      );
-
-    }else{
-
-      branchLoading = false;
-
-    }
-
-
-  }catch(error){
-
-    console.error(
-      "Branch Error:",
-      error
-    );
-
-
-    content.innerHTML = `
-
-      <div class="container">
-
-        <div class="notes-error">
-
-          <div
-            class="notes-error-icon"
-          >
-
-            <i class="
-              fa-solid
-              fa-triangle-exclamation
-            "></i>
-
-          </div>
-
-
-          <h3>
-            Unable to Load Notes
-          </h3>
-
-
-          <p>
-            ${error.message}
-          </p>
-
-
-          <button
-
-            class="btn btn-dark mt-3"
-
-            onclick="goBackToMain()"
-
-          >
-
-            <i
-              class="fa-solid fa-arrow-left"
-            ></i>
-
-            Back to Notes
-
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-
-    branchLoading = false;
-
-  }
-
-}
-
-
-/* =====================================================
-   BACK TO MAIN
-===================================================== */
-
-function goBackToMain(){
-
-  branchLoading = false;
-
-
-  history.pushState(
-    {},
-    "",
-    window.location.pathname
-  );
-
-
-  showMainPage();
-
-
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
+  const buttons = document.querySelectorAll('.branch-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('active');
   });
 
+  document.getElementById(sectionId).style.display = 'block';
+
+  if (btnElement) {
+    btnElement.classList.add('active');
+  }
 }
 
-
-/* =====================================================
-   BROWSER BACK / FORWARD
-===================================================== */
-
-window.addEventListener(
-  "popstate",
-  function(){
-
-    const branch =
-      window.location.hash
-        .replace("#","")
-        .trim();
-
-
-    if(
-      allowedBranches.includes(
-        branch
-      )
-    ){
-
-      loadBranchPage(
-        branch
-      );
-
-    }else{
-
-      showMainPage();
-
-    }
-
+function toggleFeedback() {
+  const popup = document.getElementById('feedbackPopup');
+  if (popup.style.display === 'block') {
+    popup.style.display = 'none';
+  } else {
+    popup.style.display = 'block';
   }
-);
-
-
-/* =====================================================
-   LOAD HASH PAGE
-===================================================== */
-
-function loadHashPage(){
-
-  const branch =
-    window.location.hash
-      .replace("#","")
-      .trim();
-
-
-  if(
-    allowedBranches.includes(
-      branch
-    )
-  ){
-
-    loadBranchPage(
-      branch
-    );
-
-  }else{
-
-    showMainPage();
-
-  }
-
 }
 
+function sendFeedbackEmail() {
+  const name = document.getElementById('fbName').value.trim();
+  const branch = document.getElementById('fbBranch').value;
+  const category = document.getElementById('fbCategory').value;
+  const message = document.getElementById('fbMessage').value.trim();
 
-/* =====================================================
-   CAPITALIZE
-===================================================== */
+  if(!name) {
+    alert("Please enter your name!");
+    return;
+  }
 
-function capitalize(text){
-
-  return (
-
-    text
-      .charAt(0)
-      .toUpperCase()
-
-    +
-
-    text.slice(1)
-
+  const recipientEmail = "astar22072006@gmail.com";
+  const subject = encodeURIComponent(`New Feedback / Request: ${category}`);
+  const body = encodeURIComponent(
+    `Name: ${name}\n` +
+    `Branch: ${branch}\n` +
+    `Category: ${category}\n\n` +
+    `Message:\n${message}`
   );
 
+  const mailtoURL = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+  
+  window.location.href = mailtoURL;
+  toggleFeedback();
 }
-
-
-/* =====================================================
-   INITIALIZATION
-===================================================== */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  async function(){
-
-    /*
-     * Header/footer parallel load
-     * for faster startup.
-     */
-
-    await Promise.all([
-      loadHeader(),
-      loadFooter()
-    ]);
-
-
-    /*
-     * Load current hash
-     * or main branch page.
-     */
-
-    loadHashPage();
-
-  }
-);
-
 </script>
 
-
 </body>
-
 </html>

@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Books | Diploma Engineers</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>E-Books Library | Diploma Engineers</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,788 +13,405 @@
 <style>
 :root{
   --blue:#2563eb;
+  --blue2:#1d4ed8;
   --dark:#0f172a;
   --text:#334155;
   --muted:#64748b;
   --border:#e2e8f0;
   --bg:#f8fafc;
+  --white:#fff;
+  --red:#ef4444;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{
+html,body{width:100%;min-height:100%;font-family:"Plus Jakarta Sans",sans-serif;background:var(--bg);color:var(--text)}
+body.reader-open{overflow:hidden}
+button,input,textarea{font:inherit}
+button{border:0;background:none;cursor:pointer}
+
+/* =========================
+   BOOK LIBRARY
+========================= */
+#booksPage{
   width:100%;
-  height: 100%;
-  background:var(--bg)!important;
-  font-family:"Plus Jakarta Sans",sans-serif;
-  color:var(--text);
-  overflow-x:hidden;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  min-height:100vh;
+  padding:15px;
 }
-body.reader-open{overflow:hidden} /* Prevent scrolling when reader is open */
-button,textarea{font:inherit}
-button{cursor:pointer; border: none; background: none;}
-
-/* =====================================================
-   CUSTOM HEADER (ADDED FOR STANDALONE FUNCTIONALITY)
-   ===================================================== */
-.app-header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 55px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 15px;
-  z-index: 1000;
-  display: none; /* Hidden by default */
-}
-
-/* Show header only when reader is open */
-body.reader-open .app-header {
-  display: flex;
-}
-
-.back-btn {
-  font-size: 18px;
-  color: var(--dark);
-  margin-right: 15px;
-  padding: 5px;
-  cursor: pointer;
-}
-
-.header-title {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--dark);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* =====================================================
-   LIBRARY VIEW
-   ===================================================== */
-.books-wrap{
-  width:100%;
-  padding: 15px;
-}
-
-.books-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0 0 15px;
-}
-
-.books-title{
-  font-size:18px;
+.section-title{
+  font-size:20px;
   font-weight:800;
   color:var(--dark);
+  margin:3px 0 15px;
 }
-
-.books-title span{color:var(--blue)}
-.books-subtitle{
-  font-size:10px;
-  font-weight:700;
-  color:var(--muted);
+.section-title::after{
+  content:"";
+  display:block;
+  width:42px;
+  height:3px;
+  border-radius:10px;
+  background:var(--blue);
+  margin-top:6px;
 }
-
-.books-grid{
+.notes-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:12px;
 }
-
 .book-card{
-  min-width:0;
+  display:block;
   overflow:hidden;
   background:#fff;
   border:1px solid var(--border);
-  border-radius:15px;
-  box-shadow:0 4px 12px rgba(15,23,42,.05);
+  border-radius:16px;
+  box-shadow:0 5px 18px rgba(15,23,42,.06);
   cursor:pointer;
-  transition: transform 0.2s;
   -webkit-tap-highlight-color:transparent;
+  transition:.18s ease;
 }
-.book-card:active {
-    transform: scale(0.97);
-}
-
-.book-cover{
+.book-card:active{transform:scale(.98)}
+.book-card-cover{
   position:relative;
   width:100%;
   aspect-ratio:3/4;
   background:#eef2ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
 }
-.book-thumb{
-  position:absolute;
-  inset:0;
+.book-card-cover img{
   width:100%;
   height:100%;
-  border:0;
-  background:#fff;
-  pointer-events:none;
   object-fit:contain;
-  padding:25px;
+  padding:22px;
 }
-.book-shade{
+.book-card-shade{
   position:absolute;
   inset:0;
   pointer-events:none;
-  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.03) 70%,transparent);
+  background:linear-gradient(to top,rgba(2,6,23,.78),transparent 70%);
 }
-.book-label{
+.book-open{
   position:absolute;
   left:10px;
   right:10px;
   bottom:10px;
-  z-index:2;
-  color:#fff;
-  font-size:11px;
-  font-weight:800;
-  line-height:1.35;
-  text-shadow:0 2px 8px rgba(0,0,0,.5);
-}
-.open-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  margin-top:6px;
-  padding:3px 8px;
-  border-radius:999px;
-  background:rgba(255,255,255,.25);
-  border:1px solid rgba(255,255,255,.5);
-  font-size:9px;
-  font-weight:800;
-  backdrop-filter: blur(2px);
-}
-.book-meta{
-  padding:10px;
-}
-.book-meta-line{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:6px;
-}
-.book-type{
-  font-size:9px;
-  font-weight:700;
-  color:var(--muted);
-}
-.read-pill{
-  font-size:9px;
-  font-weight:800;
-  color:#1d4ed8;
-  background:#eff6ff;
-  border:1px solid #bfdbfe;
-  border-radius:999px;
-  padding:3px 8px;
-}
-
-/* =====================================================
-   READER VIEW (HIDDEN BY DEFAULT)
-   ===================================================== */
-.reader-view{
-  display:none;
-  width:100%;
-  height: calc(100% - 55px); /* Full height minus header */
-  padding:0;
-  margin:0;
-  background: #fff;
-}
-.reader-view.active{display:block}
-
-.pdf-box{
-  width:100%;
-  height: 100%;
-  background:#fff;
-}
-.pdf-frame{
-  width:100%;
-  height:100%;
-  border:0;
-  display:block;
-  background:#fff;
-}
-
-/* Removed custom Like/Save/Comment UI as it was designed
-   for an iframe parent and wouldn't work standalone without
-   a backend setup. The cards now just open the PDF directly. */
-
-@media(max-width:420px){
-  .books-grid{gap:10px}
-  .books-title{font-size:16px;}
-  .books-subtitle{font-size:9px}
-}
-</style>
-</head>
-
-<body>
-
-<!-- CUSTOM APP HEADER -->
-<header class="app-header">
-    <button class="back-btn" onclick="history.back()">
-        <i class="fa-solid fa-arrow-left"></i>
-    </button>
-    <div class="header-title" id="headerTitle">Book Reader</div>
-</header>
-
-<!-- FIRST SCREEN: only thumbnails/cards -->
-<div class="books-wrap" id="booksHome">
-
-  <div class="books-head">
-    <div class="books-title">Books <span>Library</span></div>
-    <div class="books-subtitle">Diploma Engineers</div>
-  </div>
-
-  <div class="books-grid" id="booksGrid"></div>
-</div>
-
-
-<!-- SECOND SCREEN: PDF Reader -->
-<div class="reader-view" id="readerView">
-
-  <div class="pdf-box">
-    <iframe
-      id="pdfFrame"
-      class="pdf-frame"
-      title="PDF Reader"
-      allow="fullscreen">
-    </iframe>
-  </div>
-
-</div>
-
-
-<script>
-(function(){
-
-  /* ==========================================================
-     BOOK LIST
-     Only name + PDF link is required.
-     Same PDF icon is used for every book card.
-     ========================================================== */
-
-  const BOOKS = [
-    {
-      name:"Applied Physics 2nd",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
-    },
-    {
-      name:"Applied Mathematics 2nd",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
-    },
-    {
-      name:"Engineering Mechanics",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
-    },
-    {
-      name:"Design Of Steel Structures",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
-    }
-  ];
-
-  const booksHome=document.getElementById("booksHome");
-  const booksGrid=document.getElementById("booksGrid");
-  const readerView=document.getElementById("readerView");
-  const pdfFrame=document.getElementById("pdfFrame");
-  const headerTitle=document.getElementById("headerTitle");
-  const body=document.body;
-
-  function esc(value){
-    return String(value ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // =====================================================
-  // INITIALISE LIBRARY CARDS
-  // =====================================================
-  function renderCards(){
-
-    booksGrid.innerHTML="";
-
-    BOOKS.forEach((book,index)=>{
-
-      const card=document.createElement("article");
-
-      card.className="book-card";
-
-      const pdfIconUrl =
-        "https://cdn-icons-png.flaticon.com/512/1794/179483.png";
-
-      card.innerHTML=`
-        <div class="book-cover">
-          <img
-            class="book-thumb"
-            src="${pdfIconUrl}"
-            alt="PDF"
-            loading="lazy"
-          >
-          <div class="book-shade"></div>
-          <div class="book-label">
-            ${esc(book.name)}
-
-            <div class="open-pill">
-              <i class="fa-solid fa-book-open"></i> Open
-            </div>
-          </div>
-        </div>
-
-        <div class="book-meta">
-          <div class="book-meta-line">
-            <span class="book-type">PDF • Online Reader</span>
-            <span class="read-pill">Read</span>
-          </div>
-        </div>
-      `;
-
-      // Add click event to open reader view
-      card.addEventListener("click",()=>{
-        openBook(index);
-      });
-
-      booksGrid.appendChild(card);
-    });
-  }
-
-  // =====================================================
-  // OPEN BOOK FUNCTION (Uses Hash Navigation)
-  // =====================================================
-  function openBook(index){
-
-    const book = BOOKS[index];
-
-    if(!book) return;
-
-    // Update header title
-    headerTitle.textContent = book.name;
-
-    // Load PDF into iframe
-    pdfFrame.src=book.pdf;
-
-    // Update UI state
-    booksHome.style.display="none";
-    readerView.classList.add("active");
-    body.classList.add("reader-open");
-
-    // Change URL hash to make it bookmarkable/back-button friendly
-    window.location.hash = 'read=' + index;
-
-    window.scrollTo(0,0);
-  }
-
-  // =====================================================
-  // CLOSE BOOK FUNCTION
-  // =====================================================
-  function closeBook(){
-
-    // Detach PDF src to stop loading
-    pdfFrame.src="";
-
-    // Update UI state
-    readerView.classList.remove("active");
-    booksHome.style.display="block";
-    body.classList.remove("reader-open");
-
-    headerTitle.textContent = "Book Reader";
-
-    // Reset URL hash if we are returning to home
-    if(window.location.hash.startsWith('#read=')) {
-        // Use replaceState to avoid adding a new history entry
-        history.replaceState("", document.title, window.location.pathname + window.location.search);
-    }
-
-    window.scrollTo(0,0);
-  }
-
-  // =====================================================
-  // HASH NAVIGATION HANDLER (Mobile Back Button Fix)
-  // =====================================================
-  function handleHash() {
-    const hash = window.location.hash;
-    if (hash.startsWith('#read=')) {
-      const index = parseInt(hash.substring(6));
-      const book = BOOKS[index];
-      if(book) {
-          openBook(index);
-      } else {
-          closeBook(); // Invalid book index
-      }
-    } else {
-      closeBook(); // No read hash, show library
-    }
-  }
-
-  // Listen for URL hash changes
-  window.addEventListener('hashchange', handleHash);
-
-  // Check hash on initial page load (in case user bookmarked a book link)
-  handleHash();
-
-  renderCards();
-
-})();
-</script>
-
-</body>
-</html>  margin:0;
-}
-
-.books-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0 0 10px;
-}
-
-.books-title{
-  font-size:16px;
-  font-weight:800;
-  color:var(--dark);
-}
-
-.books-title span{color:var(--blue)}
-.books-subtitle{
-  font-size:9px;
-  font-weight:700;
-  color:var(--muted);
-}
-
-.books-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-}
-
-.book-card{
-  min-width:0;
-  overflow:hidden;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:15px;
-  box-shadow:0 7px 22px rgba(15,23,42,.07);
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-.book-cover{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/4;
-  background:#eef2ff;
-  overflow:hidden;
-}
-.book-thumb{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  border:0;
-  background:#fff;
-  pointer-events:none;
-  object-fit:contain;
-  padding:28px;
-}
-.book-shade{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.03) 70%,transparent);
-}
-.book-label{
-  position:absolute;
-  left:8px;
-  right:8px;
-  bottom:8px;
-  z-index:2;
   color:#fff;
   font-size:10px;
   font-weight:800;
-  line-height:1.35;
-  text-shadow:0 2px 8px rgba(0,0,0,.35);
 }
-.open-pill{
+.book-open span{
   display:inline-flex;
   align-items:center;
   gap:5px;
   margin-top:5px;
-  padding:4px 7px;
+  padding:4px 8px;
+  border:1px solid rgba(255,255,255,.45);
   border-radius:999px;
-  background:rgba(255,255,255,.18);
-  border:1px solid rgba(255,255,255,.35);
-  font-size:8px;
-  font-weight:800;
+  background:rgba(255,255,255,.2);
 }
-.book-meta{
-  padding:8px;
-}
-.book-meta-line{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:6px;
-}
-.book-type{
-  font-size:8px;
-  font-weight:700;
-  color:var(--muted);
-}
-.read-pill{
-  font-size:8px;
-  font-weight:800;
-  color:#1d4ed8;
-  background:#eff6ff;
-  border:1px solid #bfdbfe;
-  border-radius:999px;
-  padding:4px 6px;
-}
-
-/* Second screen inside this fetched file.
-   NO HEADER / NO BACK BUTTON here. */
-.reader-view{
-  display:none;
-  width:100%;
-  padding:0;
-  margin:0;
-}
-.reader-view.active{display:block}
-
-.reader-book-title{
-  font-size:16px;
-  font-weight:800;
-  color:var(--dark);
-  margin:0 0 8px;
-}
-.reader-book-sub{
-  font-size:10px;
-  color:var(--muted);
-  margin-bottom:10px;
-}
-
-.pdf-box{
-  width:100%;
-  height:calc(100vh - 145px);
-  min-height:500px;
-  background:#525252;
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid #dbe2ea;
-}
-.pdf-frame{
-  width:100%;
-  height:100%;
-  border:0;
-  display:block;
-  background:#fff;
-}
-
-.reader-actions{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-.action-btn{
-  flex:1;
-  height:40px;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:#fff;
-  color:var(--muted);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  font-size:10px;
-  font-weight:800;
-}
-.action-btn.active.like{
-  color:#2563eb;
-  border-color:#bfdbfe;
-  background:#eff6ff;
-}
-.action-btn.active.save{
-  color:#16a34a;
-  border-color:#bbf7d0;
-  background:#f0fdf4;
-}
-
-.comment-box{
-  margin-top:12px;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:11px;
-}
-.comment-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:9px;
-}
-.comment-head h3{
+.book-card-content{padding:10px}
+.book-card-content h3{
   font-size:12px;
+  line-height:1.35;
   color:var(--dark);
+  font-weight:800;
 }
-.comment-count{
-  font-size:8px;
+.book-card-content p{
+  font-size:9px;
+  line-height:1.4;
   color:var(--muted);
-  font-weight:700;
+  margin-top:4px;
+  font-weight:600;
 }
-.comment-form{
-  display:flex;
-  align-items:flex-end;
-  gap:7px;
+
+/* =========================
+   READER
+========================= */
+#reader{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:#fff;
+  overflow-y:auto;
 }
-.comment-avatar{
-  width:32px;
-  height:32px;
-  flex:0 0 32px;
-  border-radius:50%;
-  overflow:hidden;
+#reader.active{display:block}
+
+.reader-header{
+  position:sticky;
+  top:0;
+  height:56px;
+  z-index:20;
   display:flex;
   align-items:center;
-  justify-content:center;
-  color:var(--blue);
-  background:#eff6ff;
-  border:1px solid #dbeafe;
-}
-.comment-avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.comment-input{
-  flex:1;
-  min-height:38px;
-  max-height:100px;
-  resize:vertical;
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:9px;
-  outline:none;
-  background:#f8fafc;
-  font-size:10px;
-}
-.comment-input:focus{
+  gap:8px;
+  padding:0 10px;
   background:#fff;
-  border-color:#93c5fd;
+  border-bottom:1px solid var(--border);
 }
-.comment-submit{
+.reader-back,
+.reader-header-btn{
   width:38px;
   height:38px;
-  border:0;
-  border-radius:10px;
-  background:var(--blue);
-  color:#fff;
+  min-width:38px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:var(--dark);
 }
-.comment-submit:disabled{opacity:.55}
-
-.comments{
-  display:flex;
-  flex-direction:column;
-  gap:9px;
-  margin-top:12px;
-}
-.comment{
-  display:flex;
-  gap:7px;
-}
-.comment-body{
+.reader-back:active,
+.reader-header-btn:active{background:#f1f5f9}
+.reader-title{
   flex:1;
   min-width:0;
-  background:#f8fafc;
-  border:1px solid #eef2f7;
-  border-radius:11px;
-  padding:8px;
+  color:var(--dark);
+  font-size:13px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
-.comment-top{
+.reader-actions{display:flex;gap:2px}
+.reader-header-btn.active{color:var(--blue)}
+.reader-header-btn.like.active{color:var(--red)}
+
+.pdf-viewer{
+  width:100%;
+  height:62vh;
+  min-height:360px;
+  background:#cbd5e1;
+}
+.pdf-frame{
+  display:block;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#fff;
+}
+
+.reader-body{
+  padding:14px 15px 35px;
+  background:#fff;
+}
+.book-name{
+  color:var(--dark);
+  font-size:18px;
+  font-weight:800;
+  line-height:1.35;
+}
+.book-description{
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  margin-top:4px;
+}
+.stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+}
+.action-row{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:6px;
-  margin-bottom:3px;
+  gap:5px;
+  padding:9px 0;
+  margin-top:12px;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
 }
-.comment-name{
-  font-size:9px;
-  color:var(--dark);
+.action{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  padding:8px 11px;
+  border-radius:10px;
+  color:#475569;
+  font-size:11px;
   font-weight:800;
 }
-.comment-date{
-  font-size:7px;
-  color:#94a3b8;
+.action.active{
+  color:var(--blue);
+  background:#eff6ff;
 }
-.comment-text{
-  font-size:9px;
-  line-height:1.55;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-.empty-comments{
-  padding:14px;
-  text-align:center;
-  color:var(--muted);
-  font-size:9px;
+.action.like.active{
+  color:var(--red);
+  background:#fef2f2;
 }
 
 .login-note{
   display:none;
-  margin:10px 0 0;
-  padding:9px;
-  border-radius:10px;
+  padding:10px 12px;
+  margin-top:12px;
   background:#eff6ff;
-  border:1px solid #bfdbfe;
-  color:#1e40af;
-  font-size:9px;
+  color:#1d4ed8;
+  border-radius:12px;
+  font-size:11px;
   font-weight:700;
+}
+.comments-heading{
+  color:var(--dark);
+  font-size:15px;
+  font-weight:800;
+  margin:17px 0 10px;
+}
+.comment-form{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+}
+.avatar{
+  width:36px;
+  height:36px;
+  min-width:36px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#e2e8f0;
+}
+.comment-input-wrap{
+  display:flex;
+  flex:1;
+  gap:7px;
+}
+.comment-input{
+  width:100%;
+  min-height:42px;
+  max-height:130px;
+  resize:none;
+  outline:none;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  color:var(--text);
+  font-size:12px;
+  background:#fff;
+}
+.comment-input:focus{border-color:#93c5fd}
+.send-comment{
+  width:42px;
+  height:42px;
+  min-width:42px;
+  border-radius:12px;
+  color:#fff;
+  background:var(--blue);
+}
+.send-comment:active{background:var(--blue2)}
+.comments-list{
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+  margin-top:14px;
+}
+.comment{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+}
+.comment-content{
+  flex:1;
+  min-width:0;
+  background:#f8fafc;
+  border-radius:12px;
+  padding:9px 11px;
+}
+.comment-top{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.comment-user{
+  color:var(--dark);
+  font-size:11px;
+  font-weight:800;
+}
+.comment-time{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:600;
+}
+.comment-text{
+  color:#475569;
+  font-size:12px;
   line-height:1.5;
+  margin-top:4px;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.empty-comments{
+  text-align:center;
+  padding:20px 10px;
+  color:var(--muted);
+  font-size:11px;
+}
+.loading{
+  text-align:center;
+  padding:25px;
+  color:var(--muted);
+  font-size:11px;
 }
 
-@media(max-width:900px){
-  .pdf-box{
-    height:calc(100vh - 220px);
-    min-height:420px;
-  }
-}
 @media(max-width:420px){
-  .books-grid{gap:8px}
-  .books-subtitle{font-size:8px}
-  .pdf-box{height:calc(100vh - 230px);min-height:380px}
+  .notes-grid{gap:10px}
+  .section-title{font-size:18px}
+  .pdf-viewer{height:60vh}
 }
 </style>
 </head>
 
 <body>
 
-<!-- FIRST SCREEN: only thumbnails/cards -->
-<div class="books-wrap" id="booksHome">
+<!-- ==========================================================
+     BOOKS PAGE
+     ========================================================== -->
+<div id="booksPage" class="page">
 
-  <div class="books-head">
-    <div class="books-title">Books <span>Library</span></div>
-    <div class="books-subtitle">2 books per row</div>
+  <div class="section-title">E-Books Library</div>
+
+  <div class="notes-grid" id="booksGrid">
+
+    <!-- Cards are loaded automatically from Firestore.
+         If Firestore is empty, the two books below are fallback cards. -->
+
   </div>
-
-  <div class="books-grid" id="booksGrid"></div>
 </div>
 
 
-<!-- SECOND SCREEN: no header and no back button -->
-<div class="reader-view" id="readerView">
+<!-- ==========================================================
+     PDF READER PAGE
+     ========================================================== -->
+<div id="reader">
 
-  <div class="reader-book-title" id="readerBookTitle">Book</div>
-  <div class="reader-book-sub">
-    Diploma Engineers • Online Reader
+  <div class="reader-header">
+
+    <button class="reader-back" id="backButton" aria-label="Back">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+
+    <div class="reader-title" id="readerTitle">
+      PDF Reader
+    </div>
+
+    <div class="reader-actions">
+
+      <button class="reader-header-btn like" id="headerLike" title="Like">
+        <i class="fa-regular fa-heart"></i>
+      </button>
+
+      <button class="reader-header-btn" id="headerSave" title="Save">
+        <i class="fa-regular fa-bookmark"></i>
+      </button>
+
+    </div>
+
   </div>
 
-  <div class="pdf-box">
+
+  <div class="pdf-viewer">
     <iframe
       id="pdfFrame"
       class="pdf-frame"
@@ -802,107 +420,1399 @@ body.reader-open .app-header {
     </iframe>
   </div>
 
-  <div class="reader-actions">
-    <button class="action-btn like" id="likeBtn">
-      <i class="fa-solid fa-thumbs-up"></i>
-      <span>Like</span>
-      <b id="likeCount">0</b>
-    </button>
 
-    <button class="action-btn save" id="saveBtn">
-      <i class="fa-solid fa-bookmark"></i>
-      <span>Save</span>
-      <b id="saveCount">0</b>
-    </button>
-  </div>
+  <div class="reader-body">
 
-  <div class="login-note" id="loginNote"></div>
+    <div class="book-name" id="readerBookName"></div>
 
-  <div class="comment-box">
+    <div class="book-description" id="readerDescription"></div>
 
-    <div class="comment-head">
-      <h3>Comments</h3>
-      <span class="comment-count" id="commentCount">0 comments</span>
+    <div class="stats">
+      <span>
+        <i class="fa-regular fa-heart"></i>
+        <b id="likeCount">0</b> Likes
+      </span>
+
+      <span>
+        <i class="fa-regular fa-comment"></i>
+        <b id="commentCount">0</b> Comments
+      </span>
+
+      <span>
+        <i class="fa-regular fa-bookmark"></i>
+        <b id="saveCount">0</b> Saves
+      </span>
     </div>
 
-    <form class="comment-form" id="commentForm">
 
-      <div class="comment-avatar" id="commentUserAvatar">
-        <i class="fa-solid fa-user"></i>
-      </div>
+    <div class="action-row">
 
-      <textarea
-        class="comment-input"
-        id="commentInput"
-        maxlength="500"
-        placeholder="Write a comment..."
-      ></textarea>
-
-      <button
-        class="comment-submit"
-        id="commentSubmit"
-        type="submit">
-        <i class="fa-solid fa-paper-plane"></i>
+      <button class="action like" id="likeButton">
+        <i class="fa-regular fa-heart"></i>
+        <span>Like</span>
       </button>
 
-    </form>
+      <button class="action" id="saveButton">
+        <i class="fa-regular fa-bookmark"></i>
+        <span>Save</span>
+      </button>
 
-    <div class="comments" id="commentsList"></div>
+      <button class="action" id="commentButton">
+        <i class="fa-regular fa-comment"></i>
+        <span>Comment</span>
+      </button>
+
+      <button class="action" id="shareButton">
+        <i class="fa-solid fa-share-nodes"></i>
+        <span>Share</span>
+      </button>
+
+    </div>
+
+
+    <div class="login-note" id="loginNote">
+      Like, Save और Comment करने के लिए पहले login करें।
+    </div>
+
+
+    <div class="comments-heading">
+      Comments
+    </div>
+
+
+    <div class="comment-form">
+
+      <img
+        id="currentUserPhoto"
+        class="avatar"
+        src="https://ui-avatars.com/api/?name=User"
+        alt="User"
+      >
+
+      <div class="comment-input-wrap">
+
+        <textarea
+          id="commentInput"
+          class="comment-input"
+          maxlength="1000"
+          placeholder="Write a comment..."
+        ></textarea>
+
+        <button
+          id="sendComment"
+          class="send-comment"
+          title="Post Comment">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="comments-list" id="commentsList">
+      <div class="empty-comments">
+        No comments yet. Be the first to comment.
+      </div>
+    </div>
 
   </div>
-
 </div>
 
 
-<script>
-(function(){
+<!-- ==========================================================
+     FIREBASE
+     ========================================================== -->
+<script type="module">
 
-  /* ==========================================================
-     BOOK LIST
-     Only name + PDF link is required.
-     Same PDF icon is used for every book card.
-     ========================================================== */
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
-  const BOOKS = [
-    {
-      name:"Applied Physics 2nd",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
-    },
-    {
-      name:"Applied Mathematics 2nd",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
-    },
-    {
-      name:"Engineering Mechanics",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
-    },
-    {
-      name:"Design Of Steel Structures",
-      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+import {
+  getAuth,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  setDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  increment
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+import {
+  getStorage,
+  ref,
+  getDownloadURL
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+
+
+/* ==========================================================
+   IMPORTANT:
+   यहां अपने EXISTING Firebase project का config डालें.
+   ========================================================== */
+
+const firebaseConfig = {
+
+  apiKey: "YOUR_API_KEY",
+
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+
+  projectId: "YOUR_PROJECT_ID",
+
+  storageBucket: "YOUR_PROJECT.firebasestorage.app",
+
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+
+  appId: "YOUR_APP_ID"
+
+};
+
+
+/* Firebase initialize */
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+const storage = getStorage(app);
+
+
+/* ==========================================================
+   PDF ICON
+   हर PDF card पर यही icon लगेगा
+   ========================================================== */
+
+const PDF_ICON =
+"https://cdn-icons-png.flaticon.com/512/1794/179483.png";
+
+
+/* ==========================================================
+   FALLBACK BOOKS
+   अगर Firestore में books collection अभी खाली है,
+   तो ये books दिखाई जाएंगी.
+   ========================================================== */
+
+const FALLBACK_BOOKS = [
+
+  {
+    id:"applied-physics-2nd",
+
+    name:"Applied Physics 2nd",
+
+    description:"Diploma Engineering Physics PDF",
+
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf",
+
+    image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png"
+
+  },
+
+  {
+    id:"applied-mathematics-2nd",
+
+    name:"Applied Mathematics 2nd",
+
+    description:"Diploma Engineering Maths PDF",
+
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf",
+
+    image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png"
+
+  }
+
+];
+
+
+/* ==========================================================
+   VARIABLES
+   ========================================================== */
+
+let books = [];
+
+let currentBook = null;
+
+let currentUser = null;
+
+let unsubscribeComments = null;
+
+let unsubscribeStats = null;
+
+
+/* ==========================================================
+   DOM
+   ========================================================== */
+
+const booksGrid =
+document.getElementById("booksGrid");
+
+const reader =
+document.getElementById("reader");
+
+const pdfFrame =
+document.getElementById("pdfFrame");
+
+const readerTitle =
+document.getElementById("readerTitle");
+
+const readerBookName =
+document.getElementById("readerBookName");
+
+const readerDescription =
+document.getElementById("readerDescription");
+
+const likeCount =
+document.getElementById("likeCount");
+
+const commentCount =
+document.getElementById("commentCount");
+
+const saveCount =
+document.getElementById("saveCount");
+
+const commentsList =
+document.getElementById("commentsList");
+
+const commentInput =
+document.getElementById("commentInput");
+
+const currentUserPhoto =
+document.getElementById("currentUserPhoto");
+
+const loginNote =
+document.getElementById("loginNote");
+
+
+/* ==========================================================
+   ESCAPE HTML
+   ========================================================== */
+
+function esc(value = ""){
+
+  return String(value).replace(/[&<>"']/g,function(m){
+
+    return {
+
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+
+    }[m];
+
+  });
+
+}
+
+
+/* ==========================================================
+   USER
+   ========================================================== */
+
+function getUserName(){
+
+  if(!currentUser) return "User";
+
+  return currentUser.displayName ||
+         currentUser.email?.split("@")[0] ||
+         "User";
+
+}
+
+
+function getUserPhoto(){
+
+  if(!currentUser){
+
+    return "https://ui-avatars.com/api/?name=User";
+
+  }
+
+  return currentUser.photoURL ||
+
+    "https://ui-avatars.com/api/?name="+
+    encodeURIComponent(getUserName())+
+    "&background=e2e8f0&color=334155";
+
+}
+
+
+function requireLogin(){
+
+  if(currentUser){
+
+    loginNote.style.display="none";
+
+    return true;
+
+  }
+
+  loginNote.style.display="block";
+
+  return false;
+
+}
+
+
+/* ==========================================================
+   FIRESTORE BOOKS FETCH
+   ========================================================== */
+
+async function loadBooks(){
+
+  try{
+
+    const snapshot =
+      await getDocs(collection(db,"books"));
+
+    if(!snapshot.empty){
+
+      books =
+        snapshot.docs.map(function(item){
+
+          return {
+
+            id:item.id,
+
+            ...item.data()
+
+          };
+
+        });
+
+    }else{
+
+      books = FALLBACK_BOOKS;
+
     }
+
+  }catch(error){
+
+    console.error("Books fetch error:",error);
+
+    books = FALLBACK_BOOKS;
+
+  }
+
+  renderBooks();
+
+}
+
+
+/* ==========================================================
+   RENDER BOOK CARDS
+   ========================================================== */
+
+function renderBooks(){
+
+  booksGrid.innerHTML="";
+
+  books.forEach(function(book,index){
+
+    const card =
+      document.createElement("div");
+
+    card.className="book-card";
+
+    const image =
+      book.image ||
+      PDF_ICON;
+
+    card.innerHTML = `
+
+      <div class="book-card-cover">
+
+        <img
+          src="${esc(image)}"
+          alt="${esc(book.name || "PDF")}"
+          loading="lazy"
+        >
+
+        <div class="book-card-shade"></div>
+
+        <div class="book-open">
+
+          ${esc(book.name || "PDF File")}
+
+          <span>
+            <i class="fa-solid fa-book-open"></i>
+            Open
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="book-card-content">
+
+        <h3>
+          ${esc(book.name || "PDF File")}
+        </h3>
+
+        <p>
+          ${esc(
+            book.description ||
+            "Diploma Engineering PDF"
+          )}
+        </p>
+
+      </div>
+
+    `;
+
+    card.addEventListener(
+      "click",
+      function(){
+
+        openBook(index);
+
+      }
+    );
+
+    booksGrid.appendChild(card);
+
+  });
+
+}
+
+
+/* ==========================================================
+   PDF URL
+   ========================================================== */
+
+async function getPdfUrl(book){
+
+  /* Direct URL */
+
+  if(book.pdf){
+
+    return book.pdf;
+
+  }
+
+
+  /* Firebase Storage */
+
+  if(book.storagePath){
+
+    return await getDownloadURL(
+
+      ref(
+        storage,
+        book.storagePath
+      )
+
+    );
+
+  }
+
+
+  return "";
+
+}
+
+
+/* ==========================================================
+   OPEN BOOK
+   ========================================================== */
+
+async function openBook(index){
+
+  const book = books[index];
+
+  if(!book) return;
+
+  currentBook = book;
+
+  readerTitle.textContent =
+    book.name || "PDF Reader";
+
+  readerBookName.textContent =
+    book.name || "PDF File";
+
+  readerDescription.textContent =
+    book.description ||
+    "Diploma Engineering PDF";
+
+
+  reader.classList.add("active");
+
+  document.body.classList.add("reader-open");
+
+  window.location.hash =
+    "read="+encodeURIComponent(book.id);
+
+
+  pdfFrame.src = "";
+
+
+  try{
+
+    const pdfUrl =
+      await getPdfUrl(book);
+
+    if(!pdfUrl){
+
+      throw new Error(
+        "PDF URL or storagePath not found"
+      );
+
+    }
+
+    pdfFrame.src = pdfUrl;
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "PDF load नहीं हुआ। Firestore में pdf या storagePath check करें।"
+    );
+
+  }
+
+
+  setupRealtime();
+
+  updateUserUI();
+
+}
+
+
+/* ==========================================================
+   CLOSE READER
+   ========================================================== */
+
+function closeReader(){
+
+  if(unsubscribeComments){
+
+    unsubscribeComments();
+
+    unsubscribeComments=null;
+
+  }
+
+  if(unsubscribeStats){
+
+    unsubscribeStats();
+
+    unsubscribeStats=null;
+
+  }
+
+  pdfFrame.src="";
+
+  currentBook=null;
+
+  reader.classList.remove("active");
+
+  document.body.classList.remove("reader-open");
+
+  if(
+    window.location.hash.startsWith("#read=")
+  ){
+
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname+
+      window.location.search
+    );
+
+  }
+
+}
+
+
+/* ==========================================================
+   REALTIME STATS + COMMENTS
+   ========================================================== */
+
+function setupRealtime(){
+
+  if(!currentBook) return;
+
+
+  if(unsubscribeComments){
+
+    unsubscribeComments();
+
+  }
+
+  if(unsubscribeStats){
+
+    unsubscribeStats();
+
+  }
+
+
+  const bookId =
+    currentBook.id;
+
+
+  /* STATS */
+
+  const bookRef =
+    doc(db,"books",bookId);
+
+
+  unsubscribeStats =
+    onSnapshot(
+      bookRef,
+      function(snapshot){
+
+        const data =
+          snapshot.exists()
+          ? snapshot.data()
+          : {};
+
+        likeCount.textContent =
+          data.likeCount || 0;
+
+        saveCount.textContent =
+          data.saveCount || 0;
+
+        commentCount.textContent =
+          data.commentCount || 0;
+
+      }
+    );
+
+
+  /* COMMENTS */
+
+  const commentsRef =
+    collection(
+      db,
+      "books",
+      bookId,
+      "comments"
+    );
+
+
+  const commentsQuery =
+    query(
+      commentsRef,
+      orderBy(
+        "createdAt",
+        "desc"
+      )
+    );
+
+
+  unsubscribeComments =
+    onSnapshot(
+      commentsQuery,
+      function(snapshot){
+
+        commentsList.innerHTML="";
+
+        if(snapshot.empty){
+
+          commentsList.innerHTML =
+            `<div class="empty-comments">
+              No comments yet. Be the first to comment.
+            </div>`;
+
+          return;
+
+        }
+
+
+        snapshot.forEach(
+          function(item){
+
+            const data =
+              item.data();
+
+            const photo =
+              data.photoURL ||
+              "https://ui-avatars.com/api/?name="+
+              encodeURIComponent(
+                data.displayName || "User"
+              );
+
+
+            const div =
+              document.createElement("div");
+
+            div.className="comment";
+
+
+            div.innerHTML = `
+
+              <img
+                class="avatar"
+                src="${esc(photo)}"
+                alt="User"
+              >
+
+              <div class="comment-content">
+
+                <div class="comment-top">
+
+                  <span class="comment-user">
+                    ${esc(
+                      data.displayName ||
+                      "User"
+                    )}
+                  </span>
+
+                  <span class="comment-time">
+                    ${formatTime(data.createdAt)}
+                  </span>
+
+                </div>
+
+                <div class="comment-text">
+                  ${esc(data.text || "")}
+                </div>
+
+              </div>
+
+            `;
+
+            commentsList.appendChild(div);
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* ==========================================================
+   TIME
+   ========================================================== */
+
+function formatTime(timestamp){
+
+  if(!timestamp?.toDate){
+
+    return "just now";
+
+  }
+
+  const seconds =
+    Math.floor(
+      (
+        Date.now() -
+        timestamp.toDate().getTime()
+      ) / 1000
+    );
+
+
+  if(seconds < 60)
+    return "just now";
+
+  if(seconds < 3600)
+    return Math.floor(seconds/60)+"m";
+
+  if(seconds < 86400)
+    return Math.floor(seconds/3600)+"h";
+
+  return Math.floor(seconds/86400)+"d";
+
+}
+
+
+/* ==========================================================
+   LIKE
+   ========================================================== */
+
+async function toggleLike(){
+
+  if(!currentBook) return;
+
+  if(!requireLogin()) return;
+
+
+  const likeRef =
+    doc(
+      db,
+      "books",
+      currentBook.id,
+      "likes",
+      currentUser.uid
+    );
+
+
+  const existing =
+    await getDoc(likeRef);
+
+
+  if(existing.exists()){
+
+    await deleteDoc(likeRef);
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {
+        likeCount:
+          increment(-1)
+      },
+      {merge:true}
+    );
+
+  }else{
+
+    await setDoc(
+      likeRef,
+      {
+        uid:currentUser.uid,
+        displayName:getUserName(),
+        photoURL:getUserPhoto(),
+        createdAt:serverTimestamp()
+      }
+    );
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {
+        likeCount:
+          increment(1)
+      },
+      {merge:true}
+    );
+
+  }
+
+
+  updateLikeState();
+
+}
+
+
+/* ==========================================================
+   LIKE STATE
+   ========================================================== */
+
+async function updateLikeState(){
+
+  if(
+    !currentBook ||
+    !currentUser
+  ){
+
+    setLikeState(false);
+
+    return;
+
+  }
+
+
+  const snapshot =
+    await getDoc(
+      doc(
+        db,
+        "books",
+        currentBook.id,
+        "likes",
+        currentUser.uid
+      )
+    );
+
+
+  setLikeState(
+    snapshot.exists()
+  );
+
+}
+
+
+function setLikeState(active){
+
+  const buttons = [
+
+    document.getElementById("likeButton"),
+
+    document.getElementById("headerLike")
+
   ];
 
-  const booksHome=document.getElementById("booksHome");
-  const booksGrid=document.getElementById("booksGrid");
-  const readerView=document.getElementById("readerView");
-  const readerBookTitle=document.getElementById("readerBookTitle");
-  const pdfFrame=document.getElementById("pdfFrame");
 
-  const likeBtn=document.getElementById("likeBtn");
-  const saveBtn=document.getElementById("saveBtn");
-  const likeCount=document.getElementById("likeCount");
-  const saveCount=document.getElementById("saveCount");
+  buttons.forEach(function(button){
 
-  const loginNote=document.getElementById("loginNote");
-  const commentUserAvatar=document.getElementById("commentUserAvatar");
-  const commentForm=document.getElementById("commentForm");
-  const commentInput=document.getElementById("commentInput");
-  const commentSubmit=document.getElementById("commentSubmit");
-  const commentsList=document.getElementById("commentsList");
-  const commentCount=document.getElementById("commentCount");
+    button.classList.toggle(
+      "active",
+      active
+    );
 
-  let currentBook=null;
-  let currentBookId="";
-  let currentUser=null;
-  let db=null;
-  let auth=
+
+    const icon =
+      button.querySelector("i");
+
+
+    icon.className =
+      active
+      ? "fa-solid fa-heart"
+      : "fa-regular fa-heart";
+
+  });
+
+}
+
+
+/* ==========================================================
+   SAVE
+   ========================================================== */
+
+async function toggleSave(){
+
+  if(!currentBook) return;
+
+  if(!requireLogin()) return;
+
+
+  const saveRef =
+    doc(
+      db,
+      "books",
+      currentBook.id,
+      "saves",
+      currentUser.uid
+    );
+
+
+  const existing =
+    await getDoc(saveRef);
+
+
+  if(existing.exists()){
+
+    await deleteDoc(saveRef);
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {
+        saveCount:
+          increment(-1)
+      },
+      {merge:true}
+    );
+
+  }else{
+
+    await setDoc(
+      saveRef,
+      {
+        uid:currentUser.uid,
+        displayName:getUserName(),
+        photoURL:getUserPhoto(),
+        createdAt:serverTimestamp()
+      }
+    );
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {
+        saveCount:
+          increment(1)
+      },
+      {merge:true}
+    );
+
+  }
+
+
+  updateSaveState();
+
+}
+
+
+/* ==========================================================
+   SAVE STATE
+   ========================================================== */
+
+async function updateSaveState(){
+
+  if(
+    !currentBook ||
+    !currentUser
+  ){
+
+    setSaveState(false);
+
+    return;
+
+  }
+
+
+  const snapshot =
+    await getDoc(
+      doc(
+        db,
+        "books",
+        currentBook.id,
+        "saves",
+        currentUser.uid
+      )
+    );
+
+
+  setSaveState(
+    snapshot.exists()
+  );
+
+}
+
+
+function setSaveState(active){
+
+  const buttons = [
+
+    document.getElementById("saveButton"),
+
+    document.getElementById("headerSave")
+
+  ];
+
+
+  buttons.forEach(function(button){
+
+    button.classList.toggle(
+      "active",
+      active
+    );
+
+
+    const icon =
+      button.querySelector("i");
+
+
+    icon.className =
+      active
+      ? "fa-solid fa-bookmark"
+      : "fa-regular fa-bookmark";
+
+  });
+
+}
+
+
+/* ==========================================================
+   COMMENT
+   ========================================================== */
+
+async function postComment(){
+
+  if(!currentBook) return;
+
+  if(!requireLogin()) return;
+
+
+  const text =
+    commentInput.value.trim();
+
+
+  if(!text) return;
+
+
+  await addDoc(
+    collection(
+      db,
+      "books",
+      currentBook.id,
+      "comments"
+    ),
+    {
+      uid:currentUser.uid,
+
+      displayName:
+        getUserName(),
+
+      photoURL:
+        getUserPhoto(),
+
+      text:text,
+
+      createdAt:
+        serverTimestamp()
+    }
+  );
+
+
+  await setDoc(
+    doc(
+      db,
+      "books",
+      currentBook.id
+    ),
+    {
+      commentCount:
+        increment(1)
+    },
+    {merge:true}
+  );
+
+
+  commentInput.value="";
+
+}
+
+
+/* ==========================================================
+   SHARE
+   ========================================================== */
+
+async function shareBook(){
+
+  if(!currentBook) return;
+
+
+  const url =
+    location.href.split("#")[0]+
+    "#read="+
+    encodeURIComponent(
+      currentBook.id
+    );
+
+
+  try{
+
+    if(navigator.share){
+
+      await navigator.share({
+
+        title:
+          currentBook.name,
+
+        text:
+          "Read this PDF on Diploma Engineers",
+
+        url:url
+
+      });
+
+    }else{
+
+      await navigator.clipboard.writeText(url);
+
+      alert(
+        "Book link copied."
+      );
+
+    }
+
+  }catch(error){}
+
+}
+
+
+/* ==========================================================
+   USER UI
+   ========================================================== */
+
+function updateUserUI(){
+
+  currentUserPhoto.src =
+    getUserPhoto();
+
+  updateLikeState();
+
+  updateSaveState();
+
+}
+
+
+/* ==========================================================
+   BUTTON EVENTS
+   ========================================================== */
+
+document
+  .getElementById("backButton")
+  .addEventListener(
+    "click",
+    closeReader
+  );
+
+
+document
+  .getElementById("likeButton")
+  .addEventListener(
+    "click",
+    toggleLike
+  );
+
+
+document
+  .getElementById("headerLike")
+  .addEventListener(
+    "click",
+    toggleLike
+  );
+
+
+document
+  .getElementById("saveButton")
+  .addEventListener(
+    "click",
+    toggleSave
+  );
+
+
+document
+  .getElementById("headerSave")
+  .addEventListener(
+    "click",
+    toggleSave
+  );
+
+
+document
+  .getElementById("commentButton")
+  .addEventListener(
+    "click",
+    function(){
+
+      commentInput.focus();
+
+      commentInput.scrollIntoView({
+        behavior:"smooth",
+        block:"center"
+      });
+
+    }
+  );
+
+
+document
+  .getElementById("sendComment")
+  .addEventListener(
+    "click",
+    postComment
+  );
+
+
+document
+  .getElementById("shareButton")
+  .addEventListener(
+    "click",
+    shareBook
+  );
+
+
+commentInput.addEventListener(
+  "keydown",
+  function(event){
+
+    if(
+      event.key==="Enter" &&
+      !event.shiftKey
+    ){
+
+      event.preventDefault();
+
+      postComment();
+
+    }
+
+  }
+);
+
+
+/* ==========================================================
+   FIREBASE AUTH
+   आपका existing Firebase login user यहां मिलेगा
+   ========================================================== */
+
+onAuthStateChanged(
+  auth,
+  function(user){
+
+    currentUser=user;
+
+    updateUserUI();
+
+  }
+);
+
+
+/* ==========================================================
+   URL HASH / BACK BUTTON
+   ========================================================== */
+
+window.addEventListener(
+  "hashchange",
+  function(){
+
+    const hash =
+      decodeURIComponent(
+        location.hash
+      );
+
+
+    if(
+      !hash.startsWith("#read=")
+    ){
+
+      if(reader.classList.contains("active")){
+
+        closeReader();
+
+      }
+
+      return;
+
+    }
+
+
+    const id =
+      hash.substring(6);
+
+
+    const index =
+      books.findIndex(
+        function(book){
+
+          return String(book.id) ===
+                 String(id);
+
+        }
+      );
+
+
+    if(index >= 0){
+
+      if(
+        !currentBook ||
+        currentBook.id !==
+        books[index].id
+      ){
+
+        openBook(index);
+
+      }
+
+    }
+
+  }
+);
+
+
+/* START */
+
+loadBooks();
+
+</script>
+
+</body>
+</html>

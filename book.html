@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,449 +11,148 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+<!-- Classic scripts: more reliable when this HTML is fetched inside the app -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
 <style>
 :root{
-  --blue:#2563eb;
-  --blue-dark:#1d4ed8;
-  --blue-soft:#eff6ff;
-  --green:#16a34a;
-  --red:#ef4444;
-  --dark:#0f172a;
-  --text:#334155;
-  --muted:#64748b;
-  --border:#e2e8f0;
-  --bg:#f8fafc;
-  --white:#fff;
-  --shadow:0 10px 30px rgba(15,23,42,.08);
+  --blue:#2563eb;--dark:#0f172a;--text:#334155;--muted:#64748b;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+  --shadow:0 10px 28px rgba(15,23,42,.07);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{
-  width:100%;
-  min-height:0;
-  background:transparent!important;
-  font-family:"Plus Jakarta Sans",sans-serif;
-  color:var(--text);
-  overflow-x:hidden;
+  width:100%;min-height:0;background:transparent!important;
+  font-family:"Plus Jakarta Sans",sans-serif;color:var(--text);overflow-x:hidden;
 }
 body.reader-open{overflow:hidden}
-button,input,textarea{font:inherit}
-button{cursor:pointer}
-a{text-decoration:none;color:inherit}
-
-.books-wrap{width:100%;margin:0;padding:0}
-.books-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin:0 0 10px;
-}
+button,textarea{font:inherit}button{cursor:pointer}
+.books-wrap{width:100%;padding:0;margin:0}
+.books-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .books-title{font-size:16px;font-weight:800;color:var(--dark)}
 .books-title span{color:var(--blue)}
-.books-subtitle{font-size:10px;color:var(--muted);font-weight:700}
+.books-subtitle{font-size:9px;font-weight:700;color:var(--muted)}
 
 .books-grid{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
+  width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
 }
-
 .book-card{
-  position:relative;
-  min-width:0;
-  overflow:hidden;
-  background:var(--white);
-  border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:var(--shadow);
-  cursor:pointer;
-  transition:transform .15s ease;
-  -webkit-tap-highlight-color:transparent;
+  min-width:0;overflow:hidden;background:#fff;border:1px solid var(--border);
+  border-radius:15px;box-shadow:var(--shadow);cursor:pointer;
 }
-.book-card:active{transform:scale(.985)}
-
-.book-cover{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/4;
-  overflow:hidden;
-  background:#eef2ff;
-}
-.book-cover canvas{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:cover;
-  background:#fff;
-}
+.book-cover{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;background:#eef2ff}
+.book-cover canvas{width:100%;height:100%;display:block;background:#fff}
 .cover-loader{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#eff6ff,#f8fafc);
-  color:var(--blue);
-  font-size:10px;
-  font-weight:800;
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:#eff6ff;color:var(--blue);font-size:9px;font-weight:800;z-index:3;
 }
-.spinner{
-  width:18px;height:18px;
-  border:3px solid #dbeafe;
-  border-top-color:var(--blue);
-  border-radius:50%;
-  animation:spin .75s linear infinite;
-  margin-right:7px;
+.cover-fallback{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  padding:14px;text-align:center;background:linear-gradient(135deg,#dbeafe,#eff6ff);
+  color:#1e40af;font-weight:800;font-size:12px;z-index:2;
 }
-@keyframes spin{to{transform:rotate(360deg)}}
-
 .book-shade{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.08) 70%,transparent);
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.05) 72%,transparent);
 }
-.book-content{
-  position:absolute;
-  left:9px;right:9px;bottom:9px;z-index:3;
-}
-.book-name{
-  color:#fff;
-  font-size:11px;
-  font-weight:800;
-  line-height:1.35;
-  margin-bottom:6px;
-  text-shadow:0 2px 8px rgba(0,0,0,.3);
-}
+.book-content{position:absolute;left:8px;right:8px;bottom:8px;z-index:4}
+.book-name{font-size:10px;line-height:1.35;color:#fff;font-weight:800;margin-bottom:5px}
 .open-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  color:#fff;
-  font-size:8px;
-  font-weight:800;
-  padding:5px 8px;
-  border-radius:999px;
-  background:rgba(255,255,255,.18);
-  border:1px solid rgba(255,255,255,.35);
-  backdrop-filter:blur(7px);
+  display:inline-flex;align-items:center;gap:5px;color:#fff;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 7px;font-size:8px;font-weight:800;
 }
-.book-meta{
-  padding:9px 10px 10px;
-}
-.book-meta-line{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:6px;
-}
-.book-type{font-size:9px;color:var(--muted);font-weight:700}
-.book-pages{
-  font-size:8px;
-  padding:4px 7px;
-  border-radius:999px;
-  color:#1d4ed8;
-  background:#eff6ff;
-  border:1px solid #bfdbfe;
-  font-weight:800;
-}
+.book-meta{padding:8px 9px}
+.book-meta-line{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.book-type{font-size:8px;font-weight:700;color:var(--muted)}
+.book-page{font-size:8px;font-weight:800;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:4px 6px}
 
 /* Reader */
-.reader{
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  display:none;
-  flex-direction:column;
-  background:#111827;
-}
+.reader{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;background:#111827}
 .reader.active{display:flex}
-
 .reader-top{
-  height:58px;
-  flex:0 0 58px;
-  background:#fff;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  gap:9px;
-  padding:8px 10px;
+  height:58px;flex:0 0 58px;display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:#fff;border-bottom:1px solid var(--border)
 }
 .icon-btn{
-  width:38px;height:38px;flex:0 0 38px;
-  border:1px solid var(--border);
-  border-radius:50%;
-  background:#f8fafc;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--dark);
-  font-size:15px;
+  width:38px;height:38px;flex:0 0 38px;border:1px solid var(--border);border-radius:50%;
+  background:#f8fafc;color:var(--dark);display:flex;align-items:center;justify-content:center
 }
-.reader-title{
-  min-width:0;
-  flex:1;
-}
-.reader-title strong{
-  display:block;
-  color:var(--dark);
-  font-size:12px;
-  font-weight:800;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.reader-title small{
-  display:block;
-  color:var(--muted);
-  font-size:9px;
-  margin-top:2px;
-}
+.reader-title{flex:1;min-width:0}
+.reader-title strong{display:block;font-size:12px;color:var(--dark);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reader-title small{display:block;font-size:8px;color:var(--muted);margin-top:2px}
 
-.reader-main{
-  flex:1;
-  min-height:0;
-  display:flex;
-  overflow:hidden;
-  background:#525252;
-}
-
-.pdf-pane{
-  flex:1;
-  min-width:0;
-  overflow:auto;
-  padding:10px;
-}
-.pdf-page{
-  display:block;
-  width:min(100%,900px);
-  height:auto;
-  margin:0 auto 12px;
-  background:#fff;
-  box-shadow:0 8px 25px rgba(0,0,0,.25);
-}
+.reader-main{flex:1;min-height:0;display:flex;overflow:hidden;background:#525252}
+.pdf-pane{flex:1;min-width:0;overflow:auto;padding:8px}
+.pdf-page{display:block;max-width:100%;height:auto;margin:0 auto 10px;background:#fff;box-shadow:0 7px 20px rgba(0,0,0,.25)}
 
 .side-panel{
-  width:360px;
-  flex:0 0 360px;
-  background:#fff;
-  border-left:1px solid var(--border);
-  overflow:auto;
-  padding:15px;
+  width:350px;flex:0 0 350px;background:#fff;border-left:1px solid var(--border);
+  overflow:auto;padding:14px;
 }
-.book-info{
-  border-bottom:1px solid var(--border);
-  padding-bottom:12px;
-  margin-bottom:12px;
-}
-.book-info h2{
-  font-size:16px;
-  color:var(--dark);
-  margin-bottom:5px;
-}
-.book-info p{
-  font-size:11px;
-  color:var(--muted);
-  line-height:1.5;
-}
+.book-info{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.book-info h2{font-size:15px;color:var(--dark);margin-bottom:4px}
+.book-info p{font-size:10px;line-height:1.5;color:var(--muted)}
 
-.engagement{
-  display:flex;
-  gap:8px;
-  margin-bottom:14px;
-}
+.engagement{display:flex;gap:7px;margin-bottom:12px}
 .engage-btn{
-  flex:1;
-  height:42px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#fff;
-  color:var(--muted);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  font-size:11px;
-  font-weight:800;
+  flex:1;height:40px;border:1px solid var(--border);border-radius:11px;background:#fff;
+  color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:10px;font-weight:800;
 }
-.engage-btn.active.like{
-  color:#2563eb;
-  background:#eff6ff;
-  border-color:#bfdbfe;
-}
-.engage-btn.active.save{
-  color:#16a34a;
-  background:#f0fdf4;
-  border-color:#bbf7d0;
-}
-.engage-btn:active{transform:scale(.98)}
-
-.comment-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:9px;
-}
-.comment-head h3{
-  font-size:13px;
-  color:var(--dark);
-}
-.comment-count{
-  font-size:9px;
-  color:var(--muted);
-  font-weight:700;
-}
-
-.comment-form{
-  display:flex;
-  gap:8px;
-  align-items:flex-end;
-  margin-bottom:13px;
-}
-.comment-avatar{
-  width:34px;height:34px;
-  flex:0 0 34px;
-  border-radius:50%;
-  overflow:hidden;
-  background:#eff6ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--blue);
-  border:1px solid #dbeafe;
-}
-.comment-avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.comment-input-wrap{flex:1;min-width:0}
-.comment-input{
-  width:100%;
-  min-height:40px;
-  max-height:110px;
-  resize:vertical;
-  border:1px solid var(--border);
-  border-radius:12px;
-  outline:none;
-  padding:10px 11px;
-  font-size:11px;
-  color:var(--dark);
-  background:#f8fafc;
-}
-.comment-input:focus{
-  border-color:#93c5fd;
-  background:#fff;
-  box-shadow:0 0 0 3px rgba(37,99,235,.08);
-}
-.comment-submit{
-  height:40px;
-  width:40px;
-  border:0;
-  border-radius:12px;
-  background:var(--blue);
-  color:#fff;
-}
-.comment-submit:disabled{opacity:.55;cursor:not-allowed}
-
-.comments{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.comment{
-  display:flex;
-  gap:8px;
-}
-.comment-body{
-  flex:1;
-  min-width:0;
-  background:#f8fafc;
-  border:1px solid #eef2f7;
-  border-radius:13px;
-  padding:9px 10px;
-}
-.comment-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:4px;
-}
-.comment-name{
-  font-size:10px;
-  color:var(--dark);
-  font-weight:800;
-}
-.comment-date{
-  font-size:8px;
-  color:#94a3b8;
-  white-space:nowrap;
-}
-.comment-text{
-  font-size:10px;
-  color:var(--text);
-  line-height:1.55;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-.empty-comments{
-  padding:20px 10px;
-  text-align:center;
-  color:var(--muted);
-  font-size:10px;
-}
-
-.reader-status{
-  min-height:44px;
-  flex:0 0 44px;
-  background:#fff;
-  border-top:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:700;
-  padding:8px 10px;
-}
+.engage-btn.active.like{color:#2563eb;background:#eff6ff;border-color:#bfdbfe}
+.engage-btn.active.save{color:#16a34a;background:#f0fdf4;border-color:#bbf7d0}
 
 .login-note{
-  padding:10px 11px;
-  margin-bottom:12px;
-  border:1px solid #bfdbfe;
-  border-radius:12px;
-  background:#eff6ff;
-  color:#1e40af;
-  font-size:10px;
-  line-height:1.5;
-  font-weight:700;
+  display:none;margin-bottom:10px;padding:10px;border-radius:11px;
+  background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-size:9px;font-weight:700;line-height:1.5;
+}
+.comment-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.comment-head h3{font-size:12px;color:var(--dark)}
+.comment-count{font-size:8px;color:var(--muted);font-weight:700}
+
+.comment-form{display:flex;gap:7px;align-items:flex-end;margin-bottom:12px}
+.comment-avatar{
+  width:32px;height:32px;flex:0 0 32px;border-radius:50%;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:#eff6ff;color:var(--blue);
+  border:1px solid #dbeafe
+}
+.comment-avatar img{width:100%;height:100%;object-fit:cover}
+.comment-input-wrap{flex:1;min-width:0}
+.comment-input{
+  width:100%;min-height:38px;max-height:100px;resize:vertical;
+  border:1px solid var(--border);border-radius:10px;padding:9px;font-size:10px;
+  outline:none;background:#f8fafc;color:var(--dark)
+}
+.comment-input:focus{border-color:#93c5fd;background:#fff}
+.comment-submit{
+  width:38px;height:38px;border:0;border-radius:10px;background:var(--blue);color:#fff
+}
+.comment-submit:disabled{opacity:.55}
+
+.comments{display:flex;flex-direction:column;gap:10px}
+.comment{display:flex;gap:7px}
+.comment-body{flex:1;min-width:0;background:#f8fafc;border:1px solid #eef2f7;border-radius:11px;padding:8px}
+.comment-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.comment-name{font-size:9px;color:var(--dark);font-weight:800}
+.comment-date{font-size:7px;color:#94a3b8;white-space:nowrap}
+.comment-text{font-size:9px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.empty-comments{text-align:center;padding:18px 8px;font-size:9px;color:var(--muted)}
+
+.reader-status{
+  min-height:42px;flex:0 0 42px;background:#fff;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:9px;font-weight:700
 }
 
 @media(max-width:900px){
-  .reader-main{
-    flex-direction:column;
-    overflow:auto;
-  }
-  .pdf-pane{
-    flex:0 0 55vh;
-    min-height:260px;
-  }
-  .side-panel{
-    width:100%;
-    flex:0 0 auto;
-    border-left:0;
-    border-top:1px solid var(--border);
-  }
+  .reader-main{flex-direction:column;overflow:auto}
+  .pdf-pane{flex:0 0 55vh;min-height:250px}
+  .side-panel{width:100%;flex:0 0 auto;border-left:0;border-top:1px solid var(--border)}
 }
-
 @media(max-width:420px){
-  .books-grid{gap:9px}
-  .book-name{font-size:10px}
-  .book-meta{padding:8px}
-  .side-panel{padding:12px}
-  .pdf-pane{padding:7px}
+  .books-grid{gap:8px}.book-name{font-size:9px}.book-meta{padding:7px 8px}.side-panel{padding:11px}
 }
 </style>
 </head>
@@ -464,16 +162,14 @@ a{text-decoration:none;color:inherit}
 <div class="books-wrap">
   <div class="books-head">
     <div class="books-title">Books <span>Library</span></div>
-    <div class="books-subtitle">2 books per row on mobile</div>
+    <div class="books-subtitle">2 books per row</div>
   </div>
   <div class="books-grid" id="booksGrid"></div>
 </div>
 
-
-<!-- In-app book reader -->
 <section class="reader" id="reader" aria-hidden="true">
 
-  <header class="reader-top">
+  <div class="reader-top">
     <button class="icon-btn" id="readerBack" aria-label="Back">
       <i class="fa-solid fa-arrow-left"></i>
     </button>
@@ -486,7 +182,7 @@ a{text-decoration:none;color:inherit}
     <button class="icon-btn" id="readerClose" aria-label="Close">
       <i class="fa-solid fa-xmark"></i>
     </button>
-  </header>
+  </div>
 
   <div class="reader-main">
 
@@ -496,11 +192,10 @@ a{text-decoration:none;color:inherit}
 
       <div class="book-info">
         <h2 id="sideBookTitle">Book</h2>
-        <p>Read this book online and share your feedback with other students.</p>
+        <p>Read the book online and interact with other students.</p>
       </div>
 
       <div class="engagement">
-
         <button class="engage-btn like" id="likeBtn">
           <i class="fa-solid fa-thumbs-up"></i>
           <span>Like</span>
@@ -512,10 +207,9 @@ a{text-decoration:none;color:inherit}
           <span>Save</span>
           <b id="saveCount">0</b>
         </button>
-
       </div>
 
-      <div class="login-note" id="loginNote" style="display:none;"></div>
+      <div class="login-note" id="loginNote"></div>
 
       <div class="comment-head">
         <h3>Comments</h3>
@@ -549,53 +243,21 @@ a{text-decoration:none;color:inherit}
 
   </div>
 
-  <div class="reader-status" id="readerStatus">
-    Ready
-  </div>
-
+  <div class="reader-status" id="readerStatus">Ready</div>
 </section>
 
+<script>
+/* ==========================================================
+   IMPORTANT:
+   This page is safe to FETCH into the app because it uses
+   classic scripts instead of JavaScript modules.
+   ========================================================== */
 
-<script type="module">
-
-/* ============================================================
-   PDF.JS
-   ============================================================ */
-
-import * as pdfjsLib from
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
-
+/* PDF.js */
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-
-/* ============================================================
-   FIREBASE
-   Same Firebase project used by Diploma Engineers app.
-   ============================================================ */
-
-import { initializeApp, getApps, getApp }
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-
-import {
-  getAuth,
-  onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-import {
-  getDatabase,
-  ref,
-  onValue,
-  set,
-  remove,
-  runTransaction,
-  push,
-  serverTimestamp
-}
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
   authDomain: "diploma-app-9a378.firebaseapp.com",
@@ -606,90 +268,82 @@ const firebaseConfig = {
   appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
 };
 
-const firebaseApp =
-  getApps().length ? getApp() : initializeApp(firebaseConfig);
+let firebaseReady=false;
+let auth=null;
+let db=null;
+let currentUser=null;
 
-const auth = getAuth(firebaseApp);
-const db = getDatabase(firebaseApp);
-
-
-/* ============================================================
-   BOOK LIST
-   Just add:
-   {
-      name: "Book Name",
-      pdf: "PDF LINK"
-   }
-
-   Thumbnail is generated automatically from PDF first page.
-   ============================================================ */
-
-const BOOKS = [
-
-  {
-    name: "Applied Physics 2nd",
-    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
-  },
-
-  {
-    name: "Applied Mathematics 2nd",
-    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
-  },
-
-  {
-    name: "Engineering Mechanics",
-    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
-  },
-
-  {
-    name: "Design Of Steel Structures",
-    pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+try{
+  if(!firebase.apps.length){
+    firebase.initializeApp(firebaseConfig);
   }
 
+  auth=firebase.auth();
+  db=firebase.database();
+  firebaseReady=true;
+}catch(error){
+  console.warn("Firebase is unavailable. Book reader will still work:",error);
+}
+
+
+/* ==========================================================
+   BOOKS:
+   Only PDF link + name needed.
+   First PDF page becomes thumbnail automatically.
+   ========================================================== */
+
+const BOOKS = [
+  {
+    name:"Applied Physics 2nd",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
+  },
+  {
+    name:"Applied Mathematics 2nd",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+  },
+  {
+    name:"Engineering Mechanics",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
+  },
+  {
+    name:"Design Of Steel Structures",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+  }
 ];
 
 
-const grid = document.getElementById("booksGrid");
+/* DOM */
+const grid=document.getElementById("booksGrid");
+const reader=document.getElementById("reader");
+const readerTitle=document.getElementById("readerTitle");
+const sideBookTitle=document.getElementById("sideBookTitle");
+const pdfPane=document.getElementById("pdfPane");
+const readerStatus=document.getElementById("readerStatus");
 
-const reader = document.getElementById("reader");
-const readerTitle = document.getElementById("readerTitle");
-const sideBookTitle = document.getElementById("sideBookTitle");
-const pdfPane = document.getElementById("pdfPane");
-const readerStatus = document.getElementById("readerStatus");
+const likeBtn=document.getElementById("likeBtn");
+const saveBtn=document.getElementById("saveBtn");
+const likeCount=document.getElementById("likeCount");
+const saveCount=document.getElementById("saveCount");
 
-const likeBtn = document.getElementById("likeBtn");
-const likeCount = document.getElementById("likeCount");
+const loginNote=document.getElementById("loginNote");
+const commentForm=document.getElementById("commentForm");
+const commentInput=document.getElementById("commentInput");
+const commentSubmit=document.getElementById("commentSubmit");
+const commentsList=document.getElementById("commentsList");
+const commentCount=document.getElementById("commentCount");
+const commentUserAvatar=document.getElementById("commentUserAvatar");
 
-const saveBtn = document.getElementById("saveBtn");
-const saveCount = document.getElementById("saveCount");
-
-const commentForm = document.getElementById("commentForm");
-const commentInput = document.getElementById("commentInput");
-const commentSubmit = document.getElementById("commentSubmit");
-const commentsList = document.getElementById("commentsList");
-const commentCount = document.getElementById("commentCount");
-
-const loginNote = document.getElementById("loginNote");
-const commentUserAvatar = document.getElementById("commentUserAvatar");
-
-
-let currentBook = null;
-let currentBookId = "";
-let currentUser = null;
-
-let likeUnsubscribe = null;
-let saveUnsubscribe = null;
-let commentsUnsubscribe = null;
-
-let pdfToken = 0;
+let currentBook=null;
+let currentBookId="";
+let likeListener=null;
+let saveListener=null;
+let commentsListener=null;
+let renderToken=0;
 
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
-
+/* Helpers */
 function escapeHTML(value){
-  return String(value ?? "")
+  return String(value??"")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
@@ -703,161 +357,137 @@ function slugify(value){
     .trim()
     .replace(/[^a-z0-9]+/g,"-")
     .replace(/^-+|-+$/g,"")
-    .slice(0,80);
+    .slice(0,70);
 }
 
-function getBookId(book,index){
-  return slugify(book.name) || ("book-"+index);
-}
-
-function formatDate(value){
-  if(!value) return "Just now";
-
-  const d =
-    typeof value === "number"
-      ? new Date(value)
-      : new Date(value);
-
-  if(Number.isNaN(d.getTime())) return "Just now";
-
+function dateText(value){
+  if(!value)return"Just now";
+  const d=new Date(Number(value));
+  if(Number.isNaN(d.getTime()))return"Just now";
   return d.toLocaleDateString("en-IN",{
-    day:"2-digit",
-    month:"short",
-    year:"numeric"
+    day:"2-digit",month:"short",year:"numeric"
   });
 }
 
-function setReaderStatus(text){
-  readerStatus.textContent = text;
+function setStatus(text){
+  readerStatus.textContent=text;
 }
 
 
-/* ============================================================
-   USER UI
-   ============================================================ */
+/* ==========================================================
+   PROFILE
+   ========================================================== */
+
+function getProfileData(){
+  try{
+    if(window.parent && window.parent.currentUserData){
+      return window.parent.currentUserData;
+    }
+  }catch(_){}
+  return{};
+}
 
 function updateUserUI(){
+  if(!currentUser){
+    commentUserAvatar.innerHTML='<i class="fa-solid fa-user"></i>';
+    loginNote.style.display="block";
+    loginNote.textContent=
+      "Login to Diploma Engineers to Like, Save and comment.";
+    return;
+  }
 
-  if(currentUser){
+  loginNote.style.display="none";
 
-    loginNote.style.display = "none";
+  const profile=getProfileData();
 
-    const data =
-      window.parent &&
-      window.parent.currentUserData
-        ? window.parent.currentUserData
-        : null;
+  const name=
+    profile.name ||
+    currentUser.displayName ||
+    "User";
 
-    const name =
-      data?.name ||
-      currentUser.displayName ||
-      "User";
+  const photo=
+    profile.profilePic ||
+    currentUser.photoURL ||
+    "";
 
-    const photo =
-      data?.profilePic ||
-      currentUser.photoURL ||
-      "";
-
-    if(photo){
-
-      commentUserAvatar.innerHTML =
-        `<img src="${escapeHTML(photo)}" alt="User">`;
-
-    }else{
-
-      const first =
-        name.charAt(0).toUpperCase();
-
-      commentUserAvatar.innerHTML =
-        `<span style="font-size:13px;font-weight:800">${escapeHTML(first)}</span>`;
-    }
-
+  if(photo){
+    commentUserAvatar.innerHTML=
+      `<img src="${escapeHTML(photo)}" alt="User">`;
   }else{
-
-    loginNote.style.display = "block";
-
-    loginNote.textContent =
-      "Login to your Diploma Engineers account to Like, Save and post comments.";
-
-    commentUserAvatar.innerHTML =
-      `<i class="fa-solid fa-user"></i>`;
+    commentUserAvatar.innerHTML=
+      `<span style="font-size:12px;font-weight:800">
+        ${escapeHTML(name.charAt(0).toUpperCase())}
+      </span>`;
   }
 }
 
 
-/* ============================================================
-   BOOK THUMBNAIL
-   ============================================================ */
+/* ==========================================================
+   THUMBNAIL
+   ========================================================== */
 
-async function renderCover(book, canvas, loader){
+async function renderCover(book,canvas,loader,fallback){
 
   try{
 
-    const task =
-      pdfjsLib.getDocument({
-        url:book.pdf,
-        disableAutoFetch:false,
-        disableStream:false,
-        withCredentials:false
-      });
+    const task=pdfjsLib.getDocument({
+      url:book.pdf,
+      withCredentials:false,
+      disableAutoFetch:false,
+      disableStream:false
+    });
 
-    const pdf =
-      await task.promise;
+    const pdf=await task.promise;
+    const page=await pdf.getPage(1);
 
-    const page =
-      await pdf.getPage(1);
+    const width=Math.max(160,canvas.parentElement.clientWidth);
+    const base=page.getViewport({scale:1});
+    const scale=width/base.width;
+    const viewport=page.getViewport({scale:Math.max(.25,scale)});
 
-    const width =
-      Math.max(180,canvas.parentElement.clientWidth);
+    const ratio=Math.min(window.devicePixelRatio||1,2);
 
-    const base =
-      page.getViewport({scale:1});
-
-    const scale =
-      width / base.width;
-
-    const viewport =
-      page.getViewport({
-        scale:Math.max(.25,scale)
-      });
-
-    const ratio =
-      Math.min(window.devicePixelRatio || 1,2);
-
-    canvas.width =
-      Math.floor(viewport.width * ratio);
-
-    canvas.height =
-      Math.floor(viewport.height * ratio);
+    canvas.width=Math.floor(viewport.width*ratio);
+    canvas.height=Math.floor(viewport.height*ratio);
 
     canvas.style.width="100%";
     canvas.style.height="100%";
-    canvas.style.objectFit="cover";
 
     await page.render({
       canvasContext:canvas.getContext("2d",{alpha:false}),
       viewport,
-      transform:ratio !== 1
-        ? [ratio,0,0,ratio,0,0]
-        : null
+      transform:ratio!==1?[ratio,0,0,ratio,0,0]:null
     }).promise;
 
     loader.style.display="none";
 
-  }catch(e){
+  }catch(error){
 
-    console.warn("Cover failed:",book.name,e);
+    console.warn("Thumbnail PDF.js error:",book.name,error);
 
-    loader.innerHTML =
-      `<span style="color:#64748b">Cover unavailable</span>`;
+    loader.style.display="none";
+    canvas.style.display="none";
+
+    fallback.innerHTML = `
+      <div style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:6px;
+      ">
+        <i class="fa-solid fa-file-pdf" style="font-size:24px"></i>
+        <span>${escapeHTML(book.name)}</span>
+      </div>
+    `;
+
+    fallback.style.display="flex";
   }
-
 }
 
 
-/* ============================================================
-   CREATE BOOK CARDS
-   ============================================================ */
+/* ==========================================================
+   CARDS
+   ========================================================== */
 
 function renderCards(){
 
@@ -865,17 +495,18 @@ function renderCards(){
 
   BOOKS.forEach((book,index)=>{
 
-    const card =
-      document.createElement("article");
-
+    const card=document.createElement("article");
     card.className="book-card";
 
     card.innerHTML=`
       <div class="book-cover">
 
         <div class="cover-loader">
-          <div class="spinner"></div>
-          Loading cover…
+          <span>Loading cover…</span>
+        </div>
+
+        <div class="cover-fallback">
+          ${escapeHTML(book.name)}
         </div>
 
         <canvas></canvas>
@@ -897,13 +528,8 @@ function renderCards(){
 
       <div class="book-meta">
         <div class="book-meta-line">
-          <span class="book-type">
-            PDF • Online Reader
-          </span>
-
-          <span class="book-pages">
-            Read
-          </span>
+          <span class="book-type">PDF • Online Reader</span>
+          <span class="book-page">Read</span>
         </div>
       </div>
     `;
@@ -917,339 +543,288 @@ function renderCards(){
     renderCover(
       book,
       card.querySelector("canvas"),
-      card.querySelector(".cover-loader")
+      card.querySelector(".cover-loader"),
+      card.querySelector(".cover-fallback")
     );
+
+  });
+}
+
+
+/* ==========================================================
+   FIREBASE BOOK DATA
+   books/{bookId}/likes/{uid}
+   books/{bookId}/saves/{uid}
+   books/{bookId}/comments/{commentId}
+   ========================================================== */
+
+function detachListeners(){
+
+  if(likeListener)likeListener.off();
+  if(saveListener)saveListener.off();
+  if(commentsListener)commentsListener.off();
+
+  likeListener=null;
+  saveListener=null;
+  commentsListener=null;
+}
+
+
+function attachListeners(){
+
+  detachListeners();
+
+  if(!firebaseReady || !db || !currentBookId){
+    showNoFirebase();
+    return;
+  }
+
+  /* Likes */
+  likeListener=db.ref(
+    `books/${currentBookId}/likes`
+  );
+
+  likeListener.on("value",snapshot=>{
+
+    const data=snapshot.val()||{};
+    const count=Object.keys(data).length;
+
+    likeCount.textContent=count;
+
+    const liked=
+      currentUser &&
+      Object.prototype.hasOwnProperty.call(
+        data,
+        currentUser.uid
+      );
+
+    likeBtn.classList.toggle("active",!!liked);
+
+  });
+
+
+  /* Saves */
+  saveListener=db.ref(
+    `books/${currentBookId}/saves`
+  );
+
+  saveListener.on("value",snapshot=>{
+
+    const data=snapshot.val()||{};
+    const count=Object.keys(data).length;
+
+    saveCount.textContent=count;
+
+    const saved=
+      currentUser &&
+      Object.prototype.hasOwnProperty.call(
+        data,
+        currentUser.uid
+      );
+
+    saveBtn.classList.toggle("active",!!saved);
+
+  });
+
+
+  /* Comments */
+  commentsListener=db.ref(
+    `books/${currentBookId}/comments`
+  );
+
+  commentsListener.on("value",snapshot=>{
+
+    commentsList.innerHTML="";
+
+    if(!snapshot.exists()){
+
+      commentCount.textContent="0 comments";
+
+      commentsList.innerHTML=
+        `<div class="empty-comments">
+          No comments yet. Be the first to comment.
+        </div>`;
+
+      return;
+    }
+
+    const arr=[];
+
+    snapshot.forEach(child=>{
+      arr.push({
+        id:child.key,
+        ...(child.val()||{})
+      });
+    });
+
+    arr.sort(
+      (a,b)=>
+        Number(b.createdAt||0)-
+        Number(a.createdAt||0)
+    );
+
+    commentCount.textContent=
+      `${arr.length} comment${arr.length===1?"":"s"}`;
+
+    arr.forEach(comment=>{
+
+      const div=document.createElement("div");
+      div.className="comment";
+
+      const avatar=
+        comment.profilePic
+          ? `<img src="${escapeHTML(comment.profilePic)}" alt="Profile">`
+          : `<span style="font-size:10px;font-weight:800">
+               ${escapeHTML(
+                 String(comment.name||"U")
+                 .charAt(0)
+                 .toUpperCase()
+               )}
+             </span>`;
+
+      div.innerHTML=`
+        <div class="comment-avatar">
+          ${avatar}
+        </div>
+
+        <div class="comment-body">
+
+          <div class="comment-top">
+            <span class="comment-name">
+              ${escapeHTML(comment.name||"Diploma Engineer")}
+            </span>
+
+            <span class="comment-date">
+              ${dateText(comment.createdAt)}
+            </span>
+          </div>
+
+          <div class="comment-text">
+            ${escapeHTML(comment.text||"")}
+          </div>
+
+        </div>
+      `;
+
+      commentsList.appendChild(div);
+
+    });
 
   });
 
 }
 
 
-/* ============================================================
-   FIREBASE DATA LISTENERS
-   Structure:
+/* ==========================================================
+   FIREBASE FALLBACK
+   ========================================================== */
 
-   books/
-      book-id/
-        likes/
-          uid: true
-        saves/
-          uid: true
-        comments/
-          pushId/
-            uid
-            name
-            profilePic
-            text
-            createdAt
-   ============================================================ */
+function showNoFirebase(){
 
-function detachBookListeners(){
+  likeCount.textContent="0";
+  saveCount.textContent="0";
+  commentCount.textContent="0 comments";
 
-  if(likeUnsubscribe) likeUnsubscribe();
-  if(saveUnsubscribe) saveUnsubscribe();
-  if(commentsUnsubscribe) commentsUnsubscribe();
-
-  likeUnsubscribe=null;
-  saveUnsubscribe=null;
-  commentsUnsubscribe=null;
+  commentsList.innerHTML=
+    `<div class="empty-comments">
+      Login/Firebase connection is required for Like, Save and Comments.
+    </div>`;
 }
 
 
-function attachBookListeners(){
-
-  detachBookListeners();
-
-  if(!currentBookId) return;
-
-  /* Likes */
-  const likesRef =
-    ref(db,`books/${currentBookId}/likes`);
-
-  likeUnsubscribe =
-    onValue(likesRef,snapshot=>{
-
-      const total =
-        snapshot.exists()
-          ? Object.keys(snapshot.val() || {}).length
-          : 0;
-
-      likeCount.textContent = total;
-
-      const uid =
-        currentUser?.uid;
-
-      const liked =
-        uid &&
-        snapshot.exists() &&
-        snapshot.child(uid).exists();
-
-      likeBtn.classList.toggle("active",!!liked);
-
-    });
-
-
-  /* Saves */
-  const savesRef =
-    ref(db,`books/${currentBookId}/saves`);
-
-  saveUnsubscribe =
-    onValue(savesRef,snapshot=>{
-
-      const total =
-        snapshot.exists()
-          ? Object.keys(snapshot.val() || {}).length
-          : 0;
-
-      saveCount.textContent = total;
-
-      const uid =
-        currentUser?.uid;
-
-      const saved =
-        uid &&
-        snapshot.exists() &&
-        snapshot.child(uid).exists();
-
-      saveBtn.classList.toggle("active",!!saved);
-
-    });
-
-
-  /* Comments */
-  const commentsRef =
-    ref(db,`books/${currentBookId}/comments`);
-
-  commentsUnsubscribe =
-    onValue(commentsRef,snapshot=>{
-
-      commentsList.innerHTML="";
-
-      if(!snapshot.exists()){
-
-        commentCount.textContent="0 comments";
-
-        commentsList.innerHTML =
-          `<div class="empty-comments">
-             No comments yet. Be the first to comment.
-           </div>`;
-
-        return;
-      }
-
-      const comments=[];
-
-      snapshot.forEach(child=>{
-
-        comments.push({
-          id:child.key,
-          ...(child.val() || {})
-        });
-
-      });
-
-      comments.sort(
-        (a,b)=>
-          Number(b.createdAt || 0) -
-          Number(a.createdAt || 0)
-      );
-
-      commentCount.textContent =
-        `${comments.length} comment${comments.length===1?"":"s"}`;
-
-      comments.forEach(comment=>{
-
-        const avatar =
-          comment.profilePic
-            ? `<img src="${escapeHTML(comment.profilePic)}" alt="Profile">`
-            : `<span style="
-                font-size:11px;
-                font-weight:800;
-              ">${escapeHTML(
-                (comment.name || "U")
-                  .charAt(0)
-                  .toUpperCase()
-              )}</span>`;
-
-        const item =
-          document.createElement("div");
-
-        item.className="comment";
-
-        item.innerHTML=`
-
-          <div class="comment-avatar">
-            ${avatar}
-          </div>
-
-          <div class="comment-body">
-
-            <div class="comment-top">
-
-              <span class="comment-name">
-                ${escapeHTML(
-                  comment.name || "Diploma Engineer"
-                )}
-              </span>
-
-              <span class="comment-date">
-                ${formatDate(comment.createdAt)}
-              </span>
-
-            </div>
-
-            <div class="comment-text">
-              ${escapeHTML(comment.text || "")}
-            </div>
-
-          </div>
-        `;
-
-        commentsList.appendChild(item);
-
-      });
-
-    });
-
-}
-
-
-/* ============================================================
-   LIKE
-   ============================================================ */
+/* ==========================================================
+   LIKE / SAVE
+   ========================================================== */
 
 likeBtn.addEventListener("click",async()=>{
 
   if(!currentUser){
-
-    showLoginMessage();
-
+    updateUserUI();
     return;
   }
 
-  if(!currentBookId) return;
+  if(!firebaseReady)return;
 
-  const likeRef =
-    ref(
-      db,
-      `books/${currentBookId}/likes/${currentUser.uid}`
-    );
+  const path=
+    db.ref(`books/${currentBookId}/likes/${currentUser.uid}`);
 
   try{
 
-    const isActive =
-      likeBtn.classList.contains("active");
+    const exists=likeBtn.classList.contains("active");
 
-    if(isActive){
-      await remove(likeRef);
+    if(exists){
+      await path.remove();
     }else{
-      await set(likeRef,true);
+      await path.set(true);
     }
 
   }catch(error){
-
-    console.error("Like error:",error);
-
-    alert("Unable to update like. Please try again.");
-
+    console.error(error);
+    alert("Like could not be updated.");
   }
 
 });
 
-
-/* ============================================================
-   SAVE
-   ============================================================ */
 
 saveBtn.addEventListener("click",async()=>{
 
   if(!currentUser){
-
-    showLoginMessage();
-
+    updateUserUI();
     return;
   }
 
-  if(!currentBookId) return;
+  if(!firebaseReady)return;
 
-  const saveRef =
-    ref(
-      db,
-      `books/${currentBookId}/saves/${currentUser.uid}`
-    );
+  const path=
+    db.ref(`books/${currentBookId}/saves/${currentUser.uid}`);
 
   try{
 
-    const isActive =
-      saveBtn.classList.contains("active");
+    const exists=saveBtn.classList.contains("active");
 
-    if(isActive){
-      await remove(saveRef);
+    if(exists){
+      await path.remove();
     }else{
-      await set(saveRef,true);
+      await path.set(true);
     }
 
   }catch(error){
-
-    console.error("Save error:",error);
-
-    alert("Unable to update save. Please try again.");
-
+    console.error(error);
+    alert("Save could not be updated.");
   }
 
 });
 
 
-/* ============================================================
-   COMMENT SUBMIT
-   ============================================================ */
+/* ==========================================================
+   COMMENTS
+   ========================================================== */
 
 commentForm.addEventListener("submit",async event=>{
 
   event.preventDefault();
 
   if(!currentUser){
-
-    showLoginMessage();
-
+    updateUserUI();
     return;
   }
 
-  if(!currentBookId) return;
+  if(!firebaseReady || !currentBookId)return;
 
-  const text =
-    commentInput.value.trim();
+  const text=commentInput.value.trim();
 
-  if(!text) return;
-
-  if(text.length > 500){
-
-    alert("Comment must be 500 characters or less.");
-
-    return;
-  }
+  if(!text)return;
 
   commentSubmit.disabled=true;
 
   try{
 
-    /*
-      Prefer profile data already stored in the main app.
-      Falls back to Firebase Auth.
-    */
+    const profile=getProfileData();
 
-    const profile =
-      window.parent &&
-      window.parent.currentUserData
-        ? window.parent.currentUserData
-        : {};
+    const item=
+      db.ref(`books/${currentBookId}/comments`).push();
 
-    const commentRef =
-      push(
-        ref(db,`books/${currentBookId}/comments`)
-      );
-
-    await set(commentRef,{
+    await item.set({
       uid:currentUser.uid,
       name:
         profile.name ||
@@ -1259,23 +834,17 @@ commentForm.addEventListener("submit",async event=>{
         profile.profilePic ||
         currentUser.photoURL ||
         "",
-      branch:
-        profile.branch ||
-        "",
-      text:text,
-      createdAt:Date.now()
+      branch:profile.branch||"",
+      text:text.slice(0,500),
+      createdAt:firebase.database.ServerValue.TIMESTAMP
     });
 
     commentInput.value="";
 
   }catch(error){
 
-    console.error("Comment error:",error);
-
-    alert(
-      "Comment could not be saved: "+
-      (error?.message || "Unknown error")
-    );
+    console.error(error);
+    alert("Comment could not be saved.");
 
   }finally{
 
@@ -1286,26 +855,158 @@ commentForm.addEventListener("submit",async event=>{
 });
 
 
-function showLoginMessage(){
+/* ==========================================================
+   PDF READER
+   ========================================================== */
 
-  loginNote.style.display="block";
+async function renderPDF(url){
 
-  loginNote.textContent =
-    "Please login to Diploma Engineers before using Like, Save or Comments.";
+  const token=++renderToken;
 
-  commentInput.focus();
+  pdfPane.innerHTML=`
+    <div style="
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:200px;
+      color:#fff;
+      font-size:10px;
+      font-weight:800;
+    ">
+      Loading PDF…
+    </div>
+  `;
+
+  setStatus("Loading PDF…");
+
+  try{
+
+    const task=pdfjsLib.getDocument({
+      url:url,
+      withCredentials:false,
+      disableAutoFetch:false,
+      disableStream:false
+    });
+
+    const pdf=await task.promise;
+
+    if(token!==renderToken)return;
+
+    pdfPane.innerHTML="";
+
+    const width=Math.min(
+      Math.max(270,pdfPane.clientWidth-16),
+      900
+    );
+
+    for(
+      let pageNo=1;
+      pageNo<=pdf.numPages;
+      pageNo++
+    ){
+
+      if(token!==renderToken)return;
+
+      const page=await pdf.getPage(pageNo);
+
+      const base=page.getViewport({scale:1});
+      const scale=width/base.width;
+      const viewport=page.getViewport({scale:Math.max(.2,scale)});
+
+      const canvas=document.createElement("canvas");
+      canvas.className="pdf-page";
+
+      const ratio=Math.min(window.devicePixelRatio||1,2);
+
+      canvas.width=Math.floor(viewport.width*ratio);
+      canvas.height=Math.floor(viewport.height*ratio);
+      canvas.style.width=Math.floor(viewport.width)+"px";
+      canvas.style.height=Math.floor(viewport.height)+"px";
+
+      pdfPane.appendChild(canvas);
+
+      await page.render({
+        canvasContext:canvas.getContext("2d",{alpha:false}),
+        viewport,
+        transform:ratio!==1?[ratio,0,0,ratio,0,0]:null
+      }).promise;
+
+    }
+
+    setStatus(
+      `${pdf.numPages} page${pdf.numPages===1?"":"s"} • Online reading`
+    );
+
+  }catch(error){
+
+    console.error("PDF.js error:",error);
+
+    /*
+      IMPORTANT:
+      WordPress / some public PDF hosts do not expose CORS headers.
+      In that situation PDF.js cannot fetch the file directly.
+      Use Google Docs Viewer as a remote rendering fallback.
+      The original PDF URL is never changed.
+    */
+    const viewerUrl =
+      "https://docs.google.com/gview?embedded=1&url=" +
+      encodeURIComponent(url);
+
+    pdfPane.innerHTML = `
+      <div style="
+        width:100%;
+        min-height:100%;
+        display:flex;
+        flex-direction:column;
+        background:#fff;
+      ">
+        <div style="
+          flex:0 0 auto;
+          padding:10px 12px;
+          background:#eff6ff;
+          border-bottom:1px solid #bfdbfe;
+          color:#1e40af;
+          font-size:10px;
+          font-weight:800;
+          line-height:1.5;
+        ">
+          PDF is being opened in a secure online viewer…
+        </div>
+
+        <iframe
+          src="${escapeHTML(viewerUrl)}"
+          title="Online PDF Viewer"
+          style="
+            width:100%;
+            height:calc(100vh - 160px);
+            min-height:420px;
+            border:0;
+            background:#fff;
+          "
+          loading="eager"
+          referrerpolicy="no-referrer-when-downgrade"
+          allow="fullscreen">
+        </iframe>
+      </div>
+    `;
+
+    setStatus("Online viewer");
+
+  }
 
 }
 
 
-/* ============================================================
-   OPEN BOOK READER
-   ============================================================ */
+/* ==========================================================
+   OPEN / CLOSE
+   ========================================================== */
 
 async function openBook(book,index){
 
   currentBook=book;
-  currentBookId=getBookId(book,index);
+  currentBookId=
+    slugify(book.name)||
+    `book-${index}`;
 
   readerTitle.textContent=book.name;
   sideBookTitle.textContent=book.name;
@@ -1315,185 +1016,28 @@ async function openBook(book,index){
 
   document.body.classList.add("reader-open");
 
-  attachBookListeners();
   updateUserUI();
+  attachListeners();
 
-  pdfPane.scrollTop=0;
-
-  /*
-    Keep browser history usable.
-    Back closes the book reader.
-  */
   history.pushState(
     {bookReader:true},
     "",
     "#book-"+encodeURIComponent(currentBookId)
   );
 
-  await renderFullPdf(book.pdf);
+  await renderPDF(book.pdf);
 
 }
 
 
-/* ============================================================
-   PDF FULL READER
-   ============================================================ */
+function closeReader(fromHistory=false){
 
-async function renderFullPdf(url){
+  renderToken++;
 
-  const token=++pdfToken;
-
-  pdfPane.innerHTML=
-    `<div style="
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:50px 10px;
-      color:#fff;
-      font-size:11px;
-      font-weight:700;
-    ">
-      <div class="spinner"
-        style="border-color:#cbd5e1;border-top-color:#fff">
-      </div>
-      Loading book…
-    </div>`;
-
-  setReaderStatus("Loading PDF…");
-
-  try{
-
-    const task =
-      pdfjsLib.getDocument({
-        url:url,
-        disableAutoFetch:false,
-        disableStream:false,
-        withCredentials:false
-      });
-
-    const pdf =
-      await task.promise;
-
-    if(token!==pdfToken) return;
-
-    pdfPane.innerHTML="";
-
-    const width =
-      Math.min(
-        Math.max(
-          280,
-          pdfPane.clientWidth-20
-        ),
-        900
-      );
-
-    for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
-
-      if(token!==pdfToken) return;
-
-      const page =
-        await pdf.getPage(pageNo);
-
-      const base =
-        page.getViewport({scale:1});
-
-      const scale =
-        width/base.width;
-
-      const viewport =
-        page.getViewport({
-          scale:Math.max(.2,scale)
-        });
-
-      const canvas =
-        document.createElement("canvas");
-
-      canvas.className="pdf-page";
-
-      const ratio =
-        Math.min(window.devicePixelRatio || 1,2);
-
-      canvas.width =
-        Math.floor(viewport.width*ratio);
-
-      canvas.height =
-        Math.floor(viewport.height*ratio);
-
-      canvas.style.width =
-        Math.floor(viewport.width)+"px";
-
-      canvas.style.height =
-        Math.floor(viewport.height)+"px";
-
-      pdfPane.appendChild(canvas);
-
-      await page.render({
-        canvasContext:
-          canvas.getContext("2d",{alpha:false}),
-        viewport,
-        transform:
-          ratio!==1
-            ? [ratio,0,0,ratio,0,0]
-            : null
-      }).promise;
-
-    }
-
-    setReaderStatus(
-      `${pdf.numPages} page${pdf.numPages===1?"":"s"} • Online reading mode`
-    );
-
-  }catch(error){
-
-    console.error("PDF render error:",error);
-
-    pdfPane.innerHTML=`
-      <div style="
-        max-width:540px;
-        margin:45px auto;
-        background:#fff;
-        border-radius:18px;
-        padding:25px;
-        text-align:center;
-        font-size:12px;
-        line-height:1.7;
-        color:#64748b;
-      ">
-        <strong style="
-          display:block;
-          color:#0f172a;
-          font-size:17px;
-          margin-bottom:8px;
-        ">
-          PDF could not be opened
-        </strong>
-
-        The PDF host may block browser CORS access.
-        Please make the PDF publicly readable or use a
-        server/proxy that permits browser PDF rendering.
-
-      </div>
-    `;
-
-    setReaderStatus("PDF unavailable");
-
-  }
-
-}
-
-
-/* ============================================================
-   CLOSE READER
-   ============================================================ */
-
-function closeReader(fromPopstate=false){
-
-  pdfToken++;
+  detachListeners();
 
   currentBook=null;
   currentBookId="";
-
-  detachBookListeners();
 
   reader.classList.remove("active");
   reader.setAttribute("aria-hidden","true");
@@ -1501,10 +1045,14 @@ function closeReader(fromPopstate=false){
   document.body.classList.remove("reader-open");
 
   pdfPane.innerHTML="";
+  likeCount.textContent="0";
+  saveCount.textContent="0";
+  commentCount.textContent="0 comments";
+  commentsList.innerHTML="";
 
   if(
-    !fromPopstate &&
-    window.location.hash.startsWith("#book-")
+    !fromHistory &&
+    location.hash.startsWith("#book-")
   ){
     history.back();
   }
@@ -1512,23 +1060,20 @@ function closeReader(fromPopstate=false){
 }
 
 
-/* ============================================================
-   BACK / CLOSE
-   ============================================================ */
-
 document.getElementById("readerBack")
-  .addEventListener("click",()=>closeReader(false));
+  .addEventListener("click",()=>{
+    closeReader(false);
+  });
 
 document.getElementById("readerClose")
-  .addEventListener("click",()=>closeReader(false));
-
+  .addEventListener("click",()=>{
+    closeReader(false);
+  });
 
 window.addEventListener("popstate",()=>{
 
   if(reader.classList.contains("active")){
-
     closeReader(true);
-
   }
 
 });
@@ -1536,76 +1081,61 @@ window.addEventListener("popstate",()=>{
 
 document.addEventListener("keydown",event=>{
 
-  if(!reader.classList.contains("active")) return;
+  if(!reader.classList.contains("active"))return;
 
   if(event.key==="Escape"){
-
     closeReader(false);
-
   }
 
-  /*
-    No visible download/print UI is provided.
-    These shortcuts are blocked as a basic viewer-level measure.
-  */
   if(
     event.ctrlKey &&
     ["s","p","u"].includes(
       event.key.toLowerCase()
     )
   ){
-
     event.preventDefault();
     event.stopPropagation();
-
   }
 
 });
-
 
 document.addEventListener("contextmenu",event=>{
-
   if(reader.classList.contains("active")){
-
     event.preventDefault();
-
   }
-
 });
 
 
-/* ============================================================
-   AUTH STATE
-   ============================================================ */
+/* ==========================================================
+   FIREBASE AUTH
+   ========================================================== */
 
-onAuthStateChanged(auth,user=>{
+if(firebaseReady){
 
-  currentUser=user;
+  auth.onAuthStateChanged(user=>{
+
+    currentUser=user;
+
+    updateUserUI();
+
+    if(currentBookId){
+      attachListeners();
+    }
+
+  });
+
+}else{
 
   updateUserUI();
 
-  /*
-    Rebind current book listeners so like/save reflects
-    the newly logged-in user's state.
-  */
-  if(currentBookId){
-    attachBookListeners();
-  }
-
-});
+}
 
 
-/* ============================================================
-   INITIAL RENDER
-   ============================================================ */
-
+/* First render */
 renderCards();
 
 
-/* ============================================================
-   MOBILE ROTATION / RESIZE
-   ============================================================ */
-
+/* Re-render PDF after mobile rotation */
 window.addEventListener("resize",()=>{
 
   if(
@@ -1613,18 +1143,17 @@ window.addEventListener("resize",()=>{
     currentBook
   ){
 
-    clearTimeout(window.__readerResize);
+    clearTimeout(window.__bookResizeTimer);
 
-    window.__readerResize =
+    window.__bookResizeTimer=
       setTimeout(()=>{
-        renderFullPdf(currentBook.pdf);
-      },300);
+        renderPDF(currentBook.pdf);
+      },250);
 
   }
 
 });
 
 </script>
-
 </body>
 </html>

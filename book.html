@@ -1,14 +1,12 @@
-<!-- BOOKS PAGE -->
-<div id="booksPage" class="page">
 
-  <div class="books-container">
+
+
 
     <!-- SEARCH + FILTER -->
     <div class="books-tools">
 
       <div class="books-search">
         <span>⌕</span>
-
         <input
           type="text"
           id="bookSearch"
@@ -18,7 +16,6 @@
       </div>
 
       <div class="books-filter">
-
         <button class="filter-btn active" data-filter="all">
           All
         </button>
@@ -54,33 +51,664 @@
         <button class="filter-btn" data-filter="agriculture">
           Agriculture
         </button>
-
       </div>
 
     </div>
 
-
     <!-- BOOK COUNT -->
     <div class="books-result">
-      <span id="bookCount">0 Books</span>
+      <span id="bookCount">2 Books</span>
     </div>
 
-
-    <!-- BOOKS WILL BE FETCHED HERE -->
+    <!-- BOOK GRID -->
     <div class="books-grid" id="booksGrid"></div>
 
-
-    <!-- NO BOOKS -->
+    <!-- NO RESULT -->
     <div class="no-books" id="noBooks" style="display:none;">
-
       <div class="no-books-icon">📚</div>
-
       <h3>No Books Found</h3>
-
       <p>Search करके दूसरी book try करें।</p>
-
     </div>
 
   </div>
-
 </div>
+
+
+<style>
+
+/* =========================
+   BOOK PAGE
+========================= */
+
+#booksPage {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7f9fc;
+  padding: 25px 0 50px;
+}
+
+.books-container {
+  width: min(1250px, 94%);
+  margin: auto;
+}
+
+
+/* HEADER */
+
+.books-header {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #111827, #1e3a8a);
+  border-radius: 22px;
+  padding: 35px 35px;
+  margin-bottom: 22px;
+  color: white;
+}
+
+.books-header::after {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  right: -80px;
+  top: -100px;
+  background: rgba(255,255,255,0.08);
+}
+
+.books-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  background: rgba(255,255,255,0.13);
+  padding: 7px 12px;
+  border-radius: 30px;
+  margin-bottom: 10px;
+}
+
+.books-header h1 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 43px);
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.books-header p {
+  margin: 9px 0 0;
+  opacity: .82;
+  font-size: 15px;
+}
+
+
+/* TOOLS */
+
+.books-tools {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 17px;
+  margin-bottom: 17px;
+  box-shadow: 0 7px 25px rgba(15,23,42,.05);
+}
+
+.books-search {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f4f6f9;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 0 15px;
+  margin-bottom: 14px;
+}
+
+.books-search span {
+  font-size: 25px;
+  line-height: 1;
+  color: #64748b;
+}
+
+.books-search input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #111827;
+  font-size: 15px;
+}
+
+.books-search input::placeholder {
+  color: #94a3b8;
+}
+
+
+/* FILTERS */
+
+.books-filter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.books-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-btn {
+  flex: 0 0 auto;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  padding: 9px 15px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: .2s ease;
+}
+
+.filter-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.filter-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+
+/* RESULT */
+
+.books-result {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 3px 12px;
+}
+
+#bookCount {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+/* GRID */
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+
+/* BOOK CARD */
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 17px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 6px 20px rgba(15,23,42,.045);
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    border-color .2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+  border-color: #bfdbfe;
+  box-shadow: 0 14px 35px rgba(15,23,42,.11);
+}
+
+
+/* IMAGE */
+
+.book-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.book-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform .3s ease;
+}
+
+.book-card:hover .book-image img {
+  transform: scale(1.035);
+}
+
+
+/* PDF BADGE */
+
+.pdf-badge {
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  background: #dc2626;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 5px 8px;
+  border-radius: 6px;
+  letter-spacing: .4px;
+}
+
+
+/* OPEN BADGE */
+
+.open-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(17,24,39,.9);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 10px;
+  border-radius: 8px;
+}
+
+
+/* CONTENT */
+
+.book-card-content {
+  padding: 14px 14px 15px;
+}
+
+.book-card-content h3 {
+  margin: 0 0 6px;
+  color: #111827;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.book-card-content p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* META */
+
+.book-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.book-category {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.book-read {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+}
+
+
+/* NO BOOKS */
+
+.no-books {
+  text-align: center;
+  padding: 60px 20px;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+}
+
+.no-books-icon {
+  font-size: 45px;
+  margin-bottom: 10px;
+}
+
+.no-books h3 {
+  margin: 0 0 5px;
+  color: #111827;
+}
+
+.no-books p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+
+/* TABLET */
+
+@media (max-width: 1050px) {
+
+  .books-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 720px) {
+
+  #booksPage {
+    padding-top: 15px;
+  }
+
+  .books-header {
+    padding: 25px 21px;
+    border-radius: 17px;
+  }
+
+  .books-header p {
+    font-size: 13px;
+  }
+
+  .books-tools {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .book-card {
+    border-radius: 13px;
+  }
+
+  .book-card-content {
+    padding: 11px;
+  }
+
+  .book-card-content h3 {
+    font-size: 14px;
+  }
+
+  .book-card-content p {
+    font-size: 11px;
+  }
+
+  .book-meta {
+    margin-top: 10px;
+  }
+
+}
+
+
+/* SMALL MOBILE */
+
+@media (max-width: 390px) {
+
+  .books-grid {
+    gap: 8px;
+  }
+
+  .book-card-content h3 {
+    font-size: 13px;
+  }
+
+  .book-card-content p {
+    font-size: 10px;
+  }
+
+  .book-category {
+    font-size: 9px;
+  }
+
+  .book-read {
+    font-size: 9px;
+  }
+
+}
+
+</style>
+
+
+<script>
+
+/* =========================
+   BOOK DATABASE
+   नई BOOK यहां ADD करें
+========================= */
+
+const books = [
+
+  {
+    title: "Applied Physics 2nd",
+    description: "Diploma Engineering Physics PDF",
+    category: "physics",
+    categoryName: "Physics",
+    image:
+      "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png",
+    pdf:
+      "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+  },
+
+  {
+    title: "Applied Mathematics 2nd",
+    description: "Diploma Engineering Maths PDF",
+    category: "mathematics",
+    categoryName: "Mathematics",
+    image:
+      "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png",
+    pdf:
+      "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
+  }
+
+  /*
+  नई BOOK का example:
+
+  ,{
+    title: "Book Name",
+    description: "Diploma Engineering Book",
+    category: "civil",
+    categoryName: "Civil",
+    image: "IMAGE_URL",
+    pdf: "PDF_URL"
+  }
+
+  */
+
+
+];
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const booksGrid = document.getElementById("booksGrid");
+const bookSearch = document.getElementById("bookSearch");
+const bookCount = document.getElementById("bookCount");
+const noBooks = document.getElementById("noBooks");
+
+let currentFilter = "all";
+
+
+/* =========================
+   RENDER BOOKS
+========================= */
+
+function renderBooks() {
+
+  const searchText =
+    bookSearch.value.trim().toLowerCase();
+
+  const filteredBooks = books.filter(book => {
+
+    const matchesFilter =
+      currentFilter === "all" ||
+      book.category === currentFilter;
+
+    const matchesSearch =
+      book.title.toLowerCase().includes(searchText) ||
+      book.description.toLowerCase().includes(searchText) ||
+      book.categoryName.toLowerCase().includes(searchText);
+
+    return matchesFilter && matchesSearch;
+
+  });
+
+
+  booksGrid.innerHTML = "";
+
+
+  if (filteredBooks.length === 0) {
+
+    noBooks.style.display = "block";
+    bookCount.textContent = "0 Books";
+
+    return;
+
+  }
+
+
+  noBooks.style.display = "none";
+
+
+  bookCount.textContent =
+    `${filteredBooks.length} ${filteredBooks.length === 1 ? "Book" : "Books"}`;
+
+
+  const fragment = document.createDocumentFragment();
+
+
+  filteredBooks.forEach(book => {
+
+    const card = document.createElement("a");
+
+    card.className = "book-card";
+
+    /*
+      Direct PDF
+      Browser PDF viewer में खुलेगा
+    */
+    card.href = book.pdf;
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+
+
+    card.innerHTML = `
+
+      <div class="book-image">
+
+        <img
+          src="${book.image}"
+          alt="${book.title}"
+          loading="lazy"
+          decoding="async"
+        >
+
+        <span class="pdf-badge">PDF</span>
+
+        <span class="open-badge">
+          Open PDF
+        </span>
+
+      </div>
+
+      <div class="book-card-content">
+
+        <h3>${book.title}</h3>
+
+        <p>${book.description}</p>
+
+        <div class="book-meta">
+
+          <span class="book-category">
+            ${book.categoryName}
+          </span>
+
+          <span class="book-read">
+            Read →
+          </span>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    fragment.appendChild(card);
+
+  });
+
+
+  booksGrid.appendChild(fragment);
+
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+bookSearch.addEventListener("input", renderBooks);
+
+
+/* =========================
+   CATEGORY FILTER
+========================= */
+
+document
+  .querySelectorAll(".filter-btn")
+  .forEach(button => {
+
+    button.addEventListener("click", function() {
+
+      document
+        .querySelectorAll(".filter-btn")
+        .forEach(btn => {
+          btn.classList.remove("active");
+        });
+
+
+      this.classList.add("active");
+
+
+      currentFilter =
+        this.dataset.filter;
+
+
+      renderBooks();
+
+    });
+
+  });
+
+
+/* =========================
+   INITIAL LOAD
+========================= */
+
+renderBooks();
+
+</script>

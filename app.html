@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1290,6 +1293,21 @@ body {
 }
 
 .bottom-nav .nav-link-btn.active { color: var(--primary); }
+
+/* ROBUST EXTERNAL FILE VIEWER */
+.external-page { padding: 0 !important; max-width: none !important; width: 100% !important; min-height: calc(100vh - 58px); }
+.external-frame-wrap { position: relative; width: 100%; min-height: calc(100vh - 58px); background: #fff; overflow: hidden; }
+.external-frame { display: block; width: 100%; height: calc(100vh - 58px); min-height: 620px; border: 0; background: #fff; }
+.external-loading { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; background:#fff; z-index:3; }
+.external-loading .box { text-align:center; padding:28px 20px; color:var(--muted-text); }
+.external-loading i { font-size:28px; color:var(--primary); margin-bottom:10px; }
+.external-error { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:#fff; z-index:4; padding:20px; }
+.external-error .box { width:min(100%,520px); text-align:center; border:1px solid var(--border-light); border-radius:18px; padding:24px 18px; box-shadow:var(--shadow-subtle); }
+.external-error h3 { font-size:17px; margin-bottom:8px; }
+.external-error p { font-size:12px; color:var(--muted-text); line-height:1.5; margin-bottom:14px; }
+.external-retry { border:0; border-radius:10px; padding:10px 16px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
+@media(max-width:640px){ .external-frame { height:calc(100vh - 58px); min-height:560px; } .external-page { min-height:calc(100vh - 58px); } }
+
 </style>
 </head>
 <body>
@@ -2220,93 +2238,117 @@ body {
   let secondsSpent = 60;
 
   const defaultPage = "homePage";
-  
-  // Registered External Course Files & Dynamic Pages
-  const externalBranches = [
-    'civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 
-    'year-1-course', 'civil-year-2-course', 'mechanical-year-2-course', 'it-year-2-course', 'cs-year-2-course', 'electrical-year-2-course', 'electronics-year-2-course', 'agriculture-year-2-course', 'chemical-year-2-course'
-  ];
+
+  /*
+   * EXTERNAL FILE MAP
+   * Each branch/course is loaded inside an isolated iframe.
+   * This prevents CSS/JS/Firebase from a child HTML file from
+   * breaking or slowing the main app. Keep these files in the
+   * same folder as this app.html (or change the paths below).
+   */
+  const EXTERNAL_FILE_MAP = Object.freeze({
+    civil: "civil.html",
+    computer: "computer.html",
+    electrical: "electrical.html",
+    electronics: "electronics.html",
+    mechanical: "mechanical.html",
+    it: "it.html",
+    agricultural: "agricultural.html",
+    sem1: "1st-sem.html",
+    sem2: "2nd-sem.html",
+    admitPage: "admitcard.html",
+    resultPage: "result.html",
+    "year-1-course": "year-1-course.html",
+    "civil-year-2-course": "civil-year-2-course.html",
+    "mechanical-year-2-course": "mechanical-year-2-course.html",
+    "it-year-2-course": "it-year-2-course.html",
+    "cs-year-2-course": "cs-year-2-course.html",
+    "electrical-year-2-course": "electrical-year-2-course.html",
+    "electronics-year-2-course": "electronics-year-2-course.html",
+    "agriculture-year-2-course": "agriculture-year-2-course.html",
+    "chemical-year-2-course": "chemical-year-2-course.html"
+  });
+
+  const externalBranches = Object.keys(EXTERNAL_FILE_MAP);
+  const externalLoadTimers = new Map();
+
 // Optional JS for continuous Auto-Scroll Right-to-Left effect
 window.addEventListener('DOMContentLoaded', () => {
   const slider = document.getElementById('facultySlider');
   if (!slider) return;
 
-  let scrollSpeed = 1; // Speed of movement
+  let scrollSpeed = 1;
   let isHovered = false;
-
-  // Pause auto-scroll when user touches or hovers over the slider
   slider.addEventListener('mouseenter', () => isHovered = true);
   slider.addEventListener('mouseleave', () => isHovered = false);
-  slider.addEventListener('touchstart', () => isHovered = true);
-  slider.addEventListener('touchend', () => isHovered = false);
+  slider.addEventListener('touchstart', () => isHovered = true, {passive:true});
+  slider.addEventListener('touchend', () => isHovered = false, {passive:true});
 
   setInterval(() => {
-    if (!isHovered) {
+    if (!isHovered && slider.scrollWidth > slider.clientWidth) {
       slider.scrollLeft += scrollSpeed;
-      // If it reaches the end, smoothly loop back to the start
-      if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth)) {
-        slider.scrollLeft = 0;
-      }
+      if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth - 1)) slider.scrollLeft = 0;
     }
   }, 30);
 });
+
   /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = function(pageId, pushToHistory = true) {
-    if (externalBranches.includes(pageId)) {
+    const target = document.getElementById(pageId);
+    if (!target && !EXTERNAL_FILE_MAP[pageId]) {
+      console.warn("Unknown page:", pageId);
+      pageId = defaultPage;
+    }
+
+    if (EXTERNAL_FILE_MAP[pageId]) {
       loadPortalFromFile(pageId);
     }
-    if (pageId === 'leaderboardPage') {
-      loadLeaderboardData();
-    }
+
+    if (pageId === 'leaderboardPage') loadLeaderboardData();
     renderPageUI(pageId);
+
     if (pushToHistory) {
-      history.pushState({ pageId: pageId }, "", "#" + pageId);
+      history.pushState({ pageId }, "", "#" + pageId);
     }
+    window.scrollTo({top:0, left:0, behavior:'instant'});
   };
 
   window.goBack = function() {
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      navigateTo("homePage", false);
+      navigateTo(defaultPage, false);
     }
   };
 
   window.addEventListener("popstate", (e) => {
     const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
-    if (externalBranches.includes(pageId)) {
-      loadPortalFromFile(pageId);
-    }
-    if (pageId === 'leaderboardPage') {
-      loadLeaderboardData();
-    }
+    if (EXTERNAL_FILE_MAP[pageId]) loadPortalFromFile(pageId);
+    if (pageId === 'leaderboardPage') loadLeaderboardData();
     renderPageUI(pageId);
+    window.scrollTo({top:0, left:0, behavior:'instant'});
   });
 
   function renderPageUI(targetPage) {
     const pages = document.querySelectorAll(".page");
-    pages.forEach(p => p.classList.remove("active-page"));
+    pages.forEach(p => {
+      p.classList.remove("active-page");
+      p.classList.remove("external-page");
+    });
 
-    const activeEl = document.getElementById(targetPage);
-    if (activeEl) {
-      activeEl.classList.add("active-page");
-    } else {
-      document.getElementById(defaultPage).classList.add("active-page");
+    const activeEl = document.getElementById(targetPage) || document.getElementById(defaultPage);
+    activeEl.classList.add("active-page");
+
+    if (EXTERNAL_FILE_MAP[targetPage]) {
+      activeEl.classList.add("external-page");
     }
 
     const backBtn = document.getElementById("headerBackBtn");
-    if (backBtn) {
-      backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
-    }
+    if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
 
-    const navBtns = document.querySelectorAll(".bottom-nav .nav-link-btn");
-    navBtns.forEach(btn => btn.classList.remove("active"));
-    const activeTab = document.getElementById("tab-" + targetPage);
-    if (activeTab) {
-      activeTab.classList.add("active");
-    }
-
-    window.scrollTo(0, 0);
+    document.querySelectorAll('.bottom-nav .nav-link-btn').forEach(btn => btn.classList.remove('active'));
+    const tab = document.getElementById('tab-' + targetPage);
+    if (tab) tab.classList.add('active');
   }
 
   window.toggleForm = function() {
@@ -2755,65 +2797,83 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  async function loadPortalFromFile(portalId) {
+  window.loadPortalFromFile = async function loadPortalFromFile(portalId, forceReload = false) {
     const container = document.getElementById(portalId);
-    if (!container) return;
+    const fileName = EXTERNAL_FILE_MAP[portalId];
+    if (!container || !fileName) return;
 
-    if (container.dataset.loaded === "true") return;
+    // If already loaded, just show it.
+    if (container.dataset.loaded === "true" && container.querySelector('.external-frame')) return;
 
+    const safeId = 'external-' + portalId.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const existingFrame = container.querySelector('.external-frame');
+    if (existingFrame) existingFrame.remove();
+
+    container.classList.add('external-page');
     container.innerHTML = `
-      <div style="text-align:center; padding: 40px 20px; color: var(--muted-text);">
-        <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--primary);"></i>
-        <p style="margin-top: 10px; font-weight: 700;">Content Loading...</p>
+      <div class="external-frame-wrap">
+        <div class="external-loading" id="${safeId}-loading">
+          <div class="box">
+            <i class="fas fa-spinner fa-spin"></i>
+            <div style="font-weight:800;font-size:14px;">Loading ${escapeHTML(fileName)}...</div>
+            <div style="font-size:11px;margin-top:5px;">Please wait</div>
+          </div>
+        </div>
+        <div class="external-error" id="${safeId}-error">
+          <div class="box">
+            <i class="fas fa-triangle-exclamation" style="font-size:30px;color:#ef4444;margin-bottom:10px;"></i>
+            <h3>Page could not be loaded</h3>
+            <p>File <b>${escapeHTML(fileName)}</b> was not loaded. Make sure this HTML file is uploaded in the same folder as the main app file.</p>
+            <button class="external-retry" type="button" onclick="loadPortalFromFile('${escapeHTML(portalId)}', true)">Retry</button>
+          </div>
+        </div>
+        <iframe class="external-frame" id="${safeId}-frame" title="${escapeHTML(fileName)}" src="about:blank" loading="eager" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       </div>`;
 
-    let fileName = `${portalId}.html`;
-    if (portalId === 'sem1') fileName = '1st-sem.html';
-    if (portalId === 'sem2') fileName = '2nd-sem.html';
-    if (portalId === 'admitPage') fileName = 'admitcard.html';
-    if (portalId === 'resultPage') fileName = 'result.html';
+    const frame = document.getElementById(safeId + '-frame');
+    const loading = document.getElementById(safeId + '-loading');
+    const errorBox = document.getElementById(safeId + '-error');
+    if (!frame) return;
 
-    try {
-      const response = await fetch(fileName);
-      if (!response.ok) throw new Error(`File ${fileName} not found`);
-      
-      const htmlText = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, "text/html");
+    const showError = () => {
+      if (loading) loading.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'flex';
+      container.dataset.loaded = 'false';
+    };
 
-      doc.querySelectorAll("link[rel='stylesheet'], style").forEach(node => {
-        document.head.appendChild(node.cloneNode(true));
-      });
+    const timerKey = portalId;
+    if (externalLoadTimers.has(timerKey)) clearTimeout(externalLoadTimers.get(timerKey));
+    externalLoadTimers.set(timerKey, setTimeout(showError, 15000));
 
-      container.innerHTML = doc.body ? doc.body.innerHTML : htmlText;
-      container.dataset.loaded = "true";
-
-      const scripts = doc.querySelectorAll("script");
-      scripts.forEach(script => {
-        const newScript = document.createElement("script");
-        if (script.src) {
-          newScript.src = script.src;
-        } else {
-          newScript.textContent = script.textContent;
-        }
-        document.body.appendChild(newScript);
-      });
-
-    } catch (err) {
-      if (portalId === 'sem1' || portalId === 'sem2') {
-        renderDefaultSemLayout(container, portalId);
-      } else if (portalId === 'admitPage') {
-        renderDefaultAdmitLayout(container);
-      } else if (portalId === 'resultPage') {
-        renderDefaultResultLayout(container);
-      } else {
-        container.innerHTML = `
-          <div class="notice">
-            <h5>File Missing</h5>
-            <p>Please make sure <b>${fileName}</b> is uploaded in your root workspace.</p>
-          </div>`;
+    frame.addEventListener('load', () => {
+      if (externalLoadTimers.has(timerKey)) {
+        clearTimeout(externalLoadTimers.get(timerKey));
+        externalLoadTimers.delete(timerKey);
       }
-    }
+
+      // Same-origin files allow us to detect a genuine server error and
+      // also remove the child's body margin when appropriate.
+      try {
+        const doc = frame.contentDocument;
+        const body = doc && doc.body;
+        const text = (body?.innerText || '').trim().toLowerCase();
+        const title = (doc?.title || '').toLowerCase();
+        const looksLike404 = /404|not found|cannot get \/|failed to load resource/.test(text + ' ' + title);
+        if (looksLike404 && text.length < 1200) { showError(); return; }
+
+        if (body) body.style.margin = body.style.margin || '0';
+        if (doc?.documentElement) doc.documentElement.style.background = '#fff';
+      } catch (e) {
+        // Cross-origin is still valid; iframe itself will display the page.
+      }
+
+      if (loading) loading.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'none';
+      container.dataset.loaded = 'true';
+    }, {once:true});
+
+    frame.addEventListener('error', showError, {once:true});
+    frame.src = fileName;
   }
 
   function renderDefaultSemLayout(container, semId) {
@@ -2846,6 +2906,17 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>`;
     container.dataset.loaded = "true";
   }
+
+  // Restore the route after the Firebase auth state is ready.
+  // A hash route never blocks the main app; external pages are isolated in iframes.
+  window.addEventListener('load', () => {
+    const hashPage = window.location.hash.replace('#','').trim();
+    const initialPage = hashPage && (document.getElementById(hashPage) || EXTERNAL_FILE_MAP[hashPage]) ? hashPage : defaultPage;
+    history.replaceState({pageId: initialPage}, '', '#' + initialPage);
+    if (EXTERNAL_FILE_MAP[initialPage]) loadPortalFromFile(initialPage);
+    if (initialPage === 'leaderboardPage') loadLeaderboardData();
+    renderPageUI(initialPage);
+  });
 </script>
 </body>
 </html>

@@ -21,20 +21,431 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{
   width:100%;
-  min-height:0;
-  background:transparent!important;
+  height: 100%;
+  background:var(--bg)!important;
   font-family:"Plus Jakarta Sans",sans-serif;
   color:var(--text);
   overflow-x:hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
-body.reader-open{overflow:hidden}
+body.reader-open{overflow:hidden} /* Prevent scrolling when reader is open */
 button,textarea{font:inherit}
-button{cursor:pointer}
+button{cursor:pointer; border: none; background: none;}
 
+/* =====================================================
+   CUSTOM HEADER (ADDED FOR STANDALONE FUNCTIONALITY)
+   ===================================================== */
+.app-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 55px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  z-index: 1000;
+  display: none; /* Hidden by default */
+}
+
+/* Show header only when reader is open */
+body.reader-open .app-header {
+  display: flex;
+}
+
+.back-btn {
+  font-size: 18px;
+  color: var(--dark);
+  margin-right: 15px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.header-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =====================================================
+   LIBRARY VIEW
+   ===================================================== */
 .books-wrap{
   width:100%;
+  padding: 15px;
+}
+
+.books-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:0 0 15px;
+}
+
+.books-title{
+  font-size:18px;
+  font-weight:800;
+  color:var(--dark);
+}
+
+.books-title span{color:var(--blue)}
+.books-subtitle{
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+}
+
+.books-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.book-card{
+  min-width:0;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(15,23,42,.05);
+  cursor:pointer;
+  transition: transform 0.2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.book-card:active {
+    transform: scale(0.97);
+}
+
+.book-cover{
+  position:relative;
+  width:100%;
+  aspect-ratio:3/4;
+  background:#eef2ff;
+  overflow:hidden;
+}
+.book-thumb{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#fff;
+  pointer-events:none;
+  object-fit:contain;
+  padding:25px;
+}
+.book-shade{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.03) 70%,transparent);
+}
+.book-label{
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:10px;
+  z-index:2;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+  text-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.open-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:6px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.5);
+  font-size:9px;
+  font-weight:800;
+  backdrop-filter: blur(2px);
+}
+.book-meta{
+  padding:10px;
+}
+.book-meta-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+}
+.book-type{
+  font-size:9px;
+  font-weight:700;
+  color:var(--muted);
+}
+.read-pill{
+  font-size:9px;
+  font-weight:800;
+  color:#1d4ed8;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  padding:3px 8px;
+}
+
+/* =====================================================
+   READER VIEW (HIDDEN BY DEFAULT)
+   ===================================================== */
+.reader-view{
+  display:none;
+  width:100%;
+  height: calc(100% - 55px); /* Full height minus header */
   padding:0;
   margin:0;
+  background: #fff;
+}
+.reader-view.active{display:block}
+
+.pdf-box{
+  width:100%;
+  height: 100%;
+  background:#fff;
+}
+.pdf-frame{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+  background:#fff;
+}
+
+/* Removed custom Like/Save/Comment UI as it was designed
+   for an iframe parent and wouldn't work standalone without
+   a backend setup. The cards now just open the PDF directly. */
+
+@media(max-width:420px){
+  .books-grid{gap:10px}
+  .books-title{font-size:16px;}
+  .books-subtitle{font-size:9px}
+}
+</style>
+</head>
+
+<body>
+
+<!-- CUSTOM APP HEADER -->
+<header class="app-header">
+    <button class="back-btn" onclick="history.back()">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="header-title" id="headerTitle">Book Reader</div>
+</header>
+
+<!-- FIRST SCREEN: only thumbnails/cards -->
+<div class="books-wrap" id="booksHome">
+
+  <div class="books-head">
+    <div class="books-title">Books <span>Library</span></div>
+    <div class="books-subtitle">Diploma Engineers</div>
+  </div>
+
+  <div class="books-grid" id="booksGrid"></div>
+</div>
+
+
+<!-- SECOND SCREEN: PDF Reader -->
+<div class="reader-view" id="readerView">
+
+  <div class="pdf-box">
+    <iframe
+      id="pdfFrame"
+      class="pdf-frame"
+      title="PDF Reader"
+      allow="fullscreen">
+    </iframe>
+  </div>
+
+</div>
+
+
+<script>
+(function(){
+
+  /* ==========================================================
+     BOOK LIST
+     Only name + PDF link is required.
+     Same PDF icon is used for every book card.
+     ========================================================== */
+
+  const BOOKS = [
+    {
+      name:"Applied Physics 2nd",
+      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
+    },
+    {
+      name:"Applied Mathematics 2nd",
+      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+    },
+    {
+      name:"Engineering Mechanics",
+      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
+    },
+    {
+      name:"Design Of Steel Structures",
+      pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+    }
+  ];
+
+  const booksHome=document.getElementById("booksHome");
+  const booksGrid=document.getElementById("booksGrid");
+  const readerView=document.getElementById("readerView");
+  const pdfFrame=document.getElementById("pdfFrame");
+  const headerTitle=document.getElementById("headerTitle");
+  const body=document.body;
+
+  function esc(value){
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // =====================================================
+  // INITIALISE LIBRARY CARDS
+  // =====================================================
+  function renderCards(){
+
+    booksGrid.innerHTML="";
+
+    BOOKS.forEach((book,index)=>{
+
+      const card=document.createElement("article");
+
+      card.className="book-card";
+
+      const pdfIconUrl =
+        "https://cdn-icons-png.flaticon.com/512/1794/179483.png";
+
+      card.innerHTML=`
+        <div class="book-cover">
+          <img
+            class="book-thumb"
+            src="${pdfIconUrl}"
+            alt="PDF"
+            loading="lazy"
+          >
+          <div class="book-shade"></div>
+          <div class="book-label">
+            ${esc(book.name)}
+
+            <div class="open-pill">
+              <i class="fa-solid fa-book-open"></i> Open
+            </div>
+          </div>
+        </div>
+
+        <div class="book-meta">
+          <div class="book-meta-line">
+            <span class="book-type">PDF • Online Reader</span>
+            <span class="read-pill">Read</span>
+          </div>
+        </div>
+      `;
+
+      // Add click event to open reader view
+      card.addEventListener("click",()=>{
+        openBook(index);
+      });
+
+      booksGrid.appendChild(card);
+    });
+  }
+
+  // =====================================================
+  // OPEN BOOK FUNCTION (Uses Hash Navigation)
+  // =====================================================
+  function openBook(index){
+
+    const book = BOOKS[index];
+
+    if(!book) return;
+
+    // Update header title
+    headerTitle.textContent = book.name;
+
+    // Load PDF into iframe
+    pdfFrame.src=book.pdf;
+
+    // Update UI state
+    booksHome.style.display="none";
+    readerView.classList.add("active");
+    body.classList.add("reader-open");
+
+    // Change URL hash to make it bookmarkable/back-button friendly
+    window.location.hash = 'read=' + index;
+
+    window.scrollTo(0,0);
+  }
+
+  // =====================================================
+  // CLOSE BOOK FUNCTION
+  // =====================================================
+  function closeBook(){
+
+    // Detach PDF src to stop loading
+    pdfFrame.src="";
+
+    // Update UI state
+    readerView.classList.remove("active");
+    booksHome.style.display="block";
+    body.classList.remove("reader-open");
+
+    headerTitle.textContent = "Book Reader";
+
+    // Reset URL hash if we are returning to home
+    if(window.location.hash.startsWith('#read=')) {
+        // Use replaceState to avoid adding a new history entry
+        history.replaceState("", document.title, window.location.pathname + window.location.search);
+    }
+
+    window.scrollTo(0,0);
+  }
+
+  // =====================================================
+  // HASH NAVIGATION HANDLER (Mobile Back Button Fix)
+  // =====================================================
+  function handleHash() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#read=')) {
+      const index = parseInt(hash.substring(6));
+      const book = BOOKS[index];
+      if(book) {
+          openBook(index);
+      } else {
+          closeBook(); // Invalid book index
+      }
+    } else {
+      closeBook(); // No read hash, show library
+    }
+  }
+
+  // Listen for URL hash changes
+  window.addEventListener('hashchange', handleHash);
+
+  // Check hash on initial page load (in case user bookmarked a book link)
+  handleHash();
+
+  renderCards();
+
+})();
+</script>
+
+</body>
+</html>  margin:0;
 }
 
 .books-head{

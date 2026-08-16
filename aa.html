@@ -1,3 +1,110 @@
+
+
+app (30).html
+File
+esme jo file fatch ki gayi hai wo thik se work nahi karti lack karne lagte or brach fatch page and course fatch file puri trah se work nahi kar rahi ha nahi load ho paati hai full updateded app page code workable  full app file code 
+
+हाँ। मैंने आपकी uploaded app (30).html को देखकर पूरी app file को update किया है। समस्या मुख्यतः external branch/course HTML को fetch() करके उसके <style>, HTML और <script> को main app में inject करने से हो रही थी; इससे child page का CSS/JS main app से conflict करके lag और loading failure कर सकता था. 
+
+
+मैंने क्या fix किया है
+Branch files अब isolated iframe में load होंगी:
+
+civil.html
+
+computer.html
+
+electrical.html
+
+electronics.html
+
+mechanical.html
+
+it.html
+
+agricultural.html
+
+Course files भी isolated तरीके से load होंगी:
+
+year-1-course.html
+
+civil-year-2-course.html
+
+mechanical-year-2-course.html
+
+it-year-2-course.html
+
+cs-year-2-course.html
+
+electrical-year-2-course.html
+
+electronics-year-2-course.html
+
+agriculture-year-2-course.html
+
+chemical-year-2-course.html
+
+1st-sem.html, 2nd-sem.html, admitcard.html, result.html भी इसी reliable system से खुलेंगे।
+
+Child file का CSS/JS अब main app को disturb नहीं करेगा।
+
+Loading spinner + 15 second timeout।
+
+File missing होने पर proper error + Retry button।
+
+Browser/mobile Back button/history बेहतर किया गया।
+
+External page खुलने पर main app में unnecessary re-render कम किया गया।
+
+Explicit file mapping लगाया गया है, इसलिए ${portalId}.html जैसी unreliable guessing नहीं होगी।
+
+Existing app का Firebase/auth/news/profile आदि structure preserve किया गया है। आपकी current app में Firebase initialization मौजूद है। 
+
+
+Existing Branch navigation भी इसी external-page system से connected है। 
+
+
+Updated full file
+
+बहुत जरूरी
+इस updated app file के साथ child HTML files same folder में रखें:
+
+app.html
+civil.html
+computer.html
+electrical.html
+electronics.html
+mechanical.html
+it.html
+agricultural.html
+
+year-1-course.html
+civil-year-2-course.html
+mechanical-year-2-course.html
+it-year-2-course.html
+cs-year-2-course.html
+electrical-year-2-course.html
+electronics-year-2-course.html
+agriculture-year-2-course.html
+chemical-year-2-course.html
+
+1st-sem.html
+2nd-sem.html
+admitcard.html
+result.html
+सबसे important change: पहले आपका app fetched HTML के scripts को main document में फिर से चला रहा था, जबकि अब हर branch/course अपना अलग isolated document है। यही lag और टूटने वाली समस्या को काफी हद तक रोकता है। 
+
+
+
+
+
+Library
+/
+app (30) - fully updated.html
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,69 +235,67 @@ body {
   font-size: 14px;
 }
 #progress-percent { color: #2864e8; font-weight: 700; }
-
 /* FOOTER STYLES */
-.app-footer {
-  text-align: center;
-  padding: 30px 16px 20px 16px;
-  margin-top: 20px;
-  border-top: 1px dashed var(--border-light);
-  background: var(--bg-white);
-}
+    .app-footer {
+      text-align: center;
+      padding: 30px 16px 20px 16px;
+      margin-top: 20px;
+      border-top: 1px dashed var(--border-light);
+      background: var(--bg-white);
+    }
 
-.footer-social-icons {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
+    .footer-social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
 
-.footer-icon-btn {
-  width: 45px;
-  height: 45px;
-  background: #ffffff;
-  border: 1px solid var(--border-light);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  font-size: 18px;
-  box-shadow: var(--shadow-subtle);
-  text-decoration: none;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
+    .footer-icon-btn {
+      width: 45px;
+      height: 45px;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 18px;
+      box-shadow: var(--shadow-subtle);
+      text-decoration: none;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
 
-.footer-icon-btn:hover {
-  transform: scale(1.08);
-  background: var(--surface-gray);
-}
+    .footer-icon-btn:hover {
+      transform: scale(1.08);
+      background: var(--surface-gray);
+    }
 
-.footer-links {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 16px;
-}
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
 
-.footer-links a {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--blue-text);
-  text-decoration: none;
-}
+    .footer-links a {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue-text);
+      text-decoration: none;
+    }
 
-.footer-links a:hover {
-  text-decoration: underline;
-}
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
 
-.footer-copyright {
-  font-size: 12px;
-  color: var(--muted-text);
-  margin: 0;
-}
-
+    .footer-copyright {
+      font-size: 12px;
+      color: var(--muted-text);
+      margin: 0;
+    }
 /* AUTH PAGE */
 #authPage {
   min-height: 100vh;
@@ -449,6 +554,20 @@ body {
 .banner-coin-box i { font-size: 20px; color: #FFD700; }
 .banner-coin-box span { font-size: 14px; font-weight: 800; color: #fff; }
 
+.timer-tracker-card {
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-text);
+}
+
 /* LEADERBOARD STYLES */
 .leaderboard-container {
   max-width: 600px;
@@ -623,7 +742,6 @@ body {
   font-size: 12px;
   line-height: 1.3;
 }
-
 /* Faculty Horizontal Slider Styles */
 .faculty-scroll {
   display: flex;
@@ -631,9 +749,11 @@ body {
   gap: 15px;
   padding-bottom: 10px;
   scroll-behavior: smooth;
-  scrollbar-width: none;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
 }
-.faculty-scroll::-webkit-scrollbar { display: none; }
+.faculty-scroll::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
+}
 
 .faculty-card {
   min-width: 220px;
@@ -679,7 +799,10 @@ body {
   margin: 0;
 }
 
-.faculty-sub { font-size: 12px; color: #666; }
+.faculty-sub {
+  font-size: 12px;
+  color: #666;
+}
 
 .exp-badge {
   background: #f1f3f5;
@@ -691,7 +814,6 @@ body {
   margin-top: 6px;
   align-self: center;
 }
-
 /* SEMESTER BANNER CARDS */
 .sem-banner-grid {
   display: grid;
@@ -713,6 +835,7 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(255, 122, 0, 0.25);
+  transition: transform 0.15s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -728,6 +851,7 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  transition: transform 0.15s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -755,7 +879,11 @@ body {
   letter-spacing: -0.3px;
 }
 
-.sem-card-content p { font-size: 12px; opacity: 0.9; margin: 0; }
+.sem-card-content p {
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 0;
+}
 
 .sem-card-btn {
   display: inline-flex;
@@ -771,6 +899,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* BLUE THEME SECTION 1 */
 .blue-theme-card-1 {
   background: var(--blue-bg);
   border: 1px solid var(--blue-border);
@@ -782,6 +911,7 @@ body {
   justify-content: space-between;
   box-shadow: var(--shadow-subtle);
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
 .blue-theme-card-1:active { transform: scale(0.98); }
 
@@ -916,14 +1046,20 @@ body {
   overflow: hidden;
 }
 
-.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .upload-icon-btn {
   position: absolute;
-  bottom: 0; right: 0;
+  bottom: 0;
+  right: 0;
   background: var(--primary);
   color: white;
-  width: 26px; height: 26px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -991,35 +1127,35 @@ body {
   .course-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-.course-card { background:#fff; border:1px solid var(--border-light); border-radius:18px; overflow:hidden; box-shadow:var(--shadow-subtle); display:flex; flex-direction:column; min-width:0; }
-.card-header-banner { padding:18px; color:#fff; position:relative; min-height:142px; }
-.card-header-banner.purple { background:linear-gradient(135deg,#7C3AED,#8B5CF6); }
-.card-header-banner.green { background:linear-gradient(135deg,#059669,#10B981); }
-.card-header-banner.blue { background:linear-gradient(135deg,#2563EB,#3B82F6); }
-.card-header-banner.orange { background:linear-gradient(135deg,#EA580C,#F97316); }
-.card-header-banner.red { background:linear-gradient(135deg,#DC2626,#EF4444); }
-.card-header-banner.teal { background:linear-gradient(135deg,#0D9488,#14B8A6); }
-.card-header-banner.indigo { background:linear-gradient(135deg,#4F46E5,#6366F1); }
-.card-header-banner.pink { background:linear-gradient(135deg,#DB2777,#EC4899); }
-.card-header-banner.cyan { background:linear-gradient(135deg,#0891B2,#06B6D4); }
+.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
+.card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
+.card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
+.card-header-banner.green{background:linear-gradient(135deg,#059669,#10B981)}
+.card-header-banner.blue{background:linear-gradient(135deg,#2563EB,#3B82F6)}
+.card-header-banner.orange{background:linear-gradient(135deg,#EA580C,#F97316)}
+.card-header-banner.red{background:linear-gradient(135deg,#DC2626,#EF4444)}
+.card-header-banner.teal{background:linear-gradient(135deg,#0D9488,#14B8A6)}
+.card-header-banner.indigo{background:linear-gradient(135deg,#4F46E5,#6366F1)}
+.card-header-banner.pink{background:linear-gradient(135deg,#DB2777,#EC4899)}
+.card-header-banner.cyan{background:linear-gradient(135deg,#0891B2,#06B6D4)}
 
-.free-badge { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.28); backdrop-filter:blur(5px); padding:4px 10px; border-radius:20px; font-size:10px; font-weight:800; letter-spacing:.5px; }
-.header-title-box { display:flex; align-items:center; gap:10px; padding-right:55px; margin-bottom:7px; }
-.header-title-box i { font-size:20px; }
-.header-title-box h2 { font-size:16px; font-weight:800; margin:0; line-height:1.25; letter-spacing:-.2px; }
-.card-header-banner>p { font-size:12px; opacity:.95; margin:0; line-height:1.4; }
-.course-body { padding:16px; display:flex; flex-direction:column; flex:1; }
-.rating-bar { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; margin-bottom:12px; }
-.rating-bar i { color:#F59E0B; }
-.rating-bar .reviews { color:#64748B; font-size:11px; font-weight:500; }
-.feature-list { list-style:none; padding:12px 0 0; margin:0 0 16px; border-top:1px dashed #e2e8f0; display:flex; flex-direction:column; gap:8px; }
-.feature-list li { display:flex; align-items:flex-start; gap:8px; color:#334155; font-size:12px; line-height:1.4; font-weight:500; }
-.feature-list li i { color:#10B981; font-size:12px; margin-top:2px; flex-shrink:0; }
-.course-body .action-btn { margin-top:auto; width:100%; padding:10px; border:none; border-radius:12px; background:#2563EB; color:#fff; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; text-decoration:none; box-shadow:0 4px 12px rgba(37,99,235,.20); transition:transform .1s ease,background .15s ease; }
-.course-body .action-btn:hover { background:#1D4ED8; }
-.course-body .action-btn:active { transform:scale(.98); }
+.free-badge{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(5px);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.5px}
+.header-title-box{display:flex;align-items:center;gap:10px;padding-right:55px;margin-bottom:7px}
+.header-title-box i{font-size:20px}
+.header-title-box h2{font-size:16px;font-weight:800;margin:0;line-height:1.25;letter-spacing:-.2px}
+.card-header-banner>p{font-size:12px;opacity:.95;margin:0;line-height:1.4}
+.course-body{padding:16px;display:flex;flex-direction:column;flex:1}
+.rating-bar{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-bottom:12px}
+.rating-bar i{color:#F59E0B}
+.rating-bar .reviews{color:#64748B;font-size:11px;font-weight:500}
+.feature-list{list-style:none;padding:12px 0 0;margin:0 0 16px;border-top:1px dashed #e2e8f0;display:flex;flex-direction:column;gap:8px}
+.feature-list li{display:flex;align-items:flex-start;gap:8px;color:#334155;font-size:12px;line-height:1.4;font-weight:500}
+.feature-list li i{color:#10B981;font-size:12px;margin-top:2px;flex-shrink:0}
+.course-body .action-btn{margin-top:auto;width:100%;padding:10px;border:none;border-radius:12px;background:#2563EB;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;box-shadow:0 4px 12px rgba(37,99,235,.20);transition:transform .1s ease,background .15s ease}
+.course-body .action-btn:hover{background:#1D4ED8}
+.course-body .action-btn:active{transform:scale(.98)}
 
-/* NEWS & NOTIFICATIONS */
+/* NEWS & NOTIFICATION STYLES */
 .news-page {
   width: 100%;
   max-width: 650px;
@@ -1037,16 +1173,29 @@ body {
 }
 
 .header-icon {
-  width: 42px; height: 42px;
-  background: #eef2ff; color: #3b82f6;
+  width: 42px;
+  height: 42px;
+  background: #eef2ff;
+  color: #3b82f6;
   border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 20px;
 }
 
-.page-header h1 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; }
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
 
-#newsList { display: flex; flex-direction: column; gap: 16px; }
+#newsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .news-card {
   background: #f8fafc;
@@ -1054,18 +1203,164 @@ body {
   border: 1px solid #e2e8f0;
   border-left: 5px solid #2563eb;
   padding: 16px;
+  transition: all 0.2s ease;
   position: relative;
+  overflow: hidden;
   text-align: left;
 }
 
-.news-title {
-  font-size: 16px; font-weight: 700; color: #0f172a;
-  margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+.news-card:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); }
+
+.category {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
 }
 
-.news-description { font-size: 13px; line-height: 1.5; color: #64748b; margin-bottom: 12px; }
+.news-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-.loading, .empty, .error-box { text-align: center; padding: 30px; color: #64748b; }
+.news-title i {
+  color: #2563eb;
+  font-size: 15px;
+}
+
+.news-description {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 12px;
+}
+
+.news-date {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.action-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-btn {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.action-btn:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.expandable-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+  background: #ffffff;
+  border-radius: 10px;
+  margin-top: 0;
+  padding: 0 12px;
+  border: 0px solid #e2e8f0;
+}
+
+.expandable-panel.active {
+  max-height: 500px;
+  transition: max-height 0.3s ease-in-out;
+  margin-top: 12px;
+  padding: 12px;
+  border-width: 1px;
+}
+
+.card-thumbnail {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.full-desc {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.share-grid {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.share-icon-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.share-whatsapp { background: #25D366; }
+.share-telegram { background: #229ED9; }
+.share-copy { background: #64748b; }
+
+.loading, .empty, .error-box {
+  text-align: center;
+  padding: 30px;
+  color: #64748b;
+}
 .loading i { font-size: 24px; color: #2563eb; margin-bottom: 8px; }
 
 /* BOTTOM NAVIGATION BAR */
@@ -1095,8 +1390,28 @@ body {
   cursor: pointer;
 }
 
-.bottom-nav .nav-link-btn i { display: block; font-size: 16px; margin-bottom: 2px; }
+.bottom-nav .nav-link-btn i {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
 .bottom-nav .nav-link-btn.active { color: var(--primary); }
+
+/* ROBUST EXTERNAL FILE VIEWER */
+.external-page { padding: 0 !important; max-width: none !important; width: 100% !important; min-height: calc(100vh - 58px); }
+.external-frame-wrap { position: relative; width: 100%; min-height: calc(100vh - 58px); background: #fff; overflow: hidden; }
+.external-frame { display: block; width: 100%; height: calc(100vh - 58px); min-height: 620px; border: 0; background: #fff; }
+.external-loading { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; background:#fff; z-index:3; }
+.external-loading .box { text-align:center; padding:28px 20px; color:var(--muted-text); }
+.external-loading i { font-size:28px; color:var(--primary); margin-bottom:10px; }
+.external-error { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:#fff; z-index:4; padding:20px; }
+.external-error .box { width:min(100%,520px); text-align:center; border:1px solid var(--border-light); border-radius:18px; padding:24px 18px; box-shadow:var(--shadow-subtle); }
+.external-error h3 { font-size:17px; margin-bottom:8px; }
+.external-error p { font-size:12px; color:var(--muted-text); line-height:1.5; margin-bottom:14px; }
+.external-retry { border:0; border-radius:10px; padding:10px 16px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
+@media(max-width:640px){ .external-frame { height:calc(100vh - 58px); min-height:560px; } .external-page { min-height:calc(100vh - 58px); } }
+
 </style>
 </head>
 <body>
@@ -1108,14 +1423,18 @@ body {
             <div class="loader-ring"></div>
             <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
         </div>
+
         <h1 class="loader-title">
             <span class="orange-text">DIPLOMA</span>
             <span class="blue-text">ENGINEERS</span>
         </h1>
+
         <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
+
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
+
         <div class="loading-status">
             <span>Loading...</span>
             <span id="progress-percent">0%</span>
@@ -1157,9 +1476,11 @@ body {
     </div>
     
     <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
+    
     <button class="btn-google" onclick="googleLogin()">
       <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
     </button>
+
     <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
   </div>
 </div>
@@ -1174,10 +1495,12 @@ body {
       <div class="nav-logo">Diploma <span>Engineers</span></div>
     </div>
     <div class="nav-right-box">
+      <!-- COIN BUTTON IN HEADER -->
       <button class="coin-btn" onclick="navigateTo('leaderboardPage')">
         <i class="fas fa-coins"></i>
         <span id="navCoinCount">0 Coins</span>
       </button>
+
       <div class="profile-icon" id="navProfileIcon" onclick="navigateTo('profilePage')">
         <i class="fas fa-user-circle"></i>
       </div>
@@ -1219,12 +1542,30 @@ body {
     <!-- EXPLORE GRID -->
     <div class="section-title">Explore</div>
     <div class="grid-2">
-      <div class="card-box" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i><p>Branch</p></div>
-      <div class="card-box" onclick="navigateTo('leaderboardPage')"><i class="fas fa-trophy" style="color: #f59e0b;"></i><p>Leaderboard</p></div>
-      <div class="card-box" onclick="navigateTo('jobPage')"><i class="fas fa-briefcase"></i><p>Jobs</p></div>
-      <div class="card-box" onclick="navigateTo('admitPage')"><i class="fas fa-id-card"></i><p>Admit Card</p></div>
-      <div class="card-box" onclick="navigateTo('resultPage')"><i class="fas fa-square-poll-vertical"></i><p>Result</p></div>
-      <div class="card-box" onclick="navigateTo('updatePage')"><i class="fas fa-bell"></i><p>Updates</p></div>
+      <div class="card-box" onclick="navigateTo('notesPage')">
+        <i class="fas fa-code-branch"></i>
+        <p>Branch</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('leaderboardPage')">
+        <i class="fas fa-trophy" style="color: #f59e0b;"></i>
+        <p>Leaderboard</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('jobPage')">
+        <i class="fas fa-briefcase"></i>
+        <p>Jobs</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('admitPage')">
+        <i class="fas fa-id-card"></i>
+        <p>Admit Card</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('resultPage')">
+        <i class="fas fa-square-poll-vertical"></i>
+        <p>Result</p>
+      </div>
+      <div class="card-box" onclick="navigateTo('updatePage')">
+        <i class="fas fa-bell"></i>
+        <p>Updates</p>
+      </div>
     </div>
 
     <!-- PREMIUM ACCESS CARD -->
@@ -1233,7 +1574,9 @@ body {
         <h4>Unlock Courses 🚀</h4>
         <p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>
       </div>
-      <div class="icon-box"><i class="fas fa-graduation-cap"></i></div>
+      <div class="icon-box">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
     </div>
 
     <!-- SEMESTER CARDS -->
@@ -1246,6 +1589,7 @@ body {
         </div>
         <div class="sem-card-btn">ACCESS MATERIAL <i class="fas fa-arrow-right"></i></div>
       </div>
+
       <div class="sem-card-dark" onclick="navigateTo('sem2')">
         <div class="sem-card-icon"><i class="fas fa-book-open"></i></div>
         <div class="sem-card-content">
@@ -1261,21 +1605,81 @@ body {
       <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
     </div>
 
-    <!-- EXPERT FACULTY SLIDER -->
+   <!-- EXPERT FACULTY SLIDER (AUTO RIGHT-TO-LEFT) -->
     <div class="section-title">Expert <span>Faculty</span></div>
     <div class="faculty-slider-wrapper">
       <div class="scroll-container faculty-scroll" id="facultySlider">
+        
+        <!-- Faculty 1 -->
         <div class="faculty-card">
-          <div class="faculty-arch-bg"><img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png" alt="Anubhav Gangwar"></div>
-          <div class="faculty-info"><h4>Anubhav Gangwar</h4><span class="faculty-sub">Founder / CEO</span><div class="exp-badge">4+ Years Exp</div></div>
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png" alt="Satyajeet Sahu Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Anubhav Gangwar</h4>
+            <span class="faculty-sub">Founder / CEO</span>
+            <div class="exp-badge">4+ Years Exp</div>
+          </div>
         </div>
+
+        <!-- Faculty 2 -->
         <div class="faculty-card">
-          <div class="faculty-arch-bg"><img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png" alt="Mukesh Singh"></div>
-          <div class="faculty-info"><h4>Mukesh Singh</h4><span class="faculty-sub">Co-founder / News Expert</span><div class="exp-badge">4+ Years Exp</div></div>
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Mukesh Singh</h4>
+            <span class="faculty-sub">Co-founder / News Expert</span>
+            <div class="exp-badge">4+ Years Exp</div>
+          </div>
         </div>
+
+        <!-- Faculty 3 -->
         <div class="faculty-card">
-          <div class="faculty-arch-bg"><img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png" alt="Rambohd Yadav"></div>
-          <div class="faculty-info"><h4>Rambohd Yadav</h4><span class="faculty-sub">Content Admin</span><div class="exp-badge">3+ Years Exp</div></div>
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Rambohd Yadav</h4>
+            <span class="faculty-sub">Content Admin</span>
+            <div class="exp-badge">3+ Years Exp</div>
+          </div>
+        </div>
+        
+
+        
+        <!-- Duplicate items to create a seamless infinite loop effect -->
+          <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png" alt="Satyajeet Sahu Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Anubhav Gangwar</h4>
+            <span class="faculty-sub">Founder / CEO</span>
+            <div class="exp-badge">3+ Years Exp</div>
+          </div>
+          </div>
+          
+         <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Mukesh Singh</h4>
+            <span class="faculty-sub">Co-founder</span>
+            <div class="exp-badge">3+ Years Exp</div>
+          </div>
+          </div>
+
+        <div class="faculty-card">
+          <div class="faculty-arch-bg">
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png" alt="Krishna Yadav Sir">
+          </div>
+          <div class="faculty-info">
+            <h4>Rambohd Yadav</h4>
+            <span class="faculty-sub">Content Admin</span>
+            <div class="exp-badge">3+ Years Exp</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1283,16 +1687,24 @@ body {
     <!-- FOOTER SECTION -->
     <footer class="app-footer">
       <div class="footer-social-icons">
-        <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="footer-icon-btn"><i class="fab fa-whatsapp" style="color: #25D366;"></i></a>
-        <a href="https://t.me/diploma_engineers7" target="_blank" class="footer-icon-btn"><i class="fab fa-telegram" style="color: #229ED9;"></i></a>
-        <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="footer-icon-btn"><i class="fab fa-youtube" style="color: #FF0000;"></i></a>
+        <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="footer-icon-btn">
+          <i class="fab fa-whatsapp" style="color: #25D366;"></i>
+        </a>
+        <a href="https://t.me/diploma_engineers7" target="_blank" class="footer-icon-btn">
+          <i class="fab fa-telegram" style="color: #229ED9;"></i>
+        </a>
+        <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="footer-icon-btn">
+          <i class="fab fa-youtube" style="color: #FF0000;"></i>
+        </a>
       </div>
+
       <div class="footer-links">
-        <a href="#" onclick="alert('Privacy Policy coming soon!')">Privacy Policy</a>
-        <a href="#" onclick="alert('Disclaimer coming soon!')">Disclaimer</a>
-        <a href="#" onclick="alert('Refund Policy coming soon!')">Refund Policy</a>
-        <a href="#" onclick="alert('Terms & Conditions coming soon!')">Terms & Conditions</a>
+        <a href="privacypolicy.html" onclick="alert('Privacy Policy coming soon!')">Privacy Policy</a>
+        <a href="disclaimer.html" onclick="alert('Disclaimer coming soon!')">Disclaimer</a>
+        <a href="refundpolicy" onclick="alert('Refund Policy coming soon!')">Refund Policy</a>
+        <a href="tearm&coditions" onclick="alert('Terms & Conditions coming soon!')">Terms & Conditions</a>
       </div>
+
       <p class="footer-copyright">&copy; 2026 Diploma Engineers. All Rights Reserved.</p>
     </footer>
   </div>
@@ -1301,18 +1713,25 @@ body {
   <div id="leaderboardPage" class="page">
     <div class="leaderboard-container">
       <div class="page-header">
-        <div class="header-icon" style="background:#fffeb3; color:#d47a00;"><i class="fas fa-trophy"></i></div>
+        <div class="header-icon" style="background:#fffeb3; color:#d47a00;">
+          <i class="fas fa-trophy"></i>
+        </div>
         <div>
           <h1>Coin Leaderboard</h1>
           <p style="font-size: 12px; color: var(--muted-text); margin:0;">Top engineers active on platform</p>
         </div>
       </div>
+
       <div id="leaderboardList">
-        <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading Leaderboard...</p></div>
+        <div class="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading Leaderboard...</p>
+        </div>
       </div>
     </div>
   </div>
 
+  
   <!-- BRANCH PAGE LIST -->
   <div id="notesPage" class="page">
     <div class="section-title">Engineering Branches</div>
@@ -1355,24 +1774,252 @@ body {
   <div id="coursePage" class="page">
     <div class="section-title">Explore Free <span>Batches</span></div>
     <p style="font-size: 13px; color: var(--muted-text); margin-bottom: 14px;">High-quality structured programs designed for academic excellence</p>
+
     <div class="course-grid">
+
+      <!-- Year 1 Course -->
       <div class="course-card">
         <div class="card-header-banner purple">
           <span class="free-badge">FREE</span>
-          <div class="header-title-box"><i class="fa-solid fa-shapes"></i><h2>1st Year Course</h2></div>
+          <div class="header-title-box">
+            <i class="fa-solid fa-shapes"></i>
+            <h2>1st Year Course</h2>
+          </div>
           <p>For All Branches (Common Foundation)</p>
         </div>
         <div class="course-body">
-          <div class="rating-bar"><i class="fa-solid fa-star"></i><span>4.9</span><span class="reviews">(1,240 Reviews)</span></div>
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(1,240 Reviews)</span>
+          </div>
           <ul class="feature-list">
             <li><i class="fa-solid fa-circle-check"></i> Maths, Physics, Chemistry & CS</li>
             <li><i class="fa-solid fa-circle-check"></i> Chapter-wise HD Recorded Lectures</li>
             <li><i class="fa-solid fa-circle-check"></i> Handwritten Printable PDF Notes</li>
           </ul>
-          <button type="button" onclick="navigateTo('year-1-course')" class="action-btn"><i class="fa-solid fa-gift"></i> Access Course</button>
+          <button type="button" onclick="navigateTo('year-1-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
         </div>
       </div>
-      <!-- Add other course cards similarly -->
+
+      <!-- Civil Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner green">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-hard-hat"></i>
+            <h2>Civil Engineering Year 2</h2>
+          </div>
+          <p>Core Subjects + Practical Concepts</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(890 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> SOM, Surveying, Building Materials</li>
+            <li><i class="fa-solid fa-circle-check"></i> 100+ Video Lectures & Diagrams</li>
+            <li><i class="fa-solid fa-circle-check"></i> Quick Revision Formula Sheets</li>
+          </ul>
+          <button type="button" onclick="navigateTo('civil-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Mechanical Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner orange">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-gears"></i>
+            <h2>Mechanical Engineering Year 2</h2>
+          </div>
+          <p>Thermal, Machine & Manufacturing</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(970 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Thermodynamics, SOM & Workshop</li>
+            <li><i class="fa-solid fa-circle-check"></i> Step-by-Step Numerical Solutions</li>
+            <li><i class="fa-solid fa-circle-check"></i> Machine Drawing Notes</li>
+          </ul>
+          <button type="button" onclick="navigateTo('mechanical-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Computer Science Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner blue">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-laptop-code"></i>
+            <h2>Computer Science Year 2</h2>
+          </div>
+          <p>Data Structures, C++, & DBMS</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(1,450 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> DS, C++, Operating Systems</li>
+            <li><i class="fa-solid fa-circle-check"></i> Practical Live Code Walkthroughs</li>
+            <li><i class="fa-solid fa-circle-check"></i> Complete Exam Notes</li>
+          </ul>
+          <button type="button" onclick="navigateTo('cs-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Information Technology Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner teal">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-network-wired"></i>
+            <h2>Information Technology Year 2</h2>
+          </div>
+          <p>Web Tech, Networking & Software</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(720 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> HTML, CSS, JavaScript & Networking</li>
+            <li><i class="fa-solid fa-circle-check"></i> Practical Laboratory Guides</li>
+            <li><i class="fa-solid fa-circle-check"></i> Important Board Questions</li>
+          </ul>
+          <button type="button" onclick="navigateTo('it-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Electrical Engineering Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner red">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-bolt"></i>
+            <h2>Electrical Engineering Year 2</h2>
+          </div>
+          <p>Machines, Circuits & Measurement</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(910 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Electrical Machines-I & Measurements</li>
+            <li><i class="fa-solid fa-circle-check"></i> Circuit Theory & Numerical Guide</li>
+            <li><i class="fa-solid fa-circle-check"></i> Diagram PDF Handouts</li>
+          </ul>
+          <button type="button" onclick="navigateTo('electrical-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Electronics Engineering Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner indigo">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-microchip"></i>
+            <h2>Electronics Engineering Year 2</h2>
+          </div>
+          <p>Digital Electronics, Devices & Circuits</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.8</span>
+            <span class="reviews">(680 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Electronic Devices & Digital Systems</li>
+            <li><i class="fa-solid fa-circle-check"></i> Circuit Simulation Notes</li>
+            <li><i class="fa-solid fa-circle-check"></i> Previous Year Solutions</li>
+          </ul>
+          <button type="button" onclick="navigateTo('electronics-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Agriculture Engineering Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner pink">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-seedling"></i>
+            <h2>Agriculture Engineering Year 2</h2>
+          </div>
+          <p>Farm Machinery & Irrigation</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.7</span>
+            <span class="reviews">(410 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Farm Power, Machinery & Surveying</li>
+            <li><i class="fa-solid fa-circle-check"></i> Soil & Water Conservation Engineering</li>
+            <li><i class="fa-solid fa-circle-check"></i> Exam Notes & Manuals</li>
+          </ul>
+          <button type="button" onclick="navigateTo('agriculture-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
+      <!-- Chemical Engineering Year 2 Course -->
+      <div class="course-card">
+        <div class="card-header-banner cyan">
+          <span class="free-badge">FREE</span>
+          <div class="header-title-box">
+            <i class="fa-solid fa-flask"></i>
+            <h2>Chemical Engineering Year 2</h2>
+          </div>
+          <p>Fluid Flow, Thermodynamics & Processes</p>
+        </div>
+        <div class="course-body">
+          <div class="rating-bar">
+            <i class="fa-solid fa-star"></i>
+            <span>4.9</span>
+            <span class="reviews">(530 Reviews)</span>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fa-solid fa-circle-check"></i> Chemical Process Calculations & Fluid Flow</li>
+            <li><i class="fa-solid fa-circle-check"></i> Heat Transfer & Thermodynamics</li>
+            <li><i class="fa-solid fa-circle-check"></i> Comprehensive Notes & Formulas</li>
+          </ul>
+          <button type="button" onclick="navigateTo('chemical-year-2-course')" class="action-btn">
+            <i class="fa-solid fa-gift"></i> Access Course
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1380,11 +2027,17 @@ body {
   <div id="updatePage" class="page">
     <div class="news-page">
       <div class="page-header">
-        <div class="header-icon"><i class="fa-regular fa-bell"></i></div>
+        <div class="header-icon">
+          <i class="fa-regular fa-bell"></i>
+        </div>
         <h1>Notifications & News</h1>
       </div>
+
       <div id="newsList">
-        <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading Notifications...</p></div>
+        <div class="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading Notifications...</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1395,7 +2048,17 @@ body {
     <div class="notes-grid">
       <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf" target="_blank" class="book-card">
         <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png" alt="Physics">
-        <div class="book-card-content"><h3>Applied Physics 2nd</h3><p>Diploma Engineering Physics PDF</p></div>
+        <div class="book-card-content">
+          <h3>Applied Physics 2nd</h3>
+          <p>Diploma Engineering Physics PDF</p>
+        </div>
+      </a>
+      <a href="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf" target="_blank" class="book-card">
+        <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png" alt="Maths">
+        <div class="book-card-content">
+          <h3>Applied Mathematics 2nd</h3>
+          <p>Diploma Engineering Maths PDF</p>
+        </div>
       </a>
     </div>
   </div>
@@ -1404,10 +2067,15 @@ body {
   <div id="profilePage" class="page">
     <div class="profile-box">
       <div class="profile-avatar-wrapper">
-        <div class="profile-avatar" id="profileAvatarBox"><i class="fas fa-user"></i></div>
-        <label for="profileImageInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;"><i class="fas fa-camera"></i></label>
+        <div class="profile-avatar" id="profileAvatarBox">
+          <i class="fas fa-user"></i>
+        </div>
+        <label for="profileImageInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;">
+          <i class="fas fa-camera"></i>
+        </label>
         <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
       </div>
+      
       <h3 id="profileName" style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">Engineer</h3>
       <p id="profileBranch" style="font-size: 12px; color: var(--muted-text); margin: 0;">Diploma Member</p>
 
@@ -1417,6 +2085,10 @@ body {
         <div class="profile-row"><span class="label">Email</span><span class="value" id="profileEmail">-</span></div>
         <div class="profile-row"><span class="label">Mobile Number</span><span class="value" id="profileMobile">-</span></div>
         <div class="profile-row"><span class="label">Engineering Branch</span><span class="value" id="profileBranchName">-</span></div>
+        <div class="profile-row"><span class="label">College Name</span><span class="value" id="profileCollege">-</span></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><span class="value" id="profileEnrollment">-</span></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><span class="value" id="profileSemester">-</span></div>
+        <div class="profile-row"><span class="label">Address</span><span class="value" id="profileAddress">-</span></div>
       </div>
 
       <div class="profile-details" id="profileEditView" style="display:none;">
@@ -1427,8 +2099,16 @@ body {
             <option value="Civil Engineering">Civil Engineering</option>
             <option value="Computer Science Engineering">Computer Science Engineering</option>
             <option value="Electrical Engineering">Electrical Engineering</option>
+            <option value="Electronics Engineering">Electronics Engineering</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Agriculture Engineering">Agriculture Engineering</option>
           </select>
         </div>
+        <div class="profile-row"><span class="label">College Name</span><input type="text" id="editCollege" placeholder="Enter College Name"></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><input type="text" id="editEnrollment" placeholder="Enter Enrollment Number"></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><input type="text" id="editSemester" placeholder="e.g. 2nd Semester"></div>
+        <div class="profile-row"><span class="label">Address</span><input type="text" id="editAddress" placeholder="Enter Address"></div>
       </div>
       
       <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
@@ -1436,14 +2116,148 @@ body {
     </div>
   </div>
 
+  <!-- COMMUNITY PAGE -->
+  <div id="communityPage" class="page">
+    <div class="section-title">Branch Groups</div>
+    <div class="grid-2">
+      <a href="https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w" target="_blank" class="card-box">
+        <i class="fab fa-whatsapp"></i>
+        <p>WhatsApp Channel</p>
+      </a>
+      <a href="https://t.me/diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-telegram"></i>
+        <p>Telegram Channel</p>
+      </a>
+      <a href="https://youtube.com/@diploma_engineers7" target="_blank" class="card-box">
+        <i class="fab fa-youtube"></i>
+        <p>YouTube Channel</p>
+      </a>
+      <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="card-box">
+        <i class="fas fa-laptop-code"></i>
+        <p>CSE / IT Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/Ce9aNCFeRQP6r2ttYJUo3Z" target="_blank" class="card-box">
+        <i class="fas fa-bolt"></i>
+        <p>Electrical Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/BfOSLGkEevr8lrY6vesjtl" target="_blank" class="card-box">
+        <i class="fas fa-microchip"></i>
+        <p>Electronics Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/L5SSM7kbHHA9Jhhl6NeRbs" target="_blank" class="card-box">
+        <i class="fas fa-building"></i>
+        <p>Civil Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl" target="_blank" class="card-box">
+        <i class="fas fa-cogs"></i>
+        <p>Mechanical Group</p>
+      </a>
+      <a href="https://chat.whatsapp.com/JQaURTpcwAU10Q0B5fmAyU" target="_blank" class="card-box">
+        <i class="fas fa-seedling"></i>
+        <p>Agriculture Group</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- JOBS PAGE -->
+  <div id="jobPage" class="page">
+    <div class="section-title">Job Openings</div>
+    <div class="grid-2">
+      <div class="card-box" onclick="navigateTo('privatejob')"><i class="fas fa-building"></i><p>Private Jobs</p></div>
+      <div class="card-box" onclick="navigateTo('gov-job')"><i class="fas fa-briefcase"></i><p>Government Jobs</p></div>
+      <div class="card-box" onclick="navigateTo('apprenticeship')"><i class="fas fa-graduation-cap"></i><p>Apprenticeship</p></div>
+      <a href="https://internshala.com/" target="_blank" class="card-box"><i class="fas fa-laptop-code"></i><p>Internships</p></a>
+    </div>
+  </div>
+
+  <!-- PRIVATE JOBS -->
+  <div id="privatejob" class="page">
+    <div class="section-title">Private Jobs</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-building"></i><p><b>Construction</b><br><small>Civil/Mech • ₹15k-60k</small></p></div>
+      <div class="card-box"><i class="fas fa-industry"></i><p><b>Manufacturing</b><br><small>Mech/Elec • ₹12k-50k</small></p></div>
+    </div>
+  </div>
+
+  <!-- GOVT JOBS -->
+  <div id="gov-job" class="page">
+    <div class="section-title">Government Jobs</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-landmark"></i><p><b>SSC JE</b><br><small>Civil, Mech, Elec</small></p></div>
+      <div class="card-box"><i class="fas fa-train"></i><p><b>RRB JE</b><br><small>Railways Core Branches</small></p></div>
+    </div>
+  </div>
+
+  <!-- APPRENTICESHIP -->
+  <div id="apprenticeship" class="page">
+    <div class="section-title">Apprenticeships</div>
+    <div class="grid-2">
+      <div class="card-box"><i class="fas fa-train"></i><p><b>Railway</b><br><small>Stipend: ₹8k - ₹15k</small></p></div>
+      <div class="card-box"><i class="fas fa-industry"></i><p><b>PSU Sector</b><br><small>Stipend: ₹10k - ₹18k</small></p></div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK PAGE -->
+  <div id="feedbackPage" class="page">
+    <div class="premium-buy-card">
+      <h2 style="font-size:20px; font-weight:800;">
+        <i class="fas fa-comment-dots"></i> Send Feedback
+      </h2>
+      <p style="font-size:13px; color:var(--muted-text); margin-top:6px; line-height:1.6;">
+        Help us improve Diploma Engineers by sharing your valuable feedback.
+      </p>
+
+      <form action="https://formsubmit.co/astar22072006@gmail.com" method="POST" style="margin-top:16px;">
+        <input type="hidden" name="_subject" value="New Feedback - Diploma Engineers">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" value="https://diplomaengineers.vercel.app/?feedback=success#feedbackPage">
+
+        <input type="hidden" id="feedbackName" name="Name">
+        <input type="hidden" id="feedbackEmail" name="Email">
+        <input type="hidden" id="feedbackBranch" name="Branch">
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <select name="Rating" required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; font-family:inherit; font-size:13px; background:white;">
+            <option value="">Select Rating</option>
+            <option value="5 - Excellent">★★★★★ Excellent</option>
+            <option value="4 - Very Good">★★★★ Very Good</option>
+            <option value="3 - Good">★★★ Good</option>
+            <option value="2 - Need Improvement">★★ Need Improvement</option>
+            <option value="1 - Poor">★ Poor</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <textarea name="Feedback" rows="5" placeholder="Write your feedback..." required style="width:100%; padding:12px 14px; border:1px solid #dbe4f0; border-radius:10px; outline:none; resize:vertical; font-family:inherit; font-size:13px;"></textarea>
+        </div>
+
+        <button type="submit" class="btn-main" style="width:100%;">
+          <i class="fas fa-paper-plane"></i> Send Feedback
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav">
-    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')"><i class="fas fa-home"></i>Home</button>
-    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')"><i class="fas fa-code-branch"></i>Branch</button>
-    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')"><i class="fas fa-book"></i>Books</button>
-    <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')"><i class="fas fa-graduation-cap"></i>Courses</button>
-    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')"><i class="fas fa-comment-dots"></i>Feedback</button>
+    <button class="nav-link-btn active" id="tab-homePage" onclick="navigateTo('homePage')">
+      <i class="fas fa-home"></i>Home
+    </button>
+    <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
+      <i class="fas fa-code-branch"></i>Branch
+    </button>
+    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
+      <i class="fas fa-book"></i>Books
+    </button>
+    <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')">
+      <i class="fas fa-graduation-cap"></i>Courses
+    </button>
+    <button class="nav-link-btn" id="tab-feedbackPage" onclick="navigateTo('feedbackPage')">
+      <i class="fas fa-comment-dots"></i>Feedback
+    </button>
   </div>
+
 </div>
 
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
@@ -1452,6 +2266,7 @@ body {
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, update, child, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+  /* LOADER TIMEOUT & ANIMATION */
   document.addEventListener("DOMContentLoaded", function(){
     const loader = document.getElementById("page-loader");
     const bar = document.getElementById("progress-bar");
@@ -1461,23 +2276,37 @@ body {
     document.body.style.overflow = "hidden";
 
     const timer = setInterval(function(){
-      progress += Math.floor(Math.random() * 8) + 5;
+      progress += Math.floor(Math.random() * 5) + 2;
+
       if(progress >= 100){
         progress = 100;
         clearInterval(timer);
+
         if (bar) bar.style.width = progress + "%";
         if (percent) percent.textContent = progress + "%";
+
         setTimeout(function(){
           if (loader) loader.classList.add("hide");
           document.body.style.overflow = "";
-        }, 300);
+        }, 450);
+
         return;
       }
+
       if (bar) bar.style.width = progress + "%";
       if (percent) percent.textContent = progress + "%";
-    }, 30);
+    }, 45);
   });
 
+  setTimeout(function(){
+    const loader = document.getElementById("page-loader");
+    if(loader && !loader.classList.contains("hide")){
+      loader.classList.add("hide");
+      document.body.style.overflow = "";
+    }
+  }, 5000);
+
+  /* FIREBASE CONFIGS */
   const firebaseConfig = {
     apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
     authDomain: "diploma-app-9a378.firebaseapp.com",
@@ -1488,126 +2317,183 @@ body {
     appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
   };
 
+  const newsFirebaseConfig = {
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+  };
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
+
+  const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
+  const newsDb = getDatabase(newsApp);
 
   let isRegister = false;
   let isEditingProfile = false;
   let currentUserData = {};
   let usageTimerInterval = null;
   let secondsSpent = 60;
-  const defaultPage = "homePage";
-  
-  const externalBranches = [
-    'civil', 'computer', 'electrical', 'electronics', 'mechanical', 'it', 'agricultural', 'sem1', 'sem2', 'admitPage', 'resultPage', 
-    'year-1-course', 'civil-year-2-course', 'mechanical-year-2-course', 'it-year-2-course', 'cs-year-2-course', 'electrical-year-2-course', 'electronics-year-2-course', 'agriculture-year-2-course', 'chemical-year-2-course'
-  ];
 
-  window.addEventListener('DOMContentLoaded', () => {
-    const slider = document.getElementById('facultySlider');
-    if (!slider) return;
-    let scrollSpeed = 1;
-    let isHovered = false;
-    slider.addEventListener('mouseenter', () => isHovered = true);
-    slider.addEventListener('mouseleave', () => isHovered = false);
-    setInterval(() => {
-      if (!isHovered) {
-        slider.scrollLeft += scrollSpeed;
-        if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth)) {
-          slider.scrollLeft = 0;
-        }
-      }
-    }, 30);
+  const defaultPage = "homePage";
+
+  /*
+   * EXTERNAL FILE MAP
+   * Each branch/course is loaded inside an isolated iframe.
+   * This prevents CSS/JS/Firebase from a child HTML file from
+   * breaking or slowing the main app. Keep these files in the
+   * same folder as this app.html (or change the paths below).
+   */
+  const EXTERNAL_FILE_MAP = Object.freeze({
+    civil: "civil.html",
+    computer: "computer.html",
+    electrical: "electrical.html",
+    electronics: "electronics.html",
+    mechanical: "mechanical.html",
+    it: "it.html",
+    agricultural: "agricultural.html",
+    sem1: "1st-sem.html",
+    sem2: "2nd-sem.html",
+    admitPage: "admitcard.html",
+    resultPage: "result.html",
+    "year-1-course": "year-1-course.html",
+    "civil-year-2-course": "civil-year-2-course.html",
+    "mechanical-year-2-course": "mechanical-year-2-course.html",
+    "it-year-2-course": "it-year-2-course.html",
+    "cs-year-2-course": "cs-year-2-course.html",
+    "electrical-year-2-course": "electrical-year-2-course.html",
+    "electronics-year-2-course": "electronics-year-2-course.html",
+    "agriculture-year-2-course": "agriculture-year-2-course.html",
+    "chemical-year-2-course": "chemical-year-2-course.html"
   });
 
+  const externalBranches = Object.keys(EXTERNAL_FILE_MAP);
+  const externalLoadTimers = new Map();
+
+// Optional JS for continuous Auto-Scroll Right-to-Left effect
+window.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('facultySlider');
+  if (!slider) return;
+
+  let scrollSpeed = 1;
+  let isHovered = false;
+  slider.addEventListener('mouseenter', () => isHovered = true);
+  slider.addEventListener('mouseleave', () => isHovered = false);
+  slider.addEventListener('touchstart', () => isHovered = true, {passive:true});
+  slider.addEventListener('touchend', () => isHovered = false, {passive:true});
+
+  setInterval(() => {
+    if (!isHovered && slider.scrollWidth > slider.clientWidth) {
+      slider.scrollLeft += scrollSpeed;
+      if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth - 1)) slider.scrollLeft = 0;
+    }
+  }, 30);
+});
+
+  /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = function(pageId, pushToHistory = true) {
-    if (externalBranches.includes(pageId)) {
+    const target = document.getElementById(pageId);
+    if (!target && !EXTERNAL_FILE_MAP[pageId]) {
+      console.warn("Unknown page:", pageId);
+      pageId = defaultPage;
+    }
+
+    if (EXTERNAL_FILE_MAP[pageId]) {
       loadPortalFromFile(pageId);
     }
-    if (pageId === 'leaderboardPage') {
-      loadLeaderboardData();
-    }
+
+    if (pageId === 'leaderboardPage') loadLeaderboardData();
     renderPageUI(pageId);
+
     if (pushToHistory) {
-      history.pushState({ pageId: pageId }, "", "#" + pageId);
+      history.pushState({ pageId }, "", "#" + pageId);
     }
+    window.scrollTo({top:0, left:0, behavior:'instant'});
   };
 
   window.goBack = function() {
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      navigateTo("homePage", false);
+      navigateTo(defaultPage, false);
     }
   };
 
   window.addEventListener("popstate", (e) => {
     const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
-    if (externalBranches.includes(pageId)) {
-      loadPortalFromFile(pageId);
-    }
+    if (EXTERNAL_FILE_MAP[pageId]) loadPortalFromFile(pageId);
+    if (pageId === 'leaderboardPage') loadLeaderboardData();
     renderPageUI(pageId);
+    window.scrollTo({top:0, left:0, behavior:'instant'});
   });
 
   function renderPageUI(targetPage) {
     const pages = document.querySelectorAll(".page");
-    pages.forEach(p => p.classList.remove("active-page"));
+    pages.forEach(p => {
+      p.classList.remove("active-page");
+      p.classList.remove("external-page");
+    });
 
-    const activeEl = document.getElementById(targetPage);
-    if (activeEl) {
-      activeEl.classList.add("active-page");
-    } else {
-      document.getElementById(defaultPage).classList.add("active-page");
+    const activeEl = document.getElementById(targetPage) || document.getElementById(defaultPage);
+    activeEl.classList.add("active-page");
+
+    if (EXTERNAL_FILE_MAP[targetPage]) {
+      activeEl.classList.add("external-page");
     }
 
     const backBtn = document.getElementById("headerBackBtn");
-    if (backBtn) {
-      backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
-    }
+    if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
 
-    window.scrollTo(0, 0);
+    document.querySelectorAll('.bottom-nav .nav-link-btn').forEach(btn => btn.classList.remove('active'));
+    const tab = document.getElementById('tab-' + targetPage);
+    if (tab) tab.classList.add('active');
   }
 
-  // Robust Lazy Loader to prevent lagging or page fatching errors
-  async function loadPortalFromFile(pageId) {
-    const container = document.getElementById(pageId);
-    if (!container || container.innerHTML.trim() !== "") return; // Already loaded or missing
-    
-    container.innerHTML = `<div class="loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading Course/Branch Material...</p></div>`;
-    
-    try {
-      // Load branch/course data dynamically or populate standard template placeholders
-      setTimeout(() => {
-        container.innerHTML = `
-          <div class="section-title"><span>${pageId.toUpperCase()}</span> Materials</div>
-          <div class="notice">
-            <h5>Available Resources 📚</h5>
-            <p>Syllabus, previous year question papers, and handwritten notes for ${pageId} are now fully updated.</p>
-          </div>
-        `;
-      }, 300);
-    } catch (err) {
-      container.innerHTML = `<div class="error-box"><p>Failed to load content. Please check your network connection.</p></div>`;
-    }
-  }
+  window.toggleForm = function() {
+    isRegister = !isRegister;
+    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
+    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
+    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
+    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
+  };
 
   window.submitAuthForm = async function() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
-    if (!email || !password) { alert("Please enter Email and Password"); return; }
+    
+    if (!email || !password) {
+      alert("Please enter Email and Password");
+      return;
+    }
+
     try {
       if (isRegister) {
         let name = document.getElementById("name").value.trim();
         let branch = document.getElementById("branch").value;
         let mobile = document.getElementById("mobile").value.trim();
+        
+        if (!name || !mobile) {
+          alert("Please fill all details");
+          return;
+        }
+
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { name, email, branch, mobile, coins: 0 });
+        await set(ref(db, "users/" + cred.user.uid), { 
+          name, email, branch, mobile, coins: 0,
+          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
+        });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
-    } catch (e) { alert("Auth Error: " + e.message); }
+    } catch (e) {
+      alert("Auth Error: " + e.message);
+    }
   };
 
   window.googleLogin = async function() {
@@ -1619,10 +2505,13 @@ body {
           name: result.user.displayName || "Google User",
           email: result.user.email,
           branch: "Civil Engineering",
-          coins: 0
+          mobile: "N/A", coins: 0,
+          college: "", enrollment: "", address: "", semester: "", profilePic: ""
         });
       }
-    } catch (e) { alert("Google Login Error: " + e.message); }
+    } catch (e) {
+      alert("Google Login Error: " + e.message);
+    }
   };
 
   window.logoutFirebase = function() {
@@ -1639,24 +2528,499 @@ body {
           updateProfileUI(currentUserData);
         }
       });
+
       document.getElementById("authPage").style.display = "none";
       document.getElementById("app").style.display = "block";
+
       const initialHash = window.location.hash.substring(1);
-      navigateTo(initialHash || defaultPage, false);
+      const targetPage = initialHash || defaultPage;
+      if (externalBranches.includes(targetPage)) {
+        loadPortalFromFile(targetPage);
+      }
+      if (targetPage === 'leaderboardPage') {
+        loadLeaderboardData();
+      }
+      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+      renderPageUI(targetPage);
+      loadNewsData();
+
+      startCoinUsageTracker(user.uid);
     } else {
+      if (usageTimerInterval) clearInterval(usageTimerInterval);
       document.getElementById("app").style.display = "none";
       document.getElementById("authPage").style.display = "flex";
     }
   });
 
+  function startCoinUsageTracker(uid) {
+    if (usageTimerInterval) clearInterval(usageTimerInterval);
+
+    secondsSpent = 60;
+    const timerDisplay = document.getElementById("timerSecs");
+
+    usageTimerInterval = setInterval(() => {
+      secondsSpent--;
+      if (timerDisplay) timerDisplay.innerText = secondsSpent + "s";
+
+      if (secondsSpent <= 0) {
+        secondsSpent = 60;
+        incrementUserCoins(uid);
+      }
+    }, 1000);
+  }
+
+  async function incrementUserCoins(uid) {
+    const coinRef = ref(db, `users/${uid}/coins`);
+    try {
+      await runTransaction(coinRef, (currentCoins) => {
+        return (currentCoins || 0) + 1;
+      });
+    } catch (e) {
+      console.error("Coin Update Failed: ", e);
+    }
+  }
+
   function updateProfileUI(data) {
     const coins = data.coins || 0;
     document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
     document.getElementById("profileName").innerText = data.name || "Engineer";
+    document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
+    
     document.getElementById("profileCoins").innerText = coins;
     document.getElementById("navCoinCount").innerText = `${coins} Coins`;
     document.getElementById("bannerCoinCount").innerText = `${coins} Coins`;
+
+    document.getElementById("profileFullName").innerText = data.name || "-";
+    document.getElementById("profileEmail").innerText = data.email || "-";
+    document.getElementById("profileMobile").innerText = data.mobile || "-";
+    document.getElementById("profileBranchName").innerText = data.branch || "-";
+    document.getElementById("profileCollege").innerText = data.college || "-";
+    document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
+    document.getElementById("profileSemester").innerText = data.semester || "-";
+    document.getElementById("profileAddress").innerText = data.address || "-";
+
+    const avatarBox = document.getElementById("profileAvatarBox");
+    const navProfileIcon = document.getElementById("navProfileIcon");
+
+    if (data.profilePic) {
+      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
+      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${data.profilePic}" alt="User">`;
+    } else {
+      avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
+      if (navProfileIcon) navProfileIcon.innerHTML = `<i class="fas fa-user-circle"></i>`;
+    }
+
+    const nameField = document.getElementById("feedbackName");
+    const emailField = document.getElementById("feedbackEmail");
+    const branchField = document.getElementById("feedbackBranch");
+
+    if (nameField) nameField.value = data.name || "";
+    if (emailField) emailField.value = data.email || "";
+    if (branchField) branchField.value = data.branch || "Diploma Member";
   }
+
+  function loadLeaderboardData() {
+    const listContainer = document.getElementById("leaderboardList");
+    if (!listContainer) return;
+
+    const usersRef = ref(db, "users");
+    onValue(usersRef, (snapshot) => {
+      listContainer.innerHTML = "";
+      if (!snapshot.exists()) {
+        listContainer.innerHTML = `<div class="empty"><p>No users found.</p></div>`;
+        return;
+      }
+
+      const users = [];
+      snapshot.forEach(child => {
+        users.push({ id: child.key, ...child.val() });
+      });
+
+      users.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+
+      users.forEach((u, index) => {
+        const rank = index + 1;
+        let rankClass = "";
+        if (rank === 1) rankClass = "rank-1";
+        else if (rank === 2) rankClass = "rank-2";
+        else if (rank === 3) rankClass = "rank-3";
+
+        const avatarHTML = u.profilePic ? 
+          `<img src="${escapeHTML(u.profilePic)}" alt="${escapeHTML(u.name)}">` : 
+          `<i class="fas fa-user"></i>`;
+
+        const card = document.createElement("div");
+        card.className = "leaderboard-card";
+        card.innerHTML = `
+          <div class="rank-badge ${rankClass}">#${rank}</div>
+          <div class="leader-user-info">
+            <div class="leader-avatar">${avatarHTML}</div>
+            <div class="leader-name-box">
+              <h4>${escapeHTML(u.name || "Engineer")}</h4>
+              <p>${escapeHTML(u.branch || "Diploma Member")}</p>
+            </div>
+          </div>
+          <div class="leader-coin-count">
+            <i class="fas fa-coins"></i> ${u.coins || 0}
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    });
+  }
+
+  window.toggleProfileEditMode = async function() {
+    const displayView = document.getElementById("profileDisplayView");
+    const editView = document.getElementById("profileEditView");
+    const toggleBtn = document.getElementById("profileToggleBtn");
+    const uploadBtn = document.getElementById("uploadIconBtn");
+
+    isEditingProfile = !isEditingProfile;
+
+    if (isEditingProfile) {
+      document.getElementById("editName").value = currentUserData.name || "";
+      document.getElementById("editMobile").value = currentUserData.mobile || "";
+      document.getElementById("editBranch").value = currentUserData.branch || "Civil Engineering";
+      document.getElementById("editCollege").value = currentUserData.college || "";
+      document.getElementById("editEnrollment").value = currentUserData.enrollment || "";
+      document.getElementById("editSemester").value = currentUserData.semester || "";
+      document.getElementById("editAddress").value = currentUserData.address || "";
+
+      displayView.style.display = "none";
+      editView.style.display = "block";
+      uploadBtn.style.display = "flex";
+      toggleBtn.innerText = "Save Changes";
+      toggleBtn.style.background = "#16a34a";
+    } else {
+      const updatedData = {
+        name: document.getElementById("editName").value.trim(),
+        mobile: document.getElementById("editMobile").value.trim(),
+        branch: document.getElementById("editBranch").value,
+        college: document.getElementById("editCollege").value.trim(),
+        enrollment: document.getElementById("editEnrollment").value.trim(),
+        semester: document.getElementById("editSemester").value.trim(),
+        address: document.getElementById("editAddress").value.trim()
+      };
+
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await update(ref(db, "users/" + user.uid), updatedData);
+          currentUserData = { ...currentUserData, ...updatedData };
+          updateProfileUI(currentUserData);
+          alert("Profile updated successfully!");
+        } catch (e) {
+          alert("Error updating profile: " + e.message);
+        }
+      }
+
+      displayView.style.display = "block";
+      editView.style.display = "none";
+      uploadBtn.style.display = "none";
+      toggleBtn.innerText = "Edit Profile";
+      toggleBtn.style.background = "";
+    }
+  };
+
+  window.uploadProfileImage = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "news_upload");
+
+    const avatarBox = document.getElementById("profileAvatarBox");
+    avatarBox.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+
+    try {
+      const response = await fetch("https://api.cloudinary.com/v1_1/ub0qgzwa/auto/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      
+      if (data.secure_url) {
+        const imageUrl = data.secure_url;
+        const user = auth.currentUser;
+        if (user) {
+          await update(ref(db, "users/" + user.uid), { profilePic: imageUrl });
+          currentUserData.profilePic = imageUrl;
+          updateProfileUI(currentUserData);
+          alert("Profile picture uploaded successfully!");
+        }
+      } else {
+        throw new Error("Cloudinary upload failed");
+      }
+    } catch (err) {
+      alert("Image Upload Error: " + err.message);
+      updateProfileUI(currentUserData);
+    }
+  };
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function validURL(value) {
+    try {
+      const url = new URL(value);
+      return (url.protocol === "http:" || url.protocol === "https:");
+    } catch {
+      return false;
+    }
+  }
+
+  function loadNewsData() {
+    const newsList = document.getElementById("newsList");
+    if (!newsList) return;
+    const newsRef = ref(newsDb, "news");
+
+    onValue(newsRef, snapshot => {
+      newsList.innerHTML = "";
+
+      if (!snapshot.exists()) {
+        newsList.innerHTML = `
+          <div class="empty">
+            <i class="fa-regular fa-newspaper" style="font-size:32px;"></i>
+            <p>No news or updates available.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const newsArray = [];
+      snapshot.forEach(child => {
+        newsArray.push({
+          id: child.key,
+          data: child.val() || {}
+        });
+      });
+
+      newsArray.reverse();
+      newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
+    }, error => {
+      console.error(error);
+      newsList.innerHTML = `
+        <div class="error-box">
+          <p>Failed to load notifications. Please try again.</p>
+        </div>
+      `;
+    });
+  }
+
+  function createNewsCard(id, n, container) {
+    const title = n.title || "Untitled News";
+    const description = n.text || n.desc || n.description || "";
+    const category = n.cat || n.category || "NOTIFICATION";
+    const date = n.date || "Recent";
+    const image = n.thumb || n.image || n.thumbnail || "";
+    const externalLink = n.link || n.pdf || n.fileUrl || "";
+
+    const card = document.createElement("article");
+    card.className = "news-card";
+    card.id = `card-${id}`;
+
+    let actionTarget = externalLink && validURL(externalLink) ? 
+      `<a href="${escapeHTML(externalLink)}" target="_blank" class="action-btn">View News <i class="fa-solid fa-arrow-right"></i></a>` : 
+      `<button class="action-btn" onclick="toggleDetails('${id}')">Read More <i class="fa-solid fa-chevron-down"></i></button>`;
+
+    card.innerHTML = `
+      <span class="category">${escapeHTML(category)}</span>
+      
+      <h2 class="news-title">
+        <i class="fa-solid fa-square-check"></i>
+        ${escapeHTML(title)}
+      </h2>
+
+      <p class="news-description">${escapeHTML(description)}</p>
+
+      <div class="card-footer">
+        <div class="news-date">
+          <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
+        </div>
+        <div class="action-links">
+          <button class="action-btn" onclick="toggleDetails('${id}')">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+          ${actionTarget}
+        </div>
+      </div>
+
+      <div class="expandable-panel" id="panel-${id}">
+        ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
+        <div class="full-desc">${escapeHTML(description)}</div>
+        
+        <div class="share-grid">
+          <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </button>
+          <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </button>
+          <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  }
+
+  window.toggleDetails = function(id) {
+    const panel = document.getElementById(`panel-${id}`);
+    if (panel) {
+      panel.classList.toggle("active");
+    }
+  };
+
+  window.shareWhatsApp = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  window.shareTelegram = function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+  };
+
+  window.copyLink = async function(title, id) {
+    const url = window.location.href.split('#')[0] + '#card-' + id;
+    try {
+      await navigator.clipboard.writeText(`${title} - ${url}`);
+      alert("Link Copied!");
+    } catch (err) {
+      prompt("Copy Link:", url);
+    }
+  };
+
+  window.loadPortalFromFile = async function loadPortalFromFile(portalId, forceReload = false) {
+    const container = document.getElementById(portalId);
+    const fileName = EXTERNAL_FILE_MAP[portalId];
+    if (!container || !fileName) return;
+
+    // If already loaded, just show it.
+    if (container.dataset.loaded === "true" && container.querySelector('.external-frame')) return;
+
+    const safeId = 'external-' + portalId.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const existingFrame = container.querySelector('.external-frame');
+    if (existingFrame) existingFrame.remove();
+
+    container.classList.add('external-page');
+    container.innerHTML = `
+      <div class="external-frame-wrap">
+        <div class="external-loading" id="${safeId}-loading">
+          <div class="box">
+            <i class="fas fa-spinner fa-spin"></i>
+            <div style="font-weight:800;font-size:14px;">Loading ${escapeHTML(fileName)}...</div>
+            <div style="font-size:11px;margin-top:5px;">Please wait</div>
+          </div>
+        </div>
+        <div class="external-error" id="${safeId}-error">
+          <div class="box">
+            <i class="fas fa-triangle-exclamation" style="font-size:30px;color:#ef4444;margin-bottom:10px;"></i>
+            <h3>Page could not be loaded</h3>
+            <p>File <b>${escapeHTML(fileName)}</b> was not loaded. Make sure this HTML file is uploaded in the same folder as the main app file.</p>
+            <button class="external-retry" type="button" onclick="loadPortalFromFile('${escapeHTML(portalId)}', true)">Retry</button>
+          </div>
+        </div>
+        <iframe class="external-frame" id="${safeId}-frame" title="${escapeHTML(fileName)}" src="about:blank" loading="eager" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>`;
+
+    const frame = document.getElementById(safeId + '-frame');
+    const loading = document.getElementById(safeId + '-loading');
+    const errorBox = document.getElementById(safeId + '-error');
+    if (!frame) return;
+
+    const showError = () => {
+      if (loading) loading.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'flex';
+      container.dataset.loaded = 'false';
+    };
+
+    const timerKey = portalId;
+    if (externalLoadTimers.has(timerKey)) clearTimeout(externalLoadTimers.get(timerKey));
+    externalLoadTimers.set(timerKey, setTimeout(showError, 15000));
+
+    frame.addEventListener('load', () => {
+      if (externalLoadTimers.has(timerKey)) {
+        clearTimeout(externalLoadTimers.get(timerKey));
+        externalLoadTimers.delete(timerKey);
+      }
+
+      // Same-origin files allow us to detect a genuine server error and
+      // also remove the child's body margin when appropriate.
+      try {
+        const doc = frame.contentDocument;
+        const body = doc && doc.body;
+        const text = (body?.innerText || '').trim().toLowerCase();
+        const title = (doc?.title || '').toLowerCase();
+        const looksLike404 = /404|not found|cannot get \/|failed to load resource/.test(text + ' ' + title);
+        if (looksLike404 && text.length < 1200) { showError(); return; }
+
+        if (body) body.style.margin = body.style.margin || '0';
+        if (doc?.documentElement) doc.documentElement.style.background = '#fff';
+      } catch (e) {
+        // Cross-origin is still valid; iframe itself will display the page.
+      }
+
+      if (loading) loading.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'none';
+      container.dataset.loaded = 'true';
+    }, {once:true});
+
+    frame.addEventListener('error', showError, {once:true});
+    frame.src = fileName;
+  }
+
+  function renderDefaultSemLayout(container, semId) {
+    const title = semId === 'sem1' ? '1st Semester (Common)' : '2nd Semester (Common)';
+    container.innerHTML = `
+      <div class="section-title">${title}</div>
+      <div class="notice">
+        <h5>Semester Study Material</h5>
+        <p>Dynamic syllabus & notes for ${title} will be populated here.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  function renderDefaultAdmitLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Admit Card Portal</div>
+      <div class="notice">
+        <h5>Admit Card Portal</h5>
+        <p>BTEUP & Board Admit Cards links and updates.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  function renderDefaultResultLayout(container) {
+    container.innerHTML = `
+      <div class="section-title">Result Portal</div>
+      <div class="notice">
+        <h5>Semester Results</h5>
+        <p>Check BTEUP Diploma Semester examination results here.</p>
+      </div>`;
+    container.dataset.loaded = "true";
+  }
+
+  // Restore the route after the Firebase auth state is ready.
+  // A hash route never blocks the main app; external pages are isolated in iframes.
+  window.addEventListener('load', () => {
+    const hashPage = window.location.hash.replace('#','').trim();
+    const initialPage = hashPage && (document.getElementById(hashPage) || EXTERNAL_FILE_MAP[hashPage]) ? hashPage : defaultPage;
+    history.replaceState({pageId: initialPage}, '', '#' + initialPage);
+    if (EXTERNAL_FILE_MAP[initialPage]) loadPortalFromFile(initialPage);
+    if (initialPage === 'leaderboardPage') loadLeaderboardData();
+    renderPageUI(initialPage);
+  });
 </script>
 </body>
 </html>

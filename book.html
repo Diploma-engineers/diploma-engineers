@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>E-Books Library | Diploma Engineers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Books | Diploma Engineers</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,968 +13,539 @@
 <style>
 :root{
   --blue:#2563eb;
-  --blue2:#1d4ed8;
   --dark:#0f172a;
   --text:#334155;
   --muted:#64748b;
   --border:#e2e8f0;
   --bg:#f8fafc;
-  --white:#fff;
   --red:#ef4444;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;min-height:100%;font-family:"Plus Jakarta Sans",sans-serif;background:var(--bg);color:var(--text)}
+html,body{
+  width:100%;height:100%;
+  background:var(--bg)!important;
+  font-family:"Plus Jakarta Sans",sans-serif;
+  color:var(--text);
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
 body.reader-open{overflow:hidden}
-button,input,textarea{font:inherit}
-button{border:0;background:none;cursor:pointer}
-
-/* =========================
-   BOOK LIBRARY
-========================= */
-#booksPage{
-  width:100%;
-  min-height:100vh;
-  padding:15px;
+button,textarea{font:inherit}
+button{cursor:pointer;border:none;background:none}
+/* Same library/card design */
+.books-wrap{width:100%;padding:15px}
+.books-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin:0 0 15px;
 }
-.section-title{
-  font-size:20px;
-  font-weight:800;
-  color:var(--dark);
-  margin:3px 0 15px;
-}
-.section-title::after{
-  content:"";
-  display:block;
-  width:42px;
-  height:3px;
-  border-radius:10px;
-  background:var(--blue);
-  margin-top:6px;
-}
-.notes-grid{
+.books-title{font-size:18px;font-weight:800;color:var(--dark)}
+.books-title span{color:var(--blue)}
+.books-subtitle{font-size:10px;font-weight:700;color:var(--muted)}
+.books-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:12px;
 }
 .book-card{
-  display:block;
-  overflow:hidden;
-  background:#fff;
+  min-width:0;overflow:hidden;background:#fff;
   border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:0 5px 18px rgba(15,23,42,.06);
-  cursor:pointer;
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(15,23,42,.05);
+  cursor:pointer;transition:transform .2s;
   -webkit-tap-highlight-color:transparent;
-  transition:.18s ease;
 }
-.book-card:active{transform:scale(.98)}
-.book-card-cover{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/4;
-  background:#eef2ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
+.book-card:active{transform:scale(.97)}
+.book-cover{
+  position:relative;width:100%;aspect-ratio:3/4;
+  background:#eef2ff;overflow:hidden;
 }
-.book-card-cover img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  padding:22px;
+.book-thumb{
+  position:absolute;inset:0;width:100%;height:100%;
+  border:0;background:#fff;pointer-events:none;
+  object-fit:contain;padding:25px;
 }
-.book-card-shade{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(to top,rgba(2,6,23,.78),transparent 70%);
+.book-shade{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(2,6,23,.84),rgba(2,6,23,.03) 70%,transparent);
 }
-.book-open{
-  position:absolute;
-  left:10px;
-  right:10px;
-  bottom:10px;
-  color:#fff;
-  font-size:10px;
-  font-weight:800;
+.book-label{
+  position:absolute;left:10px;right:10px;bottom:10px;z-index:2;
+  color:#fff;font-size:11px;font-weight:800;line-height:1.35;
+  text-shadow:0 2px 8px rgba(0,0,0,.5);
 }
-.book-open span{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  margin-top:5px;
-  padding:4px 8px;
-  border:1px solid rgba(255,255,255,.45);
-  border-radius:999px;
-  background:rgba(255,255,255,.2);
+.open-pill{
+  display:inline-flex;align-items:center;gap:5px;margin-top:6px;
+  padding:3px 8px;border-radius:999px;
+  background:rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.5);
+  font-size:9px;font-weight:800;backdrop-filter:blur(2px);
 }
-.book-card-content{padding:10px}
-.book-card-content h3{
-  font-size:12px;
-  line-height:1.35;
-  color:var(--dark);
-  font-weight:800;
+.book-meta{padding:10px}
+.book-meta-line{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
 }
-.book-card-content p{
-  font-size:9px;
-  line-height:1.4;
-  color:var(--muted);
-  margin-top:4px;
-  font-weight:600;
+.book-type{font-size:9px;font-weight:700;color:var(--muted)}
+.read-pill{
+  font-size:9px;font-weight:800;color:#1d4ed8;
+  background:#eff6ff;border:1px solid #bfdbfe;
+  border-radius:999px;padding:3px 8px;
 }
 
-/* =========================
-   READER
-========================= */
-#reader{
+/* Reader: same simple full-screen PDF style, with social panel below */
+.reader-page{
   display:none;
-  position:fixed;
-  inset:0;
-  z-index:9999;
+  width:100%;
+  min-height:calc(100% - 55px);
   background:#fff;
   overflow-y:auto;
 }
-#reader.active{display:block}
-
-.reader-header{
-  position:sticky;
-  top:0;
-  height:56px;
-  z-index:20;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:0 10px;
-  background:#fff;
-  border-bottom:1px solid var(--border);
-}
-.reader-back,
-.reader-header-btn{
-  width:38px;
-  height:38px;
-  min-width:38px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  color:var(--dark);
-}
-.reader-back:active,
-.reader-header-btn:active{background:#f1f5f9}
-.reader-title{
-  flex:1;
-  min-width:0;
-  color:var(--dark);
-  font-size:13px;
-  font-weight:800;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.reader-actions{display:flex;gap:2px}
-.reader-header-btn.active{color:var(--blue)}
-.reader-header-btn.like.active{color:var(--red)}
-
-.pdf-viewer{
+.reader-page.active{display:block}
+.pdf-box{
   width:100%;
   height:62vh;
   min-height:360px;
-  background:#cbd5e1;
+  background:#e2e8f0;
 }
 .pdf-frame{
-  display:block;
-  width:100%;
-  height:100%;
-  border:0;
-  background:#fff;
+  width:100%;height:100%;border:0;display:block;background:#fff;
 }
 
-.reader-body{
+.social-panel{
   padding:14px 15px 35px;
   background:#fff;
 }
-.book-name{
-  color:var(--dark);
-  font-size:18px;
-  font-weight:800;
+.reader-name{
+  color:var(--dark);font-size:17px;font-weight:800;
   line-height:1.35;
 }
-.book-description{
-  color:var(--muted);
-  font-size:11px;
-  font-weight:600;
-  margin-top:4px;
+.reader-description{
+  color:var(--muted);font-size:10px;font-weight:600;margin-top:4px;
 }
 .stats{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:8px;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:700;
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-top:7px;color:var(--muted);
+  font-size:10px;font-weight:700;
 }
 .action-row{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  padding:9px 0;
-  margin-top:12px;
+  display:flex;align-items:center;gap:5px;
+  padding:9px 0;margin-top:12px;
   border-top:1px solid var(--border);
   border-bottom:1px solid var(--border);
   overflow-x:auto;
 }
 .action{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  white-space:nowrap;
-  padding:8px 11px;
-  border-radius:10px;
-  color:#475569;
-  font-size:11px;
-  font-weight:800;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;padding:8px 11px;border-radius:10px;
+  color:#475569;font-size:11px;font-weight:800;
 }
-.action.active{
-  color:var(--blue);
-  background:#eff6ff;
-}
-.action.like.active{
-  color:var(--red);
-  background:#fef2f2;
-}
+.action.active{color:var(--blue);background:#eff6ff}
+.action.like.active{color:var(--red);background:#fef2f2}
 
 .login-note{
-  display:none;
-  padding:10px 12px;
-  margin-top:12px;
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-radius:12px;
-  font-size:11px;
-  font-weight:700;
+  display:none;margin-top:10px;padding:10px 12px;
+  border-radius:11px;background:#eff6ff;color:#1d4ed8;
+  font-size:10px;font-weight:700;
 }
-.comments-heading{
-  color:var(--dark);
-  font-size:15px;
-  font-weight:800;
-  margin:17px 0 10px;
+.comments-title{
+  margin:16px 0 10px;color:var(--dark);
+  font-size:15px;font-weight:800;
 }
-.comment-form{
-  display:flex;
-  align-items:flex-start;
-  gap:9px;
-}
+.comment-form{display:flex;gap:9px;align-items:flex-start}
 .avatar{
-  width:36px;
-  height:36px;
-  min-width:36px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#e2e8f0;
+  width:36px;height:36px;min-width:36px;border-radius:50%;
+  object-fit:cover;background:#e2e8f0;
 }
-.comment-input-wrap{
-  display:flex;
-  flex:1;
-  gap:7px;
-}
+.comment-wrap{display:flex;gap:7px;flex:1}
 .comment-input{
-  width:100%;
-  min-height:42px;
-  max-height:130px;
-  resize:none;
-  outline:none;
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:10px 12px;
-  color:var(--text);
-  font-size:12px;
-  background:#fff;
+  width:100%;min-height:42px;max-height:130px;
+  resize:none;outline:none;
+  border:1px solid var(--border);border-radius:12px;
+  padding:10px 12px;font-size:12px;color:var(--text);
 }
 .comment-input:focus{border-color:#93c5fd}
-.send-comment{
-  width:42px;
-  height:42px;
-  min-width:42px;
-  border-radius:12px;
-  color:#fff;
-  background:var(--blue);
+.send-btn{
+  width:42px;height:42px;min-width:42px;
+  border-radius:12px;background:var(--blue);color:#fff;
 }
-.send-comment:active{background:var(--blue2)}
-.comments-list{
-  display:flex;
-  flex-direction:column;
-  gap:11px;
-  margin-top:14px;
+.comments-list{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+.comment{display:flex;gap:9px;align-items:flex-start}
+.comment-body{
+  flex:1;min-width:0;background:#f8fafc;
+  border-radius:12px;padding:9px 11px;
 }
-.comment{
-  display:flex;
-  align-items:flex-start;
-  gap:9px;
-}
-.comment-content{
-  flex:1;
-  min-width:0;
-  background:#f8fafc;
-  border-radius:12px;
-  padding:9px 11px;
-}
-.comment-top{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-.comment-user{
-  color:var(--dark);
-  font-size:11px;
-  font-weight:800;
-}
-.comment-time{
-  color:var(--muted);
-  font-size:9px;
-  font-weight:600;
-}
+.comment-head{display:flex;gap:7px;align-items:center}
+.comment-name{font-size:11px;font-weight:800;color:var(--dark)}
+.comment-time{font-size:9px;color:var(--muted)}
 .comment-text{
-  color:#475569;
-  font-size:12px;
-  line-height:1.5;
-  margin-top:4px;
-  white-space:pre-wrap;
-  word-break:break-word;
+  margin-top:4px;font-size:12px;line-height:1.5;
+  color:#475569;white-space:pre-wrap;word-break:break-word;
 }
 .empty-comments{
-  text-align:center;
-  padding:20px 10px;
-  color:var(--muted);
-  font-size:11px;
-}
-.loading{
-  text-align:center;
-  padding:25px;
-  color:var(--muted);
-  font-size:11px;
+  padding:20px;text-align:center;color:var(--muted);font-size:11px;
 }
 
 @media(max-width:420px){
-  .notes-grid{gap:10px}
-  .section-title{font-size:18px}
-  .pdf-viewer{height:60vh}
+  .books-grid{gap:10px}
+  .books-title{font-size:16px}
+  .books-subtitle{font-size:9px}
+  .pdf-box{height:58vh}
 }
 </style>
 </head>
 
 <body>
 
-<!-- ==========================================================
-     BOOKS PAGE
-     ========================================================== -->
-<div id="booksPage" class="page">
-
-  <div class="section-title">E-Books Library</div>
-
-  <div class="notes-grid" id="booksGrid">
-
-    <!-- Cards are loaded automatically from Firestore.
-         If Firestore is empty, the two books below are fallback cards. -->
-
+<!-- YOUR SAME BOOKS LIBRARY STYLE -->
+<div class="books-wrap" id="booksHome">
+  <div class="books-head">
+    <div class="books-title">Books <span>Library</span></div>
+    <div class="books-subtitle">Diploma Engineers</div>
   </div>
+
+  <div class="books-grid" id="booksGrid"></div>
 </div>
 
+<!-- READER -->
+<div class="reader-page" id="readerPage">
 
-<!-- ==========================================================
-     PDF READER PAGE
-     ========================================================== -->
-<div id="reader">
-
-  <div class="reader-header">
-
-    <button class="reader-back" id="backButton" aria-label="Back">
-      <i class="fa-solid fa-arrow-left"></i>
-    </button>
-
-    <div class="reader-title" id="readerTitle">
-      PDF Reader
-    </div>
-
-    <div class="reader-actions">
-
-      <button class="reader-header-btn like" id="headerLike" title="Like">
-        <i class="fa-regular fa-heart"></i>
-      </button>
-
-      <button class="reader-header-btn" id="headerSave" title="Save">
-        <i class="fa-regular fa-bookmark"></i>
-      </button>
-
-    </div>
-
+  <div class="pdf-box">
+    <iframe id="pdfFrame" class="pdf-frame"
+      title="PDF Reader" allow="fullscreen"></iframe>
   </div>
 
+  <div class="social-panel">
 
-  <div class="pdf-viewer">
-    <iframe
-      id="pdfFrame"
-      class="pdf-frame"
-      title="PDF Reader"
-      allow="fullscreen">
-    </iframe>
-  </div>
-
-
-  <div class="reader-body">
-
-    <div class="book-name" id="readerBookName"></div>
-
-    <div class="book-description" id="readerDescription"></div>
+    <div class="reader-name" id="readerName"></div>
+    <div class="reader-description" id="readerDescription"></div>
 
     <div class="stats">
-      <span>
-        <i class="fa-regular fa-heart"></i>
-        <b id="likeCount">0</b> Likes
-      </span>
-
-      <span>
-        <i class="fa-regular fa-comment"></i>
-        <b id="commentCount">0</b> Comments
-      </span>
-
-      <span>
-        <i class="fa-regular fa-bookmark"></i>
-        <b id="saveCount">0</b> Saves
-      </span>
+      <span><i class="fa-regular fa-heart"></i> <b id="likeCount">0</b> Likes</span>
+      <span><i class="fa-regular fa-comment"></i> <b id="commentCount">0</b> Comments</span>
+      <span><i class="fa-regular fa-bookmark"></i> <b id="saveCount">0</b> Saves</span>
     </div>
-
 
     <div class="action-row">
-
-      <button class="action like" id="likeButton">
-        <i class="fa-regular fa-heart"></i>
-        <span>Like</span>
+      <button class="action like" id="likeBtn">
+        <i class="fa-regular fa-heart"></i> Like
       </button>
 
-      <button class="action" id="saveButton">
-        <i class="fa-regular fa-bookmark"></i>
-        <span>Save</span>
+      <button class="action" id="saveBtn">
+        <i class="fa-regular fa-bookmark"></i> Save
       </button>
 
-      <button class="action" id="commentButton">
-        <i class="fa-regular fa-comment"></i>
-        <span>Comment</span>
+      <button class="action" id="commentBtn">
+        <i class="fa-regular fa-comment"></i> Comment
       </button>
 
-      <button class="action" id="shareButton">
-        <i class="fa-solid fa-share-nodes"></i>
-        <span>Share</span>
+      <button class="action" id="shareBtn">
+        <i class="fa-solid fa-share-nodes"></i> Share
       </button>
-
     </div>
-
 
     <div class="login-note" id="loginNote">
       Like, Save और Comment करने के लिए पहले login करें।
     </div>
 
-
-    <div class="comments-heading">
-      Comments
-    </div>
-
+    <div class="comments-title">Comments</div>
 
     <div class="comment-form">
+      <img class="avatar" id="userPhoto"
+        src="https://ui-avatars.com/api/?name=User" alt="User">
 
-      <img
-        id="currentUserPhoto"
-        class="avatar"
-        src="https://ui-avatars.com/api/?name=User"
-        alt="User"
-      >
-
-      <div class="comment-input-wrap">
-
-        <textarea
-          id="commentInput"
-          class="comment-input"
-          maxlength="1000"
-          placeholder="Write a comment..."
-        ></textarea>
-
-        <button
-          id="sendComment"
-          class="send-comment"
-          title="Post Comment">
+      <div class="comment-wrap">
+        <textarea id="commentInput" class="comment-input"
+          maxlength="1000" placeholder="Write a comment..."></textarea>
+        <button class="send-btn" id="sendComment">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
-
       </div>
-
     </div>
 
-
     <div class="comments-list" id="commentsList">
-      <div class="empty-comments">
-        No comments yet. Be the first to comment.
-      </div>
+      <div class="empty-comments">No comments yet. Be the first to comment.</div>
     </div>
 
   </div>
 </div>
 
-
-<!-- ==========================================================
-     FIREBASE
-     ========================================================== -->
 <script type="module">
 
-import { initializeApp }
+/* ==========================================================
+   FIREBASE
+   अपने EXISTING APP वाला यही Firebase config लगाएं.
+   ========================================================== */
+
+import {initializeApp}
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
 import {
-  getAuth,
-  onAuthStateChanged
+  getAuth,onAuthStateChanged
 }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  addDoc,
-  setDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-  increment
+  getFirestore,collection,doc,getDoc,getDocs,
+  addDoc,setDoc,deleteDoc,query,orderBy,
+  onSnapshot,serverTimestamp,increment
 }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
-  getStorage,
-  ref,
-  getDownloadURL
+  getStorage,ref,getDownloadURL
 }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 
 
-/* ==========================================================
-   IMPORTANT:
-   यहां अपने EXISTING Firebase project का config डालें.
-   ========================================================== */
-
-const firebaseConfig = {
-
-  apiKey: "YOUR_API_KEY",
-
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-
-  projectId: "YOUR_PROJECT_ID",
-
-  storageBucket: "YOUR_PROJECT.firebasestorage.app",
-
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-
-  appId: "YOUR_APP_ID"
-
+const firebaseConfig={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  projectId:"YOUR_PROJECT_ID",
+  storageBucket:"YOUR_PROJECT.firebasestorage.app",
+  messagingSenderId:"YOUR_MESSAGING_SENDER_ID",
+  appId:"YOUR_APP_ID"
 };
 
-
-/* Firebase initialize */
-
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-
-const db = getFirestore(app);
-
-const storage = getStorage(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const storage=getStorage(app);
 
 
-/* ==========================================================
-   PDF ICON
-   हर PDF card पर यही icon लगेगा
-   ========================================================== */
-
-const PDF_ICON =
-"https://cdn-icons-png.flaticon.com/512/1794/179483.png";
+/* Same PDF icon */
+const PDF_ICON=
+"https://cdn-icons-png.flaticon.com/512/3143/3143500.png";
 
 
 /* ==========================================================
    FALLBACK BOOKS
-   अगर Firestore में books collection अभी खाली है,
-   तो ये books दिखाई जाएंगी.
    ========================================================== */
 
-const FALLBACK_BOOKS = [
-
+const FALLBACK_BOOKS=[
   {
     id:"applied-physics-2nd",
-
     name:"Applied Physics 2nd",
-
     description:"Diploma Engineering Physics PDF",
-
-    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf",
-
-    image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png"
-
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
   },
-
   {
     id:"applied-mathematics-2nd",
-
     name:"Applied Mathematics 2nd",
-
     description:"Diploma Engineering Maths PDF",
-
-    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf",
-
-    image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png"
-
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+  },
+  {
+    id:"engineering-mechanics",
+    name:"Engineering Mechanics",
+    description:"Diploma Engineering Mechanics PDF",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
+  },
+  {
+    id:"design-of-steel-structures",
+    name:"Design Of Steel Structures",
+    description:"Diploma Engineering Steel Structures PDF",
+    pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
   }
-
 ];
 
 
-/* ==========================================================
-   VARIABLES
-   ========================================================== */
-
-let books = [];
-
-let currentBook = null;
-
-let currentUser = null;
-
-let unsubscribeComments = null;
-
-let unsubscribeStats = null;
+let BOOKS=[];
+let currentBook=null;
+let currentUser=null;
+let stopComments=null;
+let stopStats=null;
 
 
-/* ==========================================================
-   DOM
-   ========================================================== */
-
-const booksGrid =
-document.getElementById("booksGrid");
-
-const reader =
-document.getElementById("reader");
-
-const pdfFrame =
-document.getElementById("pdfFrame");
-
-const readerTitle =
-document.getElementById("readerTitle");
-
-const readerBookName =
-document.getElementById("readerBookName");
-
-const readerDescription =
-document.getElementById("readerDescription");
-
-const likeCount =
-document.getElementById("likeCount");
-
-const commentCount =
-document.getElementById("commentCount");
-
-const saveCount =
-document.getElementById("saveCount");
-
-const commentsList =
-document.getElementById("commentsList");
-
-const commentInput =
-document.getElementById("commentInput");
-
-const currentUserPhoto =
-document.getElementById("currentUserPhoto");
-
-const loginNote =
-document.getElementById("loginNote");
+/* DOM */
+const booksHome=document.getElementById("booksHome");
+const booksGrid=document.getElementById("booksGrid");
+const readerPage=document.getElementById("readerPage");
+const pdfFrame=document.getElementById("pdfFrame");
+const readerName=document.getElementById("readerName");
+const readerDescription=document.getElementById("readerDescription");
+const likeCount=document.getElementById("likeCount");
+const saveCount=document.getElementById("saveCount");
+const commentCount=document.getElementById("commentCount");
+const commentsList=document.getElementById("commentsList");
+const commentInput=document.getElementById("commentInput");
+const userPhoto=document.getElementById("userPhoto");
+const loginNote=document.getElementById("loginNote");
 
 
-/* ==========================================================
-   ESCAPE HTML
-   ========================================================== */
-
-function esc(value = ""){
-
-  return String(value).replace(/[&<>"']/g,function(m){
-
-    return {
-
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-
-    }[m];
-
-  });
-
+function esc(value=""){
+  return String(value).replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#039;"
+  }[m]));
 }
 
 
-/* ==========================================================
-   USER
-   ========================================================== */
-
-function getUserName(){
-
-  if(!currentUser) return "User";
-
-  return currentUser.displayName ||
-         currentUser.email?.split("@")[0] ||
+function userName(){
+  return currentUser?.displayName ||
+         currentUser?.email?.split("@")[0] ||
          "User";
-
 }
 
 
-function getUserPhoto(){
-
-  if(!currentUser){
-
-    return "https://ui-avatars.com/api/?name=User";
-
-  }
-
-  return currentUser.photoURL ||
-
+function userAvatar(){
+  return currentUser?.photoURL ||
     "https://ui-avatars.com/api/?name="+
-    encodeURIComponent(getUserName())+
+    encodeURIComponent(userName())+
     "&background=e2e8f0&color=334155";
-
 }
 
 
-function requireLogin(){
-
+function needLogin(){
   if(currentUser){
-
     loginNote.style.display="none";
-
     return true;
-
   }
-
   loginNote.style.display="block";
-
   return false;
-
 }
 
 
 /* ==========================================================
-   FIRESTORE BOOKS FETCH
+   FETCH BOOKS FROM FIRESTORE
+   Collection: books
    ========================================================== */
 
 async function loadBooks(){
 
   try{
 
-    const snapshot =
-      await getDocs(collection(db,"books"));
+    const snap=await getDocs(collection(db,"books"));
 
-    if(!snapshot.empty){
+    if(!snap.empty){
 
-      books =
-        snapshot.docs.map(function(item){
-
-          return {
-
-            id:item.id,
-
-            ...item.data()
-
-          };
-
-        });
+      BOOKS=snap.docs.map(d=>({
+        id:d.id,
+        ...d.data()
+      }));
 
     }else{
 
-      books = FALLBACK_BOOKS;
+      BOOKS=FALLBACK_BOOKS;
 
     }
 
   }catch(error){
 
-    console.error("Books fetch error:",error);
-
-    books = FALLBACK_BOOKS;
+    console.error("Firestore books error:",error);
+    BOOKS=FALLBACK_BOOKS;
 
   }
 
-  renderBooks();
-
+  renderCards();
 }
 
 
 /* ==========================================================
-   RENDER BOOK CARDS
+   SAME CARD DESIGN AS UPLOADED FILE
    ========================================================== */
 
-function renderBooks(){
+function renderCards(){
 
   booksGrid.innerHTML="";
 
-  books.forEach(function(book,index){
+  BOOKS.forEach((book,index)=>{
 
-    const card =
-      document.createElement("div");
+    const card=document.createElement("article");
 
     card.className="book-card";
 
-    const image =
-      book.image ||
-      PDF_ICON;
-
-    card.innerHTML = `
-
-      <div class="book-card-cover">
+    card.innerHTML=`
+      <div class="book-cover">
 
         <img
-          src="${esc(image)}"
-          alt="${esc(book.name || "PDF")}"
+          class="book-thumb"
+          src="${PDF_ICON}"
+          alt="PDF"
           loading="lazy"
         >
 
-        <div class="book-card-shade"></div>
+        <div class="book-shade"></div>
 
-        <div class="book-open">
+        <div class="book-label">
+          ${esc(book.name||"PDF File")}
 
-          ${esc(book.name || "PDF File")}
-
-          <span>
-            <i class="fa-solid fa-book-open"></i>
-            Open
-          </span>
-
+          <div class="open-pill">
+            <i class="fa-solid fa-book-open"></i> Open
+          </div>
         </div>
 
       </div>
 
-      <div class="book-card-content">
-
-        <h3>
-          ${esc(book.name || "PDF File")}
-        </h3>
-
-        <p>
-          ${esc(
-            book.description ||
-            "Diploma Engineering PDF"
-          )}
-        </p>
-
+      <div class="book-meta">
+        <div class="book-meta-line">
+          <span class="book-type">PDF • Online Reader</span>
+          <span class="read-pill">Read</span>
+        </div>
       </div>
-
     `;
 
-    card.addEventListener(
-      "click",
-      function(){
-
-        openBook(index);
-
-      }
-    );
+    card.addEventListener("click",()=>openBook(index));
 
     booksGrid.appendChild(card);
 
   });
-
 }
 
 
 /* ==========================================================
-   PDF URL
+   PDF: direct URL OR Firebase Storage
+   Firestore example:
+   pdf: ""
+   storagePath: "books/applied-physics.pdf"
    ========================================================== */
 
-async function getPdfUrl(book){
+async function getPDF(book){
 
-  /* Direct URL */
-
-  if(book.pdf){
-
-    return book.pdf;
-
-  }
-
-
-  /* Firebase Storage */
+  if(book.pdf) return book.pdf;
 
   if(book.storagePath){
 
     return await getDownloadURL(
-
-      ref(
-        storage,
-        book.storagePath
-      )
-
+      ref(storage,book.storagePath)
     );
 
   }
 
-
   return "";
-
 }
 
 
 /* ==========================================================
-   OPEN BOOK
+   OPEN READER
    ========================================================== */
 
 async function openBook(index){
 
-  const book = books[index];
+  const book=BOOKS[index];
 
-  if(!book) return;
+  if(!book)return;
 
-  currentBook = book;
+  currentBook=book;
+  readerName.textContent=book.name||"PDF File";
+  readerDescription.textContent=
+    book.description||"Diploma Engineering PDF";
 
-  readerTitle.textContent =
-    book.name || "PDF Reader";
-
-  readerBookName.textContent =
-    book.name || "PDF File";
-
-  readerDescription.textContent =
-    book.description ||
-    "Diploma Engineering PDF";
-
-
-  reader.classList.add("active");
-
+  booksHome.style.display="none";
+  readerPage.classList.add("active");
   document.body.classList.add("reader-open");
 
-  window.location.hash =
-    "read="+encodeURIComponent(book.id);
+  pushReaderHistory(book.id);
 
+  window.scrollTo(0,0);
 
-  pdfFrame.src = "";
-
+  pdfFrame.src="";
 
   try{
 
-    const pdfUrl =
-      await getPdfUrl(book);
+    const url=await getPDF(book);
 
-    if(!pdfUrl){
+    if(!url)throw new Error("PDF not found");
 
-      throw new Error(
-        "PDF URL or storagePath not found"
-      );
-
-    }
-
-    pdfFrame.src = pdfUrl;
+    pdfFrame.src=url;
 
   }catch(error){
 
@@ -986,11 +557,8 @@ async function openBook(index){
 
   }
 
-
   setupRealtime();
-
   updateUserUI();
-
 }
 
 
@@ -998,533 +566,330 @@ async function openBook(index){
    CLOSE READER
    ========================================================== */
 
-function closeReader(){
+function closeBook(){
 
-  if(unsubscribeComments){
-
-    unsubscribeComments();
-
-    unsubscribeComments=null;
-
+  if(stopComments){
+    stopComments();
+    stopComments=null;
   }
 
-  if(unsubscribeStats){
-
-    unsubscribeStats();
-
-    unsubscribeStats=null;
-
+  if(stopStats){
+    stopStats();
+    stopStats=null;
   }
 
   pdfFrame.src="";
-
   currentBook=null;
 
-  reader.classList.remove("active");
-
+  readerPage.classList.remove("active");
+  booksHome.style.display="block";
   document.body.classList.remove("reader-open");
 
-  if(
-    window.location.hash.startsWith("#read=")
-  ){
-
+  if(window.location.hash.startsWith("#read=")){
     history.replaceState(
       null,
-      "",
-      window.location.pathname+
-      window.location.search
+      document.title,
+      window.location.pathname + window.location.search
     );
-
   }
 
+  window.scrollTo(0,0);
 }
 
 
 /* ==========================================================
-   REALTIME STATS + COMMENTS
+   REALTIME FIRESTORE
    ========================================================== */
 
 function setupRealtime(){
 
-  if(!currentBook) return;
+  if(!currentBook)return;
+
+  if(stopComments)stopComments();
+  if(stopStats)stopStats();
+
+  const bookId=currentBook.id;
+
+  /* Stats */
+  stopStats=onSnapshot(
+    doc(db,"books",bookId),
+    snap=>{
+
+      const data=snap.exists()?snap.data():{};
+
+      likeCount.textContent=data.likeCount||0;
+      saveCount.textContent=data.saveCount||0;
+      commentCount.textContent=data.commentCount||0;
+
+    }
+  );
 
 
-  if(unsubscribeComments){
+  /* Comments */
+  const commentsQuery=query(
+    collection(db,"books",bookId,"comments"),
+    orderBy("createdAt","desc")
+  );
 
-    unsubscribeComments();
+  stopComments=onSnapshot(
+    commentsQuery,
+    snap=>{
 
-  }
+      commentsList.innerHTML="";
 
-  if(unsubscribeStats){
+      if(snap.empty){
 
-    unsubscribeStats();
+        commentsList.innerHTML=
+          `<div class="empty-comments">
+             No comments yet. Be the first to comment.
+           </div>`;
 
-  }
-
-
-  const bookId =
-    currentBook.id;
-
-
-  /* STATS */
-
-  const bookRef =
-    doc(db,"books",bookId);
-
-
-  unsubscribeStats =
-    onSnapshot(
-      bookRef,
-      function(snapshot){
-
-        const data =
-          snapshot.exists()
-          ? snapshot.data()
-          : {};
-
-        likeCount.textContent =
-          data.likeCount || 0;
-
-        saveCount.textContent =
-          data.saveCount || 0;
-
-        commentCount.textContent =
-          data.commentCount || 0;
-
+        return;
       }
-    );
 
+      snap.forEach(item=>{
 
-  /* COMMENTS */
+        const c=item.data();
 
-  const commentsRef =
-    collection(
-      db,
-      "books",
-      bookId,
-      "comments"
-    );
+        const photo=c.photoURL||
+          "https://ui-avatars.com/api/?name="+
+          encodeURIComponent(c.displayName||"User");
 
+        const div=document.createElement("div");
 
-  const commentsQuery =
-    query(
-      commentsRef,
-      orderBy(
-        "createdAt",
-        "desc"
-      )
-    );
+        div.className="comment";
 
+        div.innerHTML=`
+          <img
+            class="avatar"
+            src="${esc(photo)}"
+            alt="User"
+          >
 
-  unsubscribeComments =
-    onSnapshot(
-      commentsQuery,
-      function(snapshot){
+          <div class="comment-body">
 
-        commentsList.innerHTML="";
+            <div class="comment-head">
+              <span class="comment-name">
+                ${esc(c.displayName||"User")}
+              </span>
 
-        if(snapshot.empty){
+              <span class="comment-time">
+                ${formatTime(c.createdAt)}
+              </span>
+            </div>
 
-          commentsList.innerHTML =
-            `<div class="empty-comments">
-              No comments yet. Be the first to comment.
-            </div>`;
+            <div class="comment-text">
+              ${esc(c.text||"")}
+            </div>
 
-          return;
+          </div>
+        `;
 
-        }
+        commentsList.appendChild(div);
 
+      });
 
-        snapshot.forEach(
-          function(item){
-
-            const data =
-              item.data();
-
-            const photo =
-              data.photoURL ||
-              "https://ui-avatars.com/api/?name="+
-              encodeURIComponent(
-                data.displayName || "User"
-              );
-
-
-            const div =
-              document.createElement("div");
-
-            div.className="comment";
-
-
-            div.innerHTML = `
-
-              <img
-                class="avatar"
-                src="${esc(photo)}"
-                alt="User"
-              >
-
-              <div class="comment-content">
-
-                <div class="comment-top">
-
-                  <span class="comment-user">
-                    ${esc(
-                      data.displayName ||
-                      "User"
-                    )}
-                  </span>
-
-                  <span class="comment-time">
-                    ${formatTime(data.createdAt)}
-                  </span>
-
-                </div>
-
-                <div class="comment-text">
-                  ${esc(data.text || "")}
-                </div>
-
-              </div>
-
-            `;
-
-            commentsList.appendChild(div);
-
-          }
-        );
-
-      }
-    );
-
+    }
+  );
 }
 
 
-/* ==========================================================
-   TIME
-   ========================================================== */
-
 function formatTime(timestamp){
 
-  if(!timestamp?.toDate){
+  if(!timestamp?.toDate)return"just now";
 
-    return "just now";
+  const seconds=Math.floor(
+    (Date.now()-timestamp.toDate().getTime())/1000
+  );
 
-  }
-
-  const seconds =
-    Math.floor(
-      (
-        Date.now() -
-        timestamp.toDate().getTime()
-      ) / 1000
-    );
-
-
-  if(seconds < 60)
-    return "just now";
-
-  if(seconds < 3600)
-    return Math.floor(seconds/60)+"m";
-
-  if(seconds < 86400)
-    return Math.floor(seconds/3600)+"h";
+  if(seconds<60)return"just now";
+  if(seconds<3600)return Math.floor(seconds/60)+"m";
+  if(seconds<86400)return Math.floor(seconds/3600)+"h";
 
   return Math.floor(seconds/86400)+"d";
-
 }
 
 
 /* ==========================================================
    LIKE
+   books/bookId/likes/userUID
    ========================================================== */
 
 async function toggleLike(){
 
-  if(!currentBook) return;
+  if(!currentBook||!needLogin())return;
 
-  if(!requireLogin()) return;
+  const likeRef=doc(
+    db,
+    "books",
+    currentBook.id,
+    "likes",
+    currentUser.uid
+  );
+
+  const exists=await getDoc(likeRef);
+
+  if(exists.exists()){
+
+    await deleteDoc(likeRef);
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {likeCount:increment(-1)},
+      {merge:true}
+    );
+
+  }else{
+
+    await setDoc(likeRef,{
+      uid:currentUser.uid,
+      displayName:userName(),
+      photoURL:userAvatar(),
+      createdAt:serverTimestamp()
+    });
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {likeCount:increment(1)},
+      {merge:true}
+    );
+
+  }
+
+  updateLikeState();
+}
 
 
-  const likeRef =
+async function updateLikeState(){
+
+  if(!currentBook||!currentUser){
+
+    setLikeState(false);
+    return;
+  }
+
+  const snap=await getDoc(
     doc(
       db,
       "books",
       currentBook.id,
       "likes",
       currentUser.uid
-    );
-
-
-  const existing =
-    await getDoc(likeRef);
-
-
-  if(existing.exists()){
-
-    await deleteDoc(likeRef);
-
-    await setDoc(
-      doc(db,"books",currentBook.id),
-      {
-        likeCount:
-          increment(-1)
-      },
-      {merge:true}
-    );
-
-  }else{
-
-    await setDoc(
-      likeRef,
-      {
-        uid:currentUser.uid,
-        displayName:getUserName(),
-        photoURL:getUserPhoto(),
-        createdAt:serverTimestamp()
-      }
-    );
-
-    await setDoc(
-      doc(db,"books",currentBook.id),
-      {
-        likeCount:
-          increment(1)
-      },
-      {merge:true}
-    );
-
-  }
-
-
-  updateLikeState();
-
-}
-
-
-/* ==========================================================
-   LIKE STATE
-   ========================================================== */
-
-async function updateLikeState(){
-
-  if(
-    !currentBook ||
-    !currentUser
-  ){
-
-    setLikeState(false);
-
-    return;
-
-  }
-
-
-  const snapshot =
-    await getDoc(
-      doc(
-        db,
-        "books",
-        currentBook.id,
-        "likes",
-        currentUser.uid
-      )
-    );
-
-
-  setLikeState(
-    snapshot.exists()
+    )
   );
 
+  setLikeState(snap.exists());
 }
 
 
 function setLikeState(active){
 
-  const buttons = [
+  const btn=document.getElementById("likeBtn");
 
-    document.getElementById("likeButton"),
+  btn.classList.toggle("active",active);
 
-    document.getElementById("headerLike")
-
-  ];
-
-
-  buttons.forEach(function(button){
-
-    button.classList.toggle(
-      "active",
-      active
-    );
-
-
-    const icon =
-      button.querySelector("i");
-
-
-    icon.className =
-      active
-      ? "fa-solid fa-heart"
-      : "fa-regular fa-heart";
-
-  });
-
+  btn.innerHTML=active
+    ? '<i class="fa-solid fa-heart"></i> Liked'
+    : '<i class="fa-regular fa-heart"></i> Like';
 }
 
 
 /* ==========================================================
    SAVE
+   books/bookId/saves/userUID
    ========================================================== */
 
 async function toggleSave(){
 
-  if(!currentBook) return;
+  if(!currentBook||!needLogin())return;
 
-  if(!requireLogin()) return;
+  const saveRef=doc(
+    db,
+    "books",
+    currentBook.id,
+    "saves",
+    currentUser.uid
+  );
+
+  const exists=await getDoc(saveRef);
+
+  if(exists.exists()){
+
+    await deleteDoc(saveRef);
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {saveCount:increment(-1)},
+      {merge:true}
+    );
+
+  }else{
+
+    await setDoc(saveRef,{
+      uid:currentUser.uid,
+      displayName:userName(),
+      photoURL:userAvatar(),
+      createdAt:serverTimestamp()
+    });
+
+    await setDoc(
+      doc(db,"books",currentBook.id),
+      {saveCount:increment(1)},
+      {merge:true}
+    );
+
+  }
+
+  updateSaveState();
+}
 
 
-  const saveRef =
+async function updateSaveState(){
+
+  if(!currentBook||!currentUser){
+
+    setSaveState(false);
+    return;
+  }
+
+  const snap=await getDoc(
     doc(
       db,
       "books",
       currentBook.id,
       "saves",
       currentUser.uid
-    );
-
-
-  const existing =
-    await getDoc(saveRef);
-
-
-  if(existing.exists()){
-
-    await deleteDoc(saveRef);
-
-    await setDoc(
-      doc(db,"books",currentBook.id),
-      {
-        saveCount:
-          increment(-1)
-      },
-      {merge:true}
-    );
-
-  }else{
-
-    await setDoc(
-      saveRef,
-      {
-        uid:currentUser.uid,
-        displayName:getUserName(),
-        photoURL:getUserPhoto(),
-        createdAt:serverTimestamp()
-      }
-    );
-
-    await setDoc(
-      doc(db,"books",currentBook.id),
-      {
-        saveCount:
-          increment(1)
-      },
-      {merge:true}
-    );
-
-  }
-
-
-  updateSaveState();
-
-}
-
-
-/* ==========================================================
-   SAVE STATE
-   ========================================================== */
-
-async function updateSaveState(){
-
-  if(
-    !currentBook ||
-    !currentUser
-  ){
-
-    setSaveState(false);
-
-    return;
-
-  }
-
-
-  const snapshot =
-    await getDoc(
-      doc(
-        db,
-        "books",
-        currentBook.id,
-        "saves",
-        currentUser.uid
-      )
-    );
-
-
-  setSaveState(
-    snapshot.exists()
+    )
   );
 
+  setSaveState(snap.exists());
 }
 
 
 function setSaveState(active){
 
-  const buttons = [
+  const btn=document.getElementById("saveBtn");
 
-    document.getElementById("saveButton"),
+  btn.classList.toggle("active",active);
 
-    document.getElementById("headerSave")
-
-  ];
-
-
-  buttons.forEach(function(button){
-
-    button.classList.toggle(
-      "active",
-      active
-    );
-
-
-    const icon =
-      button.querySelector("i");
-
-
-    icon.className =
-      active
-      ? "fa-solid fa-bookmark"
-      : "fa-regular fa-bookmark";
-
-  });
-
+  btn.innerHTML=active
+    ? '<i class="fa-solid fa-bookmark"></i> Saved'
+    : '<i class="fa-regular fa-bookmark"></i> Save';
 }
 
 
 /* ==========================================================
    COMMENT
+   books/bookId/comments/commentId
    ========================================================== */
 
 async function postComment(){
 
-  if(!currentBook) return;
+  if(!currentBook||!needLogin())return;
 
-  if(!requireLogin()) return;
+  const text=commentInput.value.trim();
 
-
-  const text =
-    commentInput.value.trim();
-
-
-  if(!text) return;
-
+  if(!text)return;
 
   await addDoc(
     collection(
@@ -1535,37 +900,20 @@ async function postComment(){
     ),
     {
       uid:currentUser.uid,
-
-      displayName:
-        getUserName(),
-
-      photoURL:
-        getUserPhoto(),
-
+      displayName:userName(),
+      photoURL:userAvatar(),
       text:text,
-
-      createdAt:
-        serverTimestamp()
+      createdAt:serverTimestamp()
     }
   );
 
-
   await setDoc(
-    doc(
-      db,
-      "books",
-      currentBook.id
-    ),
-    {
-      commentCount:
-        increment(1)
-    },
+    doc(db,"books",currentBook.id),
+    {commentCount:increment(1)},
     {merge:true}
   );
 
-
   commentInput.value="";
-
 }
 
 
@@ -1575,241 +923,155 @@ async function postComment(){
 
 async function shareBook(){
 
-  if(!currentBook) return;
+  if(!currentBook)return;
 
-
-  const url =
+  const url=
     location.href.split("#")[0]+
     "#read="+
-    encodeURIComponent(
-      currentBook.id
-    );
-
+    encodeURIComponent(currentBook.id);
 
   try{
 
     if(navigator.share){
 
       await navigator.share({
-
-        title:
-          currentBook.name,
-
-        text:
-          "Read this PDF on Diploma Engineers",
-
+        title:currentBook.name,
+        text:"Read this PDF on Diploma Engineers",
         url:url
-
       });
 
     }else{
 
       await navigator.clipboard.writeText(url);
-
-      alert(
-        "Book link copied."
-      );
+      alert("Book link copied.");
 
     }
 
-  }catch(error){}
+  }catch(e){}
 
 }
 
 
 /* ==========================================================
-   USER UI
+   USER LOGIN
+   Existing Firebase Authentication user is used.
    ========================================================== */
 
-function updateUserUI(){
+onAuthStateChanged(auth,user=>{
 
-  currentUserPhoto.src =
-    getUserPhoto();
+  currentUser=user;
+
+  userPhoto.src=userAvatar();
 
   updateLikeState();
-
   updateSaveState();
 
+});
+
+
+/* ==========================================================
+   EVENTS
+   ========================================================== */
+
+// Mobile / browser back support
+window.addEventListener("popstate", () => {
+  if (readerPage.classList.contains("active")) {
+    closeBook();
+  }
+});
+
+document.getElementById("backBtn")?.addEventListener("click", closeBook);
+
+// Add a history state when opening the reader so Android/browser Back
+// returns to the Books page first.
+function pushReaderHistory(bookId){
+  history.pushState(
+    { reader: true, bookId: String(bookId) },
+    "",
+    "#read=" + encodeURIComponent(bookId)
+  );
 }
 
 
+document.getElementById("likeBtn")
+  .addEventListener("click",toggleLike);
+
+
+document.getElementById("saveBtn")
+  .addEventListener("click",toggleSave);
+
+
+document.getElementById("commentBtn")
+  .addEventListener("click",()=>{
+
+    commentInput.focus();
+
+    commentInput.scrollIntoView({
+      behavior:"smooth",
+      block:"center"
+    });
+
+  });
+
+
+document.getElementById("sendComment")
+  .addEventListener("click",postComment);
+
+
+document.getElementById("shareBtn")
+  .addEventListener("click",shareBook);
+
+
+commentInput.addEventListener("keydown",e=>{
+
+  if(e.key==="Enter"&&!e.shiftKey){
+
+    e.preventDefault();
+    postComment();
+
+  }
+
+});
+
+
 /* ==========================================================
-   BUTTON EVENTS
+   HASH / MOBILE BACK
    ========================================================== */
 
-document
-  .getElementById("backButton")
-  .addEventListener(
-    "click",
-    closeReader
-  );
+window.addEventListener("hashchange",()=>{
 
+  const hash=decodeURIComponent(location.hash);
 
-document
-  .getElementById("likeButton")
-  .addEventListener(
-    "click",
-    toggleLike
-  );
+  if(!hash.startsWith("#read=")){
 
-
-document
-  .getElementById("headerLike")
-  .addEventListener(
-    "click",
-    toggleLike
-  );
-
-
-document
-  .getElementById("saveButton")
-  .addEventListener(
-    "click",
-    toggleSave
-  );
-
-
-document
-  .getElementById("headerSave")
-  .addEventListener(
-    "click",
-    toggleSave
-  );
-
-
-document
-  .getElementById("commentButton")
-  .addEventListener(
-    "click",
-    function(){
-
-      commentInput.focus();
-
-      commentInput.scrollIntoView({
-        behavior:"smooth",
-        block:"center"
-      });
-
+    if(readerPage.classList.contains("active")){
+      closeBook();
     }
+
+    return;
+  }
+
+  const id=hash.substring(6);
+
+  const index=BOOKS.findIndex(
+    b=>String(b.id)===String(id)
   );
 
+  if(index>=0){
 
-document
-  .getElementById("sendComment")
-  .addEventListener(
-    "click",
-    postComment
-  );
+    if(!currentBook||
+       String(currentBook.id)!==String(BOOKS[index].id)){
 
-
-document
-  .getElementById("shareButton")
-  .addEventListener(
-    "click",
-    shareBook
-  );
-
-
-commentInput.addEventListener(
-  "keydown",
-  function(event){
-
-    if(
-      event.key==="Enter" &&
-      !event.shiftKey
-    ){
-
-      event.preventDefault();
-
-      postComment();
+      openBook(index);
 
     }
 
   }
-);
 
-
-/* ==========================================================
-   FIREBASE AUTH
-   आपका existing Firebase login user यहां मिलेगा
-   ========================================================== */
-
-onAuthStateChanged(
-  auth,
-  function(user){
-
-    currentUser=user;
-
-    updateUserUI();
-
-  }
-);
-
-
-/* ==========================================================
-   URL HASH / BACK BUTTON
-   ========================================================== */
-
-window.addEventListener(
-  "hashchange",
-  function(){
-
-    const hash =
-      decodeURIComponent(
-        location.hash
-      );
-
-
-    if(
-      !hash.startsWith("#read=")
-    ){
-
-      if(reader.classList.contains("active")){
-
-        closeReader();
-
-      }
-
-      return;
-
-    }
-
-
-    const id =
-      hash.substring(6);
-
-
-    const index =
-      books.findIndex(
-        function(book){
-
-          return String(book.id) ===
-                 String(id);
-
-        }
-      );
-
-
-    if(index >= 0){
-
-      if(
-        !currentBook ||
-        currentBook.id !==
-        books[index].id
-      ){
-
-        openBook(index);
-
-      }
-
-    }
-
-  }
-);
+});
 
 
 /* START */
-
 loadBooks();
 
 </script>

@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Diploma Engineers Portal</title>
 
+<!-- Fast connection warm-up -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
 <!-- External Frameworks & Fonts -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -779,6 +785,23 @@ body.faculty-modal-open { overflow:hidden; }
   .faculty-profile-branch { font-size:14px; }
   .faculty-profile-body { padding:0 18px 24px; }
 }
+/* USER PROFILE ID CARD MODAL */
+.user-id-modal{position:fixed;inset:0;z-index:1000001;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.52);backdrop-filter:blur(7px)}
+.user-id-modal.show{display:flex}.user-id-sheet{width:min(100%,485px);background:#fff;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 28px 70px rgba(15,23,42,.28);animation:userCardIn .2s ease-out}
+@keyframes userCardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.user-id-top{height:142px;position:relative;overflow:hidden;background:linear-gradient(135deg,#315be8 0%,#443de4 48%,#13acd0 100%)}
+.user-id-top::before,.user-id-top::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.10)}.user-id-top::before{width:180px;height:180px;right:-55px;top:-95px}.user-id-top::after{width:120px;height:120px;left:-55px;bottom:-78px}
+.user-id-close{position:absolute;right:14px;top:14px;z-index:4;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+.user-id-avatar-wrap{width:126px;height:126px;border-radius:50%;padding:6px;background:#fff;position:relative;z-index:3;margin:-63px auto 0;box-shadow:0 12px 30px rgba(15,23,42,.18)}
+.user-id-avatar{width:100%;height:100%;border-radius:50%;background:#eef5ff;color:#2b62e9;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;overflow:hidden}.user-id-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.user-id-body{padding:0 20px 22px;text-align:center}.user-id-name{margin:23px 0 3px;font-size:25px;line-height:1.15;font-weight:850;color:#111827}.user-id-branch{margin:0;color:#2563eb;font-size:14px;font-weight:800}
+.user-id-rank{display:inline-flex;align-items:center;gap:7px;margin-top:13px;padding:8px 15px;border-radius:999px;background:#fff9e7;border:1px solid #ffd76a;color:#a96800;font-size:12px;font-weight:800}
+.user-id-meta{display:grid;grid-template-columns:1fr 1.35fr;gap:10px;margin-top:16px;text-align:left}.user-id-meta-box{min-width:0;padding:12px 13px;border-radius:15px;background:#f8fafc;border:1px solid #e4ebf4}.user-id-meta-box strong{display:block;color:#94a3b8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}.user-id-meta-box span{display:block;color:#111827;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.user-id-meta-box.user-id-small span{font-size:10px;letter-spacing:.15px}
+.user-id-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.user-id-action{min-height:47px;border-radius:14px;border:1px solid #cfe0ff;background:#eef5ff;color:#2563eb;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}.user-id-action.primary{background:#2864e8;color:#fff;border-color:#2864e8;box-shadow:0 7px 18px rgba(40,100,232,.22)}.user-id-action:active{transform:scale(.98)}
+.profile-share-btn{width:100%;margin-top:10px;min-height:45px;border:1px solid #dbe5f1;border-radius:13px;background:#fff;color:#2563eb;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:pointer}.leaderboard-user-clickable:active{transform:scale(.99)}
+@media(max-width:560px){.user-id-sheet{border-radius:26px}.user-id-top{height:138px}.user-id-avatar-wrap{width:120px;height:120px;margin-top:-60px}.user-id-name{font-size:23px}.user-id-meta{grid-template-columns:1fr 1.25fr}}
+
 /* SEMESTER BANNER CARDS */
 .sem-banner-grid {
   display: grid;
@@ -1808,7 +1831,7 @@ body.faculty-modal-open { overflow:hidden; }
         class="home-external-frame"
         title="Trending Subjects"
         src="about:blank"
-        loading="eager"
+        loading="lazy"
         allow="fullscreen"
         referrerpolicy="strict-origin-when-cross-origin">
       </iframe>
@@ -2044,6 +2067,29 @@ body.faculty-modal-open { overflow:hidden; }
   </div>
 
   
+  <!-- USER PROFILE ID CARD MODAL -->
+  <div id="userIdCardModal" class="user-id-modal" aria-hidden="true" onclick="closeUserProfileCard(event)">
+    <div class="user-id-sheet" role="dialog" aria-modal="true" aria-labelledby="userIdCardName" onclick="event.stopPropagation()">
+      <div class="user-id-top">
+        <button class="user-id-close" type="button" aria-label="Close" onclick="closeUserProfileCard()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="user-id-avatar-wrap"><div class="user-id-avatar" id="userIdCardAvatar"><i class="fas fa-user"></i></div></div>
+      <div class="user-id-body">
+        <h2 class="user-id-name" id="userIdCardName">Engineer</h2>
+        <p class="user-id-branch" id="userIdCardBranch">Diploma Member</p>
+        <div class="user-id-rank" id="userIdCardRank"><i class="fas fa-trophy"></i> Rank #-</div>
+        <div class="user-id-meta">
+          <div class="user-id-meta-box"><strong>Coins</strong><span id="userIdCardCoins">0</span></div>
+          <div class="user-id-meta-box user-id-small"><strong>User ID</strong><span id="userIdCardUid">-</span></div>
+        </div>
+        <div class="user-id-actions">
+          <button class="user-id-action primary" type="button" onclick="shareUserProfileCard()"><i class="fas fa-share-nodes"></i> Share Card</button>
+          <button class="user-id-action" type="button" onclick="copyUserProfileCardLink()"><i class="far fa-copy"></i> Copy Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- BRANCH PAGE LIST -->
   <div id="notesPage" class="page">
     <div class="section-title">Engineering Branches</div>
@@ -2408,6 +2454,7 @@ body.faculty-modal-open { overflow:hidden; }
       </div>
       
       <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
+      <button class="profile-share-btn" type="button" onclick="openOwnProfileCard()"><i class="fas fa-id-card"></i> Share Profile Card</button>
       <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
     </div>
   </div>
@@ -2631,47 +2678,40 @@ body.faculty-modal-open { overflow:hidden; }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  /* LOADER TIMEOUT & ANIMATION */
-  document.addEventListener("DOMContentLoaded", function(){
+  /* FAST STARTUP LOADER
+     No artificial 1.8s wait. The loader stays only until the first app/auth state is ready. */
+  let appFirstPaintDone = false;
+  function hideStartupLoader() {
+    if (appFirstPaintDone) return;
+    appFirstPaintDone = true;
     const loader = document.getElementById("page-loader");
     const bar = document.getElementById("progress-bar");
     const percent = document.getElementById("progress-percent");
+    if (bar) bar.style.width = "100%";
+    if (percent) percent.textContent = "100%";
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (loader) loader.classList.add("hide");
+        document.body.style.overflow = "";
+      });
+    });
+  }
 
-    let progress = 0;
+  document.addEventListener("DOMContentLoaded", () => {
     document.body.style.overflow = "hidden";
+    // Give the browser one paint, then Firebase auth decides the visible shell.
+    requestAnimationFrame(() => {
+      const bar = document.getElementById("progress-bar");
+      const percent = document.getElementById("progress-percent");
+      if (bar) bar.style.width = "72%";
+      if (percent) percent.textContent = "72%";
+    });
+  }, { once: true });
 
-    const timer = setInterval(function(){
-      progress += Math.floor(Math.random() * 5) + 2;
-
-      if(progress >= 100){
-        progress = 100;
-        clearInterval(timer);
-
-        if (bar) bar.style.width = progress + "%";
-        if (percent) percent.textContent = progress + "%";
-
-        setTimeout(function(){
-          if (loader) loader.classList.add("hide");
-          document.body.style.overflow = "";
-        }, 450);
-
-        return;
-      }
-
-      if (bar) bar.style.width = progress + "%";
-      if (percent) percent.textContent = progress + "%";
-    }, 45);
-  });
-
-  setTimeout(function(){
-    const loader = document.getElementById("page-loader");
-    if(loader && !loader.classList.contains("hide")){
-      loader.classList.add("hide");
-      document.body.style.overflow = "";
-    }
-  }, 5000);
+  // Safety fallback. Never leave the user behind a loader.
+  setTimeout(hideStartupLoader, 2200);
 
   /* FIREBASE CONFIGS */
   const firebaseConfig = {
@@ -2897,10 +2937,6 @@ window.addEventListener('DOMContentLoaded', () => {
     frame.src = 'tranding-no-box.html';
   };
 
-  document.addEventListener('DOMContentLoaded', function(){
-    loadTrendingPage(false);
-  });
-
   /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = function(pageId, pushToHistory = true) {
     const target = document.getElementById(pageId);
@@ -2915,6 +2951,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
+    if (pageId === 'homePage') loadTrendingPage(false);
     renderPageUI(pageId);
 
     if (pushToHistory) {
@@ -2936,6 +2973,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (EXTERNAL_FILE_MAP[pageId]) loadPortalFromFile(pageId);
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
+    if (pageId === 'homePage') loadTrendingPage(false);
     renderPageUI(pageId);
     window.scrollTo({top:0, left:0, behavior:'instant'});
   });
@@ -2953,6 +2991,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (EXTERNAL_FILE_MAP[targetPage]) {
       activeEl.classList.add("external-page");
     }
+
+    if (targetPage === 'homePage') loadTrendingPage(false);
 
     const backBtn = document.getElementById("headerBackBtn");
     if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
@@ -3047,17 +3087,24 @@ window.addEventListener('DOMContentLoaded', () => {
       if (targetPage === 'leaderboardPage') {
         loadLeaderboardData();
       }
-      loadFeedbackData();
-      initFeedbackForm();
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
-      loadNewsData();
+      hideStartupLoader();
+
+      // Non-critical network work starts after the first screen is visible.
+      setTimeout(() => {
+        loadFeedbackData();
+        initFeedbackForm();
+        loadNewsData();
+        openSharedUserCardFromUrl();
+      }, 0);
 
       startCoinUsageTracker(user.uid);
     } else {
       if (usageTimerInterval) clearInterval(usageTimerInterval);
       document.getElementById("app").style.display = "none";
       document.getElementById("authPage").style.display = "flex";
+      hideStartupLoader();
     }
   });
 
@@ -3140,6 +3187,7 @@ window.addEventListener('DOMContentLoaded', () => {
      ========================================================= */
   let feedbackListenerStarted = false;
   let leaderboardListenerStarted = false;
+  let leaderboardUsersCache = [];
   let feedbackCarouselTimer = null;
   let feedbackCarouselIndex = 0;
   let feedbackCarouselCount = 0;
@@ -3445,7 +3493,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const listContainer = document.getElementById("leaderboardList");
     if (!listContainer) return;
 
-    const usersRef = ref(db, "users");
+    const usersRef = query(ref(db, "users"), orderByChild("coins"), limitToLast(20));
     onValue(usersRef, (snapshot) => {
       listContainer.innerHTML = "";
       if (!snapshot.exists()) {
@@ -3458,12 +3506,13 @@ window.addEventListener('DOMContentLoaded', () => {
         users.push({ id: childSnap.key, ...childSnap.val() });
       });
 
-      // Only the TOP 20 users are shown in the public leaderboard.
+      // Firebase returns the limited result in ascending order. Sort only these 20 users.
       users.sort((a, b) => {
         const coinDiff = (Number(b.coins) || 0) - (Number(a.coins) || 0);
         if (coinDiff !== 0) return coinDiff;
         return String(a.name || "").localeCompare(String(b.name || ""));
       });
+      leaderboardUsersCache = users;
 
       const top20 = users.slice(0, 20);
 
@@ -3479,7 +3528,9 @@ window.addEventListener('DOMContentLoaded', () => {
           `<i class="fas fa-user"></i>`;
 
         const card = document.createElement("div");
-        card.className = "leaderboard-card";
+        card.className = "leaderboard-card leaderboard-user-clickable";
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
         card.innerHTML = `
           <div class="rank-badge ${rankClass}">#${rank}</div>
           <div class="leader-user-info">
@@ -3493,6 +3544,10 @@ window.addEventListener('DOMContentLoaded', () => {
             <i class="fas fa-coins"></i> ${Number(u.coins) || 0}
           </div>
         `;
+        card.addEventListener("click", () => openUserProfileCard(u.id, rank));
+        card.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openUserProfileCard(u.id, rank); }
+        });
         listContainer.appendChild(card);
       });
     }, (error) => {
@@ -3500,6 +3555,314 @@ window.addEventListener('DOMContentLoaded', () => {
       listContainer.innerHTML = `<div class="empty"><p>Unable to load leaderboard right now.</p></div>`;
     });
   }
+
+  /* =========================================================
+     PUBLIC USER PROFILE ID CARD
+     ========================================================= */
+  let activeUserCard = null;
+
+  function sortUsersForRank(users) {
+    return users.sort((a, b) => {
+      const coinDiff = (Number(b.coins) || 0) - (Number(a.coins) || 0);
+      if (coinDiff !== 0) return coinDiff;
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+  }
+
+  async function getUserForProfileCard(uid, knownRank = null) {
+    if (!uid) return null;
+    const cached = leaderboardUsersCache.find(u => u.id === uid);
+    if (cached && knownRank) return { user: cached, rank: knownRank };
+    const [userSnapshot, usersSnapshot] = await Promise.all([
+      get(ref(db, `users/${uid}`)),
+      get(ref(db, "users"))
+    ]);
+    if (!userSnapshot.exists()) return null;
+    const user = { id: uid, ...userSnapshot.val() };
+    const allUsers = [];
+    usersSnapshot.forEach(childSnap => allUsers.push({ id: childSnap.key, ...childSnap.val() }));
+    sortUsersForRank(allUsers);
+    const index = allUsers.findIndex(item => item.id === uid);
+    return { user, rank: index >= 0 ? index + 1 : knownRank || null };
+  }
+
+  function setUserProfileCard(data, rank) {
+    const user = data || {};
+    const name = user.name || "Engineer";
+    const branch = user.branch || "Diploma Member";
+    const coins = Number(user.coins) || 0;
+    const uid = user.id || "-";
+    const avatar = document.getElementById("userIdCardAvatar");
+    if (avatar) avatar.innerHTML = (user.profilePic && validURL(user.profilePic))
+      ? `<img src="${escapeHTML(user.profilePic)}" alt="${escapeHTML(name)}">`
+      : `<span>${escapeHTML((name.trim().charAt(0) || "E").toUpperCase())}</span>`;
+    document.getElementById("userIdCardName").textContent = name;
+    document.getElementById("userIdCardBranch").textContent = branch;
+    document.getElementById("userIdCardCoins").textContent = coins;
+    document.getElementById("userIdCardUid").textContent = uid;
+    document.getElementById("userIdCardRank").innerHTML = `<i class="fas fa-trophy"></i> Rank #${rank || "-"}`;
+    activeUserCard = { ...user, id: uid, rank: rank || null };
+    const modal = document.getElementById("userIdCardModal");
+    if (modal) { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("user-id-modal-open"); }
+  }
+
+  window.openUserProfileCard = async function(uid, knownRank = null) {
+    const modal = document.getElementById("userIdCardModal");
+    if (!modal || !uid) return;
+    modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("user-id-modal-open");
+    const avatar = document.getElementById("userIdCardAvatar");
+    if (avatar) avatar.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+    document.getElementById("userIdCardName").textContent = "Loading...";
+    document.getElementById("userIdCardBranch").textContent = "Loading profile";
+    document.getElementById("userIdCardCoins").textContent = "0";
+    document.getElementById("userIdCardUid").textContent = uid;
+    document.getElementById("userIdCardRank").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading rank`;
+    try {
+      const result = await getUserForProfileCard(uid, knownRank);
+      if (!result) throw new Error("User profile not found.");
+      setUserProfileCard(result.user, result.rank);
+    } catch (error) {
+      console.error("User card error:", error);
+      document.getElementById("userIdCardName").textContent = "Profile unavailable";
+      document.getElementById("userIdCardBranch").textContent = "This user could not be loaded.";
+      document.getElementById("userIdCardRank").innerHTML = `<i class="fas fa-circle-exclamation"></i> Try again`;
+    }
+  };
+
+  window.openOwnProfileCard = async function() {
+    const user = auth.currentUser;
+    if (!user) return alert("Please login first.");
+    await openUserProfileCard(user.uid);
+  };
+
+  function getUserCardShareUrl(uid) {
+    const base = window.location.href.split("#")[0].split("?")[0];
+    return `${base}?user=${encodeURIComponent(uid)}#leaderboardPage`;
+  }
+
+  /* =========================================================
+     PROFILE CARD IMAGE SHARING
+     Creates a real PNG image from the visible profile data and
+     shares that image through the device share sheet.
+     ========================================================= */
+  async function createUserProfileCardImage(user) {
+    const width = 1080;
+    const height = 900;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    const radius = 54;
+
+    // Background
+    ctx.fillStyle = "#eef2f7";
+    ctx.fillRect(0, 0, width, height);
+
+    // Card shadow
+    ctx.save();
+    ctx.shadowColor = "rgba(15,23,42,.22)";
+    ctx.shadowBlur = 35;
+    ctx.shadowOffsetY = 16;
+    roundRect(ctx, 55, 35, width - 110, height - 70, radius);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.restore();
+
+    // Header gradient
+    ctx.save();
+    roundRect(ctx, 55, 35, width - 110, 285, radius);
+    ctx.clip();
+    const gradient = ctx.createLinearGradient(55, 35, width - 55, 320);
+    gradient.addColorStop(0, "#315be8");
+    gradient.addColorStop(.48, "#443de4");
+    gradient.addColorStop(1, "#13acd0");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(55, 35, width - 110, 285);
+
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.beginPath(); ctx.arc(930, 65, 170, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(100, 300, 125, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Brand
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.font = "800 30px Arial, sans-serif";
+    ctx.fillText("DIPLOMA ENGINEERS", 100, 100);
+    ctx.font = "600 19px Arial, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.fillText("Student Profile Card", 100, 132);
+
+    // Avatar
+    const avatarX = width / 2;
+    const avatarY = 315;
+    const avatarR = 100;
+    ctx.save();
+    ctx.shadowColor = "rgba(15,23,42,.20)";
+    ctx.shadowBlur = 25;
+    ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR + 10, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.restore();
+
+    let avatarDrawn = false;
+    const avatarSrc = user.photoURL || user.photo || user.profilePic || user.profilePhoto || "";
+    if (avatarSrc) {
+      try {
+        const img = await loadImageForCanvas(avatarSrc);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(img, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.restore();
+        avatarDrawn = true;
+      } catch (_) {}
+    }
+    if (!avatarDrawn) {
+      ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = "#eef5ff"; ctx.fill();
+      ctx.fillStyle = "#2864e8";
+      ctx.font = "800 78px Arial, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText((user.name || "E").trim().charAt(0).toUpperCase(), avatarX, avatarY + 4);
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    }
+
+    // Main details
+    const name = user.name || "Engineer";
+    const branch = user.branch || "Diploma Member";
+    const rank = user.rank || "-";
+    const coins = Number(user.coins) || 0;
+    const uid = user.id || user.uid || "-";
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#111827";
+    ctx.font = "800 42px Arial, sans-serif";
+    ctx.fillText(name, width / 2, 475);
+    ctx.fillStyle = "#2563eb";
+    ctx.font = "700 23px Arial, sans-serif";
+    ctx.fillText(branch, width / 2, 515);
+
+    // Rank pill
+    roundRect(ctx, 410, 545, 260, 58, 29);
+    ctx.fillStyle = "#fff9e7"; ctx.fill();
+    ctx.strokeStyle = "#ffd76a"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#a96800";
+    ctx.font = "800 21px Arial, sans-serif";
+    ctx.fillText(`🏆 Rank #${rank}`, width / 2, 582);
+
+    // Meta boxes
+    drawMetaBox(ctx, 110, 635, 390, 105, "COINS", String(coins));
+    drawMetaBox(ctx, 520, 635, 450, 105, "USER ID", uid);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "600 16px Arial, sans-serif";
+    ctx.fillText("Diploma Engineers • The Students' Trusted Learning Platform", width / 2, 805);
+
+    return await canvasToBlob(canvas);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawMetaBox(ctx, x, y, w, h, label, value) {
+    roundRect(ctx, x, y, w, h, 20);
+    ctx.fillStyle = "#f8fafc"; ctx.fill();
+    ctx.strokeStyle = "#e4ebf4"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "800 16px Arial, sans-serif";
+    ctx.fillText(label, x + 22, y + 32);
+    ctx.fillStyle = "#111827";
+    ctx.font = label === "USER ID" ? "700 18px Arial, sans-serif" : "800 26px Arial, sans-serif";
+    let safeValue = String(value);
+    if (label === "USER ID" && safeValue.length > 29) safeValue = safeValue.slice(0, 29) + "…";
+    ctx.fillText(safeValue, x + 22, y + 72);
+  }
+
+  function loadImageForCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Unable to create image")), "image/png", 1);
+    });
+  }
+
+  window.shareUserProfileCard = async function() {
+    if (!activeUserCard?.id) return;
+    const user = activeUserCard;
+    const url = getUserCardShareUrl(user.id);
+    const name = user.name || "Engineer";
+    const text = `${name}\'s Diploma Engineers Profile Card\nRank #${user.rank || "-"} • ${Number(user.coins) || 0} Coins\n\nView Profile Card: ${url}`;
+    const fileName = `Diploma-Engineers-${name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "Profile"}.png`;
+
+    try {
+      const blob = await createUserProfileCardImage(user);
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      // Mobile browsers: open the native share sheet with the actual PNG.
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: "Diploma Engineers Profile Card",
+          text,
+          files: [file]
+        });
+        return;
+      }
+
+      // Desktop / browsers without file sharing: download the generated image.
+      const imageUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = imageUrl; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+      alert("Profile card image ready. PNG image download ho gayi hai.");
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.error("Profile card image share error:", error);
+      try {
+        await navigator.clipboard.writeText(url);
+        alert("Image share unavailable. Profile card link copied instead.");
+      } catch {
+        alert("Profile card share nahi ho paya. Please try again.");
+      }
+    }
+  };
+
+  window.copyUserProfileCardLink = async function() {
+    if (!activeUserCard?.id) return;
+    const url = getUserCardShareUrl(activeUserCard.id);
+    try { await navigator.clipboard.writeText(url); alert("Profile card link copied!"); }
+    catch { prompt("Copy Profile Card Link:", url); }
+  };
+
+  window.closeUserProfileCard = function(event) {
+    if (event && event.target !== event.currentTarget) return;
+    const modal = document.getElementById("userIdCardModal");
+    if (!modal) return;
+    modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); document.body.classList.remove("user-id-modal-open");
+  };
+
+  function openSharedUserCardFromUrl() {
+    const uid = new URLSearchParams(window.location.search).get("user");
+    if (uid && auth.currentUser) setTimeout(() => openUserProfileCard(uid), 80);
+  }
+
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeUserProfileCard(); });
 
   window.toggleProfileEditMode = async function() {
     const displayView = document.getElementById("profileDisplayView");

@@ -3635,16 +3635,206 @@ window.addEventListener('DOMContentLoaded', () => {
     return `${base}?user=${encodeURIComponent(uid)}#leaderboardPage`;
   }
 
+  /* =========================================================
+     PROFILE CARD IMAGE SHARING
+     Creates a real PNG image from the visible profile data and
+     shares that image through the device share sheet.
+     ========================================================= */
+  async function createUserProfileCardImage(user) {
+    const width = 1080;
+    const height = 900;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    const radius = 54;
+
+    // Background
+    ctx.fillStyle = "#eef2f7";
+    ctx.fillRect(0, 0, width, height);
+
+    // Card shadow
+    ctx.save();
+    ctx.shadowColor = "rgba(15,23,42,.22)";
+    ctx.shadowBlur = 35;
+    ctx.shadowOffsetY = 16;
+    roundRect(ctx, 55, 35, width - 110, height - 70, radius);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.restore();
+
+    // Header gradient
+    ctx.save();
+    roundRect(ctx, 55, 35, width - 110, 285, radius);
+    ctx.clip();
+    const gradient = ctx.createLinearGradient(55, 35, width - 55, 320);
+    gradient.addColorStop(0, "#315be8");
+    gradient.addColorStop(.48, "#443de4");
+    gradient.addColorStop(1, "#13acd0");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(55, 35, width - 110, 285);
+
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.beginPath(); ctx.arc(930, 65, 170, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(100, 300, 125, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Brand
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.font = "800 30px Arial, sans-serif";
+    ctx.fillText("DIPLOMA ENGINEERS", 100, 100);
+    ctx.font = "600 19px Arial, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.fillText("Student Profile Card", 100, 132);
+
+    // Avatar
+    const avatarX = width / 2;
+    const avatarY = 315;
+    const avatarR = 100;
+    ctx.save();
+    ctx.shadowColor = "rgba(15,23,42,.20)";
+    ctx.shadowBlur = 25;
+    ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR + 10, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.restore();
+
+    let avatarDrawn = false;
+    const avatarSrc = user.photoURL || user.photo || user.profilePic || user.profilePhoto || "";
+    if (avatarSrc) {
+      try {
+        const img = await loadImageForCanvas(avatarSrc);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(img, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.restore();
+        avatarDrawn = true;
+      } catch (_) {}
+    }
+    if (!avatarDrawn) {
+      ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = "#eef5ff"; ctx.fill();
+      ctx.fillStyle = "#2864e8";
+      ctx.font = "800 78px Arial, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText((user.name || "E").trim().charAt(0).toUpperCase(), avatarX, avatarY + 4);
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    }
+
+    // Main details
+    const name = user.name || "Engineer";
+    const branch = user.branch || "Diploma Member";
+    const rank = user.rank || "-";
+    const coins = Number(user.coins) || 0;
+    const uid = user.id || user.uid || "-";
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#111827";
+    ctx.font = "800 42px Arial, sans-serif";
+    ctx.fillText(name, width / 2, 475);
+    ctx.fillStyle = "#2563eb";
+    ctx.font = "700 23px Arial, sans-serif";
+    ctx.fillText(branch, width / 2, 515);
+
+    // Rank pill
+    roundRect(ctx, 410, 545, 260, 58, 29);
+    ctx.fillStyle = "#fff9e7"; ctx.fill();
+    ctx.strokeStyle = "#ffd76a"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#a96800";
+    ctx.font = "800 21px Arial, sans-serif";
+    ctx.fillText(`🏆 Rank #${rank}`, width / 2, 582);
+
+    // Meta boxes
+    drawMetaBox(ctx, 110, 635, 390, 105, "COINS", String(coins));
+    drawMetaBox(ctx, 520, 635, 450, 105, "USER ID", uid);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "600 16px Arial, sans-serif";
+    ctx.fillText("Diploma Engineers • The Students' Trusted Learning Platform", width / 2, 805);
+
+    return await canvasToBlob(canvas);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawMetaBox(ctx, x, y, w, h, label, value) {
+    roundRect(ctx, x, y, w, h, 20);
+    ctx.fillStyle = "#f8fafc"; ctx.fill();
+    ctx.strokeStyle = "#e4ebf4"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "800 16px Arial, sans-serif";
+    ctx.fillText(label, x + 22, y + 32);
+    ctx.fillStyle = "#111827";
+    ctx.font = label === "USER ID" ? "700 18px Arial, sans-serif" : "800 26px Arial, sans-serif";
+    let safeValue = String(value);
+    if (label === "USER ID" && safeValue.length > 29) safeValue = safeValue.slice(0, 29) + "…";
+    ctx.fillText(safeValue, x + 22, y + 72);
+  }
+
+  function loadImageForCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Unable to create image")), "image/png", 1);
+    });
+  }
+
   window.shareUserProfileCard = async function() {
     if (!activeUserCard?.id) return;
-    const url = getUserCardShareUrl(activeUserCard.id);
-    const name = activeUserCard.name || "Engineer";
-    const text = `${name}'s Diploma Engineers Profile Card\nRank #${activeUserCard.rank || "-"} • ${Number(activeUserCard.coins) || 0} Coins`;
+    const user = activeUserCard;
+    const url = getUserCardShareUrl(user.id);
+    const name = user.name || "Engineer";
+    const text = `${name}'s Diploma Engineers Profile Card\nRank #${user.rank || "-"} • ${Number(user.coins) || 0} Coins`;
+    const fileName = `Diploma-Engineers-${name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "Profile"}.png`;
+
     try {
-      if (navigator.share) await navigator.share({ title: "Diploma Engineers Profile Card", text, url });
-      else window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank");
+      const blob = await createUserProfileCardImage(user);
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      // Mobile browsers: open the native share sheet with the actual PNG.
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: "Diploma Engineers Profile Card",
+          text,
+          files: [file]
+        });
+        return;
+      }
+
+      // Desktop / browsers without file sharing: download the generated image.
+      const imageUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = imageUrl; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+      alert("Profile card image ready. PNG image download ho gayi hai.");
     } catch (error) {
-      if (error?.name !== "AbortError") { try { await navigator.clipboard.writeText(url); alert("Profile card link copied!"); } catch {} }
+      if (error?.name === "AbortError") return;
+      console.error("Profile card image share error:", error);
+      try {
+        await navigator.clipboard.writeText(url);
+        alert("Image share unavailable. Profile card link copied instead.");
+      } catch {
+        alert("Profile card share nahi ho paya. Please try again.");
+      }
     }
   };
 

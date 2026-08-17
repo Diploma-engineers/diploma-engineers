@@ -302,115 +302,6 @@ body {
   cursor: pointer;
 }
 
-
-/* PHONE OTP AUTH */
-.otp-auth-box {
-  max-width: 460px;
-}
-
-.otp-intro {
-  text-align: center;
-  color: var(--muted-text, #64748b);
-  font-size: 13px;
-  line-height: 1.55;
-  margin: -4px 0 18px;
-}
-
-.phone-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-}
-
-.phone-input-wrap .country-code {
-  min-width: 58px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-gray);
-  border: 1.5px solid var(--border-light);
-  border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  color: var(--dark-text);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.phone-input-wrap input {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
-}
-
-.otp-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.otp-actions button {
-  border: 0;
-  background: transparent;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 7px 4px;
-}
-
-.otp-actions button:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.otp-security-note {
-  margin-top: 16px;
-  text-align: center;
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.otp-security-note i {
-  margin-right: 5px;
-  color: var(--primary);
-}
-
-.otp-auth-message {
-  display: none;
-  margin-top: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 12px;
-  line-height: 1.45;
-  text-align: center;
-}
-
-.otp-auth-message.show {
-  display: block;
-}
-
-.otp-auth-message.error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-.otp-auth-message.success {
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-
-.otp-auth-message.info {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-}
-
-#recaptcha-container {
-  min-height: 0;
-}
-
 /* MAIN APP WRAPPER */
 #app {
   display: none;
@@ -1822,111 +1713,17 @@ body.faculty-modal-open { overflow:hidden; }
 
 <!-- AUTH PAGE -->
 <div id="authPage" style="display:none;">
-  <div class="auth-box otp-auth-box">
-
-    <div class="logo">
-      Diploma <span>Engineers</span>
-    </div>
-
-    <!-- PHONE STEP -->
-    <div id="phoneStep">
-      <h2>Login with Mobile</h2>
-
-      <p class="otp-intro">
-        Enter your mobile number. We will send a verification OTP.
-      </p>
-
-      <div class="form-group phone-input-wrap">
-        <span class="country-code">+91</span>
-        <input
-          type="tel"
-          id="mobileNumber"
-          inputmode="numeric"
-          autocomplete="tel"
-          maxlength="10"
-          placeholder="10-digit mobile number"
-          aria-label="Mobile number"
-        >
-      </div>
-
-      <button class="btn-main" type="button" id="sendOtpBtn" onclick="sendOTP()">
-        Send OTP
-      </button>
-
-      <div class="otp-security-note">
-        <i class="fas fa-shield-halved"></i>
-        Your mobile number is verified securely with Firebase.
-      </div>
-    </div>
-
-    <!-- OTP STEP -->
-    <div id="otpStep" style="display:none;">
-      <h2>Verify Mobile Number</h2>
-
-      <p class="otp-intro">
-        Enter the 6-digit OTP sent to
-        <strong id="otpMobileDisplay">+91</strong>
-      </p>
-
+  <div class="auth-box">
+    <div class="logo">Diploma <span>Engineers</span></div>
+    <h2 id="formTitle">Login</h2>
+    
+    <div id="registerFields" style="display:none;">
       <div class="form-group">
-        <input
-          type="text"
-          id="otpCode"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          maxlength="6"
-          placeholder="Enter 6-digit OTP"
-          aria-label="OTP"
-          style="text-align:center;letter-spacing:7px;font-size:20px;font-weight:700;"
-        >
+        <input type="text" id="name" placeholder="Full Name">
       </div>
-
-      <button class="btn-main" type="button" id="verifyOtpBtn" onclick="verifyOTP()">
-        Verify OTP
-      </button>
-
-      <div class="otp-actions">
-        <button type="button" id="resendOtpBtn" onclick="resendOTP()" disabled>
-          Resend OTP <span id="resendTimer">(30s)</span>
-        </button>
-        <button type="button" onclick="changeMobileNumber()">
-          Change Number
-        </button>
-      </div>
-    </div>
-
-    <!-- PROFILE STEP -->
-    <div id="profileStep" style="display:none;">
-      <h2>Complete Your Profile</h2>
-
-      <p class="otp-intro">
-        Mobile verified successfully. Enter your details to complete your account.
-      </p>
-
       <div class="form-group">
-        <input
-          type="text"
-          id="authProfileName"
-          autocomplete="name"
-          placeholder="Full Name"
-          maxlength="80"
-        >
-      </div>
-
-      <div class="form-group">
-        <input
-          type="email"
-          id="authProfileEmail"
-          autocomplete="email"
-          placeholder="Email Address"
-          maxlength="120"
-        >
-      </div>
-
-      <div class="form-group">
-        <select id="authProfileBranch" aria-label="Branch">
-          <option value="">Select Branch</option>
-          <option value="Civil Engineering">Civil Engineering</option>
+        <select id="branch">
+          <option value="Civil Engineering" selected>Civil Engineering</option>
           <option value="Computer Science Engineering">Computer Science Engineering</option>
           <option value="Electrical Engineering">Electrical Engineering</option>
           <option value="Electronics Engineering">Electronics Engineering</option>
@@ -1935,22 +1732,25 @@ body.faculty-modal-open { overflow:hidden; }
           <option value="Agriculture Engineering">Agriculture Engineering</option>
         </select>
       </div>
-
-      <button class="btn-main" type="button" id="completeProfileBtn" onclick="completeProfile()">
-        Complete Registration
-      </button>
-
-      <div class="otp-security-note">
-        <i class="fas fa-circle-check"></i>
-        Your profile will be saved securely.
+      <div class="form-group">
+        <input type="text" id="mobile" placeholder="Mobile Number">
       </div>
     </div>
+    
+    <div class="form-group">
+      <input type="email" id="email" placeholder="Email Address">
+    </div>
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password">
+    </div>
+    
+    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
+    
+    <button class="btn-google" onclick="googleLogin()">
+      <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
+    </button>
 
-    <!-- Firebase invisible reCAPTCHA target -->
-    <div id="recaptcha-container"></div>
-
-    <div id="otpAuthMessage" class="otp-auth-message" role="status" aria-live="polite"></div>
-
+    <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
   </div>
 </div>
 
@@ -2821,8 +2621,8 @@ body.faculty-modal-open { overflow:hidden; }
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, update, query, orderByChild, equalTo, onValue, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   /* LOADER TIMEOUT & ANIMATION */
   document.addEventListener("DOMContentLoaded", function(){
@@ -2888,6 +2688,7 @@ body.faculty-modal-open { overflow:hidden; }
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
+  const provider = new GoogleAuthProvider();
 
   const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
   const newsDb = getDatabase(newsApp);
@@ -3150,706 +2951,102 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tab) tab.classList.add('active');
   }
 
-  /* =========================================================
-     PHONE OTP AUTHENTICATION
-     Flow:
-     Mobile -> OTP -> Verify -> Existing user: Login
-                         -> New user: Name + Email + Branch
-     ========================================================= */
-
-  let confirmationResult = null;
-  let recaptchaVerifier = null;
-  let resendTimerInterval = null;
-  let resendSeconds = 30;
-  let pendingPhoneNumber = "";
-  let authBusy = false;
-  let profileListenerUid = null;
-  let profileListenerStop = null;
-
-  function authMessage(message, type = "info") {
-    const box = document.getElementById("otpAuthMessage");
-    if (!box) return;
-
-    if (!message) {
-      box.textContent = "";
-      box.className = "otp-auth-message";
-      return;
-    }
-
-    box.textContent = message;
-    box.className = "otp-auth-message show " + type;
-  }
-
-  function setButtonLoading(id, loading, normalText, loadingText) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-
-    btn.disabled = loading;
-    btn.textContent = loading ? loadingText : normalText;
-  }
-
-  function normalizeIndianMobile(value) {
-    let raw = String(value || "").replace(/\D/g, "");
-
-    if (raw.startsWith("91") && raw.length === 12) {
-      raw = raw.substring(2);
-    }
-
-    if (raw.length !== 10 || !/^[6-9]\d{9}$/.test(raw)) {
-      return null;
-    }
-
-    return "+91" + raw;
-  }
-
-  function destroyRecaptcha() {
-    if (recaptchaVerifier) {
-      try {
-        recaptchaVerifier.clear();
-      } catch (e) {
-        console.warn("reCAPTCHA cleanup:", e);
-      }
-      recaptchaVerifier = null;
-    }
-  }
-
-  function createRecaptcha() {
-    destroyRecaptcha();
-
-    recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: function() {
-          console.log("reCAPTCHA verified");
-        },
-        "expired-callback": function() {
-          authMessage("Security verification expired. Please tap Send OTP again.", "error");
-        }
-      }
-    );
-
-    return recaptchaVerifier;
-  }
-
-  function showAuthStep(step) {
-    const steps = {
-      phone: "phoneStep",
-      otp: "otpStep",
-      profile: "profileStep"
-    };
-
-    Object.values(steps).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = "none";
-    });
-
-    const active = document.getElementById(steps[step]);
-    if (active) active.style.display = "block";
-  }
-
-  function startResendTimer() {
-    clearInterval(resendTimerInterval);
-
-    resendSeconds = 30;
-
-    const btn = document.getElementById("resendOtpBtn");
-    const timer = document.getElementById("resendTimer");
-
-    if (btn) btn.disabled = true;
-    if (timer) timer.textContent = "(30s)";
-
-    resendTimerInterval = setInterval(() => {
-      resendSeconds--;
-
-      if (timer) {
-        timer.textContent = resendSeconds > 0 ? `(${resendSeconds}s)` : "";
-      }
-
-      if (resendSeconds <= 0) {
-        clearInterval(resendTimerInterval);
-        resendTimerInterval = null;
-        if (btn) btn.disabled = false;
-      }
-    }, 1000);
-  }
-
-  function clearAuthInputs() {
-    const ids = [
-      "mobileNumber",
-      "otpCode",
-      "authProfileName",
-      "authProfileEmail"
-    ];
-
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
-
-    const branch = document.getElementById("authProfileBranch");
-    if (branch) branch.value = "";
-  }
-
-  window.sendOTP = async function() {
-    if (authBusy) return;
-
-    const input = document.getElementById("mobileNumber");
-    const fullPhone = normalizeIndianMobile(input ? input.value : "");
-
-    if (!fullPhone) {
-      authMessage("Please enter a valid 10-digit Indian mobile number.", "error");
-      if (input) input.focus();
-      return;
-    }
-
-    pendingPhoneNumber = fullPhone;
-    authBusy = true;
-
-    setButtonLoading("sendOtpBtn", true, "Send OTP", "Sending OTP...");
-    authMessage("Preparing secure verification...", "info");
-
-    try {
-      const verifier = createRecaptcha();
-
-      confirmationResult = await signInWithPhoneNumber(
-        auth,
-        fullPhone,
-        verifier
-      );
-
-      const display = document.getElementById("otpMobileDisplay");
-      if (display) display.textContent = fullPhone;
-
-      showAuthStep("otp");
-      authMessage("OTP sent successfully. Check your SMS.", "success");
-
-      const otpInput = document.getElementById("otpCode");
-      if (otpInput) {
-        otpInput.value = "";
-        setTimeout(() => otpInput.focus(), 100);
-      }
-
-      startResendTimer();
-
-    } catch (error) {
-      console.error("Send OTP error:", error);
-
-      let message = "Unable to send OTP. Please try again.";
-
-      if (error && error.code === "auth/too-many-requests") {
-        message = "Too many OTP requests. Please wait and try again later.";
-      } else if (error && error.code === "auth/invalid-phone-number") {
-        message = "Invalid mobile number. Please check the number.";
-      } else if (error && error.code === "auth/quota-exceeded") {
-        message = "OTP SMS quota has been reached. Please try again later.";
-      } else if (error && error.message) {
-        message = error.message;
-      }
-
-      authMessage(message, "error");
-      destroyRecaptcha();
-      confirmationResult = null;
-
-    } finally {
-      authBusy = false;
-      setButtonLoading("sendOtpBtn", false, "Send OTP", "Sending OTP...");
-    }
+  window.toggleForm = function() {
+    isRegister = !isRegister;
+    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
+    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
+    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
+    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
   };
 
-  window.verifyOTP = async function() {
-    if (authBusy) return;
-
-    const otpInput = document.getElementById("otpCode");
-    const otp = String(otpInput ? otpInput.value : "").replace(/\D/g, "");
-
-    if (!/^\d{6}$/.test(otp)) {
-      authMessage("Please enter the complete 6-digit OTP.", "error");
-      if (otpInput) otpInput.focus();
+  window.submitAuthForm = async function() {
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value.trim();
+    
+    if (!email || !password) {
+      alert("Please enter Email and Password");
       return;
     }
-
-    if (!confirmationResult) {
-      authMessage("Please request a new OTP first.", "error");
-      showAuthStep("phone");
-      return;
-    }
-
-    authBusy = true;
-    setButtonLoading("verifyOtpBtn", true, "Verify OTP", "Verifying...");
 
     try {
-      const result = await confirmationResult.confirm(otp);
-      const user = result.user;
-
-      confirmationResult = null;
-      clearInterval(resendTimerInterval);
-      resendTimerInterval = null;
-      destroyRecaptcha();
-
-      authMessage("Mobile verified successfully.", "success");
-
-      await handleVerifiedPhoneUser(user);
-
-    } catch (error) {
-      console.error("Verify OTP error:", error);
-
-      let message = "Invalid OTP. Please check the code and try again.";
-
-      if (error && error.code === "auth/invalid-verification-code") {
-        message = "Incorrect OTP. Please enter the latest 6-digit code.";
-      } else if (error && error.code === "auth/code-expired") {
-        message = "This OTP has expired. Please request a new OTP.";
-      }
-
-      authMessage(message, "error");
-
-    } finally {
-      authBusy = false;
-      setButtonLoading("verifyOtpBtn", false, "Verify OTP", "Verifying...");
-    }
-  };
-
-  window.resendOTP = async function() {
-    if (authBusy || !pendingPhoneNumber) return;
-
-    authBusy = true;
-    setButtonLoading("resendOtpBtn", true, "Resend OTP", "Sending...");
-
-    try {
-      const verifier = createRecaptcha();
-
-      confirmationResult = await signInWithPhoneNumber(
-        auth,
-        pendingPhoneNumber,
-        verifier
-      );
-
-      authMessage("A new OTP has been sent.", "success");
-      startResendTimer();
-
-    } catch (error) {
-      console.error("Resend OTP error:", error);
-      authMessage(
-        error && error.message ? error.message : "Could not resend OTP. Please try again.",
-        "error"
-      );
-      destroyRecaptcha();
-
-    } finally {
-      authBusy = false;
-
-      const btn = document.getElementById("resendOtpBtn");
-      if (btn && resendSeconds <= 0) btn.disabled = false;
-      if (btn && resendSeconds > 0) btn.disabled = true;
-    }
-  };
-
-  window.changeMobileNumber = function() {
-    confirmationResult = null;
-    pendingPhoneNumber = "";
-    clearInterval(resendTimerInterval);
-    resendTimerInterval = null;
-    destroyRecaptcha();
-
-    const otpInput = document.getElementById("otpCode");
-    if (otpInput) otpInput.value = "";
-
-    authMessage("");
-    showAuthStep("phone");
-
-    const input = document.getElementById("mobileNumber");
-    if (input) {
-      input.focus();
-      input.select();
-    }
-  };
-
-  async function findExistingProfileByMobile(fullPhone) {
-    try {
-      const usersRef = ref(db, "users");
-
-      const variants = [
-        fullPhone,
-        fullPhone.replace("+91", ""),
-        "91" + fullPhone.replace("+91", "")
-      ];
-
-      for (const mobile of variants) {
-        try {
-          const q = query(usersRef, orderByChild("mobile"), equalTo(mobile));
-          const snapshot = await get(q);
-
-          if (snapshot.exists()) {
-            let found = null;
-
-            snapshot.forEach(childSnapshot => {
-              if (!found) {
-                found = {
-                  uid: childSnapshot.key,
-                  data: childSnapshot.val()
-                };
-              }
-            });
-
-            if (found) return found;
-          }
-        } catch (queryError) {
-          console.warn("Mobile profile lookup skipped:", queryError);
-        }
-      }
-    } catch (error) {
-      console.warn("Profile lookup error:", error);
-    }
-
-    return null;
-  }
-
-  async function handleVerifiedPhoneUser(user) {
-    const phone = user.phoneNumber || pendingPhoneNumber;
-
-    // First look for a profile already stored against this mobile number.
-    // This also helps users who were registered previously in the database.
-    const existingByMobile = await findExistingProfileByMobile(phone);
-
-    if (existingByMobile && existingByMobile.data) {
-      const oldData = existingByMobile.data;
-
-      const mergedData = {
-        ...oldData,
-        uid: user.uid,
-        mobile: phone,
-        lastLogin: Date.now(),
-        coins: Number(oldData.coins || 0)
-      };
-
-      await set(ref(db, "users/" + user.uid), mergedData);
-
-      // If an old UID exists and is different, keep it untouched.
-      // This avoids destructive migration of existing data.
-      currentUserData = mergedData;
-
-      await finishPhoneLogin(mergedData);
-      return;
-    }
-
-    // Check the newly verified Firebase UID.
-    const userRef = ref(db, "users/" + user.uid);
-    const snapshot = await get(userRef);
-
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-
-      await update(userRef, {
-        mobile: phone,
-        lastLogin: Date.now()
-      });
-
-      data.mobile = phone;
-      data.lastLogin = Date.now();
-
-      await finishPhoneLogin(data);
-      return;
-    }
-
-    // New phone user: require profile completion.
-    showAuthStep("profile");
-    authMessage("Mobile verified. Please complete your profile.", "success");
-
-    const email = document.getElementById("authProfileEmail");
-    if (email) email.focus();
-  }
-
-  window.completeProfile = async function() {
-    if (authBusy) return;
-
-    const user = auth.currentUser;
-
-    if (!user) {
-      authMessage("Your verification session expired. Please login again.", "error");
-      showAuthStep("phone");
-      return;
-    }
-
-    const name = String(document.getElementById("authProfileName")?.value || "").trim();
-    const email = String(document.getElementById("authProfileEmail")?.value || "").trim();
-    const branch = String(document.getElementById("authProfileBranch")?.value || "").trim();
-
-    if (name.length < 2) {
-      authMessage("Please enter your full name.", "error");
-      document.getElementById("authProfileName")?.focus();
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      authMessage("Please enter a valid email address.", "error");
-      document.getElementById("authProfileEmail")?.focus();
-      return;
-    }
-
-    if (!branch) {
-      authMessage("Please select your branch.", "error");
-      document.getElementById("authProfileBranch")?.focus();
-      return;
-    }
-
-    authBusy = true;
-    setButtonLoading(
-      "completeProfileBtn",
-      true,
-      "Complete Registration",
-      "Saving Profile..."
-    );
-
-    try {
-      const userData = {
-        uid: user.uid,
-        mobile: user.phoneNumber || pendingPhoneNumber,
-        name: name,
-        email: email,
-        branch: branch,
-        coins: 0,
-        college: "",
-        enrollment: "",
-        address: "",
-        semester: "",
-        profilePic: "",
-        createdAt: Date.now(),
-        lastLogin: Date.now()
-      };
-
-      await set(ref(db, "users/" + user.uid), userData);
-
-      currentUserData = userData;
-
-      authMessage("Profile completed. Welcome to Diploma Engineers!", "success");
-
-      await finishPhoneLogin(userData);
-
-    } catch (error) {
-      console.error("Profile save error:", error);
-
-      authMessage(
-        error && error.message
-          ? error.message
-          : "Could not save your profile. Please try again.",
-        "error"
-      );
-
-    } finally {
-      authBusy = false;
-      setButtonLoading(
-        "completeProfileBtn",
-        false,
-        "Complete Registration",
-        "Saving Profile..."
-      );
-    }
-  };
-
-  async function finishPhoneLogin(userData) {
-    currentUserData = userData || {};
-
-    // Keep the existing app's live profile behavior without creating
-    // duplicate listeners every time auth state is refreshed.
-    const liveUid = auth.currentUser?.uid;
-    if (liveUid && profileListenerUid !== liveUid) {
-      if (profileListenerStop) {
-        try { profileListenerStop(); } catch (e) {}
-      }
-
-      profileListenerUid = liveUid;
-      profileListenerStop = onValue(
-        ref(db, `users/${liveUid}`),
-        (snapshot) => {
-          if (snapshot.exists()) {
-            currentUserData = snapshot.val();
-            updateProfileUI(currentUserData);
-          }
-        }
-      );
-    }
-
-    const authPage = document.getElementById("authPage");
-    const appEl = document.getElementById("app");
-
-    if (authPage) authPage.style.display = "none";
-    if (appEl) appEl.style.display = "block";
-
-    document.body.style.overflow = "";
-
-    const initialHash = window.location.hash.substring(1);
-    const targetPage =
-      initialHash &&
-      (document.getElementById(initialHash) || EXTERNAL_FILE_MAP[initialHash])
-        ? initialHash
-        : defaultPage;
-
-    if (externalBranches.includes(targetPage)) {
-      loadPortalFromFile(targetPage);
-    }
-
-    if (targetPage === "leaderboardPage") {
-      loadLeaderboardData();
-    }
-
-    loadFeedbackData();
-    initFeedbackForm();
-
-    history.replaceState(
-      { pageId: targetPage },
-      "",
-      "#" + targetPage
-    );
-
-    renderPageUI(targetPage);
-    loadNewsData();
-
-    if (usageTimerInterval) clearInterval(usageTimerInterval);
-    startCoinUsageTracker(auth.currentUser.uid);
-    updateProfileUI(currentUserData);
-  }
-
-  window.logoutFirebase = async function() {
-    try {
-      if (usageTimerInterval) clearInterval(usageTimerInterval);
-
-      clearInterval(resendTimerInterval);
-      resendTimerInterval = null;
-
-      confirmationResult = null;
-      pendingPhoneNumber = "";
-      destroyRecaptcha();
-
-      await signOut(auth);
-
-      if (profileListenerStop) {
-        try { profileListenerStop(); } catch (e) {}
-      }
-      profileListenerStop = null;
-      profileListenerUid = null;
-
-      clearAuthInputs();
-      authMessage("");
-      showAuthStep("phone");
-
-      const input = document.getElementById("mobileNumber");
-      if (input) input.focus();
-
-    } catch (error) {
-      console.error("Logout error:", error);
-      authMessage(
-        error && error.message ? error.message : "Logout failed. Please try again.",
-        "error"
-      );
-    }
-  };
-
-  onAuthStateChanged(auth, async (user) => {
-    try {
-      if (user) {
-        const userRef = ref(db, `users/${user.uid}`);
-        const snapshot = await get(userRef);
-
-        // Do not expose the main app until a profile exists.
-        if (!snapshot.exists() || !snapshot.val()?.name || !snapshot.val()?.branch) {
-          const phone = user.phoneNumber || pendingPhoneNumber;
-
-          // If a previous database profile exists under the same phone,
-          // restore it automatically.
-          const existingByMobile = await findExistingProfileByMobile(phone);
-
-          if (existingByMobile && existingByMobile.data) {
-            const oldData = existingByMobile.data;
-
-            const restored = {
-              ...oldData,
-              uid: user.uid,
-              mobile: phone,
-              lastLogin: Date.now(),
-              coins: Number(oldData.coins || 0)
-            };
-
-            await set(userRef, restored);
-            await finishPhoneLogin(restored);
-            return;
-          }
-
-          document.getElementById("app").style.display = "none";
-          document.getElementById("authPage").style.display = "flex";
-          showAuthStep("profile");
-
-          authMessage(
-            "Mobile verified. Please complete your profile.",
-            "success"
-          );
-
+      if (isRegister) {
+        let name = document.getElementById("name").value.trim();
+        let branch = document.getElementById("branch").value;
+        let mobile = document.getElementById("mobile").value.trim();
+        
+        if (!name || !mobile) {
+          alert("Please fill all details");
           return;
         }
 
-        const data = snapshot.val();
-
-        await update(userRef, {
-          mobile: user.phoneNumber || data.mobile || "",
-          lastLogin: Date.now()
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await set(ref(db, "users/" + cred.user.uid), { 
+          name, email, branch, mobile, coins: 0,
+          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
         });
-
-        data.mobile = user.phoneNumber || data.mobile || "";
-        data.lastLogin = Date.now();
-
-        await finishPhoneLogin(data);
-
       } else {
-        if (usageTimerInterval) clearInterval(usageTimerInterval);
-
-        if (profileListenerStop) {
-          try { profileListenerStop(); } catch (e) {}
-        }
-        profileListenerStop = null;
-        profileListenerUid = null;
-
-        document.getElementById("app").style.display = "none";
-        document.getElementById("authPage").style.display = "flex";
-
-        showAuthStep("phone");
-        authMessage("");
+        await signInWithEmailAndPassword(auth, email, password);
       }
+    } catch (e) {
+      alert("Auth Error: " + e.message);
+    }
+  };
 
-    } catch (error) {
-      console.error("Auth state error:", error);
+  window.googleLogin = async function() {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
+      if (!snapshot.exists()) {
+        await set(ref(db, "users/" + result.user.uid), {
+          name: result.user.displayName || "Google User",
+          email: result.user.email,
+          branch: "Civil Engineering",
+          mobile: "N/A", coins: 0,
+          college: "", enrollment: "", address: "", semester: "", profilePic: ""
+        });
+      }
+    } catch (e) {
+      alert("Google Login Error: " + e.message);
+    }
+  };
 
+  window.logoutFirebase = function() {
+    if (usageTimerInterval) clearInterval(usageTimerInterval);
+    signOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userRef = ref(db, `users/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          currentUserData = snapshot.val();
+          updateProfileUI(currentUserData);
+        }
+      });
+
+      document.getElementById("authPage").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
+      const initialHash = window.location.hash.substring(1);
+      const targetPage = initialHash || defaultPage;
+      if (externalBranches.includes(targetPage)) {
+        loadPortalFromFile(targetPage);
+      }
+      if (targetPage === 'leaderboardPage') {
+        loadLeaderboardData();
+      }
+      loadFeedbackData();
+      initFeedbackForm();
+      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+      renderPageUI(targetPage);
+      loadNewsData();
+
+      startCoinUsageTracker(user.uid);
+    } else {
+      if (usageTimerInterval) clearInterval(usageTimerInterval);
       document.getElementById("app").style.display = "none";
       document.getElementById("authPage").style.display = "flex";
-      showAuthStep("phone");
-
-      authMessage(
-        "Could not load your account. Please try again.",
-        "error"
-      );
-    }
-  });
-
-  // Numeric-only helpers
-  document.addEventListener("input", function(event) {
-    if (event.target && event.target.id === "mobileNumber") {
-      event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
-    }
-
-    if (event.target && event.target.id === "otpCode") {
-      event.target.value = event.target.value.replace(/\D/g, "").slice(0, 6);
-    }
-  });
-
-  document.addEventListener("keydown", function(event) {
-    if (event.target && event.target.id === "mobileNumber" && event.key === "Enter") {
-      event.preventDefault();
-      window.sendOTP();
-    }
-
-    if (event.target && event.target.id === "otpCode" && event.key === "Enter") {
-      event.preventDefault();
-      window.verifyOTP();
     }
   });
 

@@ -1,620 +1,1826 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mechanical Engineering Study Library App</title>
 
-<!-- Google Fonts & Font Awesome Icons -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mechanical Notes | Diploma Engineers</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-:root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #0f172a;
-  --accent: #f97316;
-  --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #e0e8ff 50%, #f5f3ff 100%);
-  --card-bg: #ffffff;
-  --text-dark: #0f172a;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-  --shadow-hover: 0 20px 30px -5px rgba(37, 99, 235, 0.15);
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root{
+--primary:#2563eb;
+--primary2:#1d4ed8;
+--text:#0f172a;
+--muted:#64748b;
+--bg:#f8fafc;
+--card:#fff;
+--border:#e2e8f0;
+--shadow:0 10px 25px -5px rgba(15,23,42,.08),
+0 8px 10px -6px rgba(15,23,42,.04);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  scroll-behavior: smooth;
-  -webkit-tap-highlight-color: transparent;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Plus Jakarta Sans',sans-serif;
+scroll-behavior:smooth;
 }
 
-body {
-  background: var(--bg-gradient);
-  background-attachment: fixed;
-  color: var(--text-dark);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+body{
+background:linear-gradient(180deg,#fff,#f8fafc);
+color:var(--text);
+min-height:100vh;
 }
 
-/* APP NAVIGATION BAR (TOP HORIZONTAL SCROLL) */
-.nav-wrapper {
-  max-width: 1200px;
-  margin: 16px auto 8px;
-  padding: 0 16px;
-  width: 100%;
+/* NAVIGATION */
+
+.nav-wrapper{
+max-width:1200px;
+margin:12px auto 8px;
+padding:0 6px;
 }
 
-.top-btns {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  padding: 8px;
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  overflow-x: auto;
-  scrollbar-width: none;
+.nav-shell{
+display:flex;
+align-items:center;
+gap:5px;
 }
 
-.top-btns::-webkit-scrollbar {
-  display: none;
+.nav-arrow{
+width:34px;
+height:34px;
+flex:0 0 34px;
+border:1px solid var(--border);
+border-radius:50%;
+background:#fff;
+color:var(--primary);
+box-shadow:var(--shadow);
+cursor:pointer;
 }
 
-.branch-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 14px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 13.5px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  flex-shrink: 0;
+.nav-arrow:hover{
+background:#eff6ff;
 }
 
-.branch-btn.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+.top-btns{
+display:flex;
+gap:6px;
+overflow-x:auto;
+scrollbar-width:none;
+padding:6px;
+flex:1;
+border:1px solid var(--border);
+border-radius:18px;
+background:#fff;
+box-shadow:var(--shadow);
 }
 
-.branch-btn:hover:not(.active) {
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--primary);
+.top-btns::-webkit-scrollbar{
+display:none;
 }
 
-/* MAIN CONTENT CONTAINER */
-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 16px 50px;
-  width: 100%;
-  flex: 1;
+.branch-btn{
+border:0;
+background:transparent;
+color:var(--muted);
+font-weight:700;
+font-size:12px;
+min-height:40px;
+padding:9px 14px;
+border-radius:12px;
+white-space:nowrap;
+cursor:pointer;
+transition:.25s;
 }
 
-.branch-section {
-  display: none;
-  animation: fadeIn 0.35s ease-in-out forwards;
+.branch-btn i{
+margin-right:6px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+.branch-btn.active{
+background:var(--primary);
+color:#fff;
+box-shadow:0 4px 14px rgba(37,99,235,.25);
 }
 
-.section-header {
-  text-align: center;
-  margin: 20px 0 20px;
+.branch-btn:hover:not(.active){
+background:#eff6ff;
+color:var(--primary);
 }
 
-.section-header h2 {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--secondary);
-  letter-spacing: -0.5px;
+/* MAIN */
+
+main{
+max-width:1200px;
+margin:auto;
+padding:8px 16px 50px;
 }
 
-.section-header p {
-  color: var(--text-muted);
-  font-size: 13px;
-  margin-top: 4px;
+.branch-section{
+display:none;
+animation:fade .35s ease;
 }
 
-/* APP GRID SYSTEM - EXACTLY 2 COLUMNS ON MOBILE */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+@keyframes fade{
+from{
+opacity:0;
+transform:translateY(7px);
+}
+to{
+opacity:1;
+transform:none;
+}
 }
 
-/* APP CARDS */
-.card {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  text-align: center;
-  position: relative;
+/* SECTION */
+
+.section{
+padding:10px 0 18px;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-  border-color: rgba(37, 99, 235, 0.3);
+.section h2{
+text-align:center;
+margin:18px 0 18px;
+font-size:22px;
+font-weight:800;
+letter-spacing:-.4px;
 }
 
-.card-icon-box {
-  width: 40px;
-  height: 40px;
-  background: #eff6ff;
-  color: var(--primary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 10px;
-  font-size: 18px;
+.section h2 span{
+color:var(--primary);
 }
 
-.card h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--secondary);
-  margin-bottom: 12px;
-  line-height: 1.3;
+/* GRID */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:12px;
 }
 
-/* BUTTON GRID INSIDE CARDS */
-.btn-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  margin-top: auto;
+/* CARD */
+
+.card{
+background:#fff;
+border:1px solid var(--border);
+border-radius:18px;
+padding:16px;
+text-align:center;
+box-shadow:var(--shadow);
+transition:.3s;
+display:flex;
+flex-direction:column;
+min-height:155px;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 6px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  color: var(--secondary);
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 700;
-  transition: all 0.2s ease;
-  border: 1px solid var(--border-color);
-  white-space: nowrap;
+.card:hover{
+transform:translateY(-4px);
+box-shadow:0 20px 30px -5px rgba(37,99,235,.15);
+border-color:#bfdbfe;
 }
 
-.btn:hover {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-  transform: translateY(-2px);
+.card>i{
+width:44px;
+height:44px;
+margin:0 auto 9px;
+border-radius:13px;
+background:#eff6ff;
+color:var(--primary);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
 }
 
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  grid-column: span 2;
-  padding: 9px;
+.card h3{
+font-size:13px;
+line-height:1.4;
+margin:3px 0 12px;
+font-weight:800;
 }
 
-.btn-primary:hover {
-  background: var(--primary-hover);
+.card p{
+font-size:10px;
+color:var(--muted);
+line-height:1.5;
+margin-bottom:12px;
 }
 
-/* E-NOTES CARD STYLES */
-#enotes .card {
-  padding: 0;
-  overflow: hidden;
-  text-align: left;
+/* BUTTON GRID */
+
+.btn-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:6px;
+margin-top:auto;
 }
 
-#enotes .card img {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-bottom: 1px solid var(--border-color);
+/* BUTTON */
+
+.btn{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:5px;
+padding:8px 6px;
+border:1px solid var(--border);
+border-radius:10px;
+background:#f8fafc;
+color:var(--text);
+text-decoration:none;
+font-size:10.5px;
+font-weight:700;
+transition:.2s;
+cursor:pointer;
 }
 
-#enotes .card-body {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.btn:hover{
+background:var(--primary);
+color:#fff;
+border-color:var(--primary);
+transform:translateY(-2px);
 }
 
-#enotes .card h3 {
-  font-size: 13px;
-  margin-bottom: 10px;
-}/* DESKTOP RESPONSIVENESS */
-@media(min-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-  }
-  .card {
-    padding: 20px;
-    border-radius: 20px;
-  }
-  .card-icon-box {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-  }
-  .card h3 {
-    font-size: 15px;
-    margin-bottom: 14px;
-  }
-  .btn {
-    padding: 9px 10px;
-    font-size: 11.5px;
-    border-radius: 12px;
-    gap: 6px;
-  }
+/* PYQ */
+
+.pyq-card{
+min-height:190px;
 }
+
+.pyq-card>i{
+background:#eff6ff;
+}
+
+.pyq-badge{
+display:inline-flex;
+align-items:center;
+gap:5px;
+margin:0 auto 7px;
+padding:5px 8px;
+border-radius:999px;
+background:#eff6ff;
+color:var(--primary);
+font-size:9px;
+font-weight:800;
+}
+
+.pyq-meta{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:5px;
+margin-bottom:10px;
+}
+
+.meta{
+padding:4px 7px;
+border-radius:7px;
+background:#f1f5f9;
+color:#475569;
+font-size:9px;
+font-weight:700;
+}
+
+/* SEARCH */
+
+.search{
+max-width:760px;
+margin:0 auto 12px;
+display:flex;
+gap:7px;
+padding:7px;
+background:#fff;
+border:1px solid var(--border);
+border-radius:16px;
+box-shadow:var(--shadow);
+}
+
+.search input{
+flex:1;
+border:0;
+outline:0;
+background:#f8fafc;
+border-radius:10px;
+padding:11px;
+font-size:13px;
+}
+
+.search button{
+border:0;
+background:var(--primary);
+color:#fff;
+border-radius:10px;
+padding:0 15px;
+font-weight:700;
+cursor:pointer;
+}
+
+.search button:hover{
+background:var(--primary2);
+}
+
+.count{
+text-align:center;
+color:var(--muted);
+font-size:11px;
+margin-bottom:14px;
+}
+
+/* EMPTY SEARCH */
+
+.no-result{
+display:none;
+text-align:center;
+padding:30px 15px;
+color:var(--muted);
+}
+
+.no-result i{
+font-size:35px;
+margin-bottom:10px;
+color:#94a3b8;
+}
+
+/* JOIN */
+
+.join-card{
+min-height:170px;
+}
+
+.join-card i{
+background:#ecfdf5;
+color:#16a34a;
+}
+
+/* SYLLABUS */
+
+.pdf-card i{
+background:#fef2f2;
+color:#dc2626;
+}
+
+/* FOOTER */
+
+footer{
+text-align:center;
+padding:20px 10px;
+color:var(--muted);
+font-size:11px;
+border-top:1px solid var(--border);
+}
+
+/* DESKTOP */
+
+@media(min-width:768px){
+
+.grid{
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:18px;
+}
+
+.card{
+padding:20px;
+border-radius:20px;
+}
+
+.card h3{
+font-size:14px;
+}
+
+.btn{
+font-size:11px;
+}
+
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+main{
+padding:6px 10px 40px;
+}
+
+.branch-btn{
+font-size:11px;
+padding:9px 11px;
+}
+
+.grid{
+gap:10px;
+}
+
+.card{
+padding:13px;
+}
+
+.card h3{
+font-size:12px;
+}
+
+.btn{
+font-size:10px;
+}
+
+.search input{
+font-size:12px;
+}
+
+.search button{
+padding:0 12px;
+}
+
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- TOP NAVIGATION BAR -->
+
+<!-- ================= NAVIGATION ================= -->
+
 <div class="nav-wrapper">
-  <div class="top-btns">
-    <button class="branch-btn active" onclick="showSection('semester', this)">
-      <i class="fas fa-graduation-cap"></i> Semester
-    </button>
-    <button class="branch-btn" onclick="showSection('enotes', this)">
-      <i class="fas fa-book-open"></i> E-Notes
-    </button>
-    <button class="branch-btn" onclick="showSection('syllabus', this)">
-      <i class="fas fa-scroll"></i> Syllabus
-    </button>
-    <button class="branch-btn" onclick="showSection('join', this)">
-      <i class="fab fa-whatsapp"></i> Join Us
-    </button>
-  </div>
+
+<div class="nav-shell">
+
+<button class="nav-arrow"
+onclick="scrollNav(-1)">
+<i class="fas fa-chevron-left"></i>
+</button>
+
+<div class="top-btns" id="nav">
+
+<button class="branch-btn active"
+onclick="showSection('semester',this)">
+<i class="fas fa-graduation-cap"></i>
+Semester
+</button>
+
+<button class="branch-btn"
+onclick="showSection('pyq',this)">
+<i class="fas fa-file-circle-question"></i>
+BTEUP PYQ
+</button>
+
+<button class="branch-btn"
+onclick="showSection('syllabus',this)">
+<i class="fas fa-scroll"></i>
+Syllabus
+</button>
+
+<button class="branch-btn"
+onclick="showSection('join',this)">
+<i class="fab fa-whatsapp"></i>
+Join Us
+</button>
+
 </div>
+
+<button class="nav-arrow"
+onclick="scrollNav(1)">
+<i class="fas fa-chevron-right"></i>
+</button>
+
+</div>
+
+</div>
+
 
 <main>
 
-  <!-- SEMESTER SECTION -->
-  <div id="semester" class="branch-section" style="display:block;">
-    
-    <!-- SEM 1 -->
-    <div class="section-header">
-      <h2>Semester 1 (Common)</h2>
-      <p>Books, Handwritten Notes, PYQs & Practical Files</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-calculator"></i></div>
-        <h3>Applied Mathematics I</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1dFyBSWMM7M1X87eFsdwd_JtgZWXaZ6w7/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-atom"></i></div>
-        <h3>Applied Physics I</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1FVUMMrHpT7HwlCbIJGdxBB4ZWr8oI0ra/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="https://drive.google.com/file/d/1hCYeiS3GvpwEQuXq_ov8invYusfwoYix/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
+<!-- ================= SEMESTER ================= -->
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-flask-vial"></i></div>
-        <h3>Applied Chemistry</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1TP44D0wNz-aMB8mFH5uyEXhFW5bFk9Hy/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/10uyWxmQu7r3ga17C0-0PNKVMprkbchfN/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="https://drive.google.com/file/d/1rz_IK4OceBZ97ZTdO4SgMXSDDwnOCA8e/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
+<div id="semester"
+class="branch-section"
+style="display:block;">
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-comments"></i></div>
-        <h3>Communication Skills</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1YnZDKUHlLi5UA19JD0XTkKnqHy1tWO3k/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1xj5G7fQL61CkcAzFaHZgc5biHGZq1AVh/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="https://drive.google.com/file/d/1bBeaIBephDXpuZ3SNC92_c7EpjfRXtyl/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-drafting-compass"></i></div>
-        <h3>Engineering Drawing</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1QhQZcp02Ab32GH187Z4ugtBdgTY1y5_X/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
-    </div>
+<!-- SEM 1 -->
 
-    <!-- SEM 2 -->
-    <div class="section-header" style="margin-top: 30px;">
-      <h2>Semester 2 (Common)</h2>
-      <p>Books, Handwritten Notes & PYQs</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-square-root-variable"></i></div>
-        <h3>Applied Mathematics II</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1TvF0XirtfeU2XBA8hd8z8trk9WeZXr3P/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/147Ny3AcoRTpFUO6DpiXkbryTzzLiQy7s/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<div class="section">
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-magnet"></i></div>
-        <h3>Applied Physics II</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1AtJvINUkXh-8nPFveWchOnHAfZtfSNrC/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/17alDjhiyRV6HelhIlGBllJNWce0faPrh/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="https://drive.google.com/file/d/1m88XqWh6vP2HMQ3wRz9wcFTzOcQ-a4ir/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
+<h2>Semester 1 <span>(Common)</span></h2>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-bolt"></i></div>
-        <h3>Fundamentals of Electrical & Electronics Engineering</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1U8pT87pzyTYgRShzhhPvNz3YwJoFQ1f9/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1vXDHqFPqe4KEbqEuH2kJrvbazYv0WVEC/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="1" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
+<div class="grid">
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-gears"></i></div>
-        <h3>Engineering Mechanics</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1qxDllH9w3fuaj9Ato_kA-BoyHjAuG-au/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1SqikpX8PYADNTlSjfVJwO21i7qX4AMdT/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="https://drive.google.com/file/d/1feSjyoy8HKTJuyoMRR-xHX2qMYKw3eMR/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-leaf"></i></div>
-        <h3>Environmental Studies</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1u_izHlECm2TgL8_Up3yBgLc8EXG8fu4f/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1MYm8jPTBo_ffpVaYm0lnXRWYg_nBUncI/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<div class="card">
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-laptop-code"></i></div>
-        <h3>Introduction to IT Systems</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/19Jpg4x7VmB5HMhE7vAs4tUoVIHw8Cu_x/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1rMfmqIiPna4ssrhOmYlCRg0NP7Wt_i6Q/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-file-invoice"></i> PYQ</a>
-          <a href="1" class="btn"><i class="fas fa-flask"></i> Practical</a>
-        </div>
-      </div>
-    </div>
+<i class="fas fa-calculator"></i>
 
-    
-    <!-- SEM 3 -->
-    <div class="section-header" style="margin-top: 30px;">
-      <h2>Semester 3</h2>
-      <p>Mechanical Engineering Core Subjects</p>
-    </div>
-    <div class="grid">
+<h3>Applied Mathematics I</h3>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-fire"></i></div>
-        <h3>Thermal Engineering – I</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/18I7aCGgjxL9Pm0fuRrtokwzWwl_nrFk6/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1stGJQfEXYksbqGM3Au-IfZ--U6s4P9K_/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/158m_NpiJ1oasDGcTTxkeRHvdilnicZJe/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<div class="btn-grid">
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-water"></i></div>
-        <h3>Fluid Mechanics & Hydraulic Machinery</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1yz4JtM4Eo_6V5dPiL6B7pNNfhiLpOGCM/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1yMiSiuN-vsYji_C5m-ExFp1P2ICAXZ-B/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1VK-hHXf3jYUKVrSWKmtyLg2qVlk_Wbo3/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<a href="https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Book
+</a>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-ruler-combined"></i></div>
-        <h3>Measurements & Metrology</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1En2QJokB8shQue4kG9lH4FpQ3c9TzZl1/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="#" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="https://drive.google.com/file/d/1RA7isSA58VP9-e58OcJ703giTdIVC0xa/view?usp=drivesdk" target="_blank" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<a href="https://drive.google.com/file/d/1dFyBSWMM7M1X87eFsdwd_JtgZWXaZ6w7/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Notes
+</a>
 
-    </div>
+<a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk"
+class="btn"
+target="_blank">
+PYQ
+</a>
 
-    <!-- SEM 4 -->
-    <div class="section-header" style="margin-top: 30px;">
-      <h2>Semester 4</h2>
-      <p>Mechanical Engineering Core Subjects</p>
-    </div>
-    <div class="grid">
+</div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-cubes"></i></div>
-        <h3>Strength of Materials</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1r_N_Y_lwdZtwqZFKkY1zEWIfeGJX2EUu/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="https://drive.google.com/file/d/1O2m6GqiLvM7p_OFkh01i9OI4L9sPs0_M/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="#" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+</div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-industry"></i></div>
-        <h3>Industrial Engineering & Management</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1fRj1HS9KSN8p7fzxm4rrfbQ9oyDDmiua/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="#" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="#" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-gears"></i></div>
-        <h3>Manufacturing Engineering</h3>
-        <div class="btn-grid">
-          <a href="https://drive.google.com/file/d/1yf1HSM3wDs1dLNnvrkongKRuhEbIBhWc/view?usp=drivesdk" target="_blank" class="btn"><i class="fas fa-book"></i> Book</a>
-          <a href="#" class="btn"><i class="fas fa-sticky-note"></i> Notes</a>
-          <a href="#" class="btn btn-primary"><i class="fas fa-file-invoice"></i> PYQ</a>
-        </div>
-      </div>
+<div class="card">
 
-    </div>
+<i class="fas fa-atom"></i>
 
-  </div>
+<h3>Applied Physics I</h3>
 
-  <!-- E-NOTES SECTION -->
-  <div id="enotes" class="branch-section">
-    <div class="section-header">
-      <h2>E-Books & Notes</h2>
-      <p>Instant Online Reading & PDF Downloads</p>
-    </div>
+<div class="btn-grid">
 
-    <div class="grid">
-      <div class="card">
-        <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop" alt="Mechanical Engineering Notes">
-        <div class="card-body">
-          <h3>Mechanical Engineering Notes</h3>
-          <a href="#" class="btn btn-primary"><i class="fas fa-folder-open"></i> Open PDF</a>
-        </div>
-      </div>
+<a href="https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Book
+</a>
 
-      <div class="card">
-        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop" alt="Thermal Engineering Notes">
-        <div class="card-body">
-          <h3>Thermal Engineering Notes</h3>
-          <a href="#" class="btn btn-primary"><i class="fas fa-folder-open"></i> Open PDF</a>
-        </div>
-      </div>
-    </div>
-  </div>
+<a href="https://drive.google.com/file/d/1FVUMMrHpT7HwlCbIJGdxBB4ZWr8oI0ra/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Notes
+</a>
 
-  <!-- SYLLABUS SECTION -->
-  <div id="syllabus" class="branch-section">
-    <div class="section-header">
-      <h2>Syllabus & Curriculum</h2>
-      <p>Download Official BTEUP / Board Syllabus</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
-        <h3>1st Year</h3>
-        <div class="btn-grid">
-          <a href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf" target="_blank" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
-        </div>
-      </div>
+<a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk"
+class="btn"
+target="_blank">
+PYQ
+</a>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
-        <h3>2nd Year</h3>
-        <div class="btn-grid">
-          <a href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/343_2025_26.pdf" target="_blank" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
-        </div>
-      </div>
+<a href="https://drive.google.com/file/d/1hCYeiS3GvpwEQuXq_ov8invYusfwoYix/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Prac. File
+</a>
 
-      <div class="card">
-        <div class="card-icon-box"><i class="fas fa-file-pdf"></i></div>
-        <h3>3rd Year</h3>
-        <div class="btn-grid">
-          <a href="#" class="btn btn-primary"><i class="fas fa-download"></i> Open PDF</a>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <!-- JOIN SECTION -->
-  <div id="join" class="branch-section">
-    <div class="section-header">
-      <h2>Join Community</h2>
-      <p>Connect with fellow mechanical engineering students</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-icon-box"><i class="fab fa-whatsapp"></i></div>
-        <h3>WhatsApp Study Group</h3>
-        <div class="btn-grid">
-          <a href="https://chat.whatsapp.com/EwcNB2zsyjABNlYj0QHzLt" target="_blank" class="btn btn-primary"><i class="fab fa-whatsapp"></i> Join branch Group</a>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-flask"></i>
+
+<h3>Applied Chemistry</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Book
+</a>
+
+<a href="https://drive.google.com/file/d/1TP44D0wNz-aMB8mFH5uyEXhFW5bFk9Hy/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Notes
+</a>
+
+<a href="https://drive.google.com/file/d/10uyWxmQu7r3ga17C0-0PNKVMprkbchfN/view?usp=drivesdk"
+class="btn"
+target="_blank">
+PYQ
+</a>
+
+<a href="https://drive.google.com/file/d/1rz_IK4OceBZ97ZTdO4SgMXSDDwnOCA8e/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Prac. File
+</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-comments"></i>
+
+<h3>Communication Skills</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Book
+</a>
+
+<a href="https://drive.google.com/file/d/1YnZDKUHlLi5UA19JD0XTkKnqHy1tWO3k/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Notes
+</a>
+
+<a href="https://drive.google.com/file/d/1xj5G7fQL61CkcAzFaHZgc5biHGZq1AVh/view?usp=drivesdk"
+class="btn"
+target="_blank">
+PYQ
+</a>
+
+<a href="https://drive.google.com/file/d/1bBeaIBephDXpuZ3SNC92_c7EpjfRXtyl/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Prac. File
+</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-drafting-compass"></i>
+
+<h3>Engineering Drawing</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk"
+class="btn"
+target="_blank">
+Book
+</a>
+
+<a href="https://drive.google.com/file/d/1QhQZcp02Ab32GH187Z4ugtBdgTY1y5_X/view?usp=drivesdk"
+class="btn"
+target="_blank">
+PYQ
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- SEM 2 -->
+
+<div class="section">
+
+<h2>Semester 2 <span>(Common)</span></h2>
+
+<div class="grid">
+
+
+<div class="card">
+
+<i class="fas fa-calculator"></i>
+
+<h3>Applied Mathematics II</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1TvF0XirtfeU2XBA8hd8z8trk9WeZXr3P/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/147Ny3AcoRTpFUO6DpiXkbryTzzLiQy7s/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-atom"></i>
+
+<h3>Applied Physics II</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1AtJvINUkXh-8nPFveWchOnHAfZtfSNrC/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/17alDjhiyRV6HelhIlGBllJNWce0faPrh/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+<a href="https://drive.google.com/file/d/1m88XqWh6vP2HMQ3wRz9wcFTzOcQ-a4ir/view?usp=drivesdk"
+class="btn"
+target="_blank">Prac. File</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-bolt"></i>
+
+<h3>Fundamentals of Electrical & Electronics Engineering</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1U8pT87pzyTYgRShzhhPvNz3YwJoFQ1f9/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/1vXDHqFPqe4KEbqEuH2kJrvbazYv0WVEC/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-balance-scale"></i>
+
+<h3>Engineering Mechanics</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1qxDllH9w3fuaj9Ato_kA-BoyHjAuG-au/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/1SqikpX8PYADNTlSjfVJwO21i7qX4AMdT/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+<a href="https://drive.google.com/file/d/1feSjyoy8HKTJuyoMRR-xHX2qMYKw3eMR/view?usp=drivesdk"
+class="btn"
+target="_blank">Prac. File</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-leaf"></i>
+
+<h3>Environmental Studies</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1u_izHlECm2TgL8_Up3yBgLc8EXG8fu4f/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/1MYm8jPTBo_ffpVaYm0lnXRWYg_nBUncI/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-computer"></i>
+
+<h3>Introduction to IT Systems</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/19Jpg4x7VmB5HMhE7vAs4tUoVIHw8Cu_x/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/1rMfmqIiPna4ssrhOmYlCRg0NP7Wt_i6Q/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- SEM 3 -->
+
+<div class="section">
+
+<h2>Semester 3</h2>
+
+<div class="grid">
+
+
+<div class="card">
+
+<i class="fas fa-fire"></i>
+
+<h3>Thermal Engineering – I</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/18I7aCGgjxL9Pm0fuRrtokwzWwl_nrFk6/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1stGJQfEXYksbqGM3Au-IfZ--U6s4P9K_/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/158m_NpiJ1oasDGcTTxkeRHvdilnicZJe/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-water"></i>
+
+<h3>Fluid Mechanics & Hydraulic Machinery</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1yz4JtM4Eo_6V5dPiL6B7pNNfhiLpOGCM/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1yMiSiuN-vsYji_C5m-ExFp1P2ICAXZ-B/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+<a href="https://drive.google.com/file/d/1VK-hHXf3jYUKVrSWKmtyLg2qVlk_Wbo3/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-ruler-combined"></i>
+
+<h3>Measurements & Metrology</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1En2QJokB8shQue4kG9lH4FpQ3c9TzZl1/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1RA7isSA58VP9-e58OcJ703giTdIVC0xa/view?usp=drivesdk"
+class="btn"
+target="_blank">PYQ</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- SEM 4 -->
+
+<div class="section">
+
+<h2>Semester 4</h2>
+
+<div class="grid">
+
+
+<div class="card">
+
+<i class="fas fa-cubes"></i>
+
+<h3>Strength of Materials</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1r_N_Y_lwdZtwqZFKkY1zEWIfeGJX2EUu/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+<a href="https://drive.google.com/file/d/1O2m6GqiLvM7p_OFkh01i9OI4L9sPs0_M/view?usp=drivesdk"
+class="btn"
+target="_blank">Notes</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-industry"></i>
+
+<h3>Industrial Engineering & Management</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1fRj1HS9KSN8p7fzxm4rrfbQ9oyDDmiua/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<i class="fas fa-gears"></i>
+
+<h3>Manufacturing Engineering</h3>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1yf1HSM3wDs1dLNnvrkongKRuhEbIBhWc/view?usp=drivesdk"
+class="btn"
+target="_blank">Book</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ================= PYQ ================= -->
+
+<div id="pyq"
+class="branch-section">
+
+<div class="section">
+
+<h2>BTEUP <span>Previous Year Papers</span></h2>
+
+
+<!-- SEARCH -->
+
+<div class="search">
+
+<input
+type="search"
+id="pyqSearch"
+placeholder="Search subject, semester or year..."
+oninput="searchPYQ()">
+
+<button onclick="searchPYQ()">
+<i class="fas fa-search"></i>
+</button>
+
+</div>
+
+
+<div id="count"
+class="count">
+0 PYQs available
+</div>
+
+
+<div class="grid"
+id="pyqGrid">
+
+
+<!-- PYQ 1 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Applied Mathematics I</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 1</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/13I-Dpto1ja3FXhoTpMFvzuWRqviGvI4i/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 2 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Applied Physics I</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 1</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1FTWXcuQJcfYS9R8bKV6WDuWqmwydchbj/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 3 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Applied Chemistry</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 1</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/10uyWxmQu7r3ga17C0-0PNKVMprkbchfN/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 4 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Communication Skills</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 1</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1xj5G7fQL61CkcAzFaHZgc5biHGZq1AVh/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 5 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Engineering Drawing</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 1</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1QhQZcp02Ab32GH187Z4ugtBdgTY1y5_X/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 6 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Applied Mathematics II</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/147Ny3AcoRTpFUO6DpiXkbryTzzLiQy7s/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 7 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Applied Physics II</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/17alDjhiyRV6HelhIlGBllJNWce0faPrh/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 8 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Electrical & Electronics Engineering</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1vXDHqFPqe4KEbqEuH2kJrvbazYv0WVEC/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 9 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Engineering Mechanics</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1SqikpX8PYADNTlSjfVJwO21i7qX4AMdT/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 10 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Environmental Studies</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1MYm8jPTBo_ffpVaYm0lnXRWYg_nBUncI/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 11 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Introduction to IT Systems</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 2</span>
+<span class="meta">Common</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1rMfmqIiPna4ssrhOmYlCRg0NP7Wt_i6Q/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 12 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Thermal Engineering – I</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 3</span>
+<span class="meta">Mechanical</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/158m_NpiJ1oasDGcTTxkeRHvdilnicZJe/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 13 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Fluid Mechanics & Hydraulic Machinery</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 3</span>
+<span class="meta">Mechanical</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1VK-hHXf3jYUKVrSWKmtyLg2qVlk_Wbo3/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+<!-- PYQ 14 -->
+
+<div class="card pyq-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<span class="pyq-badge">
+<i class="fas fa-calendar"></i>
+2026
+</span>
+
+<h3>Measurements & Metrology</h3>
+
+<div class="pyq-meta">
+
+<span class="meta">Sem 3</span>
+<span class="meta">Mechanical</span>
+
+</div>
+
+<div class="btn-grid">
+
+<a href="https://drive.google.com/file/d/1RA7isSA58VP9-e58OcJ703giTdIVC0xa/view?usp=drivesdk"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+View PYQ
+
+</a>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<div id="noResult"
+class="no-result">
+
+<i class="fas fa-folder-open"></i>
+
+<p>No PYQ found.</p>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ================= SYLLABUS ================= -->
+
+<div id="syllabus"
+class="branch-section">
+
+<div class="section">
+
+<h2>Mechanical <span>Syllabus</span></h2>
+
+<div class="grid">
+
+
+<div class="card pdf-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<h3>1st Year Syllabus</h3>
+
+<p>Common First Year Diploma Syllabus</p>
+
+<div class="btn-grid">
+
+<a href="https://urise.up.gov.in/resources/profile_image/su/17310529021st_Year_Syllabus_for_42_branches_05-08-2024_compressed.pdf"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+Open PDF
+
+</a>
+
+</div>
+
+</div>
+
+
+<div class="card pdf-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<h3>2nd Year Syllabus</h3>
+
+<p>Mechanical Engineering Diploma</p>
+
+<div class="btn-grid">
+
+<a href="https://urise.up.gov.in/resources/profile_image/syllabus/2025-26/343_2025_26.pdf"
+class="btn"
+target="_blank">
+
+<i class="fas fa-eye"></i>
+Open PDF
+
+</a>
+
+</div>
+
+</div>
+
+
+<div class="card pdf-card">
+
+<i class="fas fa-file-pdf"></i>
+
+<h3>3rd Year Syllabus</h3>
+
+<p>Mechanical Engineering Diploma</p>
+
+<div class="btn-grid">
+
+<a href="#"
+class="btn"
+onclick="return false;">
+
+<i class="fas fa-clock"></i>
+Coming Soon
+
+</a>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ================= JOIN ================= -->
+
+<div id="join"
+class="branch-section">
+
+<div class="section">
+
+<h2>Join <span>Mechanical Engineering</span></h2>
+
+<div class="grid">
+
+
+<div class="card join-card">
+
+<i class="fab fa-whatsapp"></i>
+
+<h3>Mechanical WhatsApp Group</h3>
+
+<p>
+Join the Mechanical Engineering student community for notes,
+PYQs, updates and study material.
+</p>
+
+<div class="btn-grid">
+
+<a href="https://chat.whatsapp.com/BsQBRtycNmBIHAmLZhwCUl"
+class="btn"
+target="_blank">
+
+<i class="fab fa-whatsapp"></i>
+Join Group
+
+</a>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
 
 </main>
+
+
+
+
+<!-- ================= SCRIPT ================= -->
+
 <script>
-function showSection(sectionId, btnElement) {
-  const sections = document.querySelectorAll('.branch-section');
-  sections.forEach(section => {
-    section.style.display = 'none';
-  });
 
-  const buttons = document.querySelectorAll('.branch-btn');
-  buttons.forEach(btn => {
-    btn.classList.remove('active');
-  });
+/* SECTION SWITCH */
 
-  document.getElementById(sectionId).style.display = 'block';
+function showSection(id,btn){
 
-  if (btnElement) {
-    btnElement.classList.add('active');
-  }
+document
+.querySelectorAll('.branch-section')
+.forEach(section=>{
+section.style.display='none';
+});
+
+const target=document.getElementById(id);
+
+if(target){
+target.style.display='block';
 }
+
+document
+.querySelectorAll('.branch-btn')
+.forEach(button=>{
+button.classList.remove('active');
+});
+
+btn.classList.add('active');
+
+window.scrollTo({
+top:0,
+behavior:'smooth'
+});
+
+}
+
+
+/* NAVIGATION SCROLL */
+
+function scrollNav(dir){
+
+document
+.getElementById('nav')
+.scrollBy({
+left:dir*180,
+behavior:'smooth'
+});
+
+}
+
+
+/* PYQ SEARCH */
+
+function searchPYQ(){
+
+const input=document.getElementById('pyqSearch');
+
+const query=
+(input.value || '')
+.toLowerCase()
+.trim();
+
+const cards=
+document.querySelectorAll('.pyq-card');
+
+let count=0;
+
+cards.forEach(card=>{
+
+const text=
+card.innerText.toLowerCase();
+
+const match=
+!query || text.includes(query);
+
+card.style.display=
+match ? 'flex' : 'none';
+
+if(match){
+count++;
+}
+
+});
+
+
+document.getElementById('count')
+.textContent=
+count + (count===1 ? ' PYQ available' : ' PYQs available');
+
+
+const noResult=
+document.getElementById('noResult');
+
+noResult.style.display=
+count===0 ? 'block' : 'none';
+
+}
+
+
+/* INITIAL PYQ COUNT */
+
+document.addEventListener(
+'DOMContentLoaded',
+function(){
+
+searchPYQ();
+
+}
+);
+
 </script>
+
 
 </body>
 </html>

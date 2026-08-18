@@ -865,13 +865,14 @@ import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstati
    FIREBASE CONFIG
 ===================================================== */
 const firebaseConfig = {
-    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-    authDomain: "diplomaengineers-869df.firebaseapp.com",
-    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-    projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.appspot.com",
-    messagingSenderId: "356779436080",
-    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+  authDomain: "diplomaengineers-869df.firebaseapp.com",
+  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+  projectId: "diplomaengineers-869df",
+  storageBucket: "diplomaengineers-869df.firebasestorage.app",
+  messagingSenderId: "356779436080",
+  appId: "1:356779436080:web:4b28da380e547420d0e5f5",
+  measurementId: "G-NGNBW3YGFG"
 };
 
 /* =====================================================
@@ -1692,4 +1693,108 @@ async function fastLogin(){
 loginButton.onclick=fastLogin;
 document.getElementById('superPassword').addEventListener('keydown',e=>{if(e.key==='Enter')fastLogin();});
 // Existing child auth listeners are intentionally neutralized by the shared login UI.
+
+// ===== PROPER MAIN FIREBASE LOGIN =====
+async function properMainLogin(email, password) {
+  email = String(email || "").trim();
+  if (!email || !password) throw new Error("Enter email and password.");
+
+  const cred = await signInWithEmailAndPassword(mainAuth, email, password);
+  return cred.user;
+}
+
+function setupMainAuthUI() {
+  const loginBtn =
+    document.getElementById("loginBtn") ||
+    document.querySelector('[data-login], .login-btn');
+
+  const emailInput =
+    document.getElementById("email") ||
+    document.getElementById("adminEmail") ||
+    document.querySelector('input[type="email"]');
+
+  const passwordInput =
+    document.getElementById("password") ||
+    document.getElementById("adminPassword") ||
+    document.querySelector('input[type="password"]');
+
+  const loginPage =
+    document.getElementById("loginPage") ||
+    document.getElementById("login");
+
+  const adminPage =
+    document.getElementById("admin") ||
+    document.getElementById("adminPage") ||
+    document.getElementById("app");
+
+  const errorBox =
+    document.getElementById("error") ||
+    document.getElementById("loginError");
+
+  if (!loginBtn || !emailInput || !passwordInput) {
+    console.warn("Login UI elements were not found.");
+    return;
+  }
+
+  loginBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      if (errorBox) errorBox.textContent = "Email and password are required.";
+      return;
+    }
+
+    const old = loginBtn.innerHTML;
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
+    if (errorBox) errorBox.textContent = "";
+
+    try {
+      await properMainLogin(email, password);
+    } catch (err) {
+      console.error("Firebase login:", err);
+      let msg = err?.message || "Login failed.";
+      if (err?.code === "auth/invalid-credential") msg = "Wrong email or password.";
+      if (err?.code === "auth/user-not-found") msg = "This email is not registered in Firebase Authentication.";
+      if (err?.code === "auth/wrong-password") msg = "Wrong password.";
+      if (err?.code === "auth/invalid-email") msg = "Invalid email address.";
+      if (err?.code === "auth/too-many-requests") msg = "Too many attempts. Please wait and try again.";
+      if (errorBox) errorBox.textContent = msg;
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = old;
+    }
+  });
+
+  passwordInput.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") loginBtn.click();
+  });
+
+  onAuthStateChanged(mainAuth, (user) => {
+    if (user) {
+      if (loginPage) loginPage.style.display = "none";
+      if (adminPage) adminPage.style.display = "";
+      document.body.classList.add("authenticated");
+      window.currentAdminUser = user;
+      window.dispatchEvent(new CustomEvent("main-firebase-login", { detail: user }));
+    } else {
+      if (loginPage) loginPage.style.display = "";
+      if (adminPage) adminPage.style.display = "none";
+      document.body.classList.remove("authenticated");
+      window.currentAdminUser = null;
+    }
+  });
+
+  window.firebaseAdminLogout = () => signOut(mainAuth);
+}
+
+// Run after the page markup has loaded.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupMainAuthUI);
+} else {
+  setupMainAuthUI();
+}
+
 </script></body></html>

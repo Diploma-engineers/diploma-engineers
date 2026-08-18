@@ -1,735 +1,554 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Diploma Engineers • Secure Course Approval Admin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Books Admin - Bulk Upload</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f5f7fb;color:#172033;font-family:Poppins,Arial,sans-serif}
-.wrap{max-width:1180px;margin:auto;padding:18px}
-.top{background:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 8px 28px rgba(0,0,0,.07);display:flex;justify-content:space-between;align-items:center;gap:15px}
-.brand h1{margin:0;font-size:22px}.brand p{margin:5px 0 0;color:#667085;font-size:12px}
-.btn{border:0;border-radius:10px;padding:11px 15px;font:700 13px Poppins;cursor:pointer}
-.btn:disabled{opacity:.55;cursor:not-allowed}
-.refresh{background:#eef2ff;color:#3730a3}
-.notice{margin:14px 0;padding:12px 14px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px}
-.notice.ok{background:#ecfdf3;color:#166534}.notice.err{background:#fef2f2;color:#991b1b}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0}
-.stat{background:#fff;border-radius:14px;padding:15px;box-shadow:0 5px 20px rgba(0,0,0,.05)}
-.stat b{display:block;font-size:12px;color:#667085}.stat span{font-size:25px;font-weight:800}
-.pending span{color:#d97706}.verified span{color:#16a34a}.rejected span{color:#dc2626}.total span{color:#2563eb}
-.tabs{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
-.tab{background:#fff;border:1px solid #e2e8f0;color:#334155}.tab.active{background:#111827;color:#fff}
-.request{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.06)}
-.head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.user{display:flex;align-items:center;gap:13px}.avatar{width:62px;height:62px;border-radius:50%;overflow:hidden;background:#e8eef8;display:grid;place-items:center;font-weight:800;font-size:21px;flex:none}
-.avatar img{width:100%;height:100%;object-fit:cover}.course{font-size:17px;font-weight:800}.muted{font-size:12px;color:#667085}
-.amount{background:#ecfdf3;color:#15803d;border-radius:9px;padding:7px 11px;font-weight:800;white-space:nowrap}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.item{background:#f8fafc;border-radius:10px;padding:11px}.item b{display:block;font-size:10px;color:#667085;margin-bottom:4px}
-.item span{font-size:13px;font-weight:600;word-break:break-word}.utr{font-size:18px!important;letter-spacing:1px;color:#7c3aed!important}
-.actions{display:flex;gap:10px}.approve{background:#16a34a;color:#fff;flex:1}.reject{background:#fee2e2;color:#b91c1c;flex:1}
-.course-link{background:#eff6ff;color:#1d4ed8;flex:1}.empty{text-align:center;padding:42px;background:#fff;border-radius:18px;color:#667085}
-.error{background:#fef2f2;color:#991b1b;padding:16px;border-radius:14px}.small{font-size:11px;opacity:.85}
-.login-gate{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e293b);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99999}
-.login-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,.35)}
-.login-card h2{margin:0 0 6px;font-size:24px}.login-card p{margin:0 0 20px;color:#667085;font-size:12px}
-.login-card label{display:block;font-size:12px;font-weight:700;margin:12px 0 6px}
-.login-card input{width:100%;padding:13px 14px;border:1px solid #d0d5dd;border-radius:10px;outline:0;font:500 14px Poppins}
-.login-card input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-.login-btn{width:100%;margin-top:16px;border:0;border-radius:11px;padding:13px;background:#111827;color:#fff;font:700 14px Poppins;cursor:pointer}
-.login-btn:disabled{opacity:.6;cursor:not-allowed}
-.login-status{margin-top:12px;padding:11px;border-radius:10px;font-size:12px;display:none}
-.login-status.err{display:block;background:#fef2f2;color:#991b1b}
-.login-status.ok{display:block;background:#ecfdf3;color:#166534}
-.logout{position:fixed;right:18px;top:18px;z-index:1000;border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 13px;font:700 12px Poppins;cursor:pointer}
-.security-note{margin-top:14px;font-size:10px;color:#98a2b3;line-height:1.5}
-@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.wrap{padding:10px}.top,.head{align-items:flex-start;flex-direction:column}.stats,.grid{grid-template-columns:1fr}.actions{flex-direction:column}.amount{align-self:flex-start}}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#0f172a}
+.wrap{max-width:1250px;margin:auto;padding:20px}
+.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}
+h1,h2,h3{margin:0}p{color:#64748b}
+label{display:block;font-weight:700;font-size:13px;margin:0 0 7px}
+input,select{width:100%;padding:12px;border:1px solid #dbe1e8;border-radius:10px;font-size:14px;outline:0;background:#fff}
+input:focus,select:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.primary{background:#2563eb;color:#fff}.secondary{background:#e2e8f0;color:#0f172a}
+.danger{background:#fee2e2;color:#b91c1c}.success{background:#dcfce7;color:#166534}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+.status{margin-top:12px;padding:11px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:13px;display:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}
+.hint{font-size:12px;color:#64748b;margin-top:7px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:13px;padding:15px}
+.stat span{font-size:12px;color:#64748b}.stat b{display:block;font-size:24px;margin-top:5px}
+.drop{border:2px dashed #cbd5e1;border-radius:14px;padding:22px;text-align:center;background:#f8fafc}
+.drop:hover{border-color:#2563eb}
+.queue{margin-top:15px;display:grid;gap:10px}
+.item{border:1px solid #e5e7eb;border-radius:12px;padding:12px;display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:center}
+.item img{width:70px;height:90px;object-fit:cover;border-radius:8px;background:#e2e8f0}
+.item-title{font-weight:700;word-break:break-word}.item-name{font-size:12px;color:#64748b;margin-top:4px}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:5px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8}
+.progress{height:7px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;width:0;background:#2563eb}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input{max-width:420px}
+.table{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}
+th{background:#f8fafc}
+td img{width:48px;height:64px;object-fit:cover;border-radius:6px}
+.link{display:block;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;padding:30px!important;color:#64748b}
+#app{display:none}#login{max-width:430px;margin:70px auto}
+@media(max-width:800px){
+ .wrap{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}
+ .top{flex-direction:column;align-items:flex-start}.stats{grid-template-columns:1fr 1fr}
+ .item{grid-template-columns:55px 1fr}.item img{width:55px;height:72px}.item .actions{grid-column:1/-1}
+}
+@media(max-width:480px){.stats{grid-template-columns:1fr}.actions button{width:100%}}
 </style>
 </head>
 <body>
 
-<!-- SECURE ADMIN LOGIN -->
-<div class="login-gate" id="loginGate">
-  <div class="login-card">
-    <div style="font-size:34px;margin-bottom:10px">🔐</div>
-    <h2>Admin Login</h2>
-    <p>Diploma Engineers • Course Approval Admin</p>
-
-    <label for="adminEmail">Admin Email</label>
-    <input id="adminEmail" type="email" autocomplete="username" placeholder="Enter Admin Email">
-
-    <label for="adminPassword">Password</label>
-    <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Enter Password">
-
-    <button class="login-btn" id="loginBtn">
-      <i class="fa-solid fa-right-to-bracket"></i> Login & Open Admin
-    </button>
-
-    <div class="login-status" id="loginStatus"></div>
-
-    <div class="security-note">
-      Login is checked against the Firebase users of
-      <b>diplomaengineers-869df</b>.<br>
-      For secure Course Database access, the same admin account must also exist
-      in <b>diploma-app-9a378 → Authentication → Users</b>.
-    </div>
-  </div>
+<div id="login" class="panel">
+<h1>Books Admin Login</h1>
+<p>Login with your existing Firebase admin account.</p>
+<label>Email</label>
+<input id="email" type="email" autocomplete="username">
+<label style="margin-top:12px">Password</label>
+<input id="password" type="password" autocomplete="current-password">
+<div class="actions"><button class="primary" id="loginBtn">Login</button></div>
+<div id="loginStatus" class="status"></div>
 </div>
 
-<button class="logout" id="logoutBtn" style="display:none">
-  <i class="fa-solid fa-right-from-bracket"></i> Logout
-</button>
+<div id="app" class="wrap">
 
-<!-- COURSE ADMIN -->
-<div id="adminContent" style="display:none">
-<div class="wrap">
-  <div class="top">
-    <div class="brand">
-      <h1><i class="fa-solid fa-shield-halved"></i> Course Approval Admin</h1>
-      <p>Diploma Engineers • ₹99 UPI / UTR verification</p>
-    </div>
-    <button class="btn refresh" id="refreshBtn">
-      <i class="fa-solid fa-rotate"></i> Refresh
-    </button>
-  </div>
-
-  <div id="notice" class="notice">Login required.</div>
-
-  <div class="stats">
-    <div class="stat total"><b>Total Requests</b><span id="totalCount">0</span></div>
-    <div class="stat pending"><b>Pending</b><span id="pendingCount">0</span></div>
-    <div class="stat verified"><b>Verified</b><span id="verifiedCount">0</span></div>
-    <div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div>
-  </div>
-
-  <div class="tabs">
-    <button class="btn tab active" data-filter="pending">Pending</button>
-    <button class="btn tab" data-filter="verified">Verified</button>
-    <button class="btn tab" data-filter="rejected">Rejected</button>
-    <button class="btn tab" data-filter="all">All</button>
-  </div>
-
-  <div id="list">
-    <div class="empty">Login to load purchase requests.</div>
-  </div>
+<div class="top">
+ <div>
+  <h1>Books Admin</h1>
+  <p>Add one book or upload many PDF + thumbnail pairs at once.</p>
+ </div>
+ <div class="actions">
+  <button class="secondary" id="openBooks">Open Books Page</button>
+  <button class="danger" id="logout">Logout</button>
+ </div>
 </div>
+
+<div class="stats">
+ <div class="stat"><span>Total Books</span><b id="totalBooks">0</b></div>
+ <div class="stat"><span>Categories</span><b id="totalCategories">0</b></div>
+ <div class="stat"><span>Queue</span><b id="queueCount">0</b></div>
+ <div class="stat"><span>Uploaded</span><b id="uploadedCount">0</b></div>
+</div>
+
+<!-- SINGLE BOOK -->
+<div class="panel">
+<h2>Add Single Book</h2>
+<p>For one book, select its PDF and thumbnail together.</p>
+<form id="singleForm">
+<div class="grid">
+ <div>
+  <label>Book Title *</label>
+  <input id="singleTitle" required placeholder="e.g. Engineering Mechanics">
+ </div>
+ <div>
+  <label>Category</label>
+  <select id="singleCategory">
+   <option>Book PDF</option><option>E-Book</option><option>Civil Engineering</option>
+   <option>Electrical Engineering</option><option>Mechanical Engineering</option>
+   <option>Computer Science</option><option>Electronics</option><option>Other</option>
+  </select>
+ </div>
+ <div>
+  <label>PDF File *</label>
+  <input id="singlePdfFile" type="file" accept=".pdf,application/pdf" required>
+ </div>
+ <div>
+  <label>Thumbnail Image *</label>
+  <input id="singleImage" type="file" accept="image/*" required>
+ </div>
+</div>
+<div class="actions">
+ <button class="primary" id="singleBtn">Add Book</button>
+</div>
+<div id="singleStatus" class="status"></div>
+</form>
+</div>
+
+<!-- BULK -->
+<div class="panel">
+<h2>Bulk Book Upload</h2>
+<p>Select multiple PDF files and multiple images. Books are paired by filename.</p>
+
+<div class="drop">
+ <label>1. Select PDF files</label>
+ <input id="bulkPdfs" type="file" accept=".pdf,application/pdf" multiple>
+ <div class="hint">Example: <b>RCC.pdf</b>, <b>Surveying.pdf</b>, <b>Hydraulics.pdf</b></div>
+</div>
+
+<div style="height:12px"></div>
+
+<div class="drop">
+ <label>2. Select thumbnail images</label>
+ <input id="bulkImages" type="file" accept="image/*" multiple>
+ <div class="hint">Best pairing: image filename should match PDF filename, e.g. <b>RCC.jpg</b> for <b>RCC.pdf</b>.</div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+ <div>
+  <label>Default Category</label>
+  <select id="bulkCategory">
+   <option>Book PDF</option><option>E-Book</option><option>Civil Engineering</option>
+   <option>Electrical Engineering</option><option>Mechanical Engineering</option>
+   <option>Computer Science</option><option>Electronics</option><option>Other</option>
+  </select>
+ </div>
+ <div>
+  <label>Image Pairing</label>
+  <select id="pairMode">
+   <option value="name">Match by filename</option>
+   <option value="order">Match by selection order</option>
+  </select>
+ </div>
+</div>
+
+<div class="actions">
+ <button class="secondary" id="buildQueue">Prepare Books</button>
+ <button class="primary" id="uploadAll" disabled>Upload All Books</button>
+ <button class="danger" id="clearQueue">Clear Queue</button>
+</div>
+<div id="bulkStatus" class="status"></div>
+<div id="queue" class="queue"></div>
+</div>
+
+<!-- EXISTING BOOKS -->
+<div class="panel">
+<h2 style="margin-bottom:14px">All Books</h2>
+<div class="toolbar">
+ <input id="search" placeholder="Search title or category...">
+ <select id="filterCategory"><option value="">All Categories</option></select>
+ <button class="secondary" id="clearSearch">Clear</button>
+</div>
+<div class="table">
+<table>
+<thead><tr><th>#</th><th>Image</th><th>Title</th><th>Category</th><th>PDF</th><th>Actions</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</div>
+
 </div>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {
-  getDatabase,
-  ref,
-  onValue,
-  get,
-  update,
-  set
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {getDatabase,ref,push,set,update,remove,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-/* =========================================================
-   1. COURSE FIREBASE
-   ========================================================= */
-const courseFirebaseConfig = {
-  apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-  authDomain: "diploma-app-9a378.firebaseapp.com",
-  databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-  projectId: "diploma-app-9a378",
-  storageBucket: "diploma-app-9a378.firebasestorage.app",
-  messagingSenderId: "160233059797",
-  appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
-  measurementId: "G-9646VK4C6L"
+const firebaseConfig={
+ apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+ authDomain:"diplomaengineers-869df.firebaseapp.com",
+ databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+ projectId:"diplomaengineers-869df",
+ storageBucket:"diplomaengineers-869df.appspot.com",
+ messagingSenderId:"356779436080",
+ appId:"1:356779436080:web:4b28da380e547420d0e5f5"
 };
 
-/* =========================================================
-   2. ADMIN/NEWS FIREBASE
-   This is the project whose existing Firebase users are
-   allowed to log in as admins.
-   ========================================================= */
-const adminFirebaseConfig = {
-  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-  authDomain: "diplomaengineers-869df.firebaseapp.com",
-  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-  projectId: "diplomaengineers-869df",
-  storageBucket: "diplomaengineers-869df.firebasestorage.app",
-  messagingSenderId: "356779436080",
-  appId: "1:356779436080:web:4b28da380e547420d0e5f5",
-  measurementId: "G-NGNBW3YGFG"
-};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getDatabase(app);
 
-const courseApp = initializeApp(courseFirebaseConfig, "courseApp");
-const courseAuth = getAuth(courseApp);
-const db = getDatabase(courseApp);
+const CLOUD_NAME="ub0qgzwa";
+const UPLOAD_PRESET="news_upload";
 
-const adminApp = initializeApp(adminFirebaseConfig, "adminApp");
-const adminAuth = getAuth(adminApp);
-
-/*
-  Optional email allowlist.
-  Leave [] if EVERY Firebase Authentication user in
-  diplomaengineers-869df should be allowed to open this admin.
-  Example:
-  const ADMIN_ALLOWLIST=["admin@example.com"];
-*/
-const ADMIN_ALLOWLIST = [];
-
-const $ = id => document.getElementById(id);
-
-const COURSE_FILES = {
-  "civil-year-2-course":"civil-year-2-course.html",
-  "mechanical-year-2-course":"mechanical-year-2-course.html",
-  "cs-year-2-course":"cs-year-2-course.html",
-  "it-year-2-course":"it-year-2-course.html",
-  "electrical-year-2-course":"electrical-year-2-course.html",
-  "electronics-year-2-course":"electronics-year-2-course.html",
-  "agriculture-year-2-course":"agriculture-year-2-course.html",
-  "chemical-year-2-course":"chemical-year-2-course.html"
-};
-
-let rows = [];
-let filter = "pending";
-let stopListening = null;
-let starting = false;
+const $=id=>document.getElementById(id);
+let books=[];
+let queue=[];
+let unsubscribe=null;
 
 function esc(v){
-  return String(v ?? "").replace(/[&<>'"]/g,m=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"
-  }[m]));
+ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+ .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function statusBox(id,text,error=false){
+ const x=$(id);x.textContent=text;x.style.display="block";
+ x.style.background=error?"#fee2e2":"#eff6ff";
+ x.style.color=error?"#b91c1c":"#1d4ed8";
+}
+function normalizeName(name){
+ return name.toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"").trim();
+}
+function titleFromFile(name){
+ return name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim();
 }
 
-function fmt(v){
-  if(!v) return "-";
-  const n=Number(v);
-  if(!Number.isFinite(n)) return "-";
-  return new Date(n).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
+$("loginBtn").onclick=async()=>{
+ try{
+  $("loginBtn").disabled=true;
+  await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value);
+ }catch(e){statusBox("loginStatus",e.message,true)}
+ finally{$("loginBtn").disabled=false}
+};
+$("logout").onclick=()=>signOut(auth);
+$("openBooks").onclick=()=>window.open("books.html","_blank");
+
+onAuthStateChanged(auth,user=>{
+ $("login").style.display=user?"none":"block";
+ $("app").style.display=user?"block":"none";
+ if(user)loadBooks();
+ else if(unsubscribe){unsubscribe();unsubscribe=null;}
+});
+
+function loadBooks(){
+ if(unsubscribe)unsubscribe();
+ unsubscribe=onValue(ref(db,"books"),snap=>{
+  books=[];
+  if(snap.exists())snap.forEach(x=>books.push({id:x.key,...x.val()}));
+  books.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  renderBooks();
+  updateCategories();
+  $("totalBooks").textContent=books.length;
+  $("totalCategories").textContent=new Set(books.map(x=>x.category||"Book PDF")).size;
+ },err=>statusBox("bulkStatus","Firebase read failed: "+err.message,true));
 }
 
-function statusOf(d){
-  return String(d.status || "pending").toLowerCase();
+function updateCategories(){
+ const current=$("filterCategory").value;
+ const cats=[...new Set(books.map(x=>x.category||"Book PDF"))].sort();
+ $("filterCategory").innerHTML='<option value="">All Categories</option>'+
+ cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+ if(cats.includes(current))$("filterCategory").value=current;
 }
 
-function courseFile(id){
-  return COURSE_FILES[id] || "";
+function renderBooks(){
+ const q=$("search").value.trim().toLowerCase();
+ const cat=$("filterCategory").value;
+ const list=books.filter(b=>{
+  const okQ=!q||String(b.title||"").toLowerCase().includes(q)||String(b.category||"").toLowerCase().includes(q);
+  const okC=!cat||(b.category||"Book PDF")===cat;
+  return okQ&&okC;
+ });
+
+ $("rows").innerHTML=list.length?list.map((b,i)=>`
+ <tr>
+  <td>${i+1}</td>
+  <td><img src="${esc(b.image||"")}" alt="" loading="lazy"></td>
+  <td><b>${esc(b.title)}</b></td>
+  <td>${esc(b.category||"Book PDF")}</td>
+  <td><a class="link" href="${esc(b.pdf)}" target="_blank" rel="noopener">Open PDF</a></td>
+  <td>
+   <button class="secondary" data-edit="${esc(b.id)}">Edit</button>
+   <button class="danger" data-delete="${esc(b.id)}">Delete</button>
+  </td>
+ </tr>`).join("")
+ :'<tr><td colspan="6" class="empty">No books found.</td></tr>';
+
+ document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>editBook(x.dataset.edit));
+ document.querySelectorAll("[data-delete]").forEach(x=>x.onclick=()=>deleteBook(x.dataset.delete));
 }
 
-function setNotice(text,type="warn"){
-  $("notice").className="notice"+(type==="ok"?" ok":type==="err"?" err":"");
-  $("notice").innerHTML=text;
+$("search").oninput=renderBooks;
+$("filterCategory").onchange=renderBooks;
+$("clearSearch").onclick=()=>{$("search").value="";$("filterCategory").value="";renderBooks()};
+
+function compressImage(file){
+ return new Promise((resolve,reject)=>{
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+   let w=img.width,h=img.height,max=1400;
+   if(w>max){h=h*max/w;w=max}
+   const canvas=document.createElement("canvas");
+   canvas.width=Math.round(w);canvas.height=Math.round(h);
+   canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+   URL.revokeObjectURL(url);
+   canvas.toBlob(blob=>{
+    if(blob)resolve(new File([blob],"book-thumb.jpg",{type:"image/jpeg"}));
+    else reject(new Error("Image compression failed"));
+   },"image/jpeg",.84);
+  };
+  img.onerror=()=>reject(new Error("Invalid image"));
+  img.src=url;
+ });
 }
 
-function render(){
-  const counts={pending:0,verified:0,rejected:0};
+function uploadImage(file,onProgress){
+ return new Promise((resolve,reject)=>{
+  const xhr=new XMLHttpRequest();
+  xhr.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+  xhr.upload.onprogress=e=>{
+   if(e.lengthComputable&&onProgress)onProgress(Math.round(e.loaded/e.total*100));
+  };
+  xhr.onload=()=>{
+   try{
+    const d=JSON.parse(xhr.responseText);
+    if(xhr.status>=200&&xhr.status<300&&d.secure_url)resolve(d.secure_url);
+    else reject(new Error(d.error?.message||"Cloudinary upload failed"));
+   }catch(e){reject(new Error("Invalid Cloudinary response"))}
+  };
+  xhr.onerror=()=>reject(new Error("Cloudinary network error"));
+  const data=new FormData();
+  data.append("file",file);
+  data.append("upload_preset",UPLOAD_PRESET);
+  xhr.send(data);
+ });
+}
 
-  rows.forEach(x=>{
-    const s=statusOf(x);
-    if(counts[s]!==undefined) counts[s]++;
+/* Single book */
+$("singleForm").onsubmit=async e=>{
+ e.preventDefault();
+ const title=$("singleTitle").value.trim();
+ const category=$("singleCategory").value||"Book PDF";
+ const pdfFile=$("singlePdfFile").files[0];
+ const imageFile=$("singleImage").files[0];
+
+ if(!title||!pdfFile||!imageFile){
+  statusBox("singleStatus","Title, PDF and thumbnail are required.",true);return;
+ }
+ $("singleBtn").disabled=true;
+ try{
+  statusBox("singleStatus","Uploading thumbnail...");
+  const image=await uploadImage(await compressImage(imageFile),p=>statusBox("singleStatus","Uploading thumbnail "+p+"%..."));
+  const pdfUrl=await uploadPdfToCloudinary(pdfFile,p=>statusBox("singleStatus","Uploading PDF "+p+"%..."));
+  await set(push(ref(db,"books")),{
+   title,category,pdf:pdfUrl,image,timestamp:Date.now()
   });
+  statusBox("singleStatus","Book added successfully.");
+  $("singleForm").reset();
+ }catch(err){statusBox("singleStatus",err.message,true)}
+ finally{$("singleBtn").disabled=false}
+};
 
-  $("totalCount").textContent=rows.length;
-  $("pendingCount").textContent=counts.pending;
-  $("verifiedCount").textContent=counts.verified;
-  $("rejectedCount").textContent=counts.rejected;
+/*
+ IMPORTANT:
+ Cloudinary upload preset must allow the resource type being uploaded.
+ The original preset was configured for images. PDFs are therefore uploaded
+ using Cloudinary's raw endpoint with the same unsigned preset.
+*/
+function uploadPdfToCloudinary(file,onProgress){
+ return new Promise((resolve,reject)=>{
+  const xhr=new XMLHttpRequest();
+  xhr.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
+  xhr.upload.onprogress=e=>{
+   if(e.lengthComputable&&onProgress)onProgress(Math.round(e.loaded/e.total*100));
+  };
+  xhr.onload=()=>{
+   try{
+    const d=JSON.parse(xhr.responseText);
+    if(xhr.status>=200&&xhr.status<300&&(d.secure_url||d.url))resolve(d.secure_url||d.url);
+    else reject(new Error(d.error?.message||"PDF upload failed"));
+   }catch(e){reject(new Error("Invalid Cloudinary PDF response"))}
+  };
+  xhr.onerror=()=>reject(new Error("PDF upload network error"));
+  const data=new FormData();
+  data.append("file",file);
+  data.append("upload_preset",UPLOAD_PRESET);
+  xhr.send(data);
+ });
+}
 
-  document.querySelectorAll(".tab").forEach(b=>{
-    b.classList.toggle("active",b.dataset.filter===filter);
+/* Bulk queue */
+$("buildQueue").onclick=()=>{
+ const pdfs=[...$("bulkPdfs").files];
+ const images=[...$("bulkImages").files];
+ const category=$("bulkCategory").value||"Book PDF";
+ const mode=$("pairMode").value;
+
+ if(!pdfs.length)return statusBox("bulkStatus","Please select PDF files first.",true);
+ if(!images.length)return statusBox("bulkStatus","Please select thumbnail images.",true);
+
+ queue=[];
+ let unmatched=0;
+
+ pdfs.forEach((pdf,index)=>{
+  let image=null;
+  if(mode==="order"){
+   image=images[index]||null;
+  }else{
+   const key=normalizeName(pdf.name);
+   image=images.find(x=>normalizeName(x.name)===key);
+  }
+  if(!image)unmatched++;
+  queue.push({
+   pdfFile:pdf,imageFile:image,
+   title:titleFromFile(pdf.name),
+   category,
+   state:image?"Ready":"Missing image",
+   progress:0
   });
+ });
 
-  const data=filter==="all"
-    ? rows
-    : rows.filter(x=>statusOf(x)===filter);
+ renderQueue();
 
-  if(!data.length){
-    $("list").innerHTML=`
-      <div class="empty">
-        <i class="fa-solid fa-circle-check" style="font-size:28px"></i>
-        <p>No ${esc(filter)} requests.</p>
-      </div>`;
-    return;
-  }
+ if(unmatched){
+  statusBox("bulkStatus",`${unmatched} PDF file(s) have no matching image. Fix the pairing or remove them before upload.`,true);
+ }else{
+  statusBox("bulkStatus",`${queue.length} books prepared. All PDF/image pairs are ready.`);
+ }
+ $("uploadAll").disabled=queue.length===0||unmatched>0;
+};
 
-  $("list").innerHTML=data.map(d=>{
-    const name=d.name||"Engineer";
-    const branch=d.branch||"Diploma Member";
-    const pic=d.profilePic||d.photoURL||"";
-    const initial=(name.trim()[0]||"E").toUpperCase();
+function renderQueue(){
+ $("queueCount").textContent=queue.length;
+ $("queue").innerHTML=queue.length?queue.map((x,i)=>`
+ <div class="item">
+  <img src="${x.imageFile?URL.createObjectURL(x.imageFile):""}" alt="">
+  <div>
+   <div class="item-title">${esc(x.title)}</div>
+   <div class="item-name">PDF: ${esc(x.pdfFile.name)}</div>
+   <div class="item-name">Image: ${esc(x.imageFile?.name||"No matching image")}</div>
+   <div class="progress"><i id="bar-${i}" style="width:${x.progress}%"></i></div>
+   <div class="item-name" id="state-${i}">${esc(x.state)}</div>
+  </div>
+  <div class="actions">
+   <button class="secondary" data-remove="${i}">Remove</button>
+  </div>
+ </div>`).join("")
+ :'<div class="empty">No books in upload queue.</div>';
 
-    const avatar=pic
-      ? `<img src="${esc(pic)}" alt="Profile"
-           onerror="this.parentElement.innerHTML='${initial}'">`
-      : initial;
-
-    const file=courseFile(d.courseId);
-    const s=statusOf(d);
-
-    let actions="";
-
-    if(s==="pending"){
-      actions=`
-        <button class="btn approve"
-          data-action="approve"
-          data-uid="${esc(d.uid)}"
-          data-course="${esc(d.courseId)}"
-          data-key="${esc(d.purchaseKey)}">
-          <i class="fa-solid fa-circle-check"></i>
-          Approve Payment & Give Access
-        </button>
-
-        <button class="btn reject"
-          data-action="reject"
-          data-uid="${esc(d.uid)}"
-          data-course="${esc(d.courseId)}"
-          data-key="${esc(d.purchaseKey)}">
-          <i class="fa-solid fa-xmark"></i> Reject
-        </button>`;
-    }else if(s==="verified"){
-      actions=`
-        <button class="btn course-link"
-          data-file="${esc(file)}"
-          ${file?"":"disabled"}>
-          <i class="fa-solid fa-file-code"></i>
-          ${file?"Open Course File":"Course File Not Mapped"}
-        </button>`;
-    }else{
-      actions=`<div class="muted">This request was rejected.</div>`;
-    }
-
-    return `
-      <article class="request">
-        <div class="head">
-          <div class="user">
-            <div class="avatar">${avatar}</div>
-            <div>
-              <div class="course">${esc(d.courseName||d.courseId||"Course")}</div>
-              <div class="muted">
-                ${esc(name)} • ${esc(branch)} • ${esc(d.email||"-")}
-              </div>
-              ${pic?'<div class="photo-note">Profile photo loaded from purchase record</div>':""}
-            </div>
-          </div>
-          <div class="amount">₹${esc(d.amount||99)}</div>
-        </div>
-
-        <div class="grid">
-          <div class="item"><b>NAME</b><span>${esc(name)}</span></div>
-          <div class="item"><b>BRANCH</b><span>${esc(branch)}</span></div>
-          <div class="item"><b>MOBILE</b><span>${esc(d.mobile||"-")}</span></div>
-          <div class="item"><b>EMAIL</b><span>${esc(d.email||"-")}</span></div>
-          <div class="item"><b>COURSE</b><span>${esc(d.courseName||d.courseId||"-")}</span></div>
-          <div class="item"><b>AMOUNT</b><span>₹${esc(d.amount||99)} INR</span></div>
-          <div class="item"><b>UTR</b><span class="utr">${esc(d.utr||"-")}</span></div>
-          <div class="item"><b>SUBMITTED</b><span>${esc(fmt(d.submittedAt))}</span></div>
-          <div class="item"><b>STATUS</b><span>${esc(s.toUpperCase())}</span></div>
-        </div>
-
-        <div class="actions">${actions}</div>
-      </article>`;
-  }).join("");
+ document.querySelectorAll("[data-remove]").forEach(x=>x.onclick=()=>{
+  queue.splice(Number(x.dataset.remove),1);
+  renderQueue();
+  $("uploadAll").disabled=!queue.length||queue.some(x=>!x.imageFile);
+ });
 }
 
-function flatten(snapshot){
-  const out=[];
-  if(!snapshot.exists()) return out;
+$("clearQueue").onclick=()=>{
+ queue=[];$("bulkPdfs").value="";$("bulkImages").value="";
+ renderQueue();statusBox("bulkStatus","Queue cleared.");
+ $("uploadAll").disabled=true;
+};
 
-  snapshot.forEach(uidSnap=>{
-    const uid=uidSnap.key;
-    const value=uidSnap.val()||{};
+$("uploadAll").onclick=async()=>{
+ if(!queue.length)return;
+ $("uploadAll").disabled=true;
+ $("buildQueue").disabled=true;
+ $("clearQueue").disabled=true;
 
-    Object.entries(value).forEach(([courseId,courseValue])=>{
-      if(!courseValue || typeof courseValue!=="object") return;
+ let success=0,failed=0;
+ $("uploadedCount").textContent="0";
 
-      Object.entries(courseValue).forEach(([purchaseKey,purchaseValue])=>{
-        if(!purchaseValue || typeof purchaseValue!=="object") return;
-
-        out.push({
-          uid,
-          courseId,
-          purchaseKey,
-          ...purchaseValue
-        });
-      });
-    });
-  });
-
-  return out.sort((a,b)=>
-    (Number(b.submittedAt)||0)-(Number(a.submittedAt)||0)
-  );
-}
-
-/* =========================================================
-   COURSE DATABASE CONNECTION
-   ========================================================= */
-async function connect(){
-  if(starting) return;
-  starting=true;
-
-  if(stopListening){
-    stopListening();
-    stopListening=null;
-  }
-
-  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Course Firebase...');
-
+ for(let i=0;i<queue.length;i++){
+  const item=queue[i];
   try{
-    if(!courseAuth.currentUser){
-      throw new Error("Course Firebase admin session is not signed in.");
-    }
+   item.state="Uploading image...";
+   updateQueueItem(i,item.state,5);
 
-    setNotice(
-      "Course Firebase authenticated • Loading live purchase requests...",
-      "ok"
-    );
+   const image=await uploadImage(await compressImage(item.imageFile),p=>{
+    updateQueueItem(i,"Uploading image "+p+"%",Math.round(p*.45));
+   });
 
-    stopListening=onValue(
-      ref(db,"utrPurchases"),
-      snap=>{
-        rows=flatten(snap);
+   item.state="Uploading PDF...";
+   updateQueueItem(i,item.state,50);
 
-        setNotice(
-          `Course Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR in your UPI/bank app before approving.`,
-          "ok"
-        );
+   const pdf=await uploadPdfToCloudinary(item.pdfFile,p=>{
+    updateQueueItem(i,"Uploading PDF "+p+"%",50+Math.round(p*.45));
+   });
 
-        render();
-      },
-      err=>{
-        console.error("Realtime Database error:",err);
+   item.state="Saving to Firebase...";
+   updateQueueItem(i,item.state,98);
 
-        setNotice(
-          "Firebase database error: "+esc(err.message),
-          "err"
-        );
+   await set(push(ref(db,"books")),{
+    title:item.title,
+    category:item.category,
+    pdf,
+    image,
+    timestamp:Date.now()
+   });
 
-        $("list").innerHTML=`
-          <div class="error">
-            <b>Purchase requests could not be loaded.</b><br>
-            <span class="small">${esc(err.message)}</span><br><br>
-            <span class="small">
-              Authentication succeeded, but Course Firebase Realtime Database
-              Rules must allow this authenticated admin to read
-              <b>utrPurchases</b> and write <b>courseAccess</b>.
-            </span>
-          </div>`;
-      }
-    );
-
-  }catch(e){
-    console.error("Course connection error:",e);
-    setNotice("Course Firebase error: "+esc(e.message),"err");
-  }finally{
-    starting=false;
+   success++;
+   item.state="Uploaded successfully";
+   updateQueueItem(i,item.state,100);
+   $("uploadedCount").textContent=success;
+  }catch(err){
+   failed++;
+   item.state="Failed: "+err.message;
+   updateQueueItem(i,item.state,0,true);
   }
+ }
+
+ $("buildQueue").disabled=false;
+ $("clearQueue").disabled=false;
+ $("uploadAll").disabled=queue.some(x=>x.state.startsWith("Failed"));
+ statusBox("bulkStatus",`Finished. ${success} book(s) uploaded, ${failed} failed.`,failed>0);
+};
+
+function updateQueueItem(i,state,progress,error=false){
+ const s=$("state-"+i),b=$("bar-"+i);
+ if(s)s.textContent=state;
+ if(b)b.style.width=progress+"%";
+ if(s)s.style.color=error?"#b91c1c":"#64748b";
 }
 
-/* =========================================================
-   APPROVE
-   ========================================================= */
-async function approve(uid,courseId,key,button){
-  if(!uid||!courseId||!key){
-    alert("Invalid purchase record.");
-    return;
-  }
-
-  if(!courseAuth.currentUser){
-    alert("Admin session expired. Please login again.");
-    return;
-  }
-
-  if(!confirm(
-    "Confirm that the ₹99 payment and UTR are genuine.\n\n"+
-    "After approval, this student will get access to the selected course."
-  )) return;
-
-  const oldText=button.innerHTML;
-  button.disabled=true;
-  button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
-
-  try{
-    const purchaseRef=ref(
-      db,
-      `utrPurchases/${uid}/${courseId}/${key}`
-    );
-
-    const snap=await get(purchaseRef);
-
-    if(!snap.exists()){
-      throw new Error("Purchase request not found.");
-    }
-
-    const d=snap.val()||{};
-    const now=Date.now();
-    const adminEmail=adminAuth.currentUser?.email||courseAuth.currentUser?.email||"admin";
-
-    await update(purchaseRef,{
-      status:"verified",
-      verified:true,
-      verifiedAt:now,
-      verifiedBy:adminEmail
-    });
-
-    await set(
-      ref(db,`courseAccess/${uid}/${courseId}`),
-      {
-        uid,
-        courseId,
-        courseName:d.courseName||courseId,
-        amount:Number(d.amount)||99,
-        currency:"INR",
-        utr:d.utr||"",
-        verified:true,
-        status:"verified",
-        purchaseId:d.purchaseId||key,
-        grantedAt:now,
-        verifiedBy:adminEmail
-      }
-    );
-
-    alert(
-      "Payment approved successfully.\n\n"+
-      "Course access has been granted to the student."
-    );
-
-  }catch(e){
-    console.error("Approve error:",e);
-    alert(
-      "Approve failed:\n\n"+
-      e.message+
-      "\n\nCheck Course Firebase Realtime Database Rules."
-    );
-
-    button.disabled=false;
-    button.innerHTML=oldText;
-  }
+/* Edit / delete existing books */
+async function deleteBook(id){
+ const b=books.find(x=>x.id===id);
+ if(!b)return;
+ if(!confirm(`Delete "${b.title}"?`))return;
+ try{await remove(ref(db,"books/"+id))}
+ catch(e){alert(e.message)}
 }
 
-/* =========================================================
-   REJECT
-   ========================================================= */
-async function reject(uid,courseId,key,button){
-  if(!uid||!courseId||!key){
-    alert("Invalid purchase record.");
-    return;
-  }
-
-  if(!courseAuth.currentUser){
-    alert("Admin session expired. Please login again.");
-    return;
-  }
-
-  if(!confirm("Reject this UTR/payment request?")) return;
-
-  const oldText=button.innerHTML;
-  button.disabled=true;
-  button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Rejecting...';
-
-  try{
-    await update(
-      ref(db,`utrPurchases/${uid}/${courseId}/${key}`),
-      {
-        status:"rejected",
-        verified:false,
-        rejectedAt:Date.now(),
-        rejectedBy:(adminAuth.currentUser?.email||courseAuth.currentUser?.email||"admin")
-      }
-    );
-
-    alert("Request rejected.");
-
-  }catch(e){
-    console.error("Reject error:",e);
-    alert("Reject failed:\n\n"+e.message);
-
-    button.disabled=false;
-    button.innerHTML=oldText;
-  }
+function editBook(id){
+ const b=books.find(x=>x.id===id);
+ if(!b)return;
+ const title=prompt("Book title:",b.title||"");
+ if(title===null)return;
+ const category=prompt("Category:",b.category||"Book PDF");
+ if(category===null)return;
+ const pdf=prompt("PDF URL:",b.pdf||"");
+ if(pdf===null)return;
+ update(ref(db,"books/"+id),{
+  title:title.trim()||b.title,
+  category:category.trim()||"Book PDF",
+  pdf:pdf.trim()||b.pdf,
+  image:b.image||"",
+  timestamp:b.timestamp||Date.now()
+ }).catch(e=>alert(e.message));
 }
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-document.addEventListener("click",e=>{
-  const actionButton=e.target.closest("[data-action]");
-
-  if(actionButton){
-    const args=[
-      actionButton.dataset.uid,
-      actionButton.dataset.course,
-      actionButton.dataset.key,
-      actionButton
-    ];
-
-    if(actionButton.dataset.action==="approve"){
-      approve(...args);
-    }else{
-      reject(...args);
-    }
-    return;
-  }
-
-  const courseButton=e.target.closest("[data-file]");
-
-  if(courseButton && courseButton.dataset.file){
-    window.open(
-      courseButton.dataset.file,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
-});
-
-document.querySelectorAll(".tab").forEach(button=>{
-  button.addEventListener("click",()=>{
-    filter=button.dataset.filter;
-    render();
-  });
-});
-
-$("refreshBtn").addEventListener("click",()=>{
-  if(courseAuth.currentUser) connect();
-});
-
-$("loginBtn").addEventListener("click",loginAdmin);
-
-$("adminPassword").addEventListener("keydown",e=>{
-  if(e.key==="Enter") loginAdmin();
-});
-
-/* =========================================================
-   LOGIN
-   ========================================================= */
-function setLoginStatus(text,type="err"){
-  const el=$("loginStatus");
-  el.textContent=text;
-  el.className="login-status "+type;
-}
-
-async function loginAdmin(){
-  const email=$("adminEmail").value.trim();
-  const password=$("adminPassword").value;
-
-  if(!email || !password){
-    setLoginStatus("Email and password are required.");
-    return;
-  }
-
-  const btn=$("loginBtn");
-  btn.disabled=true;
-  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
-
-  try{
-    /*
-      STEP 1:
-      This checks the user against the exact Firebase project
-      supplied by you: diplomaengineers-869df.
-    */
-    await signInWithEmailAndPassword(
-      adminAuth,
-      email,
-      password
-    );
-
-    if(
-      ADMIN_ALLOWLIST.length &&
-      !ADMIN_ALLOWLIST
-        .map(x=>x.toLowerCase())
-        .includes(email.toLowerCase())
-    ){
-      await signOut(adminAuth);
-      throw new Error("This email is not approved as an admin.");
-    }
-
-    /*
-      STEP 2:
-      Course RTDB belongs to another Firebase project.
-      Therefore the same admin credentials must also be a
-      Firebase Authentication user in diploma-app-9a378.
-    */
-    try{
-      await signInWithEmailAndPassword(
-        courseAuth,
-        email,
-        password
-      );
-    }catch(courseError){
-      await signOut(adminAuth);
-
-      throw new Error(
-        "Admin login was successful in diplomaengineers-869df, " +
-        "but this same admin user was not found in diploma-app-9a378. " +
-        "Create the same Email/Password user in Course Firebase → " +
-        "Authentication → Users, then login again."
-      );
-    }
-
-    $("loginGate").style.display="none";
-    $("adminContent").style.display="block";
-    $("logoutBtn").style.display="block";
-
-    setNotice(
-      "Admin authenticated successfully • Loading Course requests...",
-      "ok"
-    );
-
-    await connect();
-
-  }catch(e){
-    console.error("Login error:",e);
-    setLoginStatus(e.message||"Login failed.");
-  }finally{
-    btn.disabled=false;
-    btn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Login & Open Admin';
-  }
-}
-
-/* Restore login state only if BOTH projects still have sessions. */
-onAuthStateChanged(adminAuth,adminUser=>{
-  const courseUser=courseAuth.currentUser;
-
-  if(adminUser && courseUser){
-    $("loginGate").style.display="none";
-    $("adminContent").style.display="block";
-    $("logoutBtn").style.display="block";
-    connect();
-  }
-});
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-$("logoutBtn").addEventListener("click",async()=>{
-  try{
-    if(stopListening){
-      stopListening();
-      stopListening=null;
-    }
-
-    await signOut(courseAuth);
-    await signOut(adminAuth);
-
-    rows=[];
-    render();
-
-    $("adminContent").style.display="none";
-    $("logoutBtn").style.display="none";
-    $("loginGate").style.display="flex";
-    $("adminPassword").value="";
-
-    setLoginStatus("Logged out successfully.","ok");
-
-  }catch(e){
-    console.error("Logout error:",e);
-  }
-});
 </script>
 </body>
 </html>

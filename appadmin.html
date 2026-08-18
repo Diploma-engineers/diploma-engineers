@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Diploma Engineers • Course Approval Admin</title>
+<title>Diploma Engineers • Secure Course Approval Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -17,8 +17,7 @@ body{margin:0;background:#f5f7fb;color:#172033;font-family:Poppins,Arial,sans-se
 .btn:disabled{opacity:.55;cursor:not-allowed}
 .refresh{background:#eef2ff;color:#3730a3}
 .notice{margin:14px 0;padding:12px 14px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px}
-.notice.ok{background:#ecfdf3;color:#166534}
-.notice.err{background:#fef2f2;color:#991b1b}
+.notice.ok{background:#ecfdf3;color:#166534}.notice.err{background:#fef2f2;color:#991b1b}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0}
 .stat{background:#fff;border-radius:14px;padding:15px;box-shadow:0 5px 20px rgba(0,0,0,.05)}
 .stat b{display:block;font-size:12px;color:#667085}.stat span{font-size:25px;font-weight:800}
@@ -36,22 +35,71 @@ body{margin:0;background:#f5f7fb;color:#172033;font-family:Poppins,Arial,sans-se
 .actions{display:flex;gap:10px}.approve{background:#16a34a;color:#fff;flex:1}.reject{background:#fee2e2;color:#b91c1c;flex:1}
 .course-link{background:#eff6ff;color:#1d4ed8;flex:1}.empty{text-align:center;padding:42px;background:#fff;border-radius:18px;color:#667085}
 .error{background:#fef2f2;color:#991b1b;padding:16px;border-radius:14px}.small{font-size:11px;opacity:.85}
-.photo-note{font-size:10px;color:#667085;margin-top:5px}
+.login-gate{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e293b);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99999}
+.login-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,.35)}
+.login-card h2{margin:0 0 6px;font-size:24px}.login-card p{margin:0 0 20px;color:#667085;font-size:12px}
+.login-card label{display:block;font-size:12px;font-weight:700;margin:12px 0 6px}
+.login-card input{width:100%;padding:13px 14px;border:1px solid #d0d5dd;border-radius:10px;outline:0;font:500 14px Poppins}
+.login-card input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.login-btn{width:100%;margin-top:16px;border:0;border-radius:11px;padding:13px;background:#111827;color:#fff;font:700 14px Poppins;cursor:pointer}
+.login-btn:disabled{opacity:.6;cursor:not-allowed}
+.login-status{margin-top:12px;padding:11px;border-radius:10px;font-size:12px;display:none}
+.login-status.err{display:block;background:#fef2f2;color:#991b1b}
+.login-status.ok{display:block;background:#ecfdf3;color:#166534}
+.logout{position:fixed;right:18px;top:18px;z-index:1000;border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 13px;font:700 12px Poppins;cursor:pointer}
+.security-note{margin-top:14px;font-size:10px;color:#98a2b3;line-height:1.5}
 @media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.wrap{padding:10px}.top,.head{align-items:flex-start;flex-direction:column}.stats,.grid{grid-template-columns:1fr}.actions{flex-direction:column}.amount{align-self:flex-start}}
 </style>
 </head>
 <body>
+
+<!-- SECURE ADMIN LOGIN -->
+<div class="login-gate" id="loginGate">
+  <div class="login-card">
+    <div style="font-size:34px;margin-bottom:10px">🔐</div>
+    <h2>Admin Login</h2>
+    <p>Diploma Engineers • Course Approval Admin</p>
+
+    <label for="adminEmail">Admin Email</label>
+    <input id="adminEmail" type="email" autocomplete="username" placeholder="Enter Admin Email">
+
+    <label for="adminPassword">Password</label>
+    <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Enter Password">
+
+    <button class="login-btn" id="loginBtn">
+      <i class="fa-solid fa-right-to-bracket"></i> Login & Open Admin
+    </button>
+
+    <div class="login-status" id="loginStatus"></div>
+
+    <div class="security-note">
+      Login is checked against the Firebase users of
+      <b>diplomaengineers-869df</b>.<br>
+      For secure Course Database access, the same admin account must also exist
+      in <b>diploma-app-9a378 → Authentication → Users</b>.
+    </div>
+  </div>
+</div>
+
+<button class="logout" id="logoutBtn" style="display:none">
+  <i class="fa-solid fa-right-from-bracket"></i> Logout
+</button>
+
+<!-- COURSE ADMIN -->
+<div id="adminContent" style="display:none">
 <div class="wrap">
   <div class="top">
     <div class="brand">
       <h1><i class="fa-solid fa-shield-halved"></i> Course Approval Admin</h1>
       <p>Diploma Engineers • ₹99 UPI / UTR verification</p>
     </div>
-    <button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    <button class="btn refresh" id="refreshBtn">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
   </div>
 
-  <div id="notice" class="notice">Connecting to Firebase...</div>
+  <div id="notice" class="notice">Login required.</div>
 
   <div class="stats">
     <div class="stat total"><b>Total Requests</b><span id="totalCount">0</span></div>
@@ -68,67 +116,111 @@ body{margin:0;background:#f5f7fb;color:#172033;font-family:Poppins,Arial,sans-se
   </div>
 
   <div id="list">
-    <div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading purchase requests...</div>
+    <div class="empty">Login to load purchase requests.</div>
   </div>
+</div>
 </div>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {getAuth,signInAnonymously,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {getDatabase,ref,onValue,get,update,set} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  get,
+  update,
+  set
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-const firebaseConfig={
-  apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-  authDomain:"diploma-app-9a378.firebaseapp.com",
-  databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",
-  projectId:"diploma-app-9a378",
-  storageBucket:"diploma-app-9a378.firebasestorage.app",
-  messagingSenderId:"160233059797",
-  appId:"1:160233059797:web:be38130ed64f8bd0afb95c",
-  measurementId:"G-9646VK4C6L"
+/* =========================================================
+   1. COURSE FIREBASE
+   ========================================================= */
+const courseFirebaseConfig = {
+  apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+  authDomain: "diploma-app-9a378.firebaseapp.com",
+  databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+  projectId: "diploma-app-9a378",
+  storageBucket: "diploma-app-9a378.firebasestorage.app",
+  messagingSenderId: "160233059797",
+  appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
+  measurementId: "G-9646VK4C6L"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getDatabase(app);
-
-const COURSE_FILES={
- "civil-year-2-course":"civil-year-2-course.html",
- "mechanical-year-2-course":"mechanical-year-2-course.html",
- "cs-year-2-course":"cs-year-2-course.html",
- "it-year-2-course":"it-year-2-course.html",
- "electrical-year-2-course":"electrical-year-2-course.html",
- "electronics-year-2-course":"electronics-year-2-course.html",
- "agriculture-year-2-course":"agriculture-year-2-course.html",
- "chemical-year-2-course":"chemical-year-2-course.html"
+/* =========================================================
+   2. ADMIN/NEWS FIREBASE
+   This is the project whose existing Firebase users are
+   allowed to log in as admins.
+   ========================================================= */
+const adminFirebaseConfig = {
+  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+  authDomain: "diplomaengineers-869df.firebaseapp.com",
+  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+  projectId: "diplomaengineers-869df",
+  storageBucket: "diplomaengineers-869df.firebasestorage.app",
+  messagingSenderId: "356779436080",
+  appId: "1:356779436080:web:4b28da380e547420d0e5f5",
+  measurementId: "G-NGNBW3YGFG"
 };
 
-let rows=[];
-let filter="pending";
-let stopListening=null;
-let starting=false;
+const courseApp = initializeApp(courseFirebaseConfig, "courseApp");
+const courseAuth = getAuth(courseApp);
+const db = getDatabase(courseApp);
 
-const $=id=>document.getElementById(id);
+const adminApp = initializeApp(adminFirebaseConfig, "adminApp");
+const adminAuth = getAuth(adminApp);
+
+/*
+  Optional email allowlist.
+  Leave [] if EVERY Firebase Authentication user in
+  diplomaengineers-869df should be allowed to open this admin.
+  Example:
+  const ADMIN_ALLOWLIST=["admin@example.com"];
+*/
+const ADMIN_ALLOWLIST = [];
+
+const $ = id => document.getElementById(id);
+
+const COURSE_FILES = {
+  "civil-year-2-course":"civil-year-2-course.html",
+  "mechanical-year-2-course":"mechanical-year-2-course.html",
+  "cs-year-2-course":"cs-year-2-course.html",
+  "it-year-2-course":"it-year-2-course.html",
+  "electrical-year-2-course":"electrical-year-2-course.html",
+  "electronics-year-2-course":"electronics-year-2-course.html",
+  "agriculture-year-2-course":"agriculture-year-2-course.html",
+  "chemical-year-2-course":"chemical-year-2-course.html"
+};
+
+let rows = [];
+let filter = "pending";
+let stopListening = null;
+let starting = false;
 
 function esc(v){
-  return String(v??"").replace(/[&<>'"]/g,m=>({
+  return String(v ?? "").replace(/[&<>'"]/g,m=>({
     "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"
   }[m]));
 }
 
 function fmt(v){
-  if(!v)return "-";
+  if(!v) return "-";
   const n=Number(v);
-  if(!Number.isFinite(n))return "-";
+  if(!Number.isFinite(n)) return "-";
   return new Date(n).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
 }
 
 function statusOf(d){
-  return String(d.status||"pending").toLowerCase();
+  return String(d.status || "pending").toLowerCase();
 }
 
 function courseFile(id){
-  return COURSE_FILES[id]||"";
+  return COURSE_FILES[id] || "";
 }
 
 function setNotice(text,type="warn"){
@@ -138,9 +230,10 @@ function setNotice(text,type="warn"){
 
 function render(){
   const counts={pending:0,verified:0,rejected:0};
+
   rows.forEach(x=>{
     const s=statusOf(x);
-    if(counts[s]!==undefined)counts[s]++;
+    if(counts[s]!==undefined) counts[s]++;
   });
 
   $("totalCount").textContent=rows.length;
@@ -157,8 +250,8 @@ function render(){
     : rows.filter(x=>statusOf(x)===filter);
 
   if(!data.length){
-    $("list").innerHTML=
-      `<div class="empty">
+    $("list").innerHTML=`
+      <div class="empty">
         <i class="fa-solid fa-circle-check" style="font-size:28px"></i>
         <p>No ${esc(filter)} requests.</p>
       </div>`;
@@ -170,14 +263,17 @@ function render(){
     const branch=d.branch||"Diploma Member";
     const pic=d.profilePic||d.photoURL||"";
     const initial=(name.trim()[0]||"E").toUpperCase();
+
     const avatar=pic
-      ? `<img src="${esc(pic)}" alt="Profile" onerror="this.parentElement.innerHTML='${initial}'">`
+      ? `<img src="${esc(pic)}" alt="Profile"
+           onerror="this.parentElement.innerHTML='${initial}'">`
       : initial;
 
     const file=courseFile(d.courseId);
     const s=statusOf(d);
 
     let actions="";
+
     if(s==="pending"){
       actions=`
         <button class="btn approve"
@@ -185,8 +281,10 @@ function render(){
           data-uid="${esc(d.uid)}"
           data-course="${esc(d.courseId)}"
           data-key="${esc(d.purchaseKey)}">
-          <i class="fa-solid fa-circle-check"></i> Approve Payment & Give Access
+          <i class="fa-solid fa-circle-check"></i>
+          Approve Payment & Give Access
         </button>
+
         <button class="btn reject"
           data-action="reject"
           data-uid="${esc(d.uid)}"
@@ -241,21 +339,17 @@ function render(){
 
 function flatten(snapshot){
   const out=[];
-  if(!snapshot.exists())return out;
+  if(!snapshot.exists()) return out;
 
   snapshot.forEach(uidSnap=>{
     const uid=uidSnap.key;
     const value=uidSnap.val()||{};
 
     Object.entries(value).forEach(([courseId,courseValue])=>{
-      if(!courseValue||typeof courseValue!=="object")return;
+      if(!courseValue || typeof courseValue!=="object") return;
 
-      /*
-       Expected:
-       utrPurchases/{uid}/{courseId}/{purchaseId}
-      */
       Object.entries(courseValue).forEach(([purchaseKey,purchaseValue])=>{
-        if(!purchaseValue||typeof purchaseValue!=="object")return;
+        if(!purchaseValue || typeof purchaseValue!=="object") return;
 
         out.push({
           uid,
@@ -272,8 +366,11 @@ function flatten(snapshot){
   );
 }
 
+/* =========================================================
+   COURSE DATABASE CONNECTION
+   ========================================================= */
 async function connect(){
-  if(starting)return;
+  if(starting) return;
   starting=true;
 
   if(stopListening){
@@ -281,19 +378,15 @@ async function connect(){
     stopListening=null;
   }
 
-  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Firebase...');
+  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Course Firebase...');
 
   try{
-    if(!auth.currentUser){
-      await signInAnonymously(auth);
-    }
-
-    if(!auth.currentUser){
-      throw new Error("Anonymous Firebase authentication did not create a user.");
+    if(!courseAuth.currentUser){
+      throw new Error("Course Firebase admin session is not signed in.");
     }
 
     setNotice(
-      'Firebase connected • Loading live purchase requests...',
+      "Course Firebase authenticated • Loading live purchase requests...",
       "ok"
     );
 
@@ -301,56 +394,61 @@ async function connect(){
       ref(db,"utrPurchases"),
       snap=>{
         rows=flatten(snap);
+
         setNotice(
-          `Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR in your UPI/bank app before approving.`,
+          `Course Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR in your UPI/bank app before approving.`,
           "ok"
         );
+
         render();
       },
       err=>{
         console.error("Realtime Database error:",err);
-        setNotice("Firebase database error: "+esc(err.message),"err");
+
+        setNotice(
+          "Firebase database error: "+esc(err.message),
+          "err"
+        );
+
         $("list").innerHTML=`
           <div class="error">
             <b>Purchase requests could not be loaded.</b><br>
             <span class="small">${esc(err.message)}</span><br><br>
             <span class="small">
-              For this no-login admin page, Firebase Authentication →
-              Sign-in method → Anonymous must be enabled and your Realtime
-              Database Rules must permit the authenticated anonymous session
-              to read utrPurchases.
+              Authentication succeeded, but Course Firebase Realtime Database
+              Rules must allow this authenticated admin to read
+              <b>utrPurchases</b> and write <b>courseAccess</b>.
             </span>
           </div>`;
       }
     );
 
   }catch(e){
-    console.error("Admin Firebase connection error:",e);
-    setNotice("Firebase Authentication error: "+esc(e.message),"err");
-    $("list").innerHTML=`
-      <div class="error">
-        <b>Admin connection failed.</b><br>
-        <span class="small">${esc(e.message)}</span><br><br>
-        <span class="small">
-          Enable Anonymous Authentication in Firebase Console:
-          Authentication → Sign-in method → Anonymous → Enable.
-        </span>
-      </div>`;
+    console.error("Course connection error:",e);
+    setNotice("Course Firebase error: "+esc(e.message),"err");
   }finally{
     starting=false;
   }
 }
 
+/* =========================================================
+   APPROVE
+   ========================================================= */
 async function approve(uid,courseId,key,button){
   if(!uid||!courseId||!key){
     alert("Invalid purchase record.");
     return;
   }
 
+  if(!courseAuth.currentUser){
+    alert("Admin session expired. Please login again.");
+    return;
+  }
+
   if(!confirm(
     "Confirm that the ₹99 payment and UTR are genuine.\n\n"+
     "After approval, this student will get access to the selected course."
-  ))return;
+  )) return;
 
   const oldText=button.innerHTML;
   button.disabled=true;
@@ -370,20 +468,15 @@ async function approve(uid,courseId,key,button){
 
     const d=snap.val()||{};
     const now=Date.now();
+    const adminEmail=adminAuth.currentUser?.email||courseAuth.currentUser?.email||"admin";
 
-    /*
-      Update the original purchase record.
-    */
     await update(purchaseRef,{
       status:"verified",
       verified:true,
       verifiedAt:now,
-      verifiedBy:"anonymous-admin-page"
+      verifiedBy:adminEmail
     });
 
-    /*
-      Create the student's course access.
-    */
     await set(
       ref(db,`courseAccess/${uid}/${courseId}`),
       {
@@ -397,7 +490,7 @@ async function approve(uid,courseId,key,button){
         status:"verified",
         purchaseId:d.purchaseId||key,
         grantedAt:now,
-        verifiedBy:"anonymous-admin-page"
+        verifiedBy:adminEmail
       }
     );
 
@@ -411,20 +504,29 @@ async function approve(uid,courseId,key,button){
     alert(
       "Approve failed:\n\n"+
       e.message+
-      "\n\nCheck Firebase Rules: anonymous authenticated admin must be allowed to write utrPurchases and courseAccess."
+      "\n\nCheck Course Firebase Realtime Database Rules."
     );
+
     button.disabled=false;
     button.innerHTML=oldText;
   }
 }
 
+/* =========================================================
+   REJECT
+   ========================================================= */
 async function reject(uid,courseId,key,button){
   if(!uid||!courseId||!key){
     alert("Invalid purchase record.");
     return;
   }
 
-  if(!confirm("Reject this UTR/payment request?"))return;
+  if(!courseAuth.currentUser){
+    alert("Admin session expired. Please login again.");
+    return;
+  }
+
+  if(!confirm("Reject this UTR/payment request?")) return;
 
   const oldText=button.innerHTML;
   button.disabled=true;
@@ -437,19 +539,24 @@ async function reject(uid,courseId,key,button){
         status:"rejected",
         verified:false,
         rejectedAt:Date.now(),
-        rejectedBy:"anonymous-admin-page"
+        rejectedBy:(adminAuth.currentUser?.email||courseAuth.currentUser?.email||"admin")
       }
     );
 
     alert("Request rejected.");
+
   }catch(e){
     console.error("Reject error:",e);
     alert("Reject failed:\n\n"+e.message);
+
     button.disabled=false;
     button.innerHTML=oldText;
   }
 }
 
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 document.addEventListener("click",e=>{
   const actionButton=e.target.closest("[data-action]");
 
@@ -487,15 +594,142 @@ document.querySelectorAll(".tab").forEach(button=>{
   });
 });
 
-$("refreshBtn").addEventListener("click",connect);
+$("refreshBtn").addEventListener("click",()=>{
+  if(courseAuth.currentUser) connect();
+});
 
-onAuthStateChanged(auth,user=>{
-  if(user){
-    console.log("Anonymous admin session:",user.uid);
+$("loginBtn").addEventListener("click",loginAdmin);
+
+$("adminPassword").addEventListener("keydown",e=>{
+  if(e.key==="Enter") loginAdmin();
+});
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+function setLoginStatus(text,type="err"){
+  const el=$("loginStatus");
+  el.textContent=text;
+  el.className="login-status "+type;
+}
+
+async function loginAdmin(){
+  const email=$("adminEmail").value.trim();
+  const password=$("adminPassword").value;
+
+  if(!email || !password){
+    setLoginStatus("Email and password are required.");
+    return;
+  }
+
+  const btn=$("loginBtn");
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+
+  try{
+    /*
+      STEP 1:
+      This checks the user against the exact Firebase project
+      supplied by you: diplomaengineers-869df.
+    */
+    await signInWithEmailAndPassword(
+      adminAuth,
+      email,
+      password
+    );
+
+    if(
+      ADMIN_ALLOWLIST.length &&
+      !ADMIN_ALLOWLIST
+        .map(x=>x.toLowerCase())
+        .includes(email.toLowerCase())
+    ){
+      await signOut(adminAuth);
+      throw new Error("This email is not approved as an admin.");
+    }
+
+    /*
+      STEP 2:
+      Course RTDB belongs to another Firebase project.
+      Therefore the same admin credentials must also be a
+      Firebase Authentication user in diploma-app-9a378.
+    */
+    try{
+      await signInWithEmailAndPassword(
+        courseAuth,
+        email,
+        password
+      );
+    }catch(courseError){
+      await signOut(adminAuth);
+
+      throw new Error(
+        "Admin login was successful in diplomaengineers-869df, " +
+        "but this same admin user was not found in diploma-app-9a378. " +
+        "Create the same Email/Password user in Course Firebase → " +
+        "Authentication → Users, then login again."
+      );
+    }
+
+    $("loginGate").style.display="none";
+    $("adminContent").style.display="block";
+    $("logoutBtn").style.display="block";
+
+    setNotice(
+      "Admin authenticated successfully • Loading Course requests...",
+      "ok"
+    );
+
+    await connect();
+
+  }catch(e){
+    console.error("Login error:",e);
+    setLoginStatus(e.message||"Login failed.");
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Login & Open Admin';
+  }
+}
+
+/* Restore login state only if BOTH projects still have sessions. */
+onAuthStateChanged(adminAuth,adminUser=>{
+  const courseUser=courseAuth.currentUser;
+
+  if(adminUser && courseUser){
+    $("loginGate").style.display="none";
+    $("adminContent").style.display="block";
+    $("logoutBtn").style.display="block";
+    connect();
   }
 });
 
-connect();
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+$("logoutBtn").addEventListener("click",async()=>{
+  try{
+    if(stopListening){
+      stopListening();
+      stopListening=null;
+    }
+
+    await signOut(courseAuth);
+    await signOut(adminAuth);
+
+    rows=[];
+    render();
+
+    $("adminContent").style.display="none";
+    $("logoutBtn").style.display="none";
+    $("loginGate").style.display="flex";
+    $("adminPassword").value="";
+
+    setLoginStatus("Logged out successfully.","ok");
+
+  }catch(e){
+    console.error("Logout error:",e);
+  }
+});
 </script>
 </body>
 </html>

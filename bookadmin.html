@@ -1,95 +1,59 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Books Admin</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;color:#0f172a}
-.admin{max-width:1100px;margin:auto;padding:22px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
-.header h1{margin:0;font-size:24px} .header p{margin:5px 0 0;color:#64748b;font-size:13px}
-.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
-.primary{background:#2563eb;color:#fff} .danger{background:#fee2e2;color:#b91c1c} .secondary{background:#e2e8f0;color:#0f172a}
-.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(15,23,42,.05);margin-bottom:20px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field{display:flex;flex-direction:column;gap:7px} .field.full{grid-column:1/-1}
-label{font-size:13px;font-weight:700} input,select{width:100%;padding:12px;border:1px solid #dbe1e8;border-radius:10px;outline:0;font-size:14px;background:#fff}
-input:focus,select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
-.preview{display:flex;gap:15px;align-items:center;margin-top:12px}
-.preview img{width:80px;height:105px;object-fit:cover;border-radius:8px;background:#f1f5f9;border:1px solid #e5e7eb}
-.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-.table-wrap{overflow:auto} table{width:100%;border-collapse:collapse;min-width:700px}
-th,td{padding:11px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}
-th{background:#f8fafc} td img{width:45px;height:60px;object-fit:cover;border-radius:6px}
-.small-actions{display:flex;gap:7px;flex-wrap:wrap}
-.empty{text-align:center;padding:30px;color:#64748b}
-.note{font-size:12px;color:#64748b;margin-top:10px;line-height:1.5}
-@media(max-width:700px){.admin{padding:14px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.header{align-items:flex-start;flex-direction:column}}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#0f172a}
+.wrap{max-width:1100px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}
+h1,h2{margin:0}p{color:#64748b}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
+input{width:100%;padding:12px;border:1px solid #dbe1e8;border-radius:10px;font-size:14px;outline:0}input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:#2563eb;color:#fff}.secondary{background:#e2e8f0;color:#0f172a}.danger{background:#fee2e2;color:#b91c1c}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.status{margin-top:12px;padding:10px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:13px;display:none}
+.preview{margin-top:10px;display:none;align-items:center;gap:12px}.preview img{width:70px;height:90px;object-fit:cover;border-radius:8px}
+table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}th{background:#f8fafc}
+td img{width:45px;height:60px;object-fit:cover;border-radius:6px}.table{overflow:auto}.muted{font-size:12px;color:#64748b}
+#app{display:none}#login{max-width:430px;margin:70px auto}
+@media(max-width:700px){.wrap{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.top{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
-<div class="admin">
-  <div class="header">
-    <div><h1>📚 Books Admin</h1><p>Add, edit or delete books. Changes appear on the Books page in the same browser.</p></div>
-    <button class="btn secondary" onclick="window.open('books.html','_blank')">Open Book Page</button>
-  </div>
+<div id="login" class="panel">
+<h1>📚 Books Admin Login</h1><p>Use the same Firebase Admin account used by your existing admin system.</p>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label style="margin-top:12px">Password</label><input id="password" type="password" autocomplete="current-password">
+<div class="actions"><button class="primary" id="loginBtn">Login</button></div>
+<div id="loginStatus" class="status"></div>
+</div>
 
-  <div class="panel">
-    <h2 id="formTitle" style="margin:0 0 15px;font-size:19px">Add New Book</h2>
-    <form id="bookForm">
-      <div class="form-grid">
-        <div class="field">
-          <label>Book Title *</label>
-          <input id="title" required placeholder="e.g. Applied Mathematics 2nd">
-        </div>
-        <div class="field">
-          <label>Category</label>
-          <input id="category" value="Book PDF" placeholder="Book PDF">
-        </div>
-        <div class="field full">
-          <label>Book PDF / Book Link *</label>
-          <input id="pdf" type="url" required placeholder="https://example.com/book.pdf">
-        </div>
-        <div class="field full">
-          <label>Thumbnail Image URL</label>
-          <input id="imageUrl" type="url" placeholder="https://example.com/thumbnail.jpg">
-        </div>
-        <div class="field full">
-          <label>OR Upload Thumbnail Image</label>
-          <input id="imageFile" type="file" accept="image/*">
-          <div class="preview" id="preview" style="display:none">
-            <img id="previewImg" alt="Preview"><span id="previewText"></span>
-          </div>
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" type="submit" id="saveBtn">Add Book</button>
-        <button class="btn secondary" type="button" id="cancelBtn" style="display:none">Cancel Edit</button>
-      </div>
-      <div class="note">Image upload is stored in browser storage as a compressed image. For a production website used by multiple devices, connect this admin to Firebase Storage/Firestore or another database.</div>
-    </form>
-  </div>
+<div id="app" class="wrap">
+<div class="top"><div><h1>📚 Books Admin</h1><p>Add book link + thumbnail. Thumbnail goes to Cloudinary and book data goes to Firebase.</p></div>
+<div class="actions"><button class="secondary" id="openBooks">Open Books Page</button><button class="danger" id="logout">Logout</button></div></div>
 
-  <div class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px">
-      <h2 style="margin:0;font-size:19px">All Books</h2>
-      <span id="total" style="font-size:13px;font-weight:700;color:#64748b"></span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Link</th><th>Action</th></tr></thead>
-        <tbody id="bookTable"></tbody>
-      </table>
-    </div>
-  </div>
+<div class="panel">
+<h2 id="formTitle">Add Book</h2>
+<form id="form">
+<div class="grid" style="margin-top:15px">
+<div><label>Book Title *</label><input id="title" required></div>
+<div><label>Category</label><input id="category" value="Book PDF"></div>
+<div class="full"><label>Book Link / PDF Link *</label><input id="pdf" type="url" placeholder="https://..." required></div>
+<div class="full"><label>Thumbnail Upload *</label><input id="imageFile" type="file" accept="image/*" required>
+<div class="preview" id="preview"><img id="previewImg"><span id="previewText"></span></div></div>
+</div>
+<div class="actions"><button class="primary" id="saveBtn">Add Book</button><button type="button" class="secondary" id="cancel" style="display:none">Cancel</button></div>
+<div class="status" id="status"></div>
+</form>
+</div>
+
+<div class="panel"><h2 style="margin-bottom:14px">Books</h2><div class="table"><table><thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Link</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {getDatabase,ref,push,set,update,remove,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
@@ -100,13 +64,9 @@ const firebaseConfig = {
   messagingSenderId: "356779436080",
   appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const CLOUD_NAME = "ub0qgzwa";
-const UPLOAD_PRESET = "news_upload";
-
-const STORAGE_KEY="diploma_engineers_books_v1";
-const initialBooks=[{
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
+const CLOUD_NAME="ub0qgzwa", UPLOAD_PRESET="news_upload";
+const seed=[{
       title: "Applied Mathematics 2nd",
       category: "E-Book",
       image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png",
@@ -209,142 +169,58 @@ const initialBooks=[{
       pdf: "https://anubhav.finance.blog/wp-content/uploads/2026/05/publicheathengineeringe-bookbydiplomaengineers-4.pdf"
     }
   ];
-let books=[];
-let editIndex=-1;
-let uploadedImage="";
+const $=id=>document.getElementById(id);
+let books=[], editId=null;
+
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function msg(text,error=false){$("status").textContent=text;$("status").style.display="block";$("status").style.background=error?"#fee2e2":"#eff6ff";$("status").style.color=error?"#b91c1c":"#1d4ed8"}
+function loginMsg(t){$("loginStatus").textContent=t;$("loginStatus").style.display="block"}
+
+$("loginBtn").onclick=async()=>{try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(e){loginMsg(e.message)}};
+$("logout").onclick=()=>signOut(auth);
+$("openBooks").onclick=()=>window.open("books.html","_blank");
+
+onAuthStateChanged(auth,user=>{
+ $("login").style.display=user?"none":"block"; $("app").style.display=user?"block":"none";
+ if(user) loadBooks();
+});
 
 function loadBooks(){
-  try {
-    const saved=localStorage.getItem(STORAGE_KEY);
-    books=saved?JSON.parse(saved):initialBooks.slice();
-  } catch(e){ books=initialBooks.slice(); }
+ onValue(ref(db,"books"),snap=>{
+   books=[]; if(snap.exists()) snap.forEach(x=>books.push({id:x.key,...x.val()}));
+   if(!books.length){ renderRows(); return; }
+   renderRows();
+ },err=>msg("Firebase read failed: "+err.message,true));
 }
-function saveBooks(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(books)); }
-function cloudinaryUpload(file,onProgress){
-  return new Promise((resolve,reject)=>{
-    const xhr=new XMLHttpRequest();
-    xhr.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,true);
-    xhr.upload.onprogress=e=>{ if(e.lengthComputable&&onProgress) onProgress(Math.round(e.loaded/e.total*100)); };
-    xhr.onload=()=>{ try{ const d=JSON.parse(xhr.responseText); if(xhr.status>=200&&xhr.status<300&&d.secure_url) resolve(d); else reject(new Error(d.error?.message||"Cloudinary upload failed")); }catch(e){reject(new Error("Invalid Cloudinary response"));} };
-    xhr.onerror=()=>reject(new Error("Network error during Cloudinary upload"));
-    const fd=new FormData(); fd.append("file",file); fd.append("upload_preset",UPLOAD_PRESET); xhr.send(fd);
-  });
+function renderRows(){
+ $("rows").innerHTML=books.length?books.map(b=>`<tr><td><img src="${esc(b.image)}" alt=""></td><td><b>${esc(b.title)}</b></td><td>${esc(b.category||"Book PDF")}</td><td><a href="${esc(b.pdf)}" target="_blank">Open</a></td><td><button class="secondary" data-edit="${b.id}">Edit</button> <button class="danger" data-del="${b.id}">Delete</button></td></tr>`).join(""):`<tr><td colspan="5" style="text-align:center;padding:30px">No books found</td></tr>`;
+ document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editBook(b.dataset.edit));
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteBook(b.dataset.del));
 }
-function compressImage(file){
-  return new Promise((resolve,reject)=>{
-    const url=URL.createObjectURL(file), img=new Image();
-    img.onload=()=>{
-      let w=img.width,h=img.height,max=1200; if(w>max){h=h*max/w;w=max;}
-      const c=document.createElement("canvas"); c.width=Math.round(w); c.height=Math.round(h);
-      c.getContext("2d").drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
-      c.toBlob(b=>b?resolve(new File([b],file.name.replace(/\.[^/.]+$/,"")+".jpg",{type:"image/jpeg"})):reject(new Error("Image compression failed")),"image/jpeg",.84);
-    }; img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Unable to read image"));}; img.src=url;
-  });
+async function compress(file){
+ return new Promise((resolve,reject)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=im.width,h=im.height,m=1400;if(w>m){h=h*m/w;w=m}const c=document.createElement("canvas");c.width=Math.round(w);c.height=Math.round(h);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?resolve(new File([b],"book-thumb.jpg",{type:"image/jpeg"})):reject(new Error("Image compression failed")),"image/jpeg",.84)};im.onerror=reject;im.src=u});
 }
-async function loadFirebaseBooks(){
-  onValue(ref(db,"books"),async snapshot=>{
-    const data=snapshot.val()||{};
-    const remote=Object.entries(data).map(([id,b])=>({id,...b})).filter(b=>b.title&&b.pdf);
-    books=remote; saveBooks(); renderTable();
-    if(!remote.length && initialBooks.length){
-      try{
-        const updates={}; initialBooks.forEach((b,i)=>{updates[`books/legacy_${i+1}`]=b;});
-        await update(ref(db),updates);
-      }catch(e){console.warn("Initial books migration failed",e);}
-    }
-  });
+function upload(file){
+ return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);x.upload.onprogress=e=>{if(e.lengthComputable)msg("Uploading thumbnail "+Math.round(e.loaded/e.total*100)+"%...")};x.onload=()=>{try{const d=JSON.parse(x.responseText);if(x.status>=200&&x.status<300&&d.secure_url)resolve(d.secure_url);else reject(new Error(d.error?.message||"Cloudinary upload failed"))}catch(e){reject(new Error("Invalid Cloudinary response"))}};x.onerror=()=>reject(new Error("Cloudinary network error"));const f=new FormData();f.append("file",file);f.append("upload_preset",UPLOAD_PRESET);x.send(f)});
 }
-function resetForm(){
- document.getElementById("bookForm").reset();
- document.getElementById("category").value="Book PDF";
- document.getElementById("formTitle").textContent="Add New Book";
- document.getElementById("saveBtn").textContent="Add Book";
- document.getElementById("cancelBtn").style.display="none";
- document.getElementById("preview").style.display="none";
- uploadedImage="";
- editIndex=-1;
-}
-function editBook(i){
- const b=books[i]; editIndex=i; uploadedImage=b.image||"";
- document.getElementById("title").value=b.title||"";
- document.getElementById("category").value=b.category||"Book PDF";
- document.getElementById("pdf").value=b.pdf||"";
- document.getElementById("imageUrl").value=(b.image||"").startsWith("data:")?"":(b.image||"");
- document.getElementById("formTitle").textContent="Edit Book";
- document.getElementById("saveBtn").textContent="Update Book";
- document.getElementById("cancelBtn").style.display="inline-block";
- if(b.image){document.getElementById("previewImg").src=b.image;document.getElementById("previewText").textContent="Current thumbnail";document.getElementById("preview").style.display="flex";}
- window.scrollTo({top:0,behavior:"smooth"});
-}
-async function deleteBook(i){
- if(!confirm("Delete this book?"))return;
- const id=books[i]?.id; if(id){ await remove(ref(db,`books/${id}`)); } else { books.splice(i,1); saveBooks(); renderTable(); }
-}
-function compressImage(file){
- return new Promise((resolve,reject)=>{
-  const reader=new FileReader();
-  reader.onload=e=>{
-   const img=new Image();
-   img.onload=()=>{
-    const max=700, scale=Math.min(1,max/Math.max(img.width,img.height));
-    const c=document.createElement("canvas");
-    c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
-    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-    resolve(c.toDataURL("image/jpeg",.82));
-   };
-   img.onerror=reject; img.src=e.target.result;
-  };
-  reader.onerror=reject; reader.readAsDataURL(file);
- });
-}
-document.getElementById("imageFile").addEventListener("change",async e=>{
- const file=e.target.files[0]; if(!file)return;
+$("imageFile").onchange=()=>{const f=$("imageFile").files[0];if(f){$("previewImg").src=URL.createObjectURL(f);$("preview").style.display="flex";$("previewText").textContent=f.name}};
+$("form").onsubmit=async e=>{
+ e.preventDefault(); const title=$("title").value.trim(),category=$("category").value.trim()||"Book PDF",pdf=$("pdf").value.trim(),file=$("imageFile").files[0];
+ if(!title||!pdf) return msg("Book title and link are required.",true);
+ if(editId===null&&!file) return msg("Please upload thumbnail image.",true);
+ $("saveBtn").disabled=true;
  try{
-  uploadedImage=await compressImage(file);
-  document.getElementById("previewImg").src=uploadedImage;
-  document.getElementById("previewText").textContent="New thumbnail selected";
-  document.getElementById("preview").style.display="flex";
- }catch(err){alert("Image could not be processed.");}
-});
-document.getElementById("imageUrl").addEventListener("input",e=>{
- if(e.target.value.trim()&&!document.getElementById("imageFile").files.length){
-  uploadedImage=e.target.value.trim();
-  document.getElementById("previewImg").src=uploadedImage;
-  document.getElementById("previewText").textContent="URL thumbnail";
-  document.getElementById("preview").style.display="flex";
- }
-});
-document.getElementById("bookForm").addEventListener("submit",async e=>{
- e.preventDefault();
- const title=document.getElementById("title").value.trim();
- const category=document.getElementById("category").value.trim()||"Book PDF";
- const pdf=document.getElementById("pdf").value.trim();
- let image=document.getElementById("imageUrl").value.trim()||uploadedImage;
- if(!title||!pdf){alert("Book title और book link जरूरी है.");return;}
- if(!image){alert("Thumbnail image upload करें.");return;}
- const btn=document.getElementById("saveBtn"); btn.disabled=true;
- try{
-   if(image.startsWith("data:")){
-     document.getElementById("previewText").textContent="Uploading thumbnail to Cloudinary...";
-     const blob=await (await fetch(image)).blob();
-     const file=new File([blob],"book-thumbnail.jpg",{type:"image/jpeg"});
-     const result=await cloudinaryUpload(file,p=>document.getElementById("previewText").textContent=`Uploading thumbnail ${p}%`);
-     image=result.secure_url;
-   } else if(document.getElementById("imageFile").files.length){
-     document.getElementById("previewText").textContent="Compressing thumbnail...";
-     const file=await compressImage(document.getElementById("imageFile").files[0]);
-     const result=await cloudinaryUpload(file,p=>document.getElementById("previewText").textContent=`Uploading thumbnail ${p}%`);
-     image=result.secure_url;
-   }
-   const book={title,category,image,pdf,updatedAt:Date.now()};
-   if(editIndex>=0 && books[editIndex]?.id){ await update(ref(db,`books/${books[editIndex].id}`),book); }
-   else { const bookRef=push(ref(db,"books")); await set(bookRef,{...book,createdAt:Date.now()}); }
-   alert(editIndex>=0?"Book updated successfully!":"Book added successfully!"); resetForm();
- }catch(err){console.error(err);alert("Book save failed: "+(err.message||err));}
- finally{btn.disabled=false;}
-});
-document.getElementById("cancelBtn").onclick=resetForm;
-loadBooks(); renderTable(); loadFirebaseBooks();
+   let image=editId?books.find(x=>x.id===editId)?.image:"";
+   if(file){msg("Preparing thumbnail...");image=await upload(await compress(file));}
+   const data={title,category,pdf,image,timestamp:Date.now()};
+   if(editId) await update(ref(db,"books/"+editId),data); else await set(push(ref(db,"books")),data);
+   msg("Book saved successfully."); reset();
+ }catch(err){msg(err.message,true)}finally{$("saveBtn").disabled=false}
+};
+function editBook(id){const b=books.find(x=>x.id===id);if(!b)return;editId=id;$("title").value=b.title||"";$("category").value=b.category||"Book PDF";$("pdf").value=b.pdf||"";$("imageFile").required=false;$("formTitle").textContent="Edit Book";$("saveBtn").textContent="Update Book";$("cancel").style.display="inline-block";$("preview").style.display="flex";$("previewImg").src=b.image||"";$("previewText").textContent="Current thumbnail";window.scrollTo({top:0,behavior:"smooth"})}
+async function deleteBook(id){if(!confirm("Delete this book?"))return;try{await remove(ref(db,"books/"+id));msg("Book deleted.")}catch(e){msg(e.message,true)}}
+function reset(){editId=null;$("form").reset();$("category").value="Book PDF";$("formTitle").textContent="Add Book";$("saveBtn").textContent="Add Book";$("cancel").style.display="none";$("preview").style.display="none";$("imageFile").required=true}
+$("cancel").onclick=reset;
 </script>
 </body>
 </html>

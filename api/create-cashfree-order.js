@@ -5,7 +5,7 @@ const CASHFREE_API = "https://api.cashfree.com/pg";
 const API_VERSION = "2023-08-01";
 const COURSE_ID = "civil_special";
 const COURSE_NAME = "Civil Engineering 2nd Year";
-const AMOUNT = 499; // Change this to your actual course price.
+const AMOUNT = 499;
 
 function initFirebase() {
   if (!admin.apps.length) {
@@ -78,18 +78,18 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { message: "Invalid course." });
     }
 
-    // Try common phone/mobile fields in the user's Firebase profile.
     const profileSnap = await firebase.database()
       .ref(`users/${uid}`)
       .once("value");
 
     const profile = profileSnap.val() || {};
 
+    // Fixed: Fallback added so missing email/phone will not break the payment
     const email =
       decoded.email ||
       profile.email ||
       profile.emailAddress ||
-      null;
+      `student_${uid.slice(0, 8)}@diplomaengineers.local`;
 
     const phone =
       decoded.phone_number ||
@@ -97,25 +97,13 @@ module.exports = async function handler(req, res) {
       profile.mobile ||
       profile.mobileNumber ||
       profile.phoneNumber ||
-      null;
+      "9999999999";
 
     const name =
       decoded.name ||
       profile.name ||
       profile.displayName ||
       "Diploma Engineers Student";
-
-    if (!email) {
-      return json(res, 400, {
-        message: "Your account needs an email address before payment.",
-      });
-    }
-
-    if (!phone) {
-      return json(res, 400, {
-        message: "Your account needs a mobile number before payment.",
-      });
-    }
 
     const orderId = makeOrderId(uid);
     const environment =
@@ -173,7 +161,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Pending record. It does NOT unlock the course.
     await firebase.database()
       .ref(`users/${uid}/purchases/${COURSE_ID}/pendingOrders/${orderId}`)
       .set({
@@ -186,8 +173,6 @@ module.exports = async function handler(req, res) {
         createdAt: admin.database.ServerValue.TIMESTAMP,
       });
 
-    // Global lookup lets the webhook identify the Firebase UID
-    // without trusting data supplied by the browser.
     await firebase.database()
       .ref(`cashfreeOrders/${orderId}`)
       .set({
@@ -212,4 +197,3 @@ module.exports = async function handler(req, res) {
     });
   }
 };
-

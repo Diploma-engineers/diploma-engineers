@@ -1,282 +1,876 @@
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 
-const API_VERSION = "2023-08-01";
-const COURSE_ID = "civil_special";
-const CASHFREE_PRODUCTION_API = "https://api.cashfree.com/pg";
-const CASHFREE_SANDBOX_API = "https://sandbox.cashfree.com/pg";
+const API_VERSION = "2025-01-01";
 
-// Vercel/Node must expose the raw request body for Cashfree signature verification.
-module.exports.config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const COURSE_ID = "civil_special";
+
+const EXPECTED_AMOUNT = 1;
+
+const EXPECTED_CURRENCY = "INR";
+
+const CASHFREE_SANDBOX_API =
+  "https://sandbox.cashfree.com/pg";
+
+const CASHFREE_PRODUCTION_API =
+  "https://api.cashfree.com/pg";
+
+
+/* =========================================================
+   FIREBASE ADMIN INITIALIZATION
+========================================================= */
 
 function initFirebase() {
+
   if (!admin.apps.length) {
-    if (!process.env.FIREBASE_PROJECT_ID ||
-        !process.env.FIREBASE_CLIENT_EMAIL ||
-        !process.env.FIREBASE_PRIVATE_KEY) {
-      throw new Error("Firebase Admin environment variables are missing.");
+
+    if (
+      !process.env.FIREBASE_PROJECT_ID ||
+      !process.env.FIREBASE_CLIENT_EMAIL ||
+      !process.env.FIREBASE_PRIVATE_KEY ||
+      !process.env.FIREBASE_DATABASE_URL
+    ) {
+      throw new Error(
+        "Firebase Admin environment variables are missing."
+      );
     }
 
     admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-      }),
+
+      credential:
+        admin.credential.cert({
+
+          projectId:
+            process.env.FIREBASE_PROJECT_ID,
+
+          clientEmail:
+            process.env.FIREBASE_CLIENT_EMAIL,
+
+          privateKey:
+            process.env.FIREBASE_PRIVATE_KEY
+              .replace(/\\n/g, "\n")
+
+        }),
+
       databaseURL:
-        process.env.FIREBASE_DATABASE_URL ||
-        "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+        process.env.FIREBASE_DATABASE_URL
+
     });
   }
+
   return admin;
 }
 
-function readRawBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
 
-    req.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-    req.on("end", () => resolve(Buffer.concat(chunks)));
-    req.on("error", reject);
-  });
-}
-
-function safeEqualText(a, b) {
-  try {
-    const aa = Buffer.from(a || "", "utf8");
-    const bb = Buffer.from(b || "", "utf8");
-    return aa.length === bb.length && crypto.timingSafeEqual(aa, bb);
-  } catch {
-    return false;
-  }
-}
+/* =========================================================
+   JSON RESPONSE
+========================================================= */
 
 function json(res, status, data) {
-  res.status(status).json(data);
+
+  return res
+    .status(status)
+    .json(data);
+
 }
 
-async function cashfreeGet(path) {
-  const environment =
-    (process.env.CASHFREE_ENVIRONMENT || "production").toLowerCase();
 
-  const base =
+/* =========================================================
+   READ RAW WEBHOOK BODY
+
+   IMPORTANT:
+   Cashfree signature verification requires
+   the ORIGINAL raw request body.
+========================================================= */
+
+function readRawBody(req) {
+
+  return new Promise((resolve, reject) => {
+
+    const chunks = [];
+
+    req.on("data", chunk => {
+
+      chunks.push(
+        Buffer.isBuffer(chunk)
+          ? chunk
+          : Buffer.from(chunk)
+      );
+
+    });
+
+    req.on("end", () => {
+
+      resolve(
+        Buffer.concat(chunks)
+      );
+
+    });
+
+    req.on("error", error => {
+
+      reject(error);
+
+    });
+
+  });
+
+}
+
+
+/* =========================================================
+   SAFE STRING COMPARISON
+========================================================= */
+
+function safeEqualText(a, b) {
+
+  try {
+
+    const aa =
+      Buffer.from(a || "", "utf8");
+
+    const bb =
+      Buffer.from(b || "", "utf8");
+
+    return (
+      aa.length === bb.length &&
+      crypto.timingSafeEqual(aa, bb)
+    );
+
+  } catch (error) {
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   CASHFREE GET REQUEST
+========================================================= */
+
+async function cashfreeGet(path) {
+
+  const environment =
+    String(
+      process.env.CASHFREE_ENVIRONMENT ||
+      "sandbox"
+    ).toLowerCase();
+
+  const baseUrl =
     environment === "sandbox"
       ? CASHFREE_SANDBOX_API
       : CASHFREE_PRODUCTION_API;
 
-  const response = await fetch(`${base}${path}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-version": API_VERSION,
-      "x-client-id": process.env.CASHFREE_CLIENT_ID,
-      "x-client-secret": process.env.CASHFREE_CLIENT_SECRET,
-      "x-request-id": crypto.randomUUID(),
-    },
-  });
 
-  const data = await response.json().catch(() => ({}));
+  const response =
+    await fetch(
+      `${baseUrl}${path}`,
+      {
+
+        method: "GET",
+
+        headers: {
+
+          "Accept":
+            "application/json",
+
+          "x-api-version":
+            API_VERSION,
+
+          "x-client-id":
+            process.env.CASHFREE_CLIENT_ID,
+
+          "x-client-secret":
+            process.env.CASHFREE_CLIENT_SECRET,
+
+          "x-request-id":
+            crypto.randomUUID()
+
+        }
+
+      }
+    );
+
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
 
   if (!response.ok) {
-    const err = new Error(data.message || "Cashfree API request failed.");
-    err.status = response.status;
-    err.data = data;
-    throw err;
+
+    const error =
+      new Error(
+        data.message ||
+        "Cashfree API request failed."
+      );
+
+    error.status =
+      response.status;
+
+    error.data =
+      data;
+
+    throw error;
+
   }
+
 
   return data;
+
 }
 
-module.exports = async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return json(res, 405, { message: "Method not allowed." });
+
+/* =========================================================
+   VERCEL API CONFIG
+
+   Raw body must be available.
+========================================================= */
+
+module.exports.config = {
+
+  api: {
+
+    bodyParser: false
+
   }
 
+};
+
+
+/* =========================================================
+   WEBHOOK HANDLER
+========================================================= */
+
+module.exports = async function handler(req, res) {
+
+
+  /* -------------------------------------------------------
+     ONLY POST REQUEST
+  ------------------------------------------------------- */
+
+  if (req.method !== "POST") {
+
+    res.setHeader(
+      "Allow",
+      "POST"
+    );
+
+    return json(
+      res,
+      405,
+      {
+        message:
+          "Method not allowed."
+      }
+    );
+
+  }
+
+
   try {
-    if (!process.env.CASHFREE_CLIENT_SECRET) {
-      return json(res, 500, {
-        message: "Cashfree secret is not configured.",
-      });
-    }
 
-    const firebase = initFirebase();
 
-    const rawBody = await readRawBody(req);
-    const rawText = rawBody.toString("utf8");
+    /* -----------------------------------------------------
+       FIREBASE
+    ----------------------------------------------------- */
 
-    /*
-      Cashfree webhook signature:
-      Base64(HMAC-SHA256(timestamp + rawBody, clientSecret))
+    const firebase =
+      initFirebase();
 
-      The timestamp and signature come from webhook headers.
-    */
+
+    /* -----------------------------------------------------
+       READ RAW BODY
+    ----------------------------------------------------- */
+
+    const rawBody =
+      await readRawBody(req);
+
+    const rawText =
+      rawBody.toString("utf8");
+
+
+    /* -----------------------------------------------------
+       CASHFREE WEBHOOK HEADERS
+    ----------------------------------------------------- */
+
     const timestamp =
-      req.headers["x-webhook-timestamp"] ||
-      req.headers["x-webhook-timestamp".toLowerCase()];
+      req.headers[
+        "x-webhook-timestamp"
+      ];
 
     const receivedSignature =
-      req.headers["x-webhook-signature"] ||
-      req.headers["x-webhook-signature".toLowerCase()];
+      req.headers[
+        "x-webhook-signature"
+      ];
 
-    if (!timestamp || !receivedSignature) {
-      return json(res, 400, {
-        message: "Missing Cashfree webhook signature headers.",
-      });
+
+    if (
+      !timestamp ||
+      !receivedSignature
+    ) {
+
+      return json(
+        res,
+        400,
+        {
+          message:
+            "Missing Cashfree webhook signature headers."
+        }
+      );
+
     }
 
-    const signedPayload = `${timestamp}${rawText}`;
 
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.CASHFREE_CLIENT_SECRET)
-      .update(signedPayload)
-      .digest("base64");
+    /* -----------------------------------------------------
+       VERIFY CASHFREE SIGNATURE
 
-    if (!safeEqualText(expectedSignature, receivedSignature)) {
-      console.warn("Invalid Cashfree webhook signature.");
-      return json(res, 401, { message: "Invalid webhook signature." });
+       Cashfree signature:
+
+       Base64(
+         HMAC-SHA256(
+           timestamp + rawBody,
+           clientSecret
+         )
+       )
+    ----------------------------------------------------- */
+
+    const expectedSignature =
+      crypto
+        .createHmac(
+          "sha256",
+          process.env.CASHFREE_CLIENT_SECRET
+        )
+        .update(
+          `${timestamp}${rawText}`
+        )
+        .digest("base64");
+
+
+    if (
+      !safeEqualText(
+        expectedSignature,
+        receivedSignature
+      )
+    ) {
+
+      console.error(
+        "Invalid Cashfree webhook signature."
+      );
+
+      return json(
+        res,
+        401,
+        {
+          message:
+            "Invalid webhook signature."
+        }
+      );
+
     }
+
+
+    /* -----------------------------------------------------
+       PARSE WEBHOOK JSON
+    ----------------------------------------------------- */
 
     let event;
+
     try {
-      event = JSON.parse(rawText);
-    } catch {
-      return json(res, 400, { message: "Invalid JSON payload." });
+
+      event =
+        JSON.parse(rawText);
+
+    } catch (error) {
+
+      return json(
+        res,
+        400,
+        {
+          message:
+            "Invalid webhook JSON."
+        }
+      );
+
     }
+
+
+    /* -----------------------------------------------------
+       GET ORDER ID
+    ----------------------------------------------------- */
 
     const orderId =
+
       event?.data?.order?.order_id ||
+
       event?.data?.order?.orderId ||
+
       event?.data?.order_id ||
+
       event?.order_id;
 
-    if (!orderId) {
-      // Signature was valid, but this event does not contain an order ID.
-      return json(res, 200, { received: true, ignored: true });
-    }
-
-    const orderRef = firebase.database().ref(`cashfreeOrders/${orderId}`);
-    const orderSnap = await orderRef.once("value");
-
-    if (!orderSnap.exists()) {
-      console.warn("Unknown Cashfree order:", orderId);
-      // Do not unlock any Firebase user for an unknown order.
-      return json(res, 200, { received: true, ignored: true });
-    }
-
-    const mapping = orderSnap.val() || {};
-    const uid = mapping.uid;
-    const courseId = mapping.courseId;
-
-    if (!uid || courseId !== COURSE_ID) {
-      return json(res, 200, { received: true, ignored: true });
-    }
 
     /*
-      Do not trust "success" text from the browser/webhook alone.
-      Fetch the order directly from Cashfree and verify it is PAID.
+      Some Cashfree webhook events may not contain
+      an order ID. Do not fail repeatedly.
     */
-    const order = await cashfreeGet(`/orders/${encodeURIComponent(orderId)}`);
 
-    const orderStatus = String(order.order_status || "").toUpperCase();
+    if (!orderId) {
 
-    if (orderStatus !== "PAID") {
-      await orderRef.update({
-        status: orderStatus || "UNKNOWN",
-        lastWebhookAt: admin.database.ServerValue.TIMESTAMP,
-      });
+      return json(
+        res,
+        200,
+        {
+          received: true,
+          ignored: true
+        }
+      );
 
-      return json(res, 200, {
-        received: true,
-        paid: false,
-        order_status: orderStatus,
-      });
     }
 
-    // Fetch payments too, and require at least one successful payment.
-    const payments = await cashfreeGet(
-      `/orders/${encodeURIComponent(orderId)}/payments`
-    );
+
+    /* -----------------------------------------------------
+       FIND OUR ORDER MAPPING
+
+       cashfreeOrders/{orderId}
+    ----------------------------------------------------- */
+
+    const orderRef =
+      firebase
+        .database()
+        .ref(
+          `cashfreeOrders/${orderId}`
+        );
+
+
+    const orderSnapshot =
+      await orderRef.once("value");
+
+
+    /*
+      UNKNOWN ORDER
+
+      Never unlock a course for an order
+      that our backend did not create.
+    */
+
+    if (!orderSnapshot.exists()) {
+
+      console.warn(
+        "Unknown Cashfree order:",
+        orderId
+      );
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+          ignored: true
+        }
+      );
+
+    }
+
+
+    const mapping =
+      orderSnapshot.val() || {};
+
+
+    const uid =
+      mapping.uid;
+
+    const courseId =
+      mapping.courseId;
+
+
+    /* -----------------------------------------------------
+       VERIFY UID + COURSE
+    ----------------------------------------------------- */
+
+    if (!uid) {
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+          ignored: true,
+          reason:
+            "UID mapping missing."
+        }
+      );
+
+    }
+
+
+    if (
+      courseId !== COURSE_ID
+    ) {
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+          ignored: true,
+          reason:
+            "Invalid course."
+        }
+      );
+
+    }
+
+
+    /* -----------------------------------------------------
+       VERIFY ORDER DIRECTLY WITH CASHFREE
+
+       Never trust only the webhook payload.
+    ----------------------------------------------------- */
+
+    const order =
+      await cashfreeGet(
+        `/orders/${encodeURIComponent(
+          orderId
+        )}`
+      );
+
+
+    const orderStatus =
+      String(
+        order.order_status || ""
+      ).toUpperCase();
+
+
+    /* -----------------------------------------------------
+       ORDER MUST BE PAID
+    ----------------------------------------------------- */
+
+    if (
+      orderStatus !== "PAID"
+    ) {
+
+      await orderRef.update({
+
+        status:
+          orderStatus ||
+          "UNKNOWN",
+
+        lastWebhookAt:
+          admin.database
+            .ServerValue
+            .TIMESTAMP
+
+      });
+
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+
+          paid: false,
+
+          order_status:
+            orderStatus
+        }
+      );
+
+    }
+
+
+    /* -----------------------------------------------------
+       VERIFY AMOUNT
+    ----------------------------------------------------- */
+
+    const orderAmount =
+      Number(
+        order.order_amount
+      );
+
+
+    /* -----------------------------------------------------
+       VERIFY CURRENCY
+    ----------------------------------------------------- */
+
+    const orderCurrency =
+      String(
+        order.order_currency ||
+        ""
+      ).toUpperCase();
+
+
+    /*
+      VERY IMPORTANT:
+
+      Only ₹1 INR is accepted
+      in this testing version.
+    */
+
+    if (
+      orderAmount !==
+        EXPECTED_AMOUNT ||
+
+      orderCurrency !==
+        EXPECTED_CURRENCY
+    ) {
+
+
+      await orderRef.update({
+
+        status:
+          "REJECTED_AMOUNT_OR_CURRENCY",
+
+        verifiedAmount:
+          orderAmount,
+
+        verifiedCurrency:
+          orderCurrency,
+
+        lastWebhookAt:
+          admin.database
+            .ServerValue
+            .TIMESTAMP
+
+      });
+
+
+      console.error(
+        "Wrong payment amount/currency:",
+        {
+          orderId,
+          orderAmount,
+          orderCurrency
+        }
+      );
+
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+
+          paid: false,
+
+          reason:
+            "Amount or currency mismatch."
+        }
+      );
+
+    }
+
+
+    /* -----------------------------------------------------
+       GET PAYMENT DETAILS FROM CASHFREE
+    ----------------------------------------------------- */
+
+    const payments =
+      await cashfreeGet(
+        `/orders/${encodeURIComponent(
+          orderId
+        )}/payments`
+      );
+
+
+    /* -----------------------------------------------------
+       FIND SUCCESSFUL PAYMENT
+    ----------------------------------------------------- */
 
     const successfulPayment =
       Array.isArray(payments)
         ? payments.find(
-            p => String(p.payment_status || "").toUpperCase() === "SUCCESS"
+            payment =>
+              String(
+                payment.payment_status ||
+                ""
+              ).toUpperCase() ===
+              "SUCCESS"
           )
         : null;
 
+
     if (!successfulPayment) {
-      return json(res, 200, {
-        received: true,
-        paid: false,
-        reason: "No successful payment found.",
-      });
+
+      return json(
+        res,
+        200,
+        {
+          received: true,
+
+          paid: false,
+
+          reason:
+            "No successful payment found."
+        }
+      );
+
     }
 
+
+    /* -----------------------------------------------------
+       PAYMENT ID
+    ----------------------------------------------------- */
+
     const paymentId =
-      successfulPayment.cf_payment_id ||
-      successfulPayment.cfPaymentId ||
-      successfulPayment.payment_id ||
+
+      successfulPayment
+        .cf_payment_id ||
+
+      successfulPayment
+        .cfPaymentId ||
+
+      successfulPayment
+        .payment_id ||
+
       null;
 
-    const amount =
-      Number(order.order_amount) ||
-      Number(successfulPayment.payment_amount) ||
-      Number(mapping.amount) ||
-      0;
 
-    // Final unlock. This is the only place in this flow that grants access.
-    await firebase.database()
-      .ref(`users/${uid}/purchases/${COURSE_ID}`)
-      .set({
-        purchased: true,
-        status: "paid",
-        courseId: COURSE_ID,
-        courseName: "Civil Engineering 2nd Year",
+    /* -----------------------------------------------------
+       FIREBASE PURCHASE PATH
+    ----------------------------------------------------- */
+
+    const purchaseRef =
+      firebase
+        .database()
+        .ref(
+          `users/${uid}/purchases/${COURSE_ID}`
+        );
+
+
+    /* -----------------------------------------------------
+       IDEMPOTENT PURCHASE WRITE
+
+       Repeated webhook calls will safely
+       update the same purchase record.
+    ----------------------------------------------------- */
+
+    await purchaseRef.set({
+
+      purchased:
+        true,
+
+      status:
+        "paid",
+
+      courseId:
+        COURSE_ID,
+
+      courseName:
+        "Civil Engineering 2nd Year",
+
+      orderId:
         orderId,
-        paymentId,
-        amount,
-        currency: order.order_currency || "INR",
-        paymentMethod: successfulPayment.payment_group || null,
-        paidAt: admin.database.ServerValue.TIMESTAMP,
-      });
 
-    await firebase.database()
-      .ref(`users/${uid}/purchases/${COURSE_ID}/pendingOrders/${orderId}`)
-      .update({
-        status: "paid",
+      paymentId:
         paymentId,
-        verifiedAt: admin.database.ServerValue.TIMESTAMP,
-      });
+
+      amount:
+        EXPECTED_AMOUNT,
+
+      currency:
+        EXPECTED_CURRENCY,
+
+      paymentMethod:
+        successfulPayment
+          .payment_group ||
+        null,
+
+      paidAt:
+        admin.database
+          .ServerValue
+          .TIMESTAMP
+
+    });
+
+
+    /* -----------------------------------------------------
+       MARK ORDER VERIFIED
+    ----------------------------------------------------- */
 
     await orderRef.update({
-      status: "PAID",
-      paymentId,
-      verifiedAt: admin.database.ServerValue.TIMESTAMP,
+
+      status:
+        "PAID",
+
+      paymentId:
+        paymentId,
+
+      verifiedAmount:
+        EXPECTED_AMOUNT,
+
+      verifiedCurrency:
+        EXPECTED_CURRENCY,
+
+      verifiedAt:
+        admin.database
+          .ServerValue
+          .TIMESTAMP
+
     });
 
-    console.log(`Civil course unlocked for Firebase UID ${uid}, order ${orderId}`);
 
-    return json(res, 200, {
-      received: true,
-      paid: true,
-      order_id: orderId,
-    });
+    /* -----------------------------------------------------
+       SUCCESS
+    ----------------------------------------------------- */
+
+    console.log(
+      "Civil course purchase verified:",
+      {
+        orderId,
+        uid,
+        courseId: COURSE_ID,
+        amount: EXPECTED_AMOUNT,
+        currency: EXPECTED_CURRENCY
+      }
+    );
+
+
+    return json(
+      res,
+      200,
+      {
+
+        received:
+          true,
+
+        paid:
+          true,
+
+        order_id:
+          orderId
+
+      }
+    );
+
 
   } catch (error) {
-    console.error("cashfree-webhook:", error);
+
+
+    console.error(
+      "cashfree-webhook error:",
+      error
+    );
+
 
     /*
-      Return 500 so Cashfree can retry transient failures.
-      Never mark a failed verification as paid.
+      Do not expose secrets or
+      internal Firebase information.
     */
-    return json(res, 500, {
-      message: "Webhook processing failed.",
-    });
-  }
-};
 
+    return json(
+      res,
+      500,
+      {
+        message:
+          "Webhook processing failed."
+      }
+    );
+
+  }
+
+};

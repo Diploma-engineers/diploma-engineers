@@ -265,11 +265,27 @@
 </style>
 
 <!-- =========================================================
-     BOOKS JAVASCRIPT
+    BOOKS JAVASCRIPT (Firebase Integrated)
 ========================================================= -->
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
 (function () {
   "use strict";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
   const grid = document.getElementById("booksGrid");
   const search = document.getElementById("bookSearch");
@@ -278,7 +294,7 @@
 
   if (!grid) return;
 
-  let books = [
+  let defaultBooks = [
     {
       title: "Applied Mathematics 2nd",
       category: "E-Book",
@@ -383,11 +399,13 @@
     }
   ];
 
+  let books = [];
+
   function renderBooks() {
     const query = search ? search.value.trim().toLowerCase() : "";
 
     const filteredBooks = books.filter(function (book) {
-      return !query || book.title.toLowerCase().includes(query);
+      return !query || (book.title && book.title.toLowerCase().includes(query));
     });
 
     count.textContent = filteredBooks.length + (filteredBooks.length === 1 ? " Book" : " Books");
@@ -414,16 +432,13 @@
         </div>
         <div class="book-info">
           <div class="book-title">${escapeHTML(book.title)}</div>
-          <span class="book-category">${escapeHTML(book.category)}</span>
+          <span class="book-category">${escapeHTML(book.category || "Book PDF")}</span>
         </div>
       `;
 
-      // Direct One-Click Handler to open PDF instantly
       card.addEventListener("click", function (event) {
         event.preventDefault();
         if (!book.pdf || book.pdf === "#") return;
-        
-        // Opens the PDF link directly in 1 click inside the webview/browser
         window.open(book.pdf, "_blank");
       });
 
@@ -445,7 +460,7 @@
   }
 
   function escapeHTML(value) {
-    return String(value)
+    return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -453,6 +468,31 @@
       .replace(/'/g, "&#039;");
   }
 
-  renderBooks();
+  // Firebase Realtime Database Data Fetching
+  const dbRef = ref(db, "books");
+  onValue(dbRef, (snapshot) => {
+    books = [];
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        books.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        });
+      });
+    }
+    
+    // Fallback if Firebase database is empty
+    if (books.length === 0) {
+      books = defaultBooks;
+    }
+
+    renderBooks();
+  }, (error) => {
+    console.error("Firebase fetch error:", error);
+    // Fallback to default books on error
+    books = defaultBooks;
+    renderBooks();
+  });
+
 })();
 </script>

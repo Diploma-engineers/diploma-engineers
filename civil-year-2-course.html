@@ -96,7 +96,7 @@ body{min-height:100vh}
   display:grid;place-items:center;flex:0 0 auto
 }
 .lecture b{font-size:11px}.lecture span{display:block;font-size:9px;color:var(--muted);margin-top:2px}
-.locked-mini{margin-left:auto;color:#94a3b8;font-size:12px}
+.locked-mini{margin-left:auto;color:#16a34a;font-size:12px}
 .footer{text-align:center;color:#94a3b8;font-size:9px;padding:25px 0}
 
 #loader{
@@ -160,11 +160,9 @@ body{min-height:100vh}
     <h2>Civil 2nd Year is Locked</h2>
     <p>
       Aapke account par is course ka active purchase record nahi mila.
-      One-time payment complete karne ke baad verified payment ke through
-      lifetime access unlock hoga.
+      One-time payment complete karne ke baad course turant unlock ho jayega.
     </p>
 
-    <!-- CHANGE THIS AMOUNT TO YOUR ACTUAL COURSE PRICE -->
     <div class="price">₹499 <small>one-time payment</small></div>
 
     <button id="buyBtn" class="buy" onclick="startPayment()">
@@ -173,7 +171,7 @@ body{min-height:100vh}
     </button>
 
     <div class="note">
-      Secure payment powered by Cashfree • Access is linked to your Firebase account
+      Secure payment powered by Cashfree • Linked securely to your Firebase account
     </div>
   </section>
 
@@ -241,25 +239,25 @@ body{min-height:100vh}
     </section>
 
     <section class="section">
-      <h2 class="section-title">Lectures</h2>
-      <p class="section-sub">Premium lectures become available after verified purchase.</p>
+      <h2 class="section-title">Unlocked Lectures</h2>
+      <p class="section-sub">You have lifetime access to all learning modules.</p>
 
       <div class="lecture">
         <div class="play"><i class="fas fa-play"></i></div>
         <div><b>Construction Materials | UNIT 1, 4, 5</b><span>Bricks, stones and timber properties</span></div>
-        <div class="locked-mini"><i class="fas fa-unlock"></i></div>
+        <div class="locked-mini"><i class="fas fa-check-circle"></i> Unlocked</div>
       </div>
 
       <div class="lecture">
         <div class="play"><i class="fas fa-play"></i></div>
         <div><b>Basic Surveying | UNIT I</b><span>Principles and chain surveying</span></div>
-        <div class="locked-mini"><i class="fas fa-unlock"></i></div>
+        <div class="locked-mini"><i class="fas fa-check-circle"></i> Unlocked</div>
       </div>
 
       <div class="lecture">
         <div class="play"><i class="fas fa-play"></i></div>
         <div><b>Mechanics of Material | UNIT I</b><span>Stress, strain and Hooke's law</span></div>
-        <div class="locked-mini"><i class="fas fa-unlock"></i></div>
+        <div class="locked-mini"><i class="fas fa-check-circle"></i> Unlocked</div>
       </div>
     </section>
 
@@ -275,9 +273,6 @@ body{min-height:100vh}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-/* ===========================
-   FIREBASE
-   =========================== */
 const firebaseConfig = {
   apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
   authDomain: "diploma-app-9a378.firebaseapp.com",
@@ -292,22 +287,9 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
-
-/* ===========================
-   COURSE SETTINGS
-   =========================== */
 const COURSE_ID = "civil_special";
-
-/*
-  IMPORTANT:
-  Do not put Cashfree App ID or Secret Key in this file.
-  Backend endpoint must create the Cashfree order.
-*/
 const CREATE_ORDER_ENDPOINT = "/api/create-cashfree-order";
 
-/* ===========================
-   UI HELPERS
-   =========================== */
 function setStatus(type, icon, message){
   const box = document.getElementById("status");
   box.className = "status show " + type;
@@ -322,33 +304,21 @@ function hideLoader(){
 function showPaymentGate(){
   document.getElementById("paymentGate").style.display = "block";
   document.getElementById("courseContent").classList.remove("show");
-  setStatus(
-    "warning",
-    "fa-lock",
-    "No verified purchase was found for this Firebase account."
-  );
+  setStatus("warning", "fa-lock", "No verified purchase was found for this Firebase account.");
   hideLoader();
 }
 
 function showCourse(){
   document.getElementById("paymentGate").style.display = "none";
   document.getElementById("courseContent").classList.add("show");
-  setStatus(
-    "success",
-    "fa-circle-check",
-    "Payment verified. Lifetime access is active for this account."
-  );
+  setStatus("success", "fa-circle-check", "Payment verified. Lifetime access is active for this account.");
   hideLoader();
 }
 
-/* ===========================
-   PAYMENT ACCESS CHECK
-   =========================== */
 async function checkCourseAccess(user){
-
   if(!user){
     document.getElementById("userPill").textContent = "Login Required";
-    setStatus("error","fa-user-lock","Please login to your Diploma Engineers account.");
+    setStatus("error", "fa-user-lock", "Please login to your Diploma Engineers account.");
     hideLoader();
     setTimeout(() => {
       window.location.href = "/login.html";
@@ -356,10 +326,8 @@ async function checkCourseAccess(user){
     return;
   }
 
-  document.getElementById("userPill").textContent =
-    user.displayName || "Logged in";
-
-  setStatus("loading","fa-spinner fa-spin","Checking your Civil 2nd Year purchase...");
+  document.getElementById("userPill").textContent = user.displayName || user.email || "Logged in";
+  setStatus("loading", "fa-spinner fa-spin", "Checking your Civil 2nd Year purchase...");
 
   try{
     const ref = db.ref(`users/${user.uid}/purchases/${COURSE_ID}`);
@@ -371,11 +339,7 @@ async function checkCourseAccess(user){
     }
 
     const purchase = snap.val() || {};
-
-    if(
-      purchase.status === "paid" ||
-      purchase.purchased === true
-    ){
+    if(purchase.status === "paid" || purchase.purchased === true){
       showCourse();
       return;
     }
@@ -384,22 +348,13 @@ async function checkCourseAccess(user){
 
   }catch(error){
     console.error(error);
-    setStatus(
-      "error",
-      "fa-triangle-exclamation",
-      "Access verification failed. Please check your internet connection and try again."
-    );
+    setStatus("error", "fa-triangle-exclamation", "Access verification failed. Please check your network.");
     hideLoader();
   }
 }
 
-/* ===========================
-   START CASHFREE PAYMENT
-   =========================== */
 async function startPayment(){
-
   const user = auth.currentUser;
-
   if(!user){
     alert("Please login first.");
     return;
@@ -408,34 +363,18 @@ async function startPayment(){
   const btn = document.getElementById("buyBtn");
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating secure order...';
-
-  setStatus(
-    "loading",
-    "fa-spinner fa-spin",
-    "Preparing your secure Cashfree payment..."
-  );
+  setStatus("loading", "fa-spinner fa-spin", "Preparing your secure Cashfree payment...");
 
   try{
-
-    /*
-      The backend MUST:
-      1. Verify the Firebase ID token.
-      2. Create the Cashfree order server-side.
-      3. Store Firebase UID against the order.
-      4. Return payment_session_id and order_id.
-    */
-
     const idToken = await user.getIdToken(true);
 
-    const response = await fetch(CREATE_ORDER_ENDPOINT,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + idToken
+    const response = await fetch(CREATE_ORDER_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + idToken
       },
-      body:JSON.stringify({
-        courseId: COURSE_ID
-      })
+      body: JSON.stringify({ courseId: COURSE_ID })
     });
 
     const data = await response.json();
@@ -458,37 +397,21 @@ async function startPayment(){
     }
 
   }catch(error){
-
-    console.error("Payment error:",error);
-
-    setStatus(
-      "error",
-      "fa-circle-xmark",
-      error.message || "Payment could not be started."
-    );
-
+    console.error("Payment error:", error);
+    setStatus("error", "fa-circle-xmark", error.message || "Payment could not be started.");
     btn.disabled = false;
-    btn.innerHTML =
-      '<i class="fas fa-credit-card"></i> Buy Course & Get Lifetime Access';
+    btn.innerHTML = '<i class="fas fa-credit-card"></i> Buy Course & Get Lifetime Access';
   }
 }
 
-/* ===========================
-   AUTH
-   =========================== */
 auth.onAuthStateChanged(user => {
   checkCourseAccess(user);
 });
 
-/* Safety fallback */
 setTimeout(() => {
   if(document.getElementById("loader").style.display !== "none"){
     hideLoader();
-    setStatus(
-      "error",
-      "fa-clock",
-      "Verification is taking too long. Please reload the page."
-    );
+    setStatus("error", "fa-clock", "Verification took too long. Please reload the page.");
   }
 }, 10000);
 </script>

@@ -1711,6 +1711,7 @@ body.faculty-modal-open { overflow:hidden; }
 }
 
 </style>
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 </head>
 <body>
 
@@ -2105,7 +2106,19 @@ body.faculty-modal-open { overflow:hidden; }
 
   <!-- UPDATED COURSE DETAIL PAGES -->
   <div id="year-1-course" class="page"></div>
-  <div id="civil-year-2-course" class="page"></div>
+  <div id="civil-year-2-course" class="page">
+  <div class="civil-original-course-wrap" id="civilOriginalCourseWrap" style="display:none;">
+    <iframe
+      id="civilOriginalCourseFrame"
+      title="Civil Engineering 2nd Year Course"
+      src="about:blank"
+      loading="eager"
+      style="width:100%;min-height:calc(100vh - 80px);border:0;border-radius:16px;background:#fff;"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="fullscreen; autoplay; encrypted-media; picture-in-picture">
+    </iframe>
+  </div>
+</div>
   <div id="mechanical-year-2-course" class="page"></div>
   <div id="it-year-2-course" class="page"></div>
   <div id="cs-year-2-course" class="page"></div>
@@ -2647,7 +2660,9 @@ body.faculty-modal-open { overflow:hidden; }
       <button type="button" class="civil-purchase-close" onclick="closeCivilPurchaseGate()" aria-label="Close">
         <i class="fas fa-xmark"></i>
       </button>
-      <div class="civil-purchase-icon"><i class="fas fa-hard-hat"></i></div>
+      <div class="civil-purchase-icon"><i class="fas fa-hard-hat"></i></div><div style="margin:10px 0 14px;text-align:center;font-size:12px;font-weight:800;color:#2563eb;">
+      ONE-TIME PAYMENT • LIFETIME ACCESS
+    </div>
       <div class="civil-purchase-badge">CIVIL ENGINEERING</div>
       <h2 id="civilPurchaseTitle">Civil Special Course</h2>
       <p class="civil-purchase-subtitle">Semester 3 + Semester 4 complete learning package</p>
@@ -2990,8 +3005,10 @@ window.addEventListener('DOMContentLoaded', () => {
     coursePage: "civil-year-2-course"
   });
 
-  // Put your real payment-link/payment-page URL here.
-  const CIVIL_PAYMENT_URL = "";
+  const AMOUNT = 499;
+  const CASHFREE_MODE = "sandbox";
+  const CIVIL_COURSE_FILE = "civil-course.html";
+  const CIVIL_ORDER_API = "/api/create-cashfree-order";
 
   let civilPurchaseCheckInProgress = false;
 
@@ -3109,10 +3126,51 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     setCivilPurchaseStatus(
-      "Payment gateway is not configured yet. Add your real payment-link/payment-page URL to CIVIL_PAYMENT_URL. Your payment backend must then write the verified purchase to users/{UID}/purchases/civil_special.",
+      "Secure Cashfree one-time payment: ₹499 INR. Access is unlocked only after the verified backend webhook updates your Firebase purchase.",
       "error"
     );
   };
+
+
+  window.payForCivilSpecialCourse = async function() {
+    const user = auth.currentUser;
+    if (!user) return alert("Please login first.");
+    try {
+      const idToken = await user.getIdToken(true);
+      const response = await fetch("/api/create-cashfree-order", {
+        method: "POST",
+        headers: {"Content-Type":"application/json","Authorization":"Bearer " + idToken},
+        body: JSON.stringify({courseId:"civil_special"})
+      });
+      const data = await response.json();
+      if (!response.ok || !data.payment_session_id) throw new Error(data.error || "Unable to create payment order.");
+      const cashfree = Cashfree({mode:"sandbox"});
+      await cashfree.checkout({paymentSessionId:data.payment_session_id, redirectTarget:"_modal"});
+      await waitForCivilVerifiedPurchase(120000);
+    } catch (e) {
+      setCivilPurchaseStatus(e.message || "Payment failed to start.", "error");
+    }
+  };
+
+  async function waitForCivilVerifiedPurchase(timeoutMs=120000) {
+    const start=Date.now();
+    while(Date.now()-start<timeoutMs){
+      const result=await getCivilPurchaseForCurrentUser();
+      if(result.valid){ await openOriginalCivilCourse(); return true; }
+      await new Promise(r=>setTimeout(r,3000));
+    }
+    return false;
+  }
+
+  async function openOriginalCivilCourse(){
+    const wrap=document.getElementById("civilOriginalCourseWrap");
+    const frame=document.getElementById("civilOriginalCourseFrame");
+    if(!wrap||!frame) throw new Error("Civil course container is missing.");
+    if(!frame.src || frame.src.endsWith("/about:blank")) frame.src="civil-course.html";
+    wrap.style.display="block";
+    closeCivilPurchaseGate();
+    renderPageUI(CIVIL_SPECIAL_PURCHASE.coursePage);
+  }
 
   /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = async function(pageId, pushToHistory = true) {

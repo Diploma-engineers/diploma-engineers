@@ -1109,7 +1109,7 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   .course-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-.paid-course-card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}.paid-course-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.10)}.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
+.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
 .card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
 .card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
 .card-header-banner.green{background:linear-gradient(135deg,#059669,#10B981)}
@@ -2219,7 +2219,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Civil Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="civil-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner green">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2246,7 +2246,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Mechanical Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="mechanical-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner orange">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2273,7 +2273,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Computer Science Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="cs-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner blue">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2300,7 +2300,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Information Technology Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="it-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner teal">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2327,7 +2327,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Electrical Engineering Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="electrical-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner red">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2354,7 +2354,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Electronics Engineering Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="electronics-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner indigo">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2381,7 +2381,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Agriculture Engineering Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="agriculture-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner pink">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2408,7 +2408,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Chemical Engineering Year 2 Course -->
-      <div class="course-card paid-course-card" data-paid-course="chemical-year-2-course" role="button" tabindex="0">
+      <div class="course-card">
         <div class="card-header-banner cyan">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2437,6 +2437,132 @@ body.upi-modal-open{overflow:hidden}
     </div>
   </div>
 
+
+  <!-- ADMIN PURCHASE VERIFICATION PAGE -->
+  <div id="purchaseVerificationPage" class="page">
+    <div class="section-title">Admin <span>Purchase Verification</span></div>
+    <div class="admin-dashboard-head">
+      <div>
+        <h2><i class="fas fa-shield-halved"></i> Payment Verification Panel</h2>
+        <p>Check the student's UTR against your UPI/bank transaction and then verify or reject the request.</p>
+      </div>
+      <button type="button" class="admin-refresh-btn" onclick="loadPurchaseVerificationPage()"><i class="fas fa-rotate"></i> Refresh</button>
+    </div>
+    <div id="adminPurchaseAccessNotice" class="admin-access-note">Checking admin access...</div>
+    <div id="adminPurchaseStats" class="admin-purchase-stats"></div>
+    <div id="adminPurchaseList">
+      <div class="admin-empty"><i class="fas fa-spinner fa-spin"></i> Loading purchase requests...</div>
+    </div>
+  </div>
+
+  <!-- UPI PURCHASE DETAILS PAGE -->
+  <div id="purchaseDetailsPage" class="page">
+    <div class="section-title">Purchase <span>Details</span></div>
+    <div id="purchaseDetailsContainer"></div>
+  </div>
+
+  <!-- MANUAL UPI / UTR PURCHASE MODAL -->
+  <div id="upiPurchaseModal" class="upi-purchase-modal" aria-hidden="true">
+    <div class="upi-purchase-sheet" role="dialog" aria-modal="true" aria-labelledby="upiPurchaseTitle">
+      <div class="upi-purchase-head">
+        <h2 id="upiPurchaseTitle">Complete Payment</h2>
+        <button type="button" class="upi-purchase-close" onclick="closeUPIPurchaseModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="upi-purchase-body">
+        <div class="upi-course-chip" id="upiCourseName">Course</div>
+        <div class="upi-amount-box"><strong>₹99</strong><span>One-time course access</span></div>
+        <div class="upi-qr-wrap">
+          <img src="https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592" alt="UPI QR Code" loading="eager">
+        </div>
+        <div class="upi-help">QR को किसी भी UPI app से scan करके <b>₹99</b> payment करें। Payment के बाद अपने UPI app में दिख रहा <b>UTR / Transaction ID</b> नीचे भरें।</div>
+        <div class="upi-error" id="upiPurchaseError"></div>
+        <div class="upi-field">
+          <label for="upiUtrInput">UTR / Transaction ID</label>
+          <input id="upiUtrInput" type="text" maxlength="30" autocomplete="off" placeholder="Enter UTR / Transaction ID">
+        </div>
+        <button type="button" id="upiSubmitBtn" class="upi-submit-btn" onclick="submitUPIPurchase()"><i class="fas fa-paper-plane"></i> Submit UTR & Get Purchase Details</button>
+        <div class="upi-note">UTR submit होने के बाद request verification के लिए चली जाएगी। Payment verify होते ही course इसी app में automatically open हो जाएगा।</div>
+      </div>
+    </div>
+  </div>
+  <iframe name="purchaseEmailFrame" id="purchaseEmailFrame" style="display:none;"></iframe>
+
+  <!-- UPDATE & NOTIFICATIONS PAGE -->
+  <div id="updatePage" class="page">
+    <div class="news-page">
+      <div class="page-header">
+        <div class="header-icon">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <h1>Notifications & News</h1>
+      </div>
+
+      <div id="newsList">
+        <div class="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading Notifications...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKS PAGE -->
+  <div id="booksPage" class="page"></div>
+
+  <!-- PROFILE PAGE -->
+  <div id="profilePage" class="page">
+    <div class="profile-box">
+      <div class="profile-avatar-wrapper">
+        <div class="profile-avatar" id="profileAvatarBox">
+          <i class="fas fa-user"></i>
+        </div>
+        <label for="profileImageInput" class="upload-icon-btn" id="uploadIconBtn" style="display:none;">
+          <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
+      </div>
+      
+      <h3 id="profileName" style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">Engineer</h3>
+      <p id="profileBranch" style="font-size: 12px; color: var(--muted-text); margin: 0;">Diploma Member</p>
+
+      <div class="profile-details" id="profileDisplayView">
+        <div class="profile-row"><span class="label">Total Earned Coins</span><span class="value" id="profileCoins">0</span></div>
+        <div class="profile-row"><span class="label">Full Name</span><span class="value" id="profileFullName">-</span></div>
+        <div class="profile-row"><span class="label">Email</span><span class="value" id="profileEmail">-</span></div>
+        <div class="profile-row"><span class="label">Mobile Number</span><span class="value" id="profileMobile">-</span></div>
+        <div class="profile-row"><span class="label">Engineering Branch</span><span class="value" id="profileBranchName">-</span></div>
+        <div class="profile-row"><span class="label">College Name</span><span class="value" id="profileCollege">-</span></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><span class="value" id="profileEnrollment">-</span></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><span class="value" id="profileSemester">-</span></div>
+        <div class="profile-row"><span class="label">Address</span><span class="value" id="profileAddress">-</span></div>
+      </div>
+
+      <div class="profile-details" id="profileEditView" style="display:none;">
+        <div class="profile-row"><span class="label">Full Name</span><input type="text" id="editName"></div>
+        <div class="profile-row"><span class="label">Mobile Number</span><input type="text" id="editMobile"></div>
+        <div class="profile-row"><span class="label">Engineering Branch</span>
+          <select id="editBranch">
+            <option value="Civil Engineering">Civil Engineering</option>
+            <option value="Computer Science Engineering">Computer Science Engineering</option>
+            <option value="Electrical Engineering">Electrical Engineering</option>
+            <option value="Electronics Engineering">Electronics Engineering</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Agriculture Engineering">Agriculture Engineering</option>
+          </select>
+        </div>
+        <div class="profile-row"><span class="label">College Name</span><input type="text" id="editCollege" placeholder="Enter College Name"></div>
+        <div class="profile-row"><span class="label">Enrollment Number</span><input type="text" id="editEnrollment" placeholder="Enter Enrollment Number"></div>
+        <div class="profile-row"><span class="label">Semester / Year</span><input type="text" id="editSemester" placeholder="e.g. 2nd Semester"></div>
+        <div class="profile-row"><span class="label">Address</span><input type="text" id="editAddress" placeholder="Enter Address"></div>
+      </div>
+      
+      <button class="btn-main" style="margin-top: 16px;" id="profileToggleBtn" onclick="toggleProfileEditMode()">Edit Profile</button>
+      <button class="profile-share-btn" type="button" onclick="openOwnProfileCard()"><i class="fas fa-id-card"></i> Share Profile Card</button>
+      <button class="btn-main" id="adminPurchaseBtn" type="button" style="display:none;margin-top:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);" onclick="navigateTo('purchaseVerificationPage')"><i class="fas fa-shield-halved"></i> Admin • Verify Purchases</button>
+      <button class="btn-main" style="margin-top: 10px; background: #ef4444;" onclick="logoutFirebase()">Logout</button>
+    </div>
+  </div>
 
   <!-- COMMUNITY PAGE -->
   <div id="communityPage" class="page">
@@ -2654,21 +2780,6 @@ body.upi-modal-open{overflow:hidden}
 </div>
 
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
-<script>
-  document.addEventListener("click", function(e){
-    const card=e.target.closest(".paid-course-card");
-    if(!card) return;
-    if(e.target.closest("button,a,input,select,textarea,label")) return;
-    const id=card.getAttribute("data-paid-course");
-    if(id && typeof window.openUPIPurchaseModal === "function") window.openUPIPurchaseModal(id);
-  });
-  document.addEventListener("keydown", function(e){
-    if(e.key!=="Enter" && e.key!==" ") return;
-    const card=e.target.closest(".paid-course-card");
-    if(!card || typeof window.openUPIPurchaseModal !== "function") return;
-    e.preventDefault(); window.openUPIPurchaseModal(card.getAttribute("data-paid-course"));
-  });
-</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -2753,6 +2864,7 @@ body.upi-modal-open{overflow:hidden}
 
   /* MANUAL UPI / UTR COURSE PURCHASE CONFIG */
   const PURCHASE_EMAIL = "astar22072206@gmail.com";
+  const ADMIN_EMAILS = Object.freeze([PURCHASE_EMAIL.toLowerCase()]);
   const PAID_COURSES = Object.freeze({
     "civil-year-2-course": { name: "Civil Engineering Year 2", amount: 99 },
     "mechanical-year-2-course": { name: "Mechanical Engineering Year 2", amount: 99 },
@@ -3058,8 +3170,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const data={
         purchaseId,uid:user.uid,courseId,courseName:course.name,amount:course.amount,currency:"INR",utr,
         name:userData.name||user.displayName||"Engineer",email:userData.email||user.email||"",mobile:userData.mobile||"",
-        branch:userData.branch||"Diploma Member",profilePic:userData.profilePic||user.photoURL||"",
-        submittedAt:Date.now(),status:"pending",paymentMethod:"UPI QR + UTR"
+        branch:userData.branch||"Diploma Member",submittedAt:Date.now(),status:"pending",paymentMethod:"UPI QR + UTR"
       };
       await set(purchaseRef,data);activePurchaseRecord=data;sendPurchaseEmail(data);closeUPIPurchaseModal();renderPurchaseDetails(data);navigateTo("purchaseDetailsPage");watchPurchaseVerification(user.uid,courseId,purchaseId);
     }catch(error){console.error("UTR purchase save error:",error);showUPIError("UTR save nahi ho paya: "+(error.message||"Firebase error"));}finally{
@@ -3079,6 +3190,122 @@ window.addEventListener('DOMContentLoaded', () => {
     }});
     onValue(purchaseRef,snap=>{if(stopped||!snap.exists())return;const value=snap.val()||{};activePurchaseRecord=value;renderPurchaseDetails(value);if(String(value.status||"").toLowerCase()==="rejected")stop();});
   }
+
+  function getPurchaseAdminEmail(){
+    const authEmail=String(auth.currentUser?.email||'').trim().toLowerCase();
+    const profileEmail=String(currentUserData?.email||'').trim().toLowerCase();
+    return authEmail || profileEmail;
+  }
+
+  function isPurchaseAdmin(){
+    const email=getPurchaseAdminEmail();
+    return !!email && ADMIN_EMAILS.includes(email);
+  }
+
+  function adminEscape(value){ return escapeHTML(value == null ? '' : String(value)); }
+
+  window.loadPurchaseVerificationPage=async function(){
+    const notice=document.getElementById('adminPurchaseAccessNotice');
+    const list=document.getElementById('adminPurchaseList');
+    if(!notice||!list)return;
+    if(!auth.currentUser){
+      notice.innerHTML='<i class="fas fa-spinner fa-spin"></i> Checking login...';
+      list.innerHTML='<div class="admin-empty"><i class="fas fa-spinner fa-spin"></i><p style="margin:8px 0 0;font-weight:800;">Checking admin account...</p></div>';
+      return;
+    }
+    if(!isPurchaseAdmin()){
+      // Phone/password login may not expose an email on auth.currentUser.
+      // In that case currentUserData.email is used as the configured admin email.
+      if(!auth.currentUser.email && !currentUserData?.email){
+        notice.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading your profile...';
+        list.innerHTML='<div class="admin-empty"><i class="fas fa-spinner fa-spin"></i><p style="margin:8px 0 0;font-weight:800;">Checking admin email...</p></div>';
+        setTimeout(()=>{ if(document.getElementById('purchaseVerificationPage')?.classList.contains('active')) loadPurchaseVerificationPage(); },700);
+        return;
+      }
+      notice.innerHTML='<i class="fas fa-lock"></i> Admin access required. Logged-in email: '+adminEscape(getPurchaseAdminEmail()||'not available');
+      const stats=document.getElementById('adminPurchaseStats'); if(stats) stats.innerHTML='';
+      list.innerHTML='<div class="admin-empty"><i class="fas fa-shield-halved"></i><p style="margin:8px 0 0;font-weight:800;">You are not authorized to verify purchases.</p><small>Login with '+adminEscape(PURCHASE_EMAIL)+'.</small></div>';
+      return;
+    }
+    notice.innerHTML='<i class="fas fa-shield-halved"></i> Admin mode: verify the customer payment after checking the UTR in your UPI/bank records.';
+    list.innerHTML='<div class="admin-empty"><i class="fas fa-spinner fa-spin"></i> Loading purchase requests...</div>';
+
+    onValue(ref(db,'utrPurchases'), snapshot=>{
+      const rows=[];
+      if(snapshot.exists()){
+        snapshot.forEach(uidSnap=>{
+          const uid=uidSnap.key;
+          uidSnap.forEach(courseSnap=>{
+            const courseId=courseSnap.key;
+            courseSnap.forEach(purchaseSnap=>{
+              const d=purchaseSnap.val()||{};
+              rows.push({uid,courseId,purchaseKey:purchaseSnap.key,...d});
+            });
+          });
+        });
+      }
+      rows.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));
+      const pending=rows.filter(x=>String(x.status||'pending').toLowerCase()==='pending');
+      const verified=rows.filter(x=>String(x.status||'').toLowerCase()==='verified');
+      const rejected=rows.filter(x=>String(x.status||'').toLowerCase()==='rejected');
+      const stats=document.getElementById('adminPurchaseStats');
+      if(stats) stats.innerHTML=`<div class="admin-stat pending"><b>Pending</b><span>${pending.length}</span></div><div class="admin-stat verified"><b>Verified</b><span>${verified.length}</span></div><div class="admin-stat rejected"><b>Rejected</b><span>${rejected.length}</span></div>`;
+      if(!pending.length){
+        list.innerHTML='<div class="admin-empty"><i class="fas fa-circle-check" style="font-size:28px;"></i><p style="margin:8px 0 0;font-weight:800;">No pending purchase requests.</p></div>';
+        return;
+      }
+      list.innerHTML=pending.map(d=>`\
+        <article class="admin-purchase-card">\
+          <div class="admin-purchase-top">\
+            <div><h3 class="admin-purchase-title">${adminEscape(d.courseName||d.courseId)}</h3><div class="admin-purchase-meta">Purchase ID: ${adminEscape(d.purchaseId||d.purchaseKey)}<br>${adminEscape(formatPurchaseDate(d.submittedAt))}</div></div>\
+            <span class="paid-badge">₹${adminEscape(d.amount||99)} UPI</span>\
+          </div>\
+          <div class="admin-purchase-grid">\
+            <div class="admin-purchase-item"><b>Name</b><span>${adminEscape(d.name||'-')}</span></div>\
+            <div class="admin-purchase-item"><b>Email</b><span>${adminEscape(d.email||'-')}</span></div>\
+            <div class="admin-purchase-item"><b>Mobile</b><span>${adminEscape(d.mobile||'-')}</span></div>\
+            <div class="admin-purchase-item"><b>Branch</b><span>${adminEscape(d.branch||'-')}</span></div>\
+            <div class="admin-purchase-item"><b>UTR</b><span>${adminEscape(d.utr||'-')}</span></div>\
+            <div class="admin-purchase-item"><b>UID</b><span>${adminEscape(d.uid||'-')}</span></div>\
+          </div>\
+          <div class="admin-purchase-actions">\
+            <button class="admin-verify-btn" type="button" onclick="verifyPurchaseRequest('${adminEscape(d.uid)}','${adminEscape(d.courseId)}','${adminEscape(d.purchaseKey)}')"><i class="fas fa-circle-check"></i> Verify Payment & Grant Access</button>\
+            <button class="admin-reject-btn" type="button" onclick="rejectPurchaseRequest('${adminEscape(d.uid)}','${adminEscape(d.courseId)}','${adminEscape(d.purchaseKey)}')"><i class="fas fa-circle-xmark"></i> Reject</button>\
+          </div>\
+        </article>`).join('');
+    },error=>{
+      console.error('Admin purchase load error:',error);
+      list.innerHTML='<div class="admin-empty"><i class="fas fa-triangle-exclamation"></i><p style="margin:8px 0 0;font-weight:800;">Purchase requests could not be loaded.</p><small>Check Firebase Realtime Database rules.</small></div>';
+    });
+  };
+
+  window.verifyPurchaseRequest=async function(uid,courseId,purchaseKey){
+    if(!isPurchaseAdmin()){alert('Admin access required.');return;}
+    if(!confirm('Verify this ₹99 payment and grant course access?'))return;
+    try{
+      const purchaseRef=ref(db,`${purchasePath(uid,courseId)}/${purchaseKey}`);
+      const snap=await get(purchaseRef);
+      if(!snap.exists()){alert('Purchase request not found.');return;}
+      const d=snap.val()||{};
+      const verifiedAt=Date.now();
+      await update(purchaseRef,{status:'verified',verified:true,verifiedAt,verifiedBy:auth.currentUser.email});
+      await set(ref(db,accessPath(uid,courseId)),{
+        uid,courseId,courseName:d.courseName||PAID_COURSES[courseId]?.name||courseId,
+        amount:Number(d.amount)||99,currency:'INR',utr:d.utr||'',verified:true,status:'verified',
+        purchaseId:d.purchaseId||purchaseKey,grantedAt:verifiedAt,verifiedBy:auth.currentUser.email
+      });
+      alert('Payment verified. Course access granted. The student will be redirected to the course automatically.');
+    }catch(error){console.error('Purchase verification error:',error);alert('Verification failed: '+(error.message||'Firebase error'));}
+  };
+
+  window.rejectPurchaseRequest=async function(uid,courseId,purchaseKey){
+    if(!isPurchaseAdmin()){alert('Admin access required.');return;}
+    if(!confirm('Reject this UTR/payment request?'))return;
+    try{
+      await update(ref(db,`${purchasePath(uid,courseId)}/${purchaseKey}`),{status:'rejected',rejectedAt:Date.now(),rejectedBy:auth.currentUser.email});
+      alert('Purchase request rejected.');
+    }catch(error){console.error('Purchase rejection error:',error);alert('Rejection failed: '+(error.message||'Firebase error'));}
+  };
 
     async function gatePaidCoursePage(pageId){
     if(!PAID_COURSES[pageId])return true;
@@ -3105,6 +3332,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
     if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'purchaseVerificationPage') loadPurchaseVerificationPage();
     renderPageUI(pageId);
 
     if (pushToHistory) {
@@ -3132,6 +3360,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
     if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'purchaseVerificationPage') loadPurchaseVerificationPage();
     renderPageUI(pageId);
     window.scrollTo({top:0, left:0, behavior:'instant'});
   });
@@ -3151,6 +3380,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (targetPage === 'homePage') loadTrendingPage(false);
+    if (targetPage === 'purchaseVerificationPage') loadPurchaseVerificationPage();
 
     const backBtn = document.getElementById("headerBackBtn");
     if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
@@ -3254,6 +3484,7 @@ window.addEventListener('DOMContentLoaded', () => {
       history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
       renderPageUI(targetPage);
       loadNewsData();
+      if (targetPage === 'purchaseVerificationPage') loadPurchaseVerificationPage();
       openSharedUserCardFromUrl();
 
       startCoinUsageTracker(user.uid);
@@ -3310,6 +3541,15 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
     document.getElementById("profileSemester").innerText = data.semester || "-";
     document.getElementById("profileAddress").innerText = data.address || "-";
+
+    const adminPurchaseBtn = document.getElementById("adminPurchaseBtn");
+    if (adminPurchaseBtn) {
+      const email = String(data.email || auth.currentUser?.email || "").trim().toLowerCase();
+      adminPurchaseBtn.style.display = ADMIN_EMAILS.includes(email) ? "block" : "none";
+      if (window.location.hash === "#purchaseVerificationPage") {
+        setTimeout(() => loadPurchaseVerificationPage(), 50);
+      }
+    }
 
     const avatarBox = document.getElementById("profileAvatarBox");
     const navProfileIcon = document.getElementById("navProfileIcon");

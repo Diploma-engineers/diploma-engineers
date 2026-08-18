@@ -37,6 +37,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, onValue, get, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig={
@@ -48,7 +49,7 @@ const firebaseConfig={
   messagingSenderId:"160233059797",
   appId:"1:160233059797:web:be38130ed64f8bd0afb95c"
 };
-const app=initializeApp(firebaseConfig),db=getDatabase(app);
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
 const COURSE_FILES={
  "civil-year-2-course":"civil-year-2-course.html",
  "mechanical-year-2-course":"mechanical-year-2-course.html",
@@ -92,9 +93,17 @@ function render(){
   }).join('');
 }
 
-function start(){
+async function start(){
   if(stopListening)stopListening();
   setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Firebase...');
+  try{
+    if(!auth.currentUser) await signInAnonymously(auth);
+  }catch(e){
+    console.error(e);
+    setNotice('Firebase Authentication error: '+esc(e.message));
+    $('list').innerHTML='<div class="error"><b>Admin connection failed.</b><br><span class="small">Enable Anonymous Authentication in Firebase Console → Authentication → Sign-in method.</span></div>';
+    return;
+  }
   stopListening=onValue(ref(db,'utrPurchases'),snap=>{
     const out=[];
     if(snap.exists()){
@@ -113,7 +122,7 @@ function start(){
   },err=>{
     console.error(err);
     setNotice('Firebase error: '+esc(err.message));
-    $('list').innerHTML='<div class="error"><b>Purchase requests could not be loaded.</b><br><span class="small">Your Firebase Realtime Database Rules must allow this admin page to read <b>utrPurchases</b>.</span></div>';
+    $('list').innerHTML='<div class="error"><b>Purchase requests could not be loaded.</b><br><span class="small">Your current Rules require authentication. This page signs in anonymously automatically; enable Anonymous Authentication in Firebase Console.</span></div>';
   });
 }
 

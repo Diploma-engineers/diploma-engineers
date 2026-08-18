@@ -1109,6 +1109,13 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   .course-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+#approvedCoursesHomeList .approved-course-card{background:#fff;border:1px solid #dbe7f5;border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(15,23,42,.06);cursor:pointer;transition:.15s}
+#approvedCoursesHomeList .approved-course-card:active{transform:scale(.98)}
+#approvedCoursesHomeList .approved-course-top{padding:14px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);display:flex;align-items:center;gap:10px}
+#approvedCoursesHomeList .approved-course-icon{width:42px;height:42px;border-radius:12px;background:#fff;color:#16a34a;display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid #d1fae5}
+#approvedCoursesHomeList .approved-course-name{font-size:13px;font-weight:800;color:#0f172a;margin:0;line-height:1.3}
+#approvedCoursesHomeList .approved-course-status{font-size:10px;font-weight:800;color:#047857;margin-top:3px}
+#approvedCoursesHomeList .approved-course-open{padding:10px 14px;font-size:11px;font-weight:800;color:#2563eb;border-top:1px solid #e5e7eb;text-align:center}
 .course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
 .card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
 .card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
@@ -1697,6 +1704,18 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   .home-external-frame{height:255px !important;min-height:0 !important}
 }
 
+
+/* PAID COURSE / UTR SYSTEM */
+.paid-course-card{cursor:pointer;position:relative}
+.paid-course-card .free-badge{background:#fff0f0!important;color:#dc2626!important}
+.paid-badge{display:inline-flex;align-items:center;gap:5px;background:#fff;color:#dc2626;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;position:absolute;right:12px;top:12px;z-index:2}
+.payment-modal{position:fixed;inset:0;z-index:2000000;display:none;align-items:center;justify-content:center;padding:15px;background:rgba(15,23,42,.6);backdrop-filter:blur(6px)}
+.payment-modal.show{display:flex}.payment-sheet{width:min(100%,470px);max-height:92vh;overflow:auto;background:#fff;border-radius:24px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.25);position:relative}
+.payment-close{position:absolute;right:14px;top:14px;width:36px;height:36px;border:0;border-radius:50%;background:#f1f5f9;cursor:pointer;font-size:16px}
+.payment-title{text-align:center;font-weight:800;font-size:20px;margin:3px 40px 4px}.payment-sub{text-align:center;color:#64748b;font-size:12px;margin-bottom:14px}
+.qr-wrap{text-align:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px}.qr-wrap img{width:min(100%,280px);height:auto;display:block;margin:auto;border-radius:12px}.price-box{text-align:center;margin:12px 0;font-size:24px;font-weight:900;color:#dc2626}
+.utr-input{width:100%;padding:13px;border:1.5px solid #dbe3ee;border-radius:12px;outline:0;font-size:14px}.utr-input:focus{border-color:#2563eb}.payment-submit{width:100%;margin-top:10px;padding:13px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}.payment-status{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;display:none}.payment-status.show{display:block}.payment-status.error{background:#fef2f2;color:#b91c1c}.payment-status.ok{background:#ecfdf5;color:#047857}
+.purchase-detail-card{max-width:650px;margin:15px auto;background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 8px 25px rgba(15,23,42,.06)}.purchase-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eef2f7;font-size:13px}.purchase-row:last-child{border-bottom:0}.purchase-row strong{color:#475569}.purchase-row span{font-weight:700;text-align:right;word-break:break-word}.verify-pill{display:inline-block;padding:5px 10px;border-radius:999px;background:#fff7ed;color:#c2410c;font-weight:800;font-size:11px}
 </style>
 </head>
 <body>
@@ -1877,6 +1896,11 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
       <div class="icon-box">
         <i class="fas fa-graduation-cap"></i>
       </div>
+    </div>
+
+    <div id="approvedCoursesHome" style="margin-top:12px;display:none">
+      <div class="section-title" style="margin-top:0">My <span>Purchased Courses</span></div>
+      <div id="approvedCoursesHomeList" class="grid"></div>
     </div>
 
     <!-- SEMESTER CARDS -->
@@ -2132,9 +2156,9 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
     <div class="course-grid">
 
       <!-- Year 1 Course -->
-      <div class="course-card">
+      <div class="course-card ">
         <div class="card-header-banner purple">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-shapes"></i>
             <h2>1st Year Course</h2>
@@ -2159,9 +2183,9 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
       </div>
 
       <!-- Civil Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner green">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-hard-hat"></i>
             <h2>Civil Engineering Year 2</h2>
@@ -2179,16 +2203,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> 100+ Video Lectures & Diagrams</li>
             <li><i class="fa-solid fa-circle-check"></i> Quick Revision Formula Sheets</li>
           </ul>
-          <button type="button" onclick="navigateTo('civil-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('civil-year-2-course', 'Civil Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Mechanical Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner orange">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-gears"></i>
             <h2>Mechanical Engineering Year 2</h2>
@@ -2206,16 +2230,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Step-by-Step Numerical Solutions</li>
             <li><i class="fa-solid fa-circle-check"></i> Machine Drawing Notes</li>
           </ul>
-          <button type="button" onclick="navigateTo('mechanical-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('mechanical-year-2-course', 'Mechanical Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Computer Science Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner blue">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-laptop-code"></i>
             <h2>Computer Science Year 2</h2>
@@ -2233,16 +2257,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Practical Live Code Walkthroughs</li>
             <li><i class="fa-solid fa-circle-check"></i> Complete Exam Notes</li>
           </ul>
-          <button type="button" onclick="navigateTo('cs-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('cs-year-2-course', 'Computer Science Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Information Technology Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner teal">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-network-wired"></i>
             <h2>Information Technology Year 2</h2>
@@ -2260,16 +2284,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Practical Laboratory Guides</li>
             <li><i class="fa-solid fa-circle-check"></i> Important Board Questions</li>
           </ul>
-          <button type="button" onclick="navigateTo('it-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('it-year-2-course', 'Information Technology Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Electrical Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner red">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-bolt"></i>
             <h2>Electrical Engineering Year 2</h2>
@@ -2287,16 +2311,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Circuit Theory & Numerical Guide</li>
             <li><i class="fa-solid fa-circle-check"></i> Diagram PDF Handouts</li>
           </ul>
-          <button type="button" onclick="navigateTo('electrical-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('electrical-year-2-course', 'Electrical Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Electronics Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner indigo">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-microchip"></i>
             <h2>Electronics Engineering Year 2</h2>
@@ -2314,16 +2338,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Circuit Simulation Notes</li>
             <li><i class="fa-solid fa-circle-check"></i> Previous Year Solutions</li>
           </ul>
-          <button type="button" onclick="navigateTo('electronics-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('electronics-year-2-course', 'Electronics Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Agriculture Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner pink">
-          <span class="free-badge">FREE</span>
+          <span class="free-badge">₹99</span>
           <div class="header-title-box">
             <i class="fa-solid fa-seedling"></i>
             <h2>Agriculture Engineering Year 2</h2>
@@ -2341,14 +2365,14 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Soil & Water Conservation Engineering</li>
             <li><i class="fa-solid fa-circle-check"></i> Exam Notes & Manuals</li>
           </ul>
-          <button type="button" onclick="navigateTo('agriculture-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('agriculture-year-2-course', 'Agriculture Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
       <!-- Chemical Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid="1">
         <div class="card-header-banner cyan">
           <span class="free-badge">FREE</span>
           <div class="header-title-box">
@@ -2368,12 +2392,20 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
             <li><i class="fa-solid fa-circle-check"></i> Heat Transfer & Thermodynamics</li>
             <li><i class="fa-solid fa-circle-check"></i> Comprehensive Notes & Formulas</li>
           </ul>
-          <button type="button" onclick="navigateTo('chemical-year-2-course')" class="action-btn">
+          <button type="button" onclick="event.stopPropagation(); openPaidCourse('chemical-year-2-course', 'Chemical Engineering Year 2')" class="action-btn">
             <i class="fa-solid fa-gift"></i> Access Course
           </button>
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- PURCHASE DETAILS PAGE -->
+  <div id="purchaseDetailsPage" class="page">
+    <div class="section-title"><span>Purchase</span> Details</div>
+    <div id="purchaseDetailsBox" class="purchase-detail-card">
+      <div style="text-align:center;color:#64748b;padding:20px">No purchase selected.</div>
     </div>
   </div>
 
@@ -2671,6 +2703,7 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -2722,7 +2755,8 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
     projectId: "diploma-app-9a378",
     storageBucket: "diploma-app-9a378.firebasestorage.app",
     messagingSenderId: "160233059797",
-    appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
+    appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
+    measurementId: "G-9646VK4C6L"
   };
 
   const newsFirebaseConfig = {
@@ -2736,6 +2770,8 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   };
 
   const app = initializeApp(firebaseConfig);
+  let analytics = null;
+  try { analytics = getAnalytics(app); } catch (e) { console.warn("Analytics unavailable:", e); }
   const auth = getAuth(app);
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
@@ -2952,7 +2988,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
-    if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'homePage') { loadTrendingPage(false); loadApprovedCoursesHome(); }
     renderPageUI(pageId);
 
     if (pushToHistory) {
@@ -2974,7 +3010,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (EXTERNAL_FILE_MAP[pageId]) loadPortalFromFile(pageId);
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
-    if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'homePage') { loadTrendingPage(false); loadApprovedCoursesHome(); }
     renderPageUI(pageId);
     window.scrollTo({top:0, left:0, behavior:'instant'});
   });
@@ -3012,11 +3048,16 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.submitAuthForm = async function() {
-    let email = document.getElementById("email").value.trim();
-    let password = document.getElementById("password").value.trim();
-    
+    let email = String(document.getElementById("email")?.value || "").trim().toLowerCase();
+    let password = String(document.getElementById("password")?.value || "");
+
     if (!email || !password) {
       alert("Please enter Email and Password");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Please enter a valid email address.");
       return;
     }
 
@@ -3067,88 +3108,71 @@ window.addEventListener('DOMContentLoaded', () => {
     signOut(auth);
   };
 
-  let userProfileListener = null;
+  let profileUnsubscribe = null;
+  let accessUnsubscribe = null;
 
   onAuthStateChanged(auth, async (user) => {
-    try {
-      if (user) {
-        // Always create a usable profile immediately from Firebase Auth.
-        // This keeps Profile/Leaderboard working even if the profile node is
-        // temporarily empty while the Realtime Database listener starts.
-        currentUserData = {
-          name: user.displayName || "Engineer",
-          email: user.email || "-",
-          mobile: "",
-          branch: "Diploma Member",
-          college: "",
-          enrollment: "",
-          semester: "",
-          address: "",
-          profilePic: user.photoURL || "",
-          coins: 0
-        };
-        updateProfileUI(currentUserData);
+    if (profileUnsubscribe) { try { profileUnsubscribe(); } catch (_) {} profileUnsubscribe = null; }
+    if (accessUnsubscribe) { try { accessUnsubscribe(); } catch (_) {} accessUnsubscribe = null; }
+    leaderboardListenerStarted = false;
 
-        if (userProfileListener) {
-          try { userProfileListener(); } catch (_) {}
-          userProfileListener = null;
-        }
-
-        const userRef = ref(db, `users/${user.uid}`);
-        const handleProfile = (snapshot) => {
+    if (user) {
+      const userRef = ref(db, `users/${user.uid}`);
+      profileUnsubscribe = onValue(userRef, async (snapshot) => {
+        try {
           if (snapshot.exists()) {
-            currentUserData = { ...currentUserData, ...snapshot.val() };
+            currentUserData = {
+              name: snapshot.val().name || user.displayName || "Engineer",
+              email: snapshot.val().email || user.email || "",
+              mobile: snapshot.val().mobile || "",
+              branch: snapshot.val().branch || "Diploma Member",
+              college: snapshot.val().college || "",
+              enrollment: snapshot.val().enrollment || "",
+              semester: snapshot.val().semester || "",
+              address: snapshot.val().address || "",
+              profilePic: snapshot.val().profilePic || user.photoURL || "",
+              coins: Number(snapshot.val().coins) || 0,
+              ...snapshot.val()
+            };
           } else {
-            // Create the missing profile record once so Profile, coins and
-            // leaderboard have a consistent source of truth.
-            set(userRef, currentUserData).catch(err => console.warn("Profile create failed:", err));
+            currentUserData = {
+              name: user.displayName || "Engineer", email: user.email || "", mobile: "",
+              branch: "Civil Engineering", college: "", enrollment: "", semester: "",
+              address: "", profilePic: user.photoURL || "", coins: 0
+            };
+            await set(userRef, currentUserData);
           }
           updateProfileUI(currentUserData);
-          loadApprovedHomeCoursesSafe();
-        };
-        const unsubscribeProfile = onValue(userRef, handleProfile, (error) => {
-          console.warn("Profile read failed:", error);
-          updateProfileUI(currentUserData);
-        });
-        userProfileListener = () => unsubscribeProfile();
-
-        document.getElementById("authPage").style.display = "none";
-        document.getElementById("app").style.display = "block";
-
-        const initialHash = window.location.hash.substring(1);
-        const targetPage = initialHash || defaultPage;
-        if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
-        if (targetPage === 'leaderboardPage') loadLeaderboardData(true);
-        loadFeedbackData();
-        initFeedbackForm();
-        history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
-        renderPageUI(targetPage);
-        loadNewsData();
-        openSharedUserCardFromUrl();
-
-        startCoinUsageTracker(user.uid);
-      } else {
-        if (userProfileListener) {
-          try { userProfileListener(); } catch (_) {}
-          userProfileListener = null;
+          loadApprovedCoursesHome();
+        } catch (e) {
+          console.error("Profile load error:", e);
         }
-        if (usageTimerInterval) clearInterval(usageTimerInterval);
-        currentUserData = {};
-        document.getElementById("app").style.display = "none";
-        document.getElementById("authPage").style.display = "flex";
-      }
-    } catch (err) {
-      console.error("Auth state handling failed:", err);
+      });
+
+      document.getElementById("authPage").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
+      const initialHash = window.location.hash.substring(1);
+      const targetPage = initialHash || defaultPage;
+      if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
+      if (targetPage === 'leaderboardPage') loadLeaderboardData();
+      loadFeedbackData();
+      initFeedbackForm();
+      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+      renderPageUI(targetPage);
+      loadNewsData();
+      openSharedUserCardFromUrl();
+      loadApprovedCoursesHome();
+      startCoinUsageTracker(user.uid);
+    } else {
+      if (usageTimerInterval) clearInterval(usageTimerInterval);
+      currentUserData = {};
+      const home = document.getElementById("approvedCoursesHome");
+      if (home) home.style.display = "none";
+      document.getElementById("app").style.display = "none";
+      document.getElementById("authPage").style.display = "flex";
     }
   });
-
-  async function loadApprovedHomeCoursesSafe() {
-    try {
-      if (typeof window.loadApprovedHomeCoursesExternal === "function") {
-        await window.loadApprovedHomeCoursesExternal();
-      }
-    } catch (_) {}
-  }
 
   function startCoinUsageTracker(uid) {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
@@ -3179,19 +3203,16 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateProfileUI(data) {
-    data = data || {};
-    const coins = Number(data.coins) || 0;
-    const setText = (id, value) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value == null || value === "" ? "-" : String(value);
-    };
-
-    setText("userName", (data.name || "Engineer").split(" ")[0]);
+    const coins = data.coins || 0;
+    const setText=(id,val)=>{const el=document.getElementById(id); if(el) el.innerText=val;};
+    setText("userName", (data.name || "Engineer").split(' ')[0]);
     setText("profileName", data.name || "Engineer");
     setText("profileBranch", data.branch || "Diploma Member");
+    
     setText("profileCoins", coins);
     setText("navCoinCount", `${coins} Coins`);
     setText("bannerCoinCount", `${coins} Coins`);
+
     setText("profileFullName", data.name || "-");
     setText("profileEmail", data.email || "-");
     setText("profileMobile", data.mobile || "-");
@@ -3203,12 +3224,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const avatarBox = document.getElementById("profileAvatarBox");
     const navProfileIcon = document.getElementById("navProfileIcon");
-    const pic = data.profilePic || "";
-    if (pic) {
-      if (avatarBox) avatarBox.innerHTML = `<img src="${escapeHTML(pic)}" alt="Profile Pic" loading="lazy">`;
-      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${escapeHTML(pic)}" alt="User" loading="lazy">`;
+
+    if (avatarBox && data.profilePic && validURL(data.profilePic)) {
+      avatarBox.innerHTML = `<img src="${escapeHTML(data.profilePic)}" alt="Profile Pic">`;
+      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${data.profilePic}" alt="User">`;
     } else {
-      if (avatarBox) avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
+      avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
       if (navProfileIcon) navProfileIcon.innerHTML = `<i class="fas fa-user-circle"></i>`;
     }
 
@@ -3532,79 +3553,45 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  function loadLeaderboardData(force = false) {
-    if (force) leaderboardListenerStarted = false;
-    if (leaderboardListenerStarted) return;
-    leaderboardListenerStarted = true;
-
+  function loadLeaderboardData() {
     const listContainer = document.getElementById("leaderboardList");
-    if (!listContainer) return;
+    if (!listContainer || !auth.currentUser) return;
+    listContainer.innerHTML = `<div class="empty"><p>Loading leaderboard...</p></div>`;
 
-    const usersRef = query(ref(db, "users"), orderByChild("coins"), limitToLast(20));
+    const usersRef = query(ref(db, "users"), orderByChild("coins"), limitToLast(50));
     onValue(usersRef, (snapshot) => {
-      listContainer.innerHTML = "";
-      if (!snapshot.exists()) {
-        listContainer.innerHTML = `<div class="empty"><p>No users found.</p></div>`;
-        return;
-      }
+      try {
+        listContainer.innerHTML = "";
+        if (!snapshot.exists()) {
+          listContainer.innerHTML = `<div class="empty"><p>No users found yet.</p></div>`;
+          leaderboardUsersCache = [];
+          return;
+        }
+        const users = [];
+        snapshot.forEach(childSnap => users.push({ id: childSnap.key, ...(childSnap.val() || {}) }));
+        users.sort((a,b) => (Number(b.coins)||0) - (Number(a.coins)||0) || String(a.name||"").localeCompare(String(b.name||"")));
+        leaderboardUsersCache = users;
 
-      const users = [];
-      snapshot.forEach(childSnap => {
-        users.push({ id: childSnap.key, ...childSnap.val() });
-      });
-
-      // Firebase returns the limited result in ascending order. Sort only these 20 users.
-      users.sort((a, b) => {
-        const coinDiff = (Number(b.coins) || 0) - (Number(a.coins) || 0);
-        if (coinDiff !== 0) return coinDiff;
-        return String(a.name || "").localeCompare(String(b.name || ""));
-      });
-      leaderboardUsersCache = users;
-
-      const top20 = users.slice(0, 20);
-
-      top20.forEach((u, index) => {
-        const rank = index + 1;
-        let rankClass = "";
-        if (rank === 1) rankClass = "rank-1";
-        else if (rank === 2) rankClass = "rank-2";
-        else if (rank === 3) rankClass = "rank-3";
-
-        const avatarHTML = (u.profilePic && validURL(u.profilePic)) ?
-          `<img src="${escapeHTML(u.profilePic)}" alt="${escapeHTML(u.name || 'Engineer')}" loading="lazy">` :
-          `<i class="fas fa-user"></i>`;
-
-        const card = document.createElement("div");
-        card.className = "leaderboard-card leaderboard-user-clickable";
-        card.setAttribute("role", "button");
-        card.setAttribute("tabindex", "0");
-        card.innerHTML = `
-          <div class="rank-badge ${rankClass}">#${rank}</div>
-          <div class="leader-user-info">
-            <div class="leader-avatar">${avatarHTML}</div>
-            <div class="leader-name-box">
-              <h4>${escapeHTML(u.name || "Engineer")}</h4>
-              <p>${escapeHTML(u.branch || "Diploma Member")}</p>
-            </div>
-          </div>
-          <div class="leader-coin-count">
-            <i class="fas fa-coins"></i> ${Number(u.coins) || 0}
-          </div>
-        `;
-        card.addEventListener("click", () => openUserProfileCard(u.id, rank));
-        card.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openUserProfileCard(u.id, rank); }
+        users.slice(0,20).forEach((u,index) => {
+          const rank=index+1;
+          const rankClass=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'';
+          const avatar=(u.profilePic && validURL(u.profilePic)) ? `<img src="${escapeHTML(u.profilePic)}" alt="User" loading="lazy">` : `<i class="fas fa-user"></i>`;
+          const card=document.createElement('div');
+          card.className='leaderboard-card leaderboard-user-clickable';
+          card.setAttribute('role','button');
+          card.innerHTML=`<div class="rank-badge ${rankClass}">#${rank}</div><div class="leader-user-info"><div class="leader-avatar">${avatar}</div><div class="leader-name-box"><h4>${escapeHTML(u.name||'Engineer')}</h4><p>${escapeHTML(u.branch||'Diploma Member')}</p></div></div><div class="leader-coin-count"><i class="fas fa-coins"></i> ${Number(u.coins)||0}</div>`;
+          card.onclick=()=>openUserProfileCard(u.id,rank);
+          listContainer.appendChild(card);
         });
-        listContainer.appendChild(card);
-      });
-    }, (error) => {
-      console.error("Leaderboard Error:", error);
-      leaderboardListenerStarted = false;
-      listContainer.innerHTML = `<div class="empty"><p>Unable to load leaderboard right now.</p><button type="button" class="btn-main" style="margin-top:12px" onclick="loadLeaderboardData(true)">Retry</button></div>`;
+      } catch(e) {
+        console.error('Leaderboard render error:',e);
+        listContainer.innerHTML=`<div class="empty"><p>Unable to display leaderboard.</p><button class="btn-main" style="max-width:180px;margin-top:10px" onclick="loadLeaderboardData()">Retry</button></div>`;
+      }
+    }, error => {
+      console.error('Leaderboard Firebase error:',error);
+      listContainer.innerHTML=`<div class="empty"><p>Leaderboard could not load.</p><small style="color:#64748b">${escapeHTML(error.message||'Database permission error')}</small><button class="btn-main" style="max-width:180px;margin-top:10px" onclick="loadLeaderboardData()">Retry</button></div>`;
     });
   }
-
-  window.loadLeaderboardData = loadLeaderboardData;
 
   /* =========================================================
      PUBLIC USER PROFILE ID CARD
@@ -4407,60 +4394,198 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-</script>
 
-<style id="paid-course-system-style">
-.paid-course-card{cursor:pointer;position:relative;transition:transform .18s ease,box-shadow .18s ease}
-.paid-course-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
-.paid-badge{background:#fff!important;color:#166534!important;border-color:#d1fae5!important}
-.premium-user-course{margin-top:16px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);border:1px solid #bbf7d0}
-.premium-user-course h5{margin:0 0 5px;font-size:16px}.premium-user-course p{margin:0 0 12px;color:#64748b;font-size:12px}
-.approved-course-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.approved-course-item{background:#fff;border:1px solid #dbeafe;border-radius:14px;padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(15,23,42,.06)}
-.approved-course-item strong{display:block;font-size:14px;margin-bottom:5px}.approved-course-item span{font-size:11px;color:#16a34a;font-weight:800}.approved-course-item button{margin-top:10px;border:0;border-radius:10px;padding:9px 12px;background:#166534;color:#fff;font-weight:800;cursor:pointer;width:100%}
-.payment-overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(5px);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px}.payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
-.payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
-</style>
+  /* =========================================================
+     ₹99 UTR PURCHASE + ADMIN VERIFICATION SYSTEM
+     ========================================================= */
+  async function loadApprovedCoursesHome(){
+    const home=document.getElementById('approvedCoursesHome');
+    const list=document.getElementById('approvedCoursesHomeList');
+    const user=auth.currentUser;
+    if(!home || !list || !user) return;
+    try{
+      const snap=await get(ref(db,`courseAccess/${user.uid}`));
+      list.innerHTML='';
+      if(!snap.exists()){ home.style.display='none'; return; }
+      let count=0;
+      snap.forEach(ch=>{
+        const v=ch.val()||{};
+        if(v.verified!==true || !PAID_COURSE_NAMES[ch.key]) return;
+        count++;
+        const name=PAID_COURSE_NAMES[ch.key];
+        const card=document.createElement('div');
+        card.className='approved-course-card';
+        card.innerHTML=`<div class="approved-course-top"><div class="approved-course-icon"><i class="fas fa-graduation-cap"></i></div><div><p class="approved-course-name">${escapeHTML(name)}</p><div class="approved-course-status">✓ PAYMENT VERIFIED</div></div></div><div class="approved-course-open">OPEN COURSE <i class="fas fa-arrow-right"></i></div>`;
+        card.onclick=()=>openVerifiedCourse(ch.key,name);
+        list.appendChild(card);
+      });
+      home.style.display=count?'block':'none';
+    }catch(e){ console.error('Approved courses load:',e); home.style.display='none'; }
+  }
 
-<!-- Firebase purchase UI -->
-<div id="paymentOverlay" class="payment-overlay" aria-hidden="true">
- <div class="payment-modal" role="dialog" aria-modal="true">
-  <div class="payment-head"><h3>Course Purchase • ₹99</h3><button class="payment-close" id="paymentClose" type="button">×</button></div>
-  <div class="payment-body">
-   <div class="payment-course" id="paymentCourseName">Course</div>
-   <div class="payment-price">₹99 INR</div>
-   <img class="payment-qr" src="https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592" alt="UPI Payment QR">
-   <div class="payment-note">Pay ₹99, then enter the UTR / Transaction ID. Your request will be sent to admin verification.</div>
-   <input id="paymentUTR" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="Enter UTR / Transaction ID">
-   <button id="paymentSubmit" class="payment-submit" type="button">Submit for Verification</button>
-   <div id="paymentStatus" class="payment-status"></div>
-  </div>
- </div>
-</div>
+  async function openVerifiedCourse(courseId,courseName){
+    const user=auth.currentUser;
+    if(!user){alert('Please login first.');return;}
+    try{
+      const snap=await get(ref(db,`courseAccess/${user.uid}/${courseId}`));
+      if(snap.exists() && snap.val()?.verified===true){ navigateTo(courseId); return; }
+      alert('This course is not verified yet.');
+    }catch(e){ alert('Could not verify course access: '+(e.message||e)); }
+  }
+  window.openVerifiedCourse=openVerifiedCourse;
 
-<script type="module">
-import {getDatabase,ref,get,push,set,onValue,off} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  const PAID_COURSE_NAMES = Object.freeze({
+    "civil-year-2-course": "Civil Engineering Year 2",
+    "mechanical-year-2-course": "Mechanical Engineering Year 2",
+    "cs-year-2-course": "Computer Science Year 2",
+    "it-year-2-course": "Information Technology Year 2",
+    "electrical-year-2-course": "Electrical Engineering Year 2",
+    "electronics-year-2-course": "Electronics Engineering Year 2",
+    "agriculture-year-2-course": "Agriculture Engineering Year 2",
+    "chemical-year-2-course": "Chemical Engineering Year 2"
+  });
 
-const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2-course","it-year-2-course","electrical-year-2-course","electronics-year-2-course","agriculture-year-2-course","chemical-year-2-course"];
-const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2"};
-const overlay=document.getElementById('paymentOverlay'), courseEl=document.getElementById('paymentCourseName'), utrEl=document.getElementById('paymentUTR'), submitEl=document.getElementById('paymentSubmit'), statusEl=document.getElementById('paymentStatus');
-let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null;
-const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
-function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;}
-function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
-function openCourse(courseId){closePayment();window.navigateTo(courseId);}
-async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
-function watchAccess(courseId){if(accessUnsub)accessUnsub();accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{const d=snap.val();if(d&&(d.verified===true||d.status==='verified')){showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>openCourse(courseId),350);}});}
-async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('', 'warn');statusEl.style.display='none';submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');const a=await accessValue(courseId).catch(()=>null);if(a&&(a.verified===true||a.status==='verified')){openCourse(courseId);return;}watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
-async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...s.val()};}catch(e){console.warn(e)}applyPaidCards();loadApprovedHomeCourses();}
-function applyPaidCards(){paidCourseIds.forEach(id=>{document.querySelectorAll(`button[onclick*="${id}"]`).forEach(btn=>{const card=btn.closest('.course-card');if(!card)return;card.classList.add('paid-course-card');card.dataset.paidCourse=id;const badge=card.querySelector('.free-badge');if(badge){badge.textContent='₹99 • UPI';badge.classList.add('paid-badge');}btn.innerHTML='<i class="fa-solid fa-lock"></i> Pay ₹99 & Access';btn.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(id)};if(!card.dataset.paymentBound){card.dataset.paymentBound='1';card.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea'))return;openPayment(id)});}});});}
-function ensureHomeApprovedBox(){const anchor=document.querySelector('#homePage .blue-theme-card-1');if(!anchor)return null;let box=document.getElementById('approvedCoursesHome');if(!box){box=document.createElement('div');box.id='approvedCoursesHome';box.className='premium-user-course';box.innerHTML='<h5>My Unlocked Courses 🚀</h5><p>Admin-approved courses available in your account.</p><div class="approved-course-list" id="approvedCourseList"></div>';anchor.insertAdjacentElement('afterend',box);}return box;}
-async function loadApprovedHomeCourses(){if(!db||!currentUid)return;const box=ensureHomeApprovedBox();if(!box)return;const list=document.getElementById('approvedCourseList');list.innerHTML='<div style="font-size:12px;color:#64748b">Checking your approved courses…</div>';const s=await get(ref(db,`courseAccess/${currentUid}`)).catch(()=>null);if(!s||!s.exists()){box.style.display='none';return;}const data=s.val()||{};const ids=Object.keys(data).filter(id=>data[id]&&(data[id].verified===true||data[id].status==='verified')&&paidCourseIds.includes(id));if(!ids.length){box.style.display='none';return;}box.style.display='block';list.innerHTML=ids.map(id=>`<div class="approved-course-item" data-open-approved="${esc(id)}"><strong>${esc(courseNames[id])}</strong><span>✓ PURCHASE VERIFIED</span><button type="button">Open Course</button></div>`).join('');list.querySelectorAll('[data-open-approved]').forEach(el=>el.addEventListener('click',()=>openCourse(el.dataset.openApproved)));}
-window.loadApprovedHomeCoursesExternal=loadApprovedHomeCourses;
-async function submitPurchase(){const utr=utrEl.value.trim();if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}submitEl.disabled=true;showStatus('Submitting…','warn');try{const root=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);const old=await get(root);let pending=false;if(old.exists())old.forEach(x=>{if((x.val()||{}).status==='pending')pending=true;});if(pending){showStatus('This course already has a pending verification request.','warn');submitEl.disabled=false;return;}const p=push(root),now=Date.now();await set(p,{purchaseId:p.key,uid:currentUid,courseId:currentCourse,courseName:courseNames[currentCourse],amount:99,currency:'INR',utr,status:'pending',verified:false,submittedAt:now,name:currentProfile.name||'',email:currentProfile.email||'',mobile:currentProfile.mobile||'',branch:currentProfile.branch||'',profilePic:currentProfile.profilePic||''});showStatus('UTR submitted. Waiting for admin verification.','ok');watchAccess(currentCourse);}catch(e){console.error(e);showStatus('Could not submit: '+e.message,'err');submitEl.disabled=false;}}
-submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment()});
-const originalNavigate=window.navigateTo;window.navigateTo=function(pageId){if(paidCourseIds.includes(pageId)){openPayment(pageId);return;}return originalNavigate.apply(this,arguments)};
-const existingApp=(await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js')).getApps()[0];if(existingApp){db=getDatabase(existingApp);auth2=getAuth(existingApp);onAuthStateChanged(auth2,user=>{if(user)loadProfile(user);else currentUid=null;});}
+  const PAID_COURSES = Object.freeze({
+    "civil-year-2-course": "Civil Engineering Year 2",
+    "mechanical-year-2-course": "Mechanical Engineering Year 2",
+    "cs-year-2-course": "Computer Science Year 2",
+    "it-year-2-course": "Information Technology Year 2",
+    "electrical-year-2-course": "Electrical Engineering Year 2",
+    "electronics-year-2-course": "Electronics Engineering Year 2",
+    "agriculture-year-2-course": "Agriculture Engineering Year 2",
+    "chemical-year-2-course": "Chemical Engineering Year 2"
+  });
+  const PAYMENT_AMOUNT = 99;
+  const PAYMENT_QR = "https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592";
+  let activePurchase = null;
+  let purchaseAccessUnsub = null;
+
+  function ensurePaymentUI(){
+    if(document.getElementById('paymentModal')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="paymentModal" class="payment-modal" aria-hidden="true">
+        <div class="payment-sheet">
+          <button class="payment-close" type="button" onclick="closePaymentModal()"><i class="fa-solid fa-xmark"></i></button>
+          <div class="payment-title">Pay ₹99 for Course</div>
+          <div id="paymentCourseName" class="payment-sub"></div>
+          <div class="qr-wrap"><img src="${PAYMENT_QR}" alt="UPI QR Code"></div>
+          <div class="price-box">₹99</div>
+          <div style="font-size:12px;font-weight:800;margin-bottom:6px">Enter UTR / Transaction ID after payment</div>
+          <input id="utrInput" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="Enter UTR / Transaction ID">
+          <button id="paymentSubmitBtn" class="payment-submit" type="button" onclick="submitCourseUTR()">Submit for Verification</button>
+          <div id="paymentStatus" class="payment-status"></div>
+        </div>
+      </div>`);
+  }
+
+  function setPaymentStatus(msg,type){
+    const el=document.getElementById('paymentStatus'); if(!el) return;
+    el.textContent=msg||''; el.className='payment-status show '+(type||'');
+  }
+
+  window.closePaymentModal=function(){
+    const m=document.getElementById('paymentModal'); if(m){m.classList.remove('show');m.setAttribute('aria-hidden','true');}
+  };
+
+  window.openPaidCourse=async function(courseId,courseName){
+    const user=auth.currentUser;
+    if(!user){ alert('Please login first.'); return; }
+    ensurePaymentUI();
+    activePurchase={courseId,courseName};
+    document.getElementById('paymentCourseName').textContent=courseName+' • Course Access';
+    document.getElementById('utrInput').value='';
+    setPaymentStatus('', '');
+    document.getElementById('paymentStatus').className='payment-status';
+    document.getElementById('paymentModal').classList.add('show');
+    document.getElementById('paymentModal').setAttribute('aria-hidden','false');
+    try{
+      const snap=await get(ref(db,`courseAccess/${user.uid}/${courseId}`));
+      if(snap.exists() && snap.val()?.verified===true){
+        closePaymentModal(); navigateTo(courseId); return;
+      }
+      const purchases=await get(ref(db,'utrPurchases'));
+      if(purchases.exists()){
+        let pending=null;
+        purchases.forEach(ch=>{const v=ch.val()||{}; if(v.uid===user.uid&&v.courseId===courseId&&v.status==='pending') pending={id:ch.key,...v};});
+        if(pending) setPaymentStatus('Your UTR is already submitted and is waiting for verification.','ok');
+      }
+    }catch(e){ console.error(e); }
+  };
+
+  window.submitCourseUTR=async function(){
+    const user=auth.currentUser;
+    if(!user){setPaymentStatus('Please login first.','error');return;}
+    if(!activePurchase){setPaymentStatus('Please select a course again.','error');return;}
+    const input=document.getElementById('utrInput');
+    const utr=(input?.value||'').trim();
+    if(utr.length<6){setPaymentStatus('Please enter a valid UTR / Transaction ID.','error');return;}
+    const btn=document.getElementById('paymentSubmitBtn'); if(btn) btn.disabled=true;
+    try{
+      const profileSnap=await get(ref(db,`users/${user.uid}`));
+      const profile=profileSnap.exists()?profileSnap.val():{};
+      const purchaseRef=push(ref(db,'utrPurchases'));
+      const purchase={
+        uid:user.uid, email:profile.email||user.email||'', mobile:profile.mobile||'', name:profile.name||user.displayName||'Student',
+        branch:profile.branch||'', profilePic:profile.profilePic||user.photoURL||'', courseId:activePurchase.courseId, courseName:activePurchase.courseName,
+        amount:PAYMENT_AMOUNT, utr, status:'pending', createdAt:Date.now(), purchaseId:purchaseRef.key
+      };
+      await set(purchaseRef,purchase);
+      activePurchase={...activePurchase,purchaseId:purchaseRef.key,utr};
+      closePaymentModal();
+      renderPurchaseDetails(purchase);
+      navigateTo('purchaseDetailsPage');
+      watchPurchaseStatus(purchaseRef.key,user.uid,activePurchase.courseId);
+    }catch(e){
+      console.error(e); setPaymentStatus('Could not submit UTR: '+(e.message||e),'error');
+    }finally{if(btn) btn.disabled=false;}
+  };
+
+  function renderPurchaseDetails(p){
+    const box=document.getElementById('purchaseDetailsBox'); if(!box)return;
+    box.innerHTML=`<div style="text-align:center;margin-bottom:12px"><div style="font-size:38px;color:#f59e0b"><i class="fa-solid fa-clock"></i></div><h3 style="font-size:18px;margin:5px 0">Payment Verification Pending</h3><p style="font-size:12px;color:#64748b;margin:0">Admin will verify your UTR before course access is granted.</p></div>
+      <div class="purchase-row"><strong>Name</strong><span>${escapeHTML(p.name||'-')}</span></div>
+      <div class="purchase-row"><strong>Email</strong><span>${escapeHTML(p.email||'-')}</span></div>
+      <div class="purchase-row"><strong>Mobile</strong><span>${escapeHTML(p.mobile||'-')}</span></div>
+      <div class="purchase-row"><strong>Branch</strong><span>${escapeHTML(p.branch||'-')}</span></div>
+      <div class="purchase-row"><strong>Course</strong><span>${escapeHTML(p.courseName||'-')}</span></div>
+      <div class="purchase-row"><strong>Amount</strong><span>₹${Number(p.amount||99)}</span></div>
+      <div class="purchase-row"><strong>UTR</strong><span>${escapeHTML(p.utr||'-')}</span></div>
+      <div class="purchase-row"><strong>Status</strong><span id="purchaseStatusValue"><span class="verify-pill">PENDING</span></span></div>`;
+  }
+
+  function watchPurchaseStatus(purchaseId,uid,courseId){
+    if(purchaseAccessUnsub) { try{purchaseAccessUnsub();}catch(_){} purchaseAccessUnsub=null; }
+    const accessRef=ref(db,`courseAccess/${uid}/${courseId}`);
+    purchaseAccessUnsub=onValue(accessRef,snap=>{
+      if(snap.exists() && snap.val()?.verified===true){
+        const st=document.getElementById('purchaseStatusValue'); if(st) st.innerHTML='<span style="display:inline-block;padding:5px 10px;border-radius:999px;background:#ecfdf5;color:#047857;font-weight:800;font-size:11px">VERIFIED</span>';
+        setTimeout(()=>navigateTo(courseId),700);
+      }
+    });
+    onValue(ref(db,`utrPurchases/${purchaseId}`),snap=>{
+      const v=snap.val()||{}; const st=document.getElementById('purchaseStatusValue');
+      if(st && v.status==='rejected') st.innerHTML='<span style="display:inline-block;padding:5px 10px;border-radius:999px;background:#fef2f2;color:#b91c1c;font-weight:800;font-size:11px">REJECTED</span>';
+      if(st && v.status==='verified') st.innerHTML='<span style="display:inline-block;padding:5px 10px;border-radius:999px;background:#ecfdf5;color:#047857;font-weight:800;font-size:11px">VERIFIED</span>';
+    });
+  }
+
+  function initPaidCourseCards(){
+    document.querySelectorAll('.course-card[data-paid="1"]').forEach(card=>{
+      const btn=card.querySelector('button[onclick*="openPaidCourse"]');
+      if(!btn) return;
+      const match=btn.getAttribute('onclick')?.match(/openPaidCourse\('([^']+)'\s*,\s*'([^']+)'/);
+      if(!match) return;
+      const courseId=match[1], courseName=match[2];
+      card.classList.add('paid-course-card');
+      card.dataset.courseId=courseId;
+      card.onclick=(ev)=>{ if(ev.target.closest('button,a')) return; openPaidCourse(courseId,courseName); };
+      card.setAttribute('role','button'); card.setAttribute('tabindex','0');
+      card.onkeydown=(ev)=>{ if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openPaidCourse(courseId,courseName);} };
+    });
+  }
+
+  window.addEventListener('load',()=>setTimeout(initPaidCourseCards,500));
+
 </script>
 </body>
 </html>

@@ -13,143 +13,34 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top">
-    <div class="brand">
-      <h1><i class="fa-solid fa-shield-halved"></i> Purchase Approval</h1>
-      <p>Diploma Engineers • ₹99 UPI / UTR verification</p>
-    </div>
-    <button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+  <div id="loginBox" class="top" style="display:block;max-width:460px;margin:40px auto">
+    <div class="brand"><h1><i class="fa-solid fa-shield-halved"></i> Admin Purchase Approval</h1><p>Login with the authorized admin Firebase account.</p></div>
+    <div style="margin-top:16px"><input id="adminEmail" type="email" placeholder="Admin Email" autocomplete="username" style="width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:10px;margin-bottom:10px;font:500 14px Poppins"><input id="adminPassword" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:10px;font:500 14px Poppins"><button class="btn approve" id="adminLogin" style="width:100%;margin-top:12px">Login</button><div id="loginError" class="error" style="display:none;margin-top:12px"></div></div>
   </div>
-
-  <div id="notice" class="notice">Connecting to Firebase...</div>
-  <div class="stats">
-    <div class="stat pending"><b>Pending</b><span id="pendingCount">0</span></div>
-    <div class="stat verified"><b>Verified</b><span id="verifiedCount">0</span></div>
-    <div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div>
+  <div id="adminApp" style="display:none">
+    <div class="top"><div class="brand"><h1><i class="fa-solid fa-shield-halved"></i> Purchase Approval</h1><p>Diploma Engineers • ₹99 UPI / UTR verification</p></div><button class="btn danger" id="logoutBtn">Logout</button><button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+    <div id="notice" class="notice">Connecting to Firebase...</div>
+    <div class="stats"><div class="stat pending"><b>Pending</b><span id="pendingCount">0</span></div><div class="stat verified"><b>Verified</b><span id="verifiedCount">0</span></div><div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div></div>
+    <div class="tabs"><button class="btn tab active" data-filter="pending">Pending</button><button class="btn tab" data-filter="verified">Verified</button><button class="btn tab" data-filter="rejected">Rejected</button></div>
+    <div id="list"><div class="empty">Login to load purchase requests.</div></div>
   </div>
-  <div class="tabs">
-    <button class="btn tab active" data-filter="pending">Pending</button>
-    <button class="btn tab" data-filter="verified">Verified</button>
-    <button class="btn tab" data-filter="rejected">Rejected</button>
-  </div>
-  <div id="list"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading purchase requests...</div></div>
 </div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, onValue, get, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-const firebaseConfig={
-  apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-  authDomain:"diploma-app-9a378.firebaseapp.com",
-  databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",
-  projectId:"diploma-app-9a378",
-  storageBucket:"diploma-app-9a378.firebasestorage.app",
-  messagingSenderId:"160233059797",
-  appId:"1:160233059797:web:be38130ed64f8bd0afb95c"
-};
+const ADMIN_EMAIL="astar22072206@gmail.com";
+const firebaseConfig={apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",authDomain:"diploma-app-9a378.firebaseapp.com",databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",projectId:"diploma-app-9a378",storageBucket:"diploma-app-9a378.firebasestorage.app",messagingSenderId:"160233059797",appId:"1:160233059797:web:be38130ed64f8bd0afb95c6"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
-const COURSE_FILES={
- "civil-year-2-course":"civil-year-2-course.html",
- "mechanical-year-2-course":"mechanical-year-2-course.html",
- "cs-year-2-course":"cs-year-2-course.html",
- "it-year-2-course":"it-year-2-course.html",
- "electrical-year-2-course":"electrical-year-2-course.html",
- "electronics-year-2-course":"electronics-year-2-course.html",
- "agriculture-year-2-course":"agriculture-year-2-course.html",
- "chemical-year-2-course":"chemical-year-2-course.html"
-};
-let rows=[],filter="pending",stopListening=null;
-const $=id=>document.getElementById(id);
-const esc=v=>String(v??"").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':'&quot;'}[m]));
-const fmt=v=>v?new Date(Number(v)).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}):"-";
-function courseFile(id){return COURSE_FILES[id]||""}
-
-function setNotice(text,ok=false){$('notice').className='notice'+(ok?' ok':'');$('notice').innerHTML=text}
-
-function render(){
-  const counts={pending:0,verified:0,rejected:0};
-  rows.forEach(x=>{const s=String(x.status||'pending').toLowerCase();if(counts[s]!==undefined)counts[s]++});
-  $('pendingCount').textContent=counts.pending;$('verifiedCount').textContent=counts.verified;$('rejectedCount').textContent=counts.rejected;
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.filter===filter));
-  const data=rows.filter(x=>String(x.status||'pending').toLowerCase()===filter);
-  if(!data.length){$('list').innerHTML=`<div class="empty"><i class="fa-solid fa-circle-check" style="font-size:28px"></i><p>No ${filter} requests.</p></div>`;return}
-  $('list').innerHTML=data.map(d=>{
-    const name=d.name||'Engineer',branch=d.branch||'Diploma Member',pic=d.profilePic||'';
-    const avatar=pic?`<img src="${esc(pic)}" alt="Profile">`:esc((name.trim()[0]||'E').toUpperCase());
-    const file=courseFile(d.courseId);
-    return `<article class="request">
-      <div class="head"><div class="user"><div class="avatar">${avatar}</div><div><div class="course">${esc(d.courseName||d.courseId)}</div><div class="muted">${esc(name)} • ${esc(branch)} • ${esc(d.email||'-')}</div></div></div><div class="amount">₹${esc(d.amount||99)}</div></div>
-      <div class="grid">
-        <div class="item"><b>NAME</b><span>${esc(name)}</span></div><div class="item"><b>BRANCH</b><span>${esc(branch)}</span></div><div class="item"><b>MOBILE</b><span>${esc(d.mobile||'-')}</span></div>
-        <div class="item"><b>COURSE</b><span>${esc(d.courseName||d.courseId)}</span></div><div class="item"><b>UTR</b><span class="utr">${esc(d.utr||'-')}</span></div><div class="item"><b>SUBMITTED</b><span>${esc(fmt(d.submittedAt))}</span></div>
-      </div>
-      <div class="actions">${filter==='pending'?`
-        <button class="btn approve" data-action="approve" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-circle-check"></i> Approve Payment & Give Access</button>
-        <button class="btn reject" data-action="reject" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-xmark"></i> Reject</button>`:
-        `<button class="btn course-link" data-file="${esc(file)}" ${file?'':'disabled'}><i class="fa-solid fa-file-code"></i> ${file?'Open Course File':'Course File Not Mapped'}</button>`}</div>
-    </article>`;
-  }).join('');
-}
-
-async function start(){
-  if(stopListening)stopListening();
-  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Firebase...');
-  try{
-    if(!auth.currentUser) await signInAnonymously(auth);
-  }catch(e){
-    console.error(e);
-    setNotice('Firebase Authentication error: '+esc(e.message));
-    $('list').innerHTML='<div class="error"><b>Admin connection failed.</b><br><span class="small">Enable Anonymous Authentication in Firebase Console → Authentication → Sign-in method.</span></div>';
-    return;
-  }
-  stopListening=onValue(ref(db,'utrPurchases'),snap=>{
-    const out=[];
-    if(snap.exists()){
-      snap.forEach(uidSnap=>{
-        uidSnap.forEach(courseSnap=>{
-          courseSnap.forEach(purchaseSnap=>{
-            const d=purchaseSnap.val()||{};
-            out.push({uid:uidSnap.key,courseId:courseSnap.key,purchaseKey:purchaseSnap.key,...d});
-          });
-        });
-      });
-    }
-    rows=out.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));
-    setNotice('Firebase connected • Showing live UTR requests. Check the student UTR in your UPI/bank app before approving.',true);
-    render();
-  },err=>{
-    console.error(err);
-    setNotice('Firebase error: '+esc(err.message));
-    $('list').innerHTML='<div class="error"><b>Purchase requests could not be loaded.</b><br><span class="small">Your current Rules require authentication. This page signs in anonymously automatically; enable Anonymous Authentication in Firebase Console.</span></div>';
-  });
-}
-
-async function approve(uid,courseId,key){
-  if(!confirm('Confirm that the ₹99 payment and UTR are genuine. Approve this purchase?'))return;
-  try{
-    const purchaseRef=ref(db,`utrPurchases/${uid}/${courseId}/${key}`),snap=await get(purchaseRef);
-    if(!snap.exists())throw new Error('Purchase request not found.');
-    const d=snap.val()||{},now=Date.now();
-    await update(purchaseRef,{status:'verified',verified:true,verifiedAt:now,verifiedBy:'manual-admin-page'});
-    await set(ref(db,`courseAccess/${uid}/${courseId}`),{uid,courseId,courseName:d.courseName||courseId,amount:Number(d.amount)||99,currency:'INR',utr:d.utr||'',verified:true,status:'verified',purchaseId:d.purchaseId||key,grantedAt:now,verifiedBy:'manual-admin-page'});
-    alert('Payment approved. Course access has been granted.');
-  }catch(e){console.error(e);alert('Approve failed: '+e.message)}
-}
-async function reject(uid,courseId,key){
-  if(!confirm('Reject this UTR/payment request?'))return;
-  try{await update(ref(db,`utrPurchases/${uid}/${courseId}/${key}`),{status:'rejected',rejectedAt:Date.now(),rejectedBy:'manual-admin-page'});alert('Request rejected.')}catch(e){alert('Reject failed: '+e.message)}
-}
-
-document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-action]');
-  if(b){const a=[b.dataset.uid,b.dataset.course,b.dataset.key];b.dataset.action==='approve'?approve(...a):reject(...a);return}
-  const c=e.target.closest('[data-file]');if(c&&c.dataset.file){window.open(c.dataset.file,'_blank','noopener')}
-});
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render()});
-$('refreshBtn').onclick=start;
-start();
+const COURSE_FILES={"civil-year-2-course":"civil-year-2-course.html","mechanical-year-2-course":"mechanical-year-2-course.html","cs-year-2-course":"cs-year-2-course.html","it-year-2-course":"it-year-2-course.html","electrical-year-2-course":"electrical-year-2-course.html","electronics-year-2-course":"electronics-year-2-course.html","agriculture-year-2-course":"agriculture-year-2-course.html","chemical-year-2-course":"chemical-year-2-course.html"};
+let rows=[],filter="pending",stopListening=null;const $=id=>document.getElementById(id);const esc=v=>String(v??"").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':'&quot;'}[m]));const fmt=v=>v?new Date(Number(v)).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}):"-";
+function notice(t,ok=false){$("notice").className="notice"+(ok?" ok":"");$("notice").innerHTML=t}
+function render(){const c={pending:0,verified:0,rejected:0};rows.forEach(x=>{const s=String(x.status||"pending").toLowerCase();if(c[s]!=null)c[s]++});$("pendingCount").textContent=c.pending;$("verifiedCount").textContent=c.verified;$("rejectedCount").textContent=c.rejected;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.filter===filter));const data=rows.filter(x=>String(x.status||"pending").toLowerCase()===filter);if(!data.length){$("list").innerHTML=`<div class="empty">No ${filter} requests.</div>`;return}$("list").innerHTML=data.map(d=>{const name=d.name||"Engineer",branch=d.branch||"-",pic=d.profilePic||"",avatar=pic?`<img src="${esc(pic)}" alt="Profile">`:esc((name.trim()[0]||"E").toUpperCase());return `<article class="request"><div class="head"><div class="user"><div class="avatar">${avatar}</div><div><div class="course">${esc(d.courseName||d.courseId)}</div><div class="muted">${esc(name)} • ${esc(branch)} • ${esc(d.email||"-")}</div></div></div><div class="amount">₹${esc(d.amount||99)}</div></div><div class="grid"><div class="item"><b>NAME</b><span>${esc(name)}</span></div><div class="item"><b>BRANCH</b><span>${esc(branch)}</span></div><div class="item"><b>MOBILE</b><span>${esc(d.mobile||"-")}</span></div><div class="item"><b>COURSE</b><span>${esc(d.courseName||d.courseId)}</span></div><div class="item"><b>UTR</b><span class="utr">${esc(d.utr||"-")}</span></div><div class="item"><b>SUBMITTED</b><span>${esc(fmt(d.submittedAt))}</span></div></div><div class="actions">${filter==="pending"?`<button class="btn approve" data-action="approve" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}">✓ Approve & Give Access</button><button class="btn reject" data-action="reject" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}">✕ Reject</button>`:`<button class="btn course-link" onclick="window.open('${esc(COURSE_FILES[d.courseId]||"")}','_blank')">Open Course File</button>`}</div></article>`}).join("")}
+async function load(){if(stopListening)stopListening();notice("Loading live requests…");stopListening=onValue(ref(db,"utrPurchases"),snap=>{const out=[];if(snap.exists())snap.forEach(u=>u.forEach(c=>c.forEach(p=>out.push({uid:u.key,courseId:c.key,purchaseKey:p.key,...(p.val()||{})}))));rows=out.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));notice("Firebase connected • Verify the UTR in your payment records before approving.",true);render()},err=>{notice("Firebase read failed: "+esc(err.message));$("list").innerHTML='<div class="error">Database permission denied. Publish the secure rules supplied with this app.</div>'})}
+async function approve(uid,courseId,key){if(!confirm("Confirm the ₹99 payment/UTR before approving?"))return;try{const p=ref(db,`utrPurchases/${uid}/${courseId}/${key}`),s=await get(p);if(!s.exists())throw Error("Purchase not found");const d=s.val()||{},now=Date.now();await update(p,{status:"verified",verified:true,verifiedAt:now,verifiedBy:ADMIN_EMAIL});await set(ref(db,`courseAccess/${uid}/${courseId}`),{uid,courseId,courseName:d.courseName||courseId,amount:99,currency:"INR",utr:d.utr||"",verified:true,status:"verified",purchaseId:d.purchaseId||key,grantedAt:now,verifiedBy:ADMIN_EMAIL});alert("Approved. Course access granted.");}catch(e){alert("Approve failed: "+e.message)}}
+async function reject(uid,courseId,key){if(!confirm("Reject this payment request?"))return;try{await update(ref(db,`utrPurchases/${uid}/${courseId}/${key}`),{status:"rejected",rejectedAt:Date.now(),rejectedBy:ADMIN_EMAIL});}catch(e){alert("Reject failed: "+e.message)}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const a=[b.dataset.uid,b.dataset.course,b.dataset.key];b.dataset.action==="approve"?approve(...a):reject(...a)});document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render()});$("refreshBtn").onclick=load;$("logoutBtn").onclick=()=>signOut(auth);$("adminLogin").onclick=async()=>{const email=$("adminEmail").value.trim().toLowerCase(),pass=$("adminPassword").value;if(email!==ADMIN_EMAIL){$("loginError").style.display="block";$("loginError").textContent="Only the authorized admin email can access this panel.";return}if(!pass){$("loginError").style.display="block";$("loginError").textContent="Enter admin password.";return}try{await signInWithEmailAndPassword(auth,email,pass);$("loginError").style.display="none"}catch(e){$("loginError").style.display="block";$("loginError").textContent="Login failed: "+e.message}};
+onAuthStateChanged(auth,user=>{if(user&&user.email?.toLowerCase()===ADMIN_EMAIL){$("loginBox").style.display="none";$("adminApp").style.display="block";load()}else{$("loginBox").style.display="block";$("adminApp").style.display="none";if(user)signOut(auth)}});
 </script>
 </body>
 </html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diploma Engineers — Admin Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Poppins,sans-serif;background:#f5f7fb;color:#172033}.wrap{max-width:1100px;margin:auto;padding:22px}.top{background:#fff;border-radius:18px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.08);display:flex;justify-content:space-between;gap:15px;align-items:center}.brand h1{margin:0;font-size:22px}.brand p{margin:4px 0 0;color:#667085;font-size:13px}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}.logout{background:#111827;color:#fff}.login{max-width:430px;margin:80px auto}.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.08)}input{width:100%;padding:13px;border:1px solid #d8dee9;border-radius:10px;margin:7px 0 12px;font:inherit}.login-btn{width:100%;background:#2563eb;color:#fff}.msg{font-size:13px;margin-top:12px}.hidden{display:none!important}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{background:#fff;border-radius:14px;padding:16px;box-shadow:0 5px 20px rgba(0,0,0,.06)}.stat b{display:block;font-size:13px;color:#667085}.stat span{font-size:26px;font-weight:800}.pending span{color:#d97706}.verified span{color:#16a34a}.rejected span{color:#dc2626}.request{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)}.head{display:flex;justify-content:space-between;gap:15px;align-items:center}.user{display:flex;gap:13px;align-items:center}.avatar{width:58px;height:58px;border-radius:50%;overflow:hidden;background:#e9eef8;display:grid;place-items:center;font-weight:800;font-size:20px}.avatar img{width:100%;height:100%;object-fit:cover}.course{font-size:17px;font-weight:800}.muted{color:#667085;font-size:12px}.amount{background:#ecfdf3;color:#15803d;border-radius:9px;padding:7px 10px;font-weight:800;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.item{background:#f8fafc;border-radius:10px;padding:10px}.item b{display:block;font-size:11px;color:#667085;margin-bottom:3px}.item span{font-size:13px;font-weight:600;word-break:break-word}.utr{font-size:18px;letter-spacing:1px;color:#7c3aed}.actions{display:flex;gap:10px}.approve{background:#16a34a;color:#fff;flex:1}.reject{background:#fee2e2;color:#b91c1c}.refresh{background:#eef2ff;color:#3730a3}.empty{text-align:center;padding:40px;background:#fff;border-radius:18px;color:#667085}.course-link{background:#eff6ff;color:#1d4ed8}.tabs{display:flex;gap:8px;margin:18px 0}.tab{background:#fff;border:1px solid #e2e8f0}.tab.active{background:#111827;color:#fff}@media(max-width:700px){.top,.head{align-items:flex-start;flex-direction:column}.stats,.grid{grid-template-columns:1fr}.actions{flex-direction:column}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div id="loginView" class="login card">
+  <h2 style="margin-top:0">Admin Login</h2>
+  <p class="muted">Purchase verification panel</p>
+  <label>Email</label><input id="email" type="email" value="astar22072206@gmail.com" autocomplete="username">
+  <label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Admin password">
+  <button class="btn login-btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+  <div id="loginMsg" class="msg"></div>
+</div>
+
+<div id="adminView" class="wrap hidden">
+  <div class="top">
+    <div class="brand"><h1><i class="fa-solid fa-shield-halved"></i> Purchase Verification</h1><p>Check UTR, then approve or reject the student's ₹99 course request.</p></div>
+    <div><button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button> <button class="btn logout" id="logoutBtn">Logout</button></div>
+  </div>
+  <div class="tabs"><button class="btn tab active" data-filter="pending">Pending</button><button class="btn tab" data-filter="verified">Verified</button><button class="btn tab" data-filter="rejected">Rejected</button></div>
+  <div class="stats"><div class="stat pending"><b>Pending</b><span id="pendingCount">0</span></div><div class="stat verified"><b>Verified</b><span id="verifiedCount">0</span></div><div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div></div>
+  <div id="list"><div class="empty">Loading...</div></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, onValue, get, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig={apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",authDomain:"diploma-app-9a378.firebaseapp.com",databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",projectId:"diploma-app-9a378",storageBucket:"diploma-app-9a378.firebasestorage.app",messagingSenderId:"160233059797",appId:"1:160233059797:web:be38130ed64f8bd0afb95c"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
+const ADMIN_EMAIL="astar22072206@gmail.com";
+let rows=[],filter="pending",unsubscribe=null;
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const date=v=>v?new Date(Number(v)).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'-';
+const courseFile=id=>({"civil-year-2-course":"civil-year-2-course.html","mechanical-year-2-course":"mechanical-year-2-course.html","cs-year-2-course":"cs-year-2-course.html","it-year-2-course":"it-year-2-course.html","electrical-year-2-course":"electrical-year-2-course.html","electronics-year-2-course":"electronics-year-2-course.html","agriculture-year-2-course":"agriculture-year-2-course.html","chemical-year-2-course":"chemical-year-2-course.html"}[id]||'');
+
+async function load(){
+  if(unsubscribe)unsubscribe();
+  unsubscribe=onValue(ref(db,'utrPurchases'),async snap=>{
+    const list=[];
+    if(snap.exists()){
+      const jobs=[];
+      snap.forEach(uidSnap=>uidSnap.forEach(courseSnap=>courseSnap.forEach(purchaseSnap=>jobs.push((async()=>{
+        const d=purchaseSnap.val()||{}; let profile={};
+        try{const ps=await get(ref(db,'users/'+uidSnap.key));if(ps.exists())profile=ps.val()||{};}catch(e){}
+        list.push({uid:uidSnap.key,courseId:courseSnap.key,purchaseKey:purchaseSnap.key,...d,profilePic:profile.profilePic||'',profileName:profile.name||'',profileBranch:profile.branch||''});
+      })())));
+      await Promise.all(jobs);
+    }
+    rows=list.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));
+    render();
+  },err=>{$('list').innerHTML='<div class="empty">Could not load requests. Check Firebase Database Rules.<br><small>'+esc(err.message)+'</small></div>';});
+}
+function render(){
+  const counts={pending:0,verified:0,rejected:0};rows.forEach(x=>counts[String(x.status||'pending').toLowerCase()] = (counts[String(x.status||'pending').toLowerCase()]||0)+1);
+  $('pendingCount').textContent=counts.pending||0;$('verifiedCount').textContent=counts.verified||0;$('rejectedCount').textContent=counts.rejected||0;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.filter===filter));
+  const data=rows.filter(x=>String(x.status||'pending').toLowerCase()===filter);
+  if(!data.length){$('list').innerHTML='<div class="empty"><i class="fa-solid fa-circle-check" style="font-size:28px"></i><p>No '+filter+' requests.</p></div>';return;}
+  $('list').innerHTML=data.map(d=>{
+    const name=d.profileName||d.name||'Engineer',branch=d.profileBranch||d.branch||'-',pic=d.profilePic||'';
+    const avatar=pic?`<img src="${esc(pic)}" alt="Profile">`:`${esc(name.trim().charAt(0).toUpperCase()||'E')}`;
+    const link=courseFile(d.courseId);
+    return `<article class="request"><div class="head"><div class="user"><div class="avatar">${avatar}</div><div><div class="course">${esc(d.courseName||d.courseId)}</div><div class="muted">${esc(name)} • ${esc(branch)} • ${esc(d.email||'-')}</div></div></div><div class="amount">₹${esc(d.amount||99)}</div></div><div class="grid"><div class="item"><b>NAME</b><span>${esc(name)}</span></div><div class="item"><b>BRANCH</b><span>${esc(branch)}</span></div><div class="item"><b>MOBILE</b><span>${esc(d.mobile||'-')}</span></div><div class="item"><b>COURSE</b><span>${esc(d.courseName||d.courseId)}</span></div><div class="item"><b>UTR</b><span class="utr">${esc(d.utr||'-')}</span></div><div class="item"><b>SUBMITTED</b><span>${esc(date(d.submittedAt))}</span></div></div><div class="actions">${filter==='pending'?`<button class="btn approve" data-action="approve" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-circle-check"></i> Approve Payment & Give Access</button><button class="btn reject" data-action="reject" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-xmark"></i> Reject</button>`:`<button class="btn course-link" onclick="window.open('${esc(link)}','_blank')"><i class="fa-solid fa-up-right-from-square"></i> Open Course File</button>`}</div></article>`;
+  }).join('');
+}
+async function approve(uid,courseId,key){
+  if(!confirm('UTR verify karne ke baad hi approve karein. Approve this ₹99 payment?'))return;
+  try{const snap=await get(ref(db,`utrPurchases/${uid}/${courseId}/${key}`));if(!snap.exists())throw new Error('Purchase request not found');const d=snap.val()||{},now=Date.now();
+    await update(ref(db,`utrPurchases/${uid}/${courseId}/${key}`),{status:'verified',verified:true,verifiedAt:now,verifiedBy:ADMIN_EMAIL});
+    await set(ref(db,`courseAccess/${uid}/${courseId}`),{uid,courseId,courseName:d.courseName||courseId,amount:Number(d.amount)||99,currency:'INR',utr:d.utr||'',verified:true,status:'verified',purchaseId:d.purchaseId||key,grantedAt:now,verifiedBy:ADMIN_EMAIL});
+    alert('Approved. Student can now click the course in the app and it will fetch/open the course HTML.');
+  }catch(e){alert('Approval failed: '+e.message)}
+}
+async function reject(uid,courseId,key){if(!confirm('Reject this payment request?'))return;try{await update(ref(db,`utrPurchases/${uid}/${courseId}/${key}`),{status:'rejected',rejectedAt:Date.now(),rejectedBy:ADMIN_EMAIL});alert('Request rejected.')}catch(e){alert('Reject failed: '+e.message)}}
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const args=[b.dataset.uid,b.dataset.course,b.dataset.key];b.dataset.action==='approve'?approve(...args):reject(...args)});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render()});$('refreshBtn').onclick=load;
+$('loginBtn').onclick=async()=>{const email=$('email').value.trim().toLowerCase(),pass=$('password').value;if(email!==ADMIN_EMAIL){$('loginMsg').textContent='Only the configured admin account can use this page.';return}try{$('loginBtn').disabled=true;await signInWithEmailAndPassword(auth,email,pass);$('loginMsg').textContent=''}catch(e){$('loginMsg').textContent=e.message}finally{$('loginBtn').disabled=false}};
+$('logoutBtn').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,user=>{if(user&&String(user.email||'').toLowerCase()===ADMIN_EMAIL){$('loginView').classList.add('hidden');$('adminView').classList.remove('hidden');load()}else{$('loginView').classList.remove('hidden');$('adminView').classList.add('hidden');if(user)signOut(auth)}});
+</script>
+</body>
+</html>

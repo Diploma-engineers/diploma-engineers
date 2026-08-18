@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4353,6 +4352,59 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+</script>
+
+<style id="paid-course-system-style">
+.paid-course-card{cursor:pointer;position:relative;transition:transform .18s ease,box-shadow .18s ease}
+.paid-course-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+.paid-badge{background:#fff!important;color:#166534!important;border-color:#d1fae5!important}
+.premium-user-course{margin-top:16px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);border:1px solid #bbf7d0}
+.premium-user-course h5{margin:0 0 5px;font-size:16px}.premium-user-course p{margin:0 0 12px;color:#64748b;font-size:12px}
+.approved-course-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.approved-course-item{background:#fff;border:1px solid #dbeafe;border-radius:14px;padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(15,23,42,.06)}
+.approved-course-item strong{display:block;font-size:14px;margin-bottom:5px}.approved-course-item span{font-size:11px;color:#16a34a;font-weight:800}.approved-course-item button{margin-top:10px;border:0;border-radius:10px;padding:9px 12px;background:#166534;color:#fff;font-weight:800;cursor:pointer;width:100%}
+.payment-overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(5px);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px}.payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
+</style>
+
+<!-- Firebase purchase UI -->
+<div id="paymentOverlay" class="payment-overlay" aria-hidden="true">
+ <div class="payment-modal" role="dialog" aria-modal="true">
+  <div class="payment-head"><h3>Course Purchase • ₹99</h3><button class="payment-close" id="paymentClose" type="button">×</button></div>
+  <div class="payment-body">
+   <div class="payment-course" id="paymentCourseName">Course</div>
+   <div class="payment-price">₹99 INR</div>
+   <img class="payment-qr" src="https://anubhav.finance.blog/wp-content/uploads/2026/03/whatsapp-image-2026-03-09-at-10.49.05.jpeg?w=592" alt="UPI Payment QR">
+   <div class="payment-note">Pay ₹99, then enter the UTR / Transaction ID. Your request will be sent to admin verification.</div>
+   <input id="paymentUTR" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="Enter UTR / Transaction ID">
+   <button id="paymentSubmit" class="payment-submit" type="button">Submit for Verification</button>
+   <div id="paymentStatus" class="payment-status"></div>
+  </div>
+ </div>
+</div>
+
+<script type="module">
+import {getDatabase,ref,get,push,set,onValue,off} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2-course","it-year-2-course","electrical-year-2-course","electronics-year-2-course","agriculture-year-2-course","chemical-year-2-course"];
+const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2"};
+const overlay=document.getElementById('paymentOverlay'), courseEl=document.getElementById('paymentCourseName'), utrEl=document.getElementById('paymentUTR'), submitEl=document.getElementById('paymentSubmit'), statusEl=document.getElementById('paymentStatus');
+let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null;
+const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;}
+function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
+function openCourse(courseId){closePayment();window.navigateTo(courseId);}
+async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
+function watchAccess(courseId){if(accessUnsub)accessUnsub();accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{const d=snap.val();if(d&&(d.verified===true||d.status==='verified')){showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>openCourse(courseId),350);}});}
+async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('', 'warn');statusEl.style.display='none';submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');const a=await accessValue(courseId).catch(()=>null);if(a&&(a.verified===true||a.status==='verified')){openCourse(courseId);return;}watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
+async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...s.val()};}catch(e){console.warn(e)}applyPaidCards();loadApprovedHomeCourses();}
+function applyPaidCards(){paidCourseIds.forEach(id=>{document.querySelectorAll(`button[onclick*="${id}"]`).forEach(btn=>{const card=btn.closest('.course-card');if(!card)return;card.classList.add('paid-course-card');card.dataset.paidCourse=id;const badge=card.querySelector('.free-badge');if(badge){badge.textContent='₹99 • UPI';badge.classList.add('paid-badge');}btn.innerHTML='<i class="fa-solid fa-lock"></i> Pay ₹99 & Access';btn.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(id)};if(!card.dataset.paymentBound){card.dataset.paymentBound='1';card.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea'))return;openPayment(id)});}});});}
+function ensureHomeApprovedBox(){const anchor=document.querySelector('#homePage .blue-theme-card-1');if(!anchor)return null;let box=document.getElementById('approvedCoursesHome');if(!box){box=document.createElement('div');box.id='approvedCoursesHome';box.className='premium-user-course';box.innerHTML='<h5>My Unlocked Courses 🚀</h5><p>Admin-approved courses available in your account.</p><div class="approved-course-list" id="approvedCourseList"></div>';anchor.insertAdjacentElement('afterend',box);}return box;}
+async function loadApprovedHomeCourses(){if(!db||!currentUid)return;const box=ensureHomeApprovedBox();if(!box)return;const list=document.getElementById('approvedCourseList');list.innerHTML='<div style="font-size:12px;color:#64748b">Checking your approved courses…</div>';const s=await get(ref(db,`courseAccess/${currentUid}`)).catch(()=>null);if(!s||!s.exists()){box.style.display='none';return;}const data=s.val()||{};const ids=Object.keys(data).filter(id=>data[id]&&(data[id].verified===true||data[id].status==='verified')&&paidCourseIds.includes(id));if(!ids.length){box.style.display='none';return;}box.style.display='block';list.innerHTML=ids.map(id=>`<div class="approved-course-item" data-open-approved="${esc(id)}"><strong>${esc(courseNames[id])}</strong><span>✓ PURCHASE VERIFIED</span><button type="button">Open Course</button></div>`).join('');list.querySelectorAll('[data-open-approved]').forEach(el=>el.addEventListener('click',()=>openCourse(el.dataset.openApproved)));}
+async function submitPurchase(){const utr=utrEl.value.trim();if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}submitEl.disabled=true;showStatus('Submitting…','warn');try{const root=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);const old=await get(root);let pending=false;if(old.exists())old.forEach(x=>{if((x.val()||{}).status==='pending')pending=true;});if(pending){showStatus('This course already has a pending verification request.','warn');submitEl.disabled=false;return;}const p=push(root),now=Date.now();await set(p,{purchaseId:p.key,uid:currentUid,courseId:currentCourse,courseName:courseNames[currentCourse],amount:99,currency:'INR',utr,status:'pending',verified:false,submittedAt:now,name:currentProfile.name||'',email:currentProfile.email||'',mobile:currentProfile.mobile||'',branch:currentProfile.branch||'',profilePic:currentProfile.profilePic||''});showStatus('UTR submitted. Waiting for admin verification.','ok');watchAccess(currentCourse);}catch(e){console.error(e);showStatus('Could not submit: '+e.message,'err');submitEl.disabled=false;}}
+submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment()});
+const originalNavigate=window.navigateTo;window.navigateTo=function(pageId){if(paidCourseIds.includes(pageId)){openPayment(pageId);return;}return originalNavigate.apply(this,arguments)};
+const existingApp=(await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js')).getApps()[0];if(existingApp){db=getDatabase(existingApp);auth2=getAuth(existingApp);onAuthStateChanged(auth2,user=>{if(user)loadProfile(user);else currentUid=null;});}
 </script>
 </body>
 </html>

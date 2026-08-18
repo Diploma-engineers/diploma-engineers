@@ -1,195 +1,2126 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Books Admin</title>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Diploma Engineers | Unified Admin Panel</title>
+
+<link rel="icon" href="favicon.ico">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#0f172a; -webkit-tap-highlight-color: transparent;}
-.wrap{max-width:1100px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}
-h1,h2{margin:0}p{color:#64748b}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
-input{width:100%;padding:12px;border:1px solid #dbe1e8;border-radius:10px;font-size:14px;outline:0}input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
-button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:#2563eb;color:#fff}.secondary{background:#e2e8f0;color:#0f172a}.danger{background:#fee2e2;color:#b91c1c}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.status{margin-top:12px;padding:10px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:13px;display:none}
-.preview{margin-top:10px;display:none;align-items:center;gap:12px}.preview img{width:70px;height:90px;object-fit:cover;border-radius:8px}
-table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}th{background:#f8fafc}
-td img{width:45px;height:60px;object-fit:cover;border-radius:6px}.table{overflow:auto}.muted{font-size:12px;color:#64748b}
-#app{display:none}#login{max-width:430px;margin:70px auto}
-@media(max-width:700px){.wrap{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.top{align-items:flex-start;flex-direction:column}}
+
+/* =========================
+   RESET
+========================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,Arial,sans-serif;
+}
+
+body{
+    background:#f1f5f9;
+    color:#172033;
+}
+
+/* LOADER */
+#page-loader {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .6s ease, visibility .6s ease;
+}
+#page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-content { width: min(90%, 500px); text-align: center; }
+.loader-logo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 25px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loader-ring {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 4px solid #edf1f6;
+  border-top-color: #2864e8;
+  border-right-color: #ff6500;
+  border-bottom-color: #2864e8;
+  animation: loaderRotate 1.8s linear infinite;
+}
+.loader-ring:after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 28px;
+  background: #ff6500;
+  border-radius: 10px;
+  top: -4px;
+  right: 5px;
+}
+@keyframes loaderRotate { to { transform: rotate(360deg); } }
+.loader-logo img {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  padding: 7px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 5px 25px rgba(0,0,0,.06);
+}
+.loader-title { font-size: 28px; font-weight: 800; line-height: 1.2; }
+.orange-text { color: #ff6500; }
+.blue-text { color: #2864e8; }
+.loader-subtitle { margin: 10px 0 30px; color: #64748b; font-size: 15px; }
+.progress-container { width: 100%; height: 7px; background: #e4e9ef; border-radius: 20px; overflow: hidden; }
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #2864e8, #2864e8, #ff6500);
+  border-radius: 20px;
+  transition: width .12s linear;
+}
+.loading-status {
+  margin-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 14px;
+}
+#progress-percent { color: #2864e8; font-weight: 700; }
+
+
+/* =========================
+   LOGIN
+========================= */
+
+#loginPage{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.login-box{
+    width:390px;
+    max-width:100%;
+    background:#fff;
+    padding:35px;
+    border-radius:22px;
+    box-shadow: 0 15px 45px rgba(15,23,42,.12);
+    text-align:center;
+}
+
+.logo{
+    width:85px;
+    height:85px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
+}
+
+.login-box h2{
+    color:#2563eb;
+    margin-bottom:8px;
+}
+
+.login-box p{
+    color:#64748b;
+    font-size:14px;
+    margin-bottom:22px;
+}
+
+.input,
+textarea,
+select{
+    width:100%;
+    padding:13px 14px;
+    border:1px solid #dbe2ea;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+    margin-bottom:13px;
+    background:#fff;
+}
+
+.input:focus,
+textarea:focus,
+select:focus{
+    border-color:#2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+}
+
+textarea{
+    height:130px;
+    resize:vertical;
+}
+
+.login-btn,
+.primary-btn{
+    width:100%;
+    border:0;
+    padding:13px 18px;
+    background:#2563eb;
+    color:#fff;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.login-btn:hover,
+.primary-btn:hover{
+    background:#1d4ed8;
+}
+
+button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+#error{
+    margin-top:12px;
+    font-size:13px;
+    color:#dc2626;
+}
+
+/* =========================
+   ADMIN
+========================= */
+
+#adminPanel{
+    display:none;
+}
+
+.navbar{
+    height:68px;
+    background:#2563eb;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    position:sticky;
+    top:0;
+    z-index:1000;
+}
+
+.navbar h2{
+    font-size:19px;
+}
+
+.logout{
+    border:0;
+    background:#fff;
+    color:#2563eb;
+    padding:9px 16px;
+    border-radius:9px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard{
+    width:100%;
+    max-width:1100px;
+    margin:auto;
+    padding:25px 18px 40px;
+}
+
+.welcome{
+    background:#fff;
+    padding:22px;
+    border-radius:17px;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(15,23,42,.06);
+}
+
+.welcome h1{
+    color:#2563eb;
+    font-size:24px;
+    margin-bottom:5px;
+}
+
+.welcome p{
+    color:#64748b;
+}
+
+/* =========================
+   STAT CARDS
+========================= */
+
+.cards{
+    display:grid;
+    grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:#fff;
+    padding:22px;
+    border-radius:16px;
+    box-shadow: 0 5px 20px rgba(15,23,42,.06);
+}
+
+.stat-card i{
+    font-size:28px;
+    color:#2563eb;
+    margin-bottom:10px;
+}
+
+.stat-card h3{
+    margin-bottom:4px;
+}
+
+.stat-card p{
+    color:#64748b;
+    font-size:13px;
+}
+
+/* =========================
+   BOX
+========================= */
+
+.box{
+    background:#fff;
+    padding:23px;
+    border-radius:17px;
+    margin-bottom:20px;
+    box-shadow: 0 5px 20px rgba(15,23,42,.06);
+}
+
+.box h2{
+    color:#2563eb;
+    font-size:19px;
+    margin-bottom:18px;
+}
+
+.label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:#334155;
+    margin:8px 0 7px;
+}
+
+/* =========================
+   FILE AREA
+========================= */
+
+.file-box{
+    border:2px dashed #cbd5e1;
+    border-radius:12px;
+    padding:17px;
+    background:#f8fafc;
+    margin-bottom:13px;
+}
+
+.file-box:hover{
+    border-color:#2563eb;
+}
+
+.file-box input{
+    width:100%;
+}
+
+/* =========================
+   IMAGE PREVIEW
+========================= */
+
+#imagePreviewBox{
+    display:none;
+    margin:12px 0;
+}
+
+#imagePreview{
+    width:220px;
+    max-width:100%;
+    height:135px;
+    object-fit:cover;
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+}
+
+/* =========================
+   UPLOAD STATUS
+========================= */
+
+#uploadStatus{
+    display:none;
+    margin-top:15px;
+    padding:13px;
+    background:#eff6ff;
+    border-radius:10px;
+    color:#1d4ed8;
+    font-size:13px;
+}
+
+.progress{
+    width:100%;
+    height:8px;
+    background:#e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:9px;
+}
+
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:#2563eb;
+    transition:width .15s;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:8px;
+}
+
+.btn-row button{
+    flex:1;
+}
+
+.clear-btn{
+    border:0;
+    padding:13px;
+    border-radius:10px;
+    background:#e2e8f0;
+    color:#334155;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* =========================
+   NEWS LIST
+========================= */
+
+.news-list{
+    display:flex;
+    flex-direction:column;
+    gap:13px;
+}
+
+.news-card{
+    display:flex;
+    gap:15px;
+    padding:15px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+}
+
+.news-thumb{
+    width:155px;
+    height:100px;
+    flex-shrink:0;
+    border-radius:10px;
+    overflow:hidden;
+    background:#e2e8f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.news-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.no-image{
+    color:#94a3b8;
+    font-size:30px;
+}
+
+.news-content{
+    flex:1;
+    min-width:0;
+}
+
+.news-content h3{
+    font-size:16px;
+    margin-bottom:5px;
+    color:#0f172a;
+}
+
+.meta{
+    color:#64748b;
+    font-size:12px;
+    margin-bottom:7px;
+}
+
+.news-content p{
+    color:#475569;
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:10px;
+}
+
+.links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.links a,
+.delete-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:7px 10px;
+    border-radius:7px;
+    font-size:12px;
+    text-decoration:none;
+    border:0;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.image-link{ background:#dbeafe; color:#1d4ed8; }
+.pdf-link{ background:#fee2e2; color:#dc2626; }
+.external-link{ background:#dcfce7; color:#15803d; }
+.delete-btn{ background:#dc2626; color:white; }
+.delete-btn:hover{ background:#b91c1c; }
+
+/* =========================
+   BOOK
+========================= */
+
+.book-grid{
+    display:grid;
+    grid-template-columns: repeat(2,1fr);
+    gap:12px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    background:#2563eb;
+    color:#fff;
+    text-align:center;
+    padding:22px;
+}
+
+.footer p{
+    font-size:13px;
+    margin-top:4px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+    .navbar{ padding:0 13px; }
+    .navbar h2{ font-size:14px; }
+    .logout{ padding:8px 10px; font-size:12px; }
+    .dashboard{ padding:15px 10px 30px; }
+    .welcome h1{ font-size:20px; }
+    .box{ padding:17px; border-radius:14px; }
+    .book-grid{ grid-template-columns:1fr; }
+    .news-card{ flex-direction:column; }
+    .news-thumb{ width:100%; height:180px; }
+    .btn-row{ flex-direction:column; }
+    .links a, .delete-btn{ width:100%; justify-content:center; }
+}
+
+
+/* =========================
+   ADMIN MODE SWITCHER
+========================= */
+.admin-switcher{
+    width:min(1100px,calc(100% - 36px));
+    margin:18px auto 0;
+    display:flex;
+    justify-content:center;
+}
+.switcher-track{
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    width:min(800px,100%);
+    padding:5px;
+    background:#e8eef8;
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(15,23,42,.08);
+    overflow:hidden;
+}
+.switcher-slider{
+    position:absolute;
+    top:5px;
+    left:5px;
+    width:calc(33.333% - 4px);
+    height:calc(100% - 10px);
+    background:#2563eb;
+    border-radius:12px;
+    transition:transform .28s ease;
+    box-shadow:0 5px 14px rgba(37,99,235,.22);
+}
+.switcher-track.books-active .switcher-slider{transform:translateX(100%);}
+.switcher-track.course-active .switcher-slider{transform:translateX(200%);}
+.switch-btn{
+    position:relative;
+    z-index:2;
+    border:0;
+    background:transparent;
+    color:#475569;
+    padding:12px 16px;
+    border-radius:12px;
+    font:700 14px Poppins,Arial,sans-serif;
+    cursor:pointer;
+    transition:color .25s ease;
+}
+.switch-btn.active{color:#fff;}
+.admin-mode-section{display:none;}
+.admin-mode-section.active{display:block;}
+#courseAdminSection{padding-top:1px;}
+.course-admin-shell{
+    width:min(1180px,100%);
+    margin:0 auto;
+}
+.course-admin-shell .wrap{max-width:1180px;}
+.course-filter-tabs{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap;}
+.course-filter-tab{background:#fff;border:1px solid #e2e8f0;color:#334155;}
+.course-filter-tab.active{background:#111827;color:#fff;}
+.course-admin-shell .btn{border:0;border-radius:10px;padding:11px 15px;font:700 13px Poppins,Arial,sans-serif;cursor:pointer;}
+.course-admin-shell .btn:disabled{opacity:.55;cursor:not-allowed;}
+.course-admin-shell .refresh{background:#eef2ff;color:#3730a3;}
+.course-admin-shell .notice{margin:14px 0;padding:12px 14px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px;}
+.course-admin-shell .notice.ok{background:#ecfdf3;color:#166534;}
+.course-admin-shell .notice.err{background:#fef2f2;color:#991b1b;}
+.course-admin-shell .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0;}
+.course-admin-shell .stat{background:#fff;border-radius:14px;padding:15px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+.course-admin-shell .stat b{display:block;font-size:12px;color:#667085;}
+.course-admin-shell .stat span{font-size:25px;font-weight:800;}
+.course-admin-shell .pending span{color:#d97706;}
+.course-admin-shell .verified span{color:#16a34a;}
+.course-admin-shell .rejected span{color:#dc2626;}
+.course-admin-shell .total span{color:#2563eb;}
+.course-admin-shell .request{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.06);}
+.course-admin-shell .head{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.course-admin-shell .user{display:flex;align-items:center;gap:13px;}
+.course-admin-shell .avatar{width:62px;height:62px;border-radius:50%;overflow:hidden;background:#e8eef8;display:grid;place-items:center;font-weight:800;font-size:21px;flex:none;}
+.course-admin-shell .avatar img{width:100%;height:100%;object-fit:cover;}
+.course-admin-shell .course{font-size:17px;font-weight:800;}
+.course-admin-shell .muted{font-size:12px;color:#667085;}
+.course-admin-shell .amount{background:#ecfdf3;color:#15803d;border-radius:9px;padding:7px 11px;font-weight:800;white-space:nowrap;}
+.course-admin-shell .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0;}
+.course-admin-shell .item{background:#f8fafc;border-radius:10px;padding:11px;}
+.course-admin-shell .item b{display:block;font-size:10px;color:#667085;margin-bottom:4px;}
+.course-admin-shell .item span{font-size:13px;font-weight:600;word-break:break-word;}
+.course-admin-shell .utr{font-size:18px!important;letter-spacing:1px;color:#7c3aed!important;}
+.course-admin-shell .actions{display:flex;gap:10px;}
+.course-admin-shell .approve{background:#16a34a;color:#fff;flex:1;}
+.course-admin-shell .reject{background:#fee2e2;color:#b91c1c;flex:1;}
+.course-admin-shell .course-link{background:#eff6ff;color:#1d4ed8;flex:1;}
+.course-admin-shell .empty{text-align:center;padding:42px;background:#fff;border-radius:18px;color:#667085;}
+.course-admin-shell .error{background:#fef2f2;color:#991b1b;padding:16px;border-radius:14px;}
+.course-admin-shell .small{font-size:11px;opacity:.85;}
+.course-admin-shell .photo-note{font-size:10px;color:#98a2b3;margin-top:4px;}
+
+/* Books section styling adjustments */
+#booksAdminSection .wrap{max-width:1100px;margin:auto;padding:20px}
+#booksAdminSection .panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+#booksAdminSection table{width:100%;border-collapse:collapse;min-width:700px}
+#booksAdminSection th,#booksAdminSection td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}
+#booksAdminSection th{background:#f8fafc}
+#booksAdminSection td img{width:45px;height:60px;object-fit:cover;border-radius:6px}
+#booksAdminSection .table{overflow:auto}
+
+@media(max-width:800px){
+    .course-admin-shell .stats{grid-template-columns:repeat(2,1fr);}
+    .course-admin-shell .grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:600px){
+    .admin-switcher{width:calc(100% - 20px);margin-top:12px;}
+    .switch-btn{padding:10px 4px;font-size:11px;}
+    .course-admin-shell .wrap{padding:10px;}
+    .course-admin-shell .stats,.course-admin-shell .grid{grid-template-columns:1fr;}
+    .course-admin-shell .actions{flex-direction:column;}
+    .course-admin-shell .amount{align-self:flex-start;}
+    .course-admin-shell .top,.course-admin-shell .head{align-items:flex-start;flex-direction:column;}
+}
+
 </style>
+
 </head>
+
 <body>
-<div id="login" class="panel">
-<h1>📚 Books Admin Login</h1><p>Use the same Firebase Admin account used by your existing admin system.</p>
-<label>Email</label><input id="email" type="email" autocomplete="username">
-<label style="margin-top:12px">Password</label><input id="password" type="password" autocomplete="current-password">
-<div class="actions"><button class="primary" id="loginBtn">Login</button></div>
-<div id="loginStatus" class="status"></div>
+
+<!-- ================= LOADER ================= -->
+<div id="page-loader">
+    <div class="loader-content">
+        <div class="loader-logo">
+            <div class="loader-ring"></div>
+            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
+        </div>
+
+        <h1 class="loader-title">
+            <span class="orange-text">DIPLOMA</span>
+            <span class="blue-text">ENGINEERS</span>
+        </h1>
+
+        <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="loader-progress-bar"></div>
+        </div>
+
+        <div class="loading-status">
+            <span>Loading...</span>
+            <span id="progress-percent">0%</span>
+        </div>
+    </div>
 </div>
 
-<div id="app" class="wrap">
-<div class="top"><div><h1>📚 Books Admin</h1><p>Add multiple books, upload custom thumbnails, and manage entries seamlessly.</p></div>
-<div class="actions"><button class="secondary" id="openBooks">Open Books Page</button><button class="danger" id="logout">Logout</button></div></div>
 
-<div class="panel">
-<h2 id="formTitle">Add Book</h2>
-<form id="form">
-<div class="grid" style="margin-top:15px">
-<div><label>Book Title *</label><input id="title" required></div>
-<div><label>Category</label><input id="category" value="Book PDF"></div>
-<div class="full"><label>Book Link / PDF Link *</label><input id="pdf" type="url" placeholder="https://..." required></div>
-<div class="full"><label>Thumbnail Upload (Supports Multiple Selection) *</label><input id="imageFile" type="file" accept="image/*" multiple required>
-<div class="preview" id="preview"><img id="previewImg"><span id="previewText"></span></div></div>
-</div>
-<div class="actions"><button class="primary" id="saveBtn">Add Book(s)</button><button type="button" class="secondary" id="cancel" style="display:none">Cancel</button></div>
-<div class="status" id="status"></div>
-</form>
+<!-- =========================
+     LOGIN
+========================= -->
+
+<div id="loginPage">
+    <div class="login-box">
+        <img class="logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers">
+        <h2>Admin Login</h2>
+        <p>Diploma Engineers Management Panel</p>
+
+        <input class="input" id="email" type="email" autocomplete="email" placeholder="Enter Admin Email">
+        <input class="input" id="password" type="password" autocomplete="current-password" placeholder="Enter Password">
+
+        <button class="login-btn" id="loginBtn">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Login
+        </button>
+
+        <div id="error"></div>
+    </div>
 </div>
 
-<div class="panel"><h2 style="margin-bottom:14px">Books</h2><div class="table"><table><thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Link</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+
+<!-- =========================
+     ADMIN PANEL
+========================= -->
+
+<div id="adminPanel">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <h2>
+            <i class="fa-solid fa-user-shield"></i>
+            Diploma Engineers Admin
+        </h2>
+        <button class="logout" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </button>
+    </nav>
+
+
+<!-- ========================= ADMIN MODE SWITCHER ========================= -->
+<div class="admin-switcher">
+    <div class="switcher-track" id="adminSwitcher">
+        <div class="switcher-slider"></div>
+        <button class="switch-btn active" id="newsSwitch" type="button">
+            <i class="fa-solid fa-newspaper"></i> NEWS
+        </button>
+        <button class="switch-btn" id="booksSwitch" type="button">
+            <i class="fa-solid fa-book"></i> BOOKS
+        </button>
+        <button class="switch-btn" id="courseSwitch" type="button">
+            <i class="fa-solid fa-graduation-cap"></i> COURSE
+        </button>
+    </div>
 </div>
+
+    <!-- NEWS ADMIN -->
+    <div id="newsAdminSection" class="admin-mode-section active">
+    <main class="dashboard">
+
+        <!-- WELCOME -->
+        <div class="welcome">
+            <h1>Welcome Admin</h1>
+            <p>Manage Diploma Engineers News & Study Material</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="cards">
+            <div class="stat-card">
+                <i class="fa-solid fa-newspaper"></i>
+                <h3 id="newsCount">0</h3>
+                <p>Published News</p>
+            </div>
+
+            <div class="stat-card">
+                <i class="fa-solid fa-file-pdf"></i>
+                <h3>Cloudinary</h3>
+                <p>Image & PDF Storage</p>
+            </div>
+
+            <div class="stat-card">
+                <i class="fa-solid fa-database"></i>
+                <h3>Firebase</h3>
+                <p>Realtime Database</p>
+            </div>
+        </div>
+
+        <!-- ADD NEWS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-newspaper"></i>
+                Publish News
+            </h2>
+
+            <label class="label">News Title</label>
+            <input class="input" id="newsTitle" maxlength="200" placeholder="Enter News Title">
+
+            <label class="label">News Description</label>
+            <textarea class="input" id="newsText" maxlength="3000" placeholder="Enter News Description"></textarea>
+
+            <div class="book-grid">
+                <div>
+                    <label class="label">Category</label>
+                    <select id="newsCategory" class="input">
+                        <option value="News">News</option>
+                        <option value="Notice">Notice</option>
+                        <option value="Result">Result</option>
+                        <option value="Admission">Admission</option>
+                        <option value="Scholarship">Scholarship</option>
+                        <option value="Job">Job</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="label">Publish Status</label>
+                    <input class="input" value="Ready to Publish" readonly>
+                </div>
+            </div>
+
+            <label class="label">Thumbnail Image</label>
+            <div class="file-box">
+                <input type="file" id="imageFile" accept="image/jpeg,image/png,image/webp">
+                <small>JPG, PNG or WEBP recommended</small>
+            </div>
+
+            <label class="label">OR Image URL</label>
+            <input class="input" id="imageUrlInput" type="url" placeholder="https://example.com/image.jpg">
+
+            <div id="imagePreviewBox">
+                <img id="imagePreview" alt="Thumbnail Preview">
+            </div>
+
+            <label class="label">PDF / Document</label>
+            <div class="file-box">
+                <input type="file" id="pdfFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+                <small>PDF, DOC, XLS, PPT or ZIP</small>
+            </div>
+
+            <label class="label">External Link</label>
+            <input class="input" id="externalLink" type="url" placeholder="https://example.com">
+
+            <div id="uploadStatus">
+                <div id="statusText">Preparing upload...</div>
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="primary-btn" id="publishBtn">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Publish News
+                </button>
+                <button class="clear-btn" id="clearBtn">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Clear
+                </button>
+            </div>
+        </section>
+
+        <!-- BOOKS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-book-open"></i>
+                Add Study Material
+            </h2>
+
+            <div class="book-grid">
+                <input class="input" id="bookName" placeholder="Book / Material Name">
+                <input class="input" id="semester" placeholder="Semester">
+                <input class="input" id="branch" placeholder="Branch">
+                <input class="input" id="bookLink" type="url" placeholder="PDF / Book Link">
+            </div>
+
+            <button class="primary-btn" id="bookBtn">
+                <i class="fa-solid fa-plus"></i>
+                Add Study Material
+            </button>
+        </section>
+
+        <!-- NEWS DATABASE -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-server"></i>
+                Published News
+            </h2>
+            <div id="newsList" class="news-list">
+                Loading News...
+            </div>
+        </section>
+
+        <!-- DATABASE RECORDS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-database"></i>
+                Database Records
+            </h2>
+            <div id="dataList">
+                Loading...
+            </div>
+        </section>
+
+    </main>
+    </div>
+
+    <!-- BOOKS ADMIN SECTION -->
+    <div id="booksAdminSection" class="admin-mode-section">
+        <div class="wrap" style="padding-top:20px;">
+            <div class="top">
+                <div>
+                    <h2>📚 Books Admin Management</h2>
+                    <p>Add multiple books, upload custom thumbnails, and manage entries seamlessly.</p>
+                </div>
+                <div class="actions">
+                    <button class="secondary" id="openBooks">Open Books Page</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 id="formTitle">Add Book</h2>
+                <form id="bookAdminForm">
+                    <div class="grid" style="margin-top:15px">
+                        <div><label>Book Title *</label><input id="bookAdminTitle" required></div>
+                        <div><label>Category</label><input id="bookAdminCategory" value="Book PDF"></div>
+                        <div class="full"><label>Book Link / PDF Link *</label><input id="bookAdminPdf" type="url" placeholder="https://..." required></div>
+                        <div class="full"><label>Thumbnail Upload (Supports Multiple Selection) *</label><input id="bookImageFile" type="file" accept="image/*" multiple required>
+                        <div class="preview" id="bookPreview" style="display:none;"><img id="bookPreviewImg" style="width:70px;height:90px;object-fit:cover;border-radius:8px;"><span id="bookPreviewText"></span></div></div>
+                    </div>
+                    <div class="actions" style="display:flex;gap:9px;margin-top:15px;"><button type="submit" class="primary" id="bookSaveBtn">Add Book(s)</button><button type="button" class="secondary" id="bookCancel" style="display:none">Cancel</button></div>
+                    <div class="status" id="bookStatus" style="display:none;margin-top:12px;padding:10px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:13px;"></div>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h2 style="margin-bottom:14px">Books List</h2>
+                <div class="table">
+                    <table>
+                        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Link</th><th>Action</th></tr></thead>
+                        <tbody id="bookRows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COURSE ADMIN -->
+    <div id="courseAdminSection" class="admin-mode-section">
+        <div class="course-admin-shell">
+            <div class="wrap">
+              <div class="top">
+                <div class="brand">
+                  <h1><i class="fa-solid fa-shield-halved"></i> Course Approval Admin</h1>
+                  <p>Diploma Engineers • ₹99 UPI / UTR verification</p>
+                </div>
+                <button class="btn refresh" id="refreshBtn">
+                  <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+              </div>
+
+              <div id="notice" class="notice">Login required.</div>
+
+              <div class="stats">
+                <div class="stat total"><b>Total Requests</b><span id="totalCount">0</span></div>
+                <div class="stat pending"><b>Pending</b><span id="pendingCount">0</span></div>
+                <div class="stat verified"><b>Verified</b><span id="verifiedCount">0</span></div>
+                <div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div>
+              </div>
+
+              <div class="course-filter-tabs">
+                <button class="btn course-filter-tab active" data-filter="pending">Pending</button>
+                <button class="btn course-filter-tab" data-filter="verified">Verified</button>
+                <button class="btn course-filter-tab" data-filter="rejected">Rejected</button>
+                <button class="btn course-filter-tab" data-filter="all">All</button>
+              </div>
+
+              <div id="list">
+                <div class="empty">Login to load purchase requests.</div>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <h3>Diploma Engineers</h3>
+        <p>Secure Admin Management Panel</p>
+        <p>© 2026 Diploma Engineers</p>
+    </footer>
+
+</div>
+
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {getDatabase,ref,push,set,update,remove,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+/* =====================================================
+   FIREBASE IMPORT
+===================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, push, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+/* =====================================================
+   FIREBASE CONFIG
+===================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-  authDomain: "diplomaengineers-869df.firebaseapp.com",
-  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-  projectId: "diplomaengineers-869df",
-  storageBucket: "diplomaengineers-869df.appspot.com",
-  messagingSenderId: "356779436080",
-  appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
-const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
-const CLOUD_NAME="ub0qgzwa", UPLOAD_PRESET="news_upload";
 
-const $=id=>document.getElementById(id);
-let books=[], editId=null;
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
-function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function msg(text,error=false){$("status").textContent=text;$("status").style.display="block";$("status").style.background=error?"#fee2e2":"#eff6ff";$("status").style.color=error?"#b91c1c":"#1d4ed8"}
-function loginMsg(t){$("loginStatus").textContent=t;$("loginStatus").style.display="block"}
+/* =====================================================
+   COURSE FIREBASE (SECOND ADMIN SYSTEM)
+===================================================== */
+const courseFirebaseConfig = {
+    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+    authDomain: "diploma-app-9a378.firebaseapp.com",
+    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+    projectId: "diploma-app-9a378",
+    storageBucket: "diploma-app-9a378.firebasestorage.app",
+    messagingSenderId: "160233059797",
+    appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
+    measurementId: "G-9646VK4C6L"
+};
 
-$("loginBtn").onclick=async()=>{try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(e){loginMsg(e.message)}};
-$("logout").onclick=()=>signOut(auth);
-$("openBooks").onclick=()=>window.open("books.html","_blank");
+const courseApp = initializeApp(courseFirebaseConfig, "courseApp");
+const courseAuth = getAuth(courseApp);
+const courseDb = getDatabase(courseApp);
 
-onAuthStateChanged(auth,user=>{
- $("login").style.display=user?"none":"block"; $("app").style.display=user?"block":"none";
- if(user) loadBooks();
+const CLOUD_NAME = "ub0qgzwa";
+const UPLOAD_PRESET = "news_upload";
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+const pageLoader = document.getElementById("page-loader");
+const loginPage = document.getElementById("loginPage");
+const adminPanel = document.getElementById("adminPanel");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const errorBox = document.getElementById("error");
+
+const publishBtn = document.getElementById("publishBtn");
+const clearBtn = document.getElementById("clearBtn");
+const imageFile = document.getElementById("imageFile");
+const imageUrlInput = document.getElementById("imageUrlInput");
+const pdfFile = document.getElementById("pdfFile");
+const imagePreviewBox = document.getElementById("imagePreviewBox");
+const imagePreview = document.getElementById("imagePreview");
+const uploadStatus = document.getElementById("uploadStatus");
+const statusText = document.getElementById("statusText");
+const progressBar = document.getElementById("progressBar");
+const newsList = document.getElementById("newsList");
+const dataList = document.getElementById("dataList");
+const newsCount = document.getElementById("newsCount");
+
+/* =====================================================
+   SINGLE LOGIN FOR NEWS + COURSE ADMIN
+===================================================== */
+loginBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        errorBox.innerText = "Enter Email and Password";
+        return;
+    }
+
+    errorBox.innerText = "";
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+
+        try {
+            await signInWithEmailAndPassword(courseAuth, email, password);
+        } catch (courseError) {
+            await signOut(auth);
+            throw new Error(
+                "News Admin login successful, but the same admin account is not present in Course Firebase. " +
+                "Create the same Email/Password user in diploma-app-9a378 → Authentication → Users."
+            );
+        }
+
+    } catch (error) {
+        console.error(error);
+        if (error.code === "auth/too-many-requests") {
+            errorBox.innerText = "Too many attempts. Please wait and try again.";
+        } else if (error.code === "auth/invalid-credential") {
+            errorBox.innerText = "Wrong Email or Password.";
+        } else {
+            errorBox.innerText = error.message;
+        }
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+    }
 });
 
-function loadBooks(){
- onValue(ref(db,"books"),snap=>{
-   books=[]; if(snap.exists()) snap.forEach(x=>books.push({id:x.key,...x.val()}));
-   renderRows();
- },err=>msg("Firebase read failed: "+err.message,true));
+/* =====================================================
+   AUTH STATE MANAGEMENT
+===================================================== */
+onAuthStateChanged(auth, (user) => {
+    if (pageLoader && !pageLoader.classList.contains("hide")) {
+        pageLoader.classList.add("hide");
+        document.body.style.overflow = "";
+    }
+
+    if (user && courseAuth.currentUser) {
+        loginPage.style.display = "none";
+        adminPanel.style.display = "block";
+        loadNews();
+        loadDatabase();
+        loadBooksTab();
+        if (typeof connectCourseAdmin === "function") connectCourseAdmin();
+    } else if (user && !courseAuth.currentUser) {
+        loginPage.style.display = "flex";
+        adminPanel.style.display = "none";
+        errorBox.innerText = "Course Admin session is missing. Please login again.";
+    } else {
+        loginPage.style.display = "flex";
+        adminPanel.style.display = "none";
+    }
+});
+
+/* =====================================================
+   LOGOUT LOGIC
+===================================================== */
+logoutBtn.addEventListener("click", async () => {
+    try {
+        await signOut(courseAuth);
+        await signOut(auth);
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+/* =====================================================
+   IMAGE PREVIEW
+===================================================== */
+imageFile.addEventListener("change", () => {
+    const file = imageFile.files[0];
+    if (!file) {
+        imagePreviewBox.style.display = "none";
+        return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+        alert("Please select an image.");
+        imageFile.value = "";
+        return;
+    }
+
+    const url = URL.createObjectURL(file);
+    imagePreview.src = url;
+    imagePreviewBox.style.display = "block";
+});
+
+/* =====================================================
+   IMAGE COMPRESSION
+===================================================== */
+async function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            const MAX_WIDTH = 1400;
+
+            if (width > MAX_WIDTH) {
+                height = height * MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url);
+                if (!blob) {
+                    reject(new Error("Image compression failed"));
+                    return;
+                }
+                const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+                resolve(compressed);
+            }, "image/jpeg", 0.82);
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Unable to read image"));
+        };
+
+        img.src = url;
+    });
 }
 
-function renderRows(){
- $("rows").innerHTML=books.length?books.map(b=>`<tr><td><img src="${esc(b.image)}" alt=""></td><td><b>${esc(b.title)}</b></td><td>${esc(b.category||"Book PDF")}</td><td><a href="${esc(b.pdf)}" target="_blank">Open</a></td><td><button class="secondary" data-edit="${b.id}">Edit</button> <button class="danger" data-del="${b.id}">Delete</button></td></tr>`).join(""):`<tr><td colspan="5" style="text-align:center;padding:30px">No books found</td></tr>`;
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editBook(b.dataset.edit));
- document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteBook(b.dataset.del));
+/* =====================================================
+   CLOUDINARY UPLOAD
+===================================================== */
+function uploadToCloudinary(file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+
+        xhr.open("POST", url, true);
+
+        xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                if (onProgress) onProgress(percent);
+            }
+        };
+
+        xhr.onload = function() {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
+                    resolve(data);
+                } else {
+                    reject(new Error(data.error?.message || "Cloudinary upload failed"));
+                }
+            } catch (error) {
+                reject(new Error("Invalid Cloudinary response"));
+            }
+        };
+
+        xhr.onerror = function() {
+            reject(new Error("Network error during upload"));
+        };
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+
+        xhr.send(formData);
+    });
 }
 
-async function compress(file){
- return new Promise((resolve,reject)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=im.width,h=im.height,m=1400;if(w>m){h=h*m/w;w=m}const c=document.createElement("canvas");c.width=Math.round(w);c.height=Math.round(h);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?resolve(new File([b],"book-thumb.jpg",{type:"image/jpeg"})):reject(new Error("Image compression failed")),"image/jpeg",.84)};im.onerror=reject;im.src=u});
+/* =====================================================
+   PUBLISH NEWS
+===================================================== */
+publishBtn.addEventListener("click", async () => {
+    const title = document.getElementById("newsTitle").value.trim();
+    const text = document.getElementById("newsText").value.trim();
+    const category = document.getElementById("newsCategory").value;
+    const externalLink = document.getElementById("externalLink").value.trim();
+
+    if (!title || !text) {
+        alert("Please enter News Title and Description.");
+        return;
+    }
+
+    publishBtn.disabled = true;
+    clearBtn.disabled = true;
+    uploadStatus.style.display = "block";
+    progressBar.style.width = "0%";
+    statusText.innerText = "Preparing upload...";
+
+    try {
+        let finalImageUrl = imageUrlInput.value.trim();
+        let finalPdfUrl = "";
+
+        let imagePromise = null;
+        let pdfPromise = null;
+
+        if (imageFile.files.length) {
+            statusText.innerText = "Compressing image...";
+            const compressedImage = await compressImage(imageFile.files[0]);
+            imagePromise = uploadToCloudinary(compressedImage, (percent) => {
+                progressBar.style.width = percent + "%";
+                statusText.innerText = `Uploading image ${percent}%`;
+            });
+        }
+
+        if (pdfFile.files.length) {
+            pdfPromise = uploadToCloudinary(pdfFile.files[0], (percent) => {
+                statusText.innerText = `Uploading PDF ${percent}%`;
+            });
+        }
+
+        if (imagePromise || pdfPromise) {
+            statusText.innerText = "Uploading files...";
+            const results = await Promise.all([imagePromise, pdfPromise]);
+            if (results[0]) finalImageUrl = results[0].secure_url;
+            if (results[1]) finalPdfUrl = results[1].secure_url;
+        }
+
+        statusText.innerText = "Saving news to Firebase...";
+        const newsRef = push(ref(db, "news"));
+
+        await set(newsRef, {
+            title: title,
+            text: text,
+            desc: text,
+            thumb: finalImageUrl,
+            image: finalImageUrl,
+            pdf: finalPdfUrl,
+            link: externalLink,
+            cat: category,
+            category: category,
+            date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+            timestamp: Date.now()
+        });
+
+        statusText.innerText = "Published successfully.";
+        progressBar.style.width = "100%";
+        alert("News Published Successfully!");
+        clearForm();
+
+    } catch (error) {
+        console.error("Publish Error:", error);
+        alert("Upload failed:\n" + error.message);
+    } finally {
+        publishBtn.disabled = false;
+        clearBtn.disabled = false;
+        setTimeout(() => { uploadStatus.style.display = "none"; }, 1200);
+    }
+});
+
+function clearForm() {
+    document.getElementById("newsTitle").value = "";
+    document.getElementById("newsText").value = "";
+    document.getElementById("externalLink").value = "";
+    document.getElementById("newsCategory").value = "News";
+    imageFile.value = "";
+    pdfFile.value = "";
+    imageUrlInput.value = "";
+    imagePreview.src = "";
+    imagePreviewBox.style.display = "none";
 }
 
-function upload(file){
- return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);x.upload.onprogress=e=>{if(e.lengthComputable)msg("Uploading thumbnail "+Math.round(e.loaded/e.total*100)+"%...")};x.onload=()=>{try{const d=JSON.parse(x.responseText);if(x.status>=200&&x.status<300&&d.secure_url)resolve(d.secure_url);else reject(new Error(d.error?.message||"Cloudinary upload failed"))}catch(e){reject(new Error("Invalid Cloudinary response"))}};x.onerror=()=>reject(new Error("Cloudinary network error"));const f=new FormData();f.append("file",file);f.append("upload_preset",UPLOAD_PRESET);x.send(f)});
+clearBtn.addEventListener("click", clearForm);
+
+/* =====================================================
+   LOAD NEWS
+===================================================== */
+function loadNews() {
+    const newsRef = ref(db, "news");
+
+    onValue(newsRef, (snapshot) => {
+        newsList.innerHTML = "";
+
+        if (!snapshot.exists()) {
+            newsList.innerHTML = "<p>No News Published Yet.</p>";
+            newsCount.innerText = "0";
+            return;
+        }
+
+        const items = [];
+        snapshot.forEach((child) => {
+            items.push({ id: child.key, ...child.val() });
+        });
+
+        items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        newsCount.innerText = items.length;
+
+        items.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "news-card";
+
+            const thumb = document.createElement("div");
+            thumb.className = "news-thumb";
+
+            if (item.thumb) {
+                const img = document.createElement("img");
+                img.src = item.thumb;
+                img.loading = "lazy";
+                img.alt = item.title || "News";
+                thumb.appendChild(img);
+            } else {
+                thumb.innerHTML = '<i class="fa-solid fa-newspaper no-image"></i>';
+            }
+
+            const content = document.createElement("div");
+            content.className = "news-content";
+
+            const heading = document.createElement("h3");
+            heading.innerText = item.title || "Untitled";
+
+            const meta = document.createElement("div");
+            meta.className = "meta";
+            meta.innerText = `${item.cat || item.category || "News"} • ${item.date || ""}`;
+
+            const description = document.createElement("p");
+            description.innerText = item.text || item.desc || "";
+
+            const links = document.createElement("div");
+            links.className = "links";
+
+            if (item.thumb) {
+                const a = document.createElement("a");
+                a.href = item.thumb;
+                a.target = "_blank";
+                a.className = "image-link";
+                a.innerHTML = '<i class="fa-solid fa-image"></i> Image';
+                links.appendChild(a);
+            }
+
+            if (item.pdf) {
+                const a = document.createElement("a");
+                a.href = item.pdf;
+                a.target = "_blank";
+                a.className = "pdf-link";
+                a.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF / File';
+                links.appendChild(a);
+            }
+
+            if (item.link) {
+                const a = document.createElement("a");
+                a.href = item.link;
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "external-link";
+                a.innerHTML = '<i class="fa-solid fa-link"></i> Link';
+                links.appendChild(a);
+            }
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            deleteBtn.onclick = () => deleteNews(item.id);
+
+            links.appendChild(deleteBtn);
+            content.appendChild(heading);
+            content.appendChild(meta);
+            content.appendChild(description);
+            content.appendChild(links);
+
+            card.appendChild(thumb);
+            card.appendChild(content);
+
+            newsList.appendChild(card);
+        });
+    }, (error) => {
+        console.error("News Load Error:", error);
+        newsList.innerHTML = `<p style="color:#dc2626">Unable to Load News</p>`;
+    });
 }
 
-$("imageFile").onchange=()=>{
-  const files=$("imageFile").files;
-  if(files.length > 0){
-    $("previewImg").src=URL.createObjectURL(files[0]);
-    $("preview").style.display="flex";
-    $("previewText").textContent=files.length > 1 ? `${files.length} images selected` : files[0].name;
+async function deleteNews(id) {
+    if (!confirm("Delete this news?")) return;
+
+    try {
+        await remove(ref(db, "news/" + id));
+        alert("News Deleted Successfully");
+    } catch (error) {
+        console.error(error);
+        alert("Delete failed: " + error.message);
+    }
+}
+
+/* =====================================================
+   BOOKS TAB LOGIC (INTEGRATED)
+===================================================== */
+let bookItems = [], bookEditId = null;
+
+function bookMsg(text, error=false){
+    const s = document.getElementById("bookStatus");
+    s.textContent = text;
+    s.style.display = "block";
+    s.style.background = error ? "#fee2e2" : "#eff6ff";
+    s.style.color = error ? "#b91c1c" : "#1d4ed8";
+}
+
+document.getElementById("openBooks").onclick = () => window.open("books.html", "_blank");
+
+function loadBooksTab() {
+    onValue(ref(db, "books"), snap => {
+        bookItems = [];
+        if(snap.exists()) snap.forEach(x => bookItems.push({id: x.key, ...x.val()}));
+        renderBookRows();
+    }, err => bookMsg("Firebase read failed: "+err.message, true));
+}
+
+function renderBookRows(){
+    const rowsEl = document.getElementById("bookRows");
+    rowsEl.innerHTML = bookItems.length ? bookItems.map(b=>`<tr><td><img src="${escapeHTML(b.image)}" alt=""></td><td><b>${escapeHTML(b.title)}</b></td><td>${escapeHTML(b.category||"Book PDF")}</td><td><a href="${escapeHTML(b.pdf)}" target="_blank">Open</a></td><td><button class="secondary" data-book-edit="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:pointer;">Edit</button> <button class="danger" data-book-del="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#fee2e2;color:#b91c1c;cursor:pointer;">Delete</button></td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;padding:30px">No books found</td></tr>`;
+    
+    document.querySelectorAll("[data-book-edit]").forEach(b=>b.onclick = () => editBookEntry(b.dataset.bookEdit));
+    document.querySelectorAll("[data-book-del]").forEach(b=>b.onclick = () => deleteBookEntry(b.dataset.bookDel));
+}
+
+document.getElementById("bookImageFile").onchange = () => {
+    const files = document.getElementById("bookImageFile").files;
+    if(files.length > 0){
+        document.getElementById("bookPreviewImg").src = URL.createObjectURL(files[0]);
+        document.getElementById("bookPreview").style.display = "flex";
+        document.getElementById("bookPreviewText").textContent = files.length > 1 ? `${files.length} images selected` : files[0].name;
+    }
+};
+
+document.getElementById("bookAdminForm").onsubmit = async e => {
+    e.preventDefault();
+    const title = document.getElementById("bookAdminTitle").value.trim();
+    const category = document.getElementById("bookAdminCategory").value.trim() || "Book PDF";
+    const pdf = document.getElementById("bookAdminPdf").value.trim();
+    const files = document.getElementById("bookImageFile").files;
+
+    if(!title ||!pdf) return bookMsg("Book title and link are required.", true);
+    if(bookEditId === null && files.length === 0) return bookMsg("Please upload thumbnail image(s).", true);
+
+    document.getElementById("bookSaveBtn").disabled = true;
+    try {
+        if(bookEditId){
+            let image = bookItems.find(x => x.id === bookEditId)?.image;
+            if(files.length > 0){
+                bookMsg("Preparing thumbnail...");
+                let compressed = await compressImage(files[0]);
+                let res = await uploadToCloudinary(compressed);
+                image = res.secure_url;
+            }
+            const data = {title, category, pdf, image, timestamp: Date.now()};
+            await update(ref(db, "books/" + bookEditId), data);
+            bookMsg("Book updated successfully.");
+        } else {
+            for(let i = 0; i < files.length; i++){
+                bookMsg(`Uploading thumbnail ${i+1} of ${files.length}...`);
+                let compressedFile = await compressImage(files[i]);
+                let res = await uploadToCloudinary(compressedFile);
+                let imageUrl = res.secure_url;
+                
+                let bookTitle = files.length > 1 ? `${title} (${i+1})` : title;
+                const data = {title: bookTitle, category, pdf, image: imageUrl, timestamp: Date.now() + i};
+                await set(push(ref(db, "books")), data);
+            }
+            bookMsg("Book(s) added successfully.");
+        }
+        resetBookForm();
+        loadBooksTab();
+    } catch(err) {
+        bookMsg(err.message, true);
+    } finally {
+        document.getElementById("bookSaveBtn").disabled = false;
+    }
+};
+
+function editBookEntry(id){
+    const b = bookItems.find(x => x.id === id); if(!b) return;
+    bookEditId = id;
+    document.getElementById("bookAdminTitle").value = b.title || "";
+    document.getElementById("bookAdminCategory").value = b.category || "Book PDF";
+    document.getElementById("bookAdminPdf").value = b.pdf || "";
+    document.getElementById("bookImageFile").required = false;
+    document.getElementById("formTitle").textContent = "Edit Book";
+    document.getElementById("bookSaveBtn").textContent = "Update Book";
+    document.getElementById("bookCancel").style.display = "inline-block";
+    document.getElementById("bookPreview").style.display = "flex";
+    document.getElementById("bookPreviewImg").src = b.image || "";
+    document.getElementById("bookPreviewText").textContent = "Current thumbnail";
+}
+
+async function deleteBookEntry(id){
+    if(!confirm("Delete this book?")) return;
+    try {
+        await remove(ref(db, "books/" + id));
+        bookMsg("Book deleted.");
+        loadBooksTab();
+    } catch(e) {
+        bookMsg(e.message, true);
+    }
+}
+
+function resetBookForm(){
+    bookEditId = null;
+    document.getElementById("bookAdminForm").reset();
+    document.getElementById("bookAdminCategory").value = "Book PDF";
+    document.getElementById("formTitle").textContent = "Add Book";
+    document.getElementById("bookSaveBtn").textContent = "Add Book(s)";
+    document.getElementById("bookCancel").style.display = "none";
+    document.getElementById("bookPreview").style.display = "none";
+    document.getElementById("bookImageFile").required = true;
+}
+
+document.getElementById("bookCancel").onclick = resetBookForm;
+
+
+/* =====================================================
+   ADD STUDY MATERIAL (LEGACY SECTION)
+===================================================== */
+document.getElementById("bookBtn").addEventListener("click", async () => {
+    const name = document.getElementById("bookName").value.trim();
+    const semester = document.getElementById("semester").value.trim();
+    const branch = document.getElementById("branch").value.trim();
+    const link = document.getElementById("bookLink").value.trim();
+
+    if (!name || !link) {
+        alert("Enter Book Name and PDF Link.");
+        return;
+    }
+
+    const bookRef = push(ref(db, "books"));
+
+    try {
+        await set(bookRef, {
+            name: name,
+            semester: semester,
+            branch: branch,
+            link: link,
+            date: new Date().toLocaleString("en-IN"),
+            timestamp: Date.now()
+        });
+
+        alert("Study Material Added!");
+        document.getElementById("bookName").value = "";
+        document.getElementById("semester").value = "";
+        document.getElementById("branch").value = "";
+        document.getElementById("bookLink").value = "";
+    } catch (error) {
+        console.error(error);
+        alert("Book Add Failed: " + error.message);
+    }
+});
+
+
+/* =====================================================
+   LOAD DATABASE RECORDS
+===================================================== */
+function loadDatabase() {
+    const rootRef = ref(db);
+
+    onValue(rootRef, (snapshot) => {
+        dataList.innerHTML = "";
+        const data = snapshot.val();
+
+        if (!data) {
+            dataList.innerText = "No Data Found";
+            return;
+        }
+
+        Object.keys(data).forEach((section) => {
+            const sectionData = data[section];
+            if (!sectionData || typeof sectionData !== "object") return;
+
+            Object.keys(sectionData).slice(-30).forEach((id) => {
+                const item = sectionData[id];
+                const div = document.createElement("div");
+
+                const title = item.title || item.name || "Record";
+                const text = item.text || item.desc || item.link || "";
+
+                div.innerHTML = `
+                    <b>Section: ${escapeHTML(section)}</b><br><br>
+                    <strong>${escapeHTML(title)}</strong><br>
+                    <small>${escapeHTML(text)}</small><br><br>
+                    <button style="background:#dc2626;color:#fff;border:0;padding:7px 12px;border-radius:7px;cursor:pointer;" data-section="${escapeHTML(section)}" data-id="${escapeHTML(id)}">
+                        Delete
+                    </button>
+                `;
+
+                const btn = div.querySelector("button");
+                btn.addEventListener("click", () => {
+                    deleteDatabaseItem(section, id);
+                });
+
+                dataList.appendChild(div);
+            });
+        });
+    });
+}
+
+async function deleteDatabaseItem(section, id) {
+    if (!confirm("Delete this database record?")) return;
+
+    try {
+        await remove(ref(db, section + "/" + id));
+        alert("Deleted Successfully");
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+function escapeHTML(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* =====================================================
+   COURSE ADMIN LOGIC
+===================================================== */
+const COURSE_FILES = {
+  "civil-year-2-course":"civil-year-2-course.html",
+  "mechanical-year-2-course":"mechanical-year-2-course.html",
+  "cs-year-2-course":"cs-year-2-course.html",
+  "it-year-2-course":"it-year-2-course.html",
+  "electrical-year-2-course":"electrical-year-2-course.html",
+  "electronics-year-2-course":"electronics-year-2-course.html",
+  "agriculture-year-2-course":"agriculture-year-2-course.html",
+  "chemical-year-2-course":"chemical-year-2-course.html"
+};
+
+let rows = [];
+let courseFilter = "pending";
+let stopListening = null;
+let starting = false;
+
+function fmt(v){
+  if(!v) return "-";
+  const n=Number(v);
+  if(!Number.isFinite(n)) return "-";
+  return new Date(n).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
+}
+
+function statusOf(d){
+  return String(d.status || "pending").toLowerCase();
+}
+
+function courseFile(id){
+  return COURSE_FILES[id] || "";
+}
+
+function setNotice(text,type="warn"){
+  document.getElementById("notice").className="notice"+(type==="ok"?" ok":type==="err"?" err":"");
+  document.getElementById("notice").innerHTML=text;
+}
+
+function renderCourseAdmin(){
+  const counts={pending:0,verified:0,rejected:0};
+
+  rows.forEach(x=>{
+    const s=statusOf(x);
+    if(counts[s]!==undefined) counts[s]++;
+  });
+
+  document.getElementById("totalCount").textContent=rows.length;
+  document.getElementById("pendingCount").textContent=counts.pending;
+  document.getElementById("verifiedCount").textContent=counts.verified;
+  document.getElementById("rejectedCount").textContent=counts.rejected;
+
+  document.querySelectorAll(".course-filter-tab").forEach(b=>{
+    b.classList.toggle("active",b.dataset.filter===courseFilter);
+  });
+
+  const data=courseFilter==="all"
+    ? rows
+    : rows.filter(x=>statusOf(x)===courseFilter);
+
+  if(!data.length){
+    document.getElementById("list").innerHTML=`
+      <div class="empty">
+        <i class="fa-solid fa-circle-check" style="font-size:28px"></i>
+        <p>No ${escapeHTML(courseFilter)} requests.</p>
+      </div>`;
+    return;
   }
-};
 
-$("form").onsubmit=async e=>{
- e.preventDefault(); 
- const title=$("title").value.trim();
- const category=$("category").value.trim()||"Book PDF";
- const pdf=$("pdf").value.trim();
- const files=$("imageFile").files;
+  document.getElementById("list").innerHTML=data.map(d=>{
+    const name=d.name||"Engineer";
+    const branch=d.branch||"Diploma Member";
+    const pic=d.profilePic||d.photoURL||"";
+    const initial=(name.trim()[0]||"E").toUpperCase();
 
- if(!title||!pdf) return msg("Book title and link are required.",true);
- if(editId===null&&files.length===0) return msg("Please upload thumbnail image(s).",true);
+    const avatar=pic
+      ? `<img src="${escapeHTML(pic)}" alt="Profile"
+           onerror="this.parentElement.innerHTML='${initial}'">`
+      : initial;
 
- $("saveBtn").disabled=true;
- try{
-   if(editId){
-     let image=books.find(x=>x.id===editId)?.image;
-     if(files.length > 0){
-       msg("Preparing thumbnail...");
-       image=await upload(await compress(files[0]));
-     }
-     const data={title,category,pdf,image,timestamp:Date.now()};
-     await update(ref(db,"books/"+editId),data);
-     msg("Book updated successfully.");
-   } else {
-     // Handle multiple uploads
-     for(let i=0; i<files.length; i++){
-       msg(`Uploading thumbnail ${i+1} of ${files.length}...`);
-       let compressedFile = await compress(files[i]);
-       let imageUrl = await upload(compressedFile);
-       
-       // If multiple files are uploaded with same title, append index or keep same
-       let bookTitle = files.length > 1 ? `${title} (${i+1})` : title;
-       const data={title: bookTitle, category, pdf, image: imageUrl, timestamp: Date.now() + i};
-       await set(push(ref(db,"books")), data);
-     }
-     msg("Book(s) added successfully.");
-   }
-   reset();
- }catch(err){msg(err.message,true)}finally{$("saveBtn").disabled=false}
-};
+    const file=courseFile(d.courseId);
+    const s=statusOf(d);
 
-function editBook(id){
-  const b=books.find(x=>x.id===id);if(!b)return;
-  editId=id;
-  $("title").value=b.title||"";
-  $("category").value=b.category||"Book PDF";
-  $("pdf").value=b.pdf||"";
-  $("imageFile").required=false;
-  $("formTitle").textContent="Edit Book";
-  $("saveBtn").textContent="Update Book";
-  $("cancel").style.display="inline-block";
-  $("preview").style.display="flex";
-  $("previewImg").src=b.image||"";
-  $("previewText").textContent="Current thumbnail";
-  window.scrollTo({top:0,behavior:"smooth"})
+    let actions="";
+
+    if(s==="pending"){
+      actions=`
+        <button class="btn approve"
+          data-action="approve"
+          data-uid="${escapeHTML(d.uid)}"
+          data-course="${escapeHTML(d.courseId)}"
+          data-key="${escapeHTML(d.purchaseKey)}">
+          <i class="fa-solid fa-circle-check"></i>
+          Approve Payment & Give Access
+        </button>
+
+        <button class="btn reject"
+          data-action="reject"
+          data-uid="${escapeHTML(d.uid)}"
+          data-course="${escapeHTML(d.courseId)}"
+          data-key="${escapeHTML(d.purchaseKey)}">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>`;
+    }else if(s==="verified"){
+      actions=`
+        <button class="btn course-link"
+          data-file="${escapeHTML(file)}"
+          ${file?"":"disabled"}>
+          <i class="fa-solid fa-file-code"></i>
+          ${file?"Open Course File":"Course File Not Mapped"}
+        </button>`;
+    }else{
+      actions=`<div class="muted">This request was rejected.</div>`;
+    }
+
+    return `
+      <article class="request">
+        <div class="head">
+          <div class="user">
+            <div class="avatar">${avatar}</div>
+            <div>
+              <div class="course">${escapeHTML(d.courseName||d.courseId||"Course")}</div>
+              <div class="muted">
+                ${escapeHTML(name)} • ${escapeHTML(branch)} • ${escapeHTML(d.email||"-")}
+              </div>
+              ${pic?'<div class="photo-note">Profile photo loaded from purchase record</div>':""}
+            </div>
+          </div>
+          <div class="amount">₹${escapeHTML(d.amount||99)}</div>
+        </div>
+
+        <div class="grid">
+          <div class="item"><b>NAME</b><span>${escapeHTML(name)}</span></div>
+          <div class="item"><b>BRANCH</b><span>${escapeHTML(branch)}</span></div>
+          <div class="item"><b>MOBILE</b><span>${escapeHTML(d.mobile||"-")}</span></div>
+          <div class="item"><b>EMAIL</b><span>${escapeHTML(d.email||"-")}</span></div>
+          <div class="item"><b>COURSE</b><span>${escapeHTML(d.courseName||d.courseId||"-")}</span></div>
+          <div class="item"><b>AMOUNT</b><span>₹${escapeHTML(d.amount||99)} INR</span></div>
+          <div class="item"><b>UTR</b><span class="utr">${escapeHTML(d.utr||"-")}</span></div>
+          <div class="item"><b>SUBMITTED</b><span>${escapeHTML(fmt(d.submittedAt))}</span></div>
+          <div class="item"><b>STATUS</b><span>${escapeHTML(s.toUpperCase())}</span></div>
+        </div>
+
+        <div class="actions">${actions}</div>
+      </article>`;
+  }).join("");
 }
 
-async function deleteBook(id){
-  if(!confirm("Delete this book?"))return;
+function flatten(snapshot){
+  const out=[];
+  if(!snapshot.exists()) return out;
+
+  snapshot.forEach(uidSnap=>{
+    const uid=uidSnap.key;
+    const value=uidSnap.val()||{};
+
+    Object.entries(value).forEach(([courseId,courseValue])=>{
+      if(!courseValue || typeof courseValue!=="object") return;
+
+      Object.entries(courseValue).forEach(([purchaseKey,purchaseValue])=>{
+        if(!purchaseValue || typeof purchaseValue!=="object") return;
+
+        out.push({
+          uid,
+          courseId,
+          purchaseKey,
+          ...purchaseValue
+        });
+      });
+    });
+  });
+
+  return out.sort((a,b)=>
+    (Number(b.submittedAt)||0)-(Number(a.submittedAt)||0)
+  );
+}
+
+async function connectCourseAdmin(){
+  if(starting) return;
+  starting=true;
+
+  if(stopListening){
+    stopListening();
+    stopListening=null;
+  }
+
+  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Course Firebase...');
+
   try{
-    await remove(ref(db,"books/"+id));
-    msg("Book deleted.");
+    if(!courseAuth.currentUser){
+      throw new Error("Course Firebase admin session is not signed in.");
+    }
+
+    setNotice(
+      "Course Firebase authenticated • Loading live purchase requests...",
+      "ok"
+    );
+
+    stopListening=onValue(
+      ref(courseDb,"utrPurchases"),
+      snap=>{
+        rows=flatten(snap);
+
+        setNotice(
+          `Course Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR in your UPI/bank app before approving.`,
+          "ok"
+        );
+
+        renderCourseAdmin();
+      },
+      err=>{
+        console.error("Realtime Database error:",err);
+        setNotice("Firebase database error: "+escapeHTML(err.message),"err");
+      }
+    );
+
   }catch(e){
-    msg(e.message,true);
+    console.error("Course connection error:",e);
+    setNotice("Course Firebase error: "+escapeHTML(e.message),"err");
+  }finally{
+    starting=false;
   }
 }
 
-function reset(){
-  editId=null;
-  $("form").reset();
-  $("category").value="Book PDF";
-  $("formTitle").textContent="Add Book";
-  $("saveBtn").textContent="Add Book(s)";
-  $("cancel").style.display="none";
-  $("preview").style.display="none";
-  $("imageFile").required=true;
+async function approve(uid,courseId,key,button){
+  if(!uid||!courseId||!key) return;
+  if(!confirm("Confirm that the ₹99 payment and UTR are genuine.")) return;
+
+  const oldText=button.innerHTML;
+  button.disabled=true;
+  button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
+
+  try{
+    const purchaseRef=ref(db, `utrPurchases/${uid}/${courseId}/${key}`);
+    const snap=await get(purchaseRef);
+    if(!snap.exists()) throw new Error("Purchase request not found.");
+
+    const d=snap.val()||{};
+    const now=Date.now();
+    const adminEmail=auth.currentUser?.email||courseAuth.currentUser?.email||"admin";
+
+    await update(purchaseRef,{
+      status:"verified",
+      verified:true,
+      verifiedAt:now,
+      verifiedBy:adminEmail
+    });
+
+    await set(
+      ref(courseDb,`courseAccess/${uid}/${courseId}`),
+      {
+        uid,
+        courseId,
+        courseName:d.courseName||courseId,
+        amount:Number(d.amount)||99,
+        currency:"INR",
+        utr:d.utr||"",
+        verified:true,
+        status:"verified",
+        purchaseId:d.purchaseId||key,
+        grantedAt:now,
+        verifiedBy:adminEmail
+      }
+    );
+
+    alert("Payment approved successfully.");
+  }catch(e){
+    alert("Approve failed:\n\n"+e.message);
+    button.disabled=false;
+    button.innerHTML=oldText;
+  }
 }
 
-$("cancel").onclick=reset;
+async function reject(uid,courseId,key,button){
+  if(!uid||!courseId||!key) return;
+  if(!confirm("Reject this UTR/payment request?")) return;
+
+  const oldText=button.innerHTML;
+  button.disabled=true;
+  button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Rejecting...';
+
+  try{
+    await update(
+      ref(courseDb,`utrPurchases/${uid}/${courseId}/${key}`),
+      {
+        status:"rejected",
+        verified:false,
+        rejectedAt:Date.now(),
+        rejectedBy:(auth.currentUser?.email||courseAuth.currentUser?.email||"admin")
+      }
+    );
+    alert("Request rejected.");
+  }catch(e){
+    alert("Reject failed:\n\n"+e.message);
+    button.disabled=false;
+    button.innerHTML=oldText;
+  }
+}
+
+document.addEventListener("click", (e) => {
+    const actionButton = e.target.closest("[data-action]");
+    if (actionButton) {
+        const args = [
+            actionButton.dataset.uid,
+            actionButton.dataset.course,
+            actionButton.dataset.key,
+            actionButton
+        ];
+        if (actionButton.dataset.action === "approve") {
+            approve(...args);
+        } else {
+            reject(...args);
+        }
+        return;
+    }
+
+    const courseButton = e.target.closest("[data-file]");
+    if (courseButton && courseButton.dataset.file) {
+        window.open(courseButton.dataset.file, "_blank", "noopener,noreferrer");
+    }
+});
+
+document.querySelectorAll(".course-filter-tab").forEach(button => {
+    button.addEventListener("click", () => {
+        courseFilter = button.dataset.filter;
+        renderCourseAdmin();
+    });
+});
+
+document.getElementById("refreshBtn").addEventListener("click", () => {
+    if (courseAuth.currentUser) connectCourseAdmin();
+});
+
+/* =====================================================
+   SLIDING SWITCHER (NEWS / BOOKS / COURSE)
+===================================================== */
+const adminSwitcher = document.getElementById("adminSwitcher");
+const newsSwitch = document.getElementById("newsSwitch");
+const booksSwitch = document.getElementById("booksSwitch");
+const courseSwitch = document.getElementById("courseSwitch");
+const newsAdminSection = document.getElementById("newsAdminSection");
+const booksAdminSection = document.getElementById("booksAdminSection");
+const courseAdminSection = document.getElementById("courseAdminSection");
+
+function showAdminMode(mode) {
+    adminSwitcher.classList.remove("books-active", "course-active");
+    newsSwitch.classList.remove("active");
+    booksSwitch.classList.remove("active");
+    courseSwitch.classList.remove("active");
+    newsAdminSection.classList.remove("active");
+    booksAdminSection.classList.remove("active");
+    courseAdminSection.classList.remove("active");
+
+    if (mode === "books") {
+        adminSwitcher.classList.add("books-active");
+        booksSwitch.classList.add("active");
+        booksAdminSection.classList.add("active");
+    } else if (mode === "course") {
+        adminSwitcher.classList.add("course-active");
+        courseSwitch.classList.add("active");
+        courseAdminSection.classList.add("active");
+        if (courseAuth.currentUser) connectCourseAdmin();
+    } else {
+        newsSwitch.classList.add("active");
+        newsAdminSection.classList.add("active");
+    }
+    window.scrollTo({top:0, behavior:"smooth"});
+}
+
+newsSwitch.addEventListener("click", () => showAdminMode("news"));
+booksSwitch.addEventListener("click", () => showAdminMode("books"));
+courseSwitch.addEventListener("click", () => showAdminMode("course"));
+
+/* =====================================================
+   INITIAL LOADER ANIMATION
+===================================================== */
+document.addEventListener("DOMContentLoaded", function() {
+    const loader = document.getElementById("page-loader");
+    const bar = document.getElementById("loader-progress-bar");
+    const percent = document.getElementById("progress-percent");
+
+    let progress = 0;
+    document.body.style.overflow = "hidden";
+
+    const timer = setInterval(function() {
+        progress += Math.floor(Math.random() * 5) + 2;
+
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(timer);
+
+            if (bar) bar.style.width = progress + "%";
+            if (percent) percent.textContent = progress + "%";
+
+            setTimeout(function() {
+                if (loader) loader.classList.add("hide");
+                document.body.style.overflow = "";
+            }, 450);
+
+            return;
+        }
+
+        if (bar) bar.style.width = progress + "%";
+        if (percent) percent.textContent = progress + "%";
+    }, 45);
+});
+
+setTimeout(function() {
+    const loader = document.getElementById("page-loader");
+    if (loader && !loader.classList.contains("hide")) {
+        loader.classList.add("hide");
+        document.body.style.overflow = "";
+    }
+}, 5000);
+
 </script>
+
 </body>
 </html>

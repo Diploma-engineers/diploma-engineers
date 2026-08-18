@@ -3067,41 +3067,88 @@ window.addEventListener('DOMContentLoaded', () => {
     signOut(auth);
   };
 
+  let userProfileListener = null;
+
   onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userRef = ref(db, `users/${user.uid}`);
-      onValue(userRef, (snapshot) => {
-        if (snapshot.exists()) {
-          currentUserData = snapshot.val();
-          updateProfileUI(currentUserData);
+    try {
+      if (user) {
+        // Always create a usable profile immediately from Firebase Auth.
+        // This keeps Profile/Leaderboard working even if the profile node is
+        // temporarily empty while the Realtime Database listener starts.
+        currentUserData = {
+          name: user.displayName || "Engineer",
+          email: user.email || "-",
+          mobile: "",
+          branch: "Diploma Member",
+          college: "",
+          enrollment: "",
+          semester: "",
+          address: "",
+          profilePic: user.photoURL || "",
+          coins: 0
+        };
+        updateProfileUI(currentUserData);
+
+        if (userProfileListener) {
+          try { userProfileListener(); } catch (_) {}
+          userProfileListener = null;
         }
-      });
 
-      document.getElementById("authPage").style.display = "none";
-      document.getElementById("app").style.display = "block";
+        const userRef = ref(db, `users/${user.uid}`);
+        const handleProfile = (snapshot) => {
+          if (snapshot.exists()) {
+            currentUserData = { ...currentUserData, ...snapshot.val() };
+          } else {
+            // Create the missing profile record once so Profile, coins and
+            // leaderboard have a consistent source of truth.
+            set(userRef, currentUserData).catch(err => console.warn("Profile create failed:", err));
+          }
+          updateProfileUI(currentUserData);
+          loadApprovedHomeCoursesSafe();
+        };
+        const unsubscribeProfile = onValue(userRef, handleProfile, (error) => {
+          console.warn("Profile read failed:", error);
+          updateProfileUI(currentUserData);
+        });
+        userProfileListener = () => unsubscribeProfile();
 
-      const initialHash = window.location.hash.substring(1);
-      const targetPage = initialHash || defaultPage;
-      if (externalBranches.includes(targetPage)) {
-        loadPortalFromFile(targetPage);
+        document.getElementById("authPage").style.display = "none";
+        document.getElementById("app").style.display = "block";
+
+        const initialHash = window.location.hash.substring(1);
+        const targetPage = initialHash || defaultPage;
+        if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
+        if (targetPage === 'leaderboardPage') loadLeaderboardData(true);
+        loadFeedbackData();
+        initFeedbackForm();
+        history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+        renderPageUI(targetPage);
+        loadNewsData();
+        openSharedUserCardFromUrl();
+
+        startCoinUsageTracker(user.uid);
+      } else {
+        if (userProfileListener) {
+          try { userProfileListener(); } catch (_) {}
+          userProfileListener = null;
+        }
+        if (usageTimerInterval) clearInterval(usageTimerInterval);
+        currentUserData = {};
+        document.getElementById("app").style.display = "none";
+        document.getElementById("authPage").style.display = "flex";
       }
-      if (targetPage === 'leaderboardPage') {
-        loadLeaderboardData();
-      }
-      loadFeedbackData();
-      initFeedbackForm();
-      history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
-      renderPageUI(targetPage);
-      loadNewsData();
-      openSharedUserCardFromUrl();
-
-      startCoinUsageTracker(user.uid);
-    } else {
-      if (usageTimerInterval) clearInterval(usageTimerInterval);
-      document.getElementById("app").style.display = "none";
-      document.getElementById("authPage").style.display = "flex";
+    } catch (err) {
+      console.error("Auth state handling failed:", err);
     }
   });
+
+  async function loadApprovedHomeCoursesSafe() {
+    try {
+      if (typeof window.loadApprovedHomeCoursesExternal === "function") {
+        await window.loadApprovedHomeCoursesExternal();
+      }
+    } catch (_) {}
+  }
 
   function startCoinUsageTracker(uid) {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
@@ -3132,32 +3179,36 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateProfileUI(data) {
-    const coins = data.coins || 0;
-    document.getElementById("userName").innerText = (data.name || "Engineer").split(' ')[0];
-    document.getElementById("profileName").innerText = data.name || "Engineer";
-    document.getElementById("profileBranch").innerText = data.branch || "Diploma Member";
-    
-    document.getElementById("profileCoins").innerText = coins;
-    document.getElementById("navCoinCount").innerText = `${coins} Coins`;
-    document.getElementById("bannerCoinCount").innerText = `${coins} Coins`;
+    data = data || {};
+    const coins = Number(data.coins) || 0;
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value == null || value === "" ? "-" : String(value);
+    };
 
-    document.getElementById("profileFullName").innerText = data.name || "-";
-    document.getElementById("profileEmail").innerText = data.email || "-";
-    document.getElementById("profileMobile").innerText = data.mobile || "-";
-    document.getElementById("profileBranchName").innerText = data.branch || "-";
-    document.getElementById("profileCollege").innerText = data.college || "-";
-    document.getElementById("profileEnrollment").innerText = data.enrollment || "-";
-    document.getElementById("profileSemester").innerText = data.semester || "-";
-    document.getElementById("profileAddress").innerText = data.address || "-";
+    setText("userName", (data.name || "Engineer").split(" ")[0]);
+    setText("profileName", data.name || "Engineer");
+    setText("profileBranch", data.branch || "Diploma Member");
+    setText("profileCoins", coins);
+    setText("navCoinCount", `${coins} Coins`);
+    setText("bannerCoinCount", `${coins} Coins`);
+    setText("profileFullName", data.name || "-");
+    setText("profileEmail", data.email || "-");
+    setText("profileMobile", data.mobile || "-");
+    setText("profileBranchName", data.branch || "-");
+    setText("profileCollege", data.college || "-");
+    setText("profileEnrollment", data.enrollment || "-");
+    setText("profileSemester", data.semester || "-");
+    setText("profileAddress", data.address || "-");
 
     const avatarBox = document.getElementById("profileAvatarBox");
     const navProfileIcon = document.getElementById("navProfileIcon");
-
-    if (data.profilePic) {
-      avatarBox.innerHTML = `<img src="${data.profilePic}" alt="Profile Pic">`;
-      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${data.profilePic}" alt="User">`;
+    const pic = data.profilePic || "";
+    if (pic) {
+      if (avatarBox) avatarBox.innerHTML = `<img src="${escapeHTML(pic)}" alt="Profile Pic" loading="lazy">`;
+      if (navProfileIcon) navProfileIcon.innerHTML = `<img src="${escapeHTML(pic)}" alt="User" loading="lazy">`;
     } else {
-      avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
+      if (avatarBox) avatarBox.innerHTML = `<i class="fas fa-user"></i>`;
       if (navProfileIcon) navProfileIcon.innerHTML = `<i class="fas fa-user-circle"></i>`;
     }
 
@@ -3481,7 +3532,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  function loadLeaderboardData() {
+  function loadLeaderboardData(force = false) {
+    if (force) leaderboardListenerStarted = false;
     if (leaderboardListenerStarted) return;
     leaderboardListenerStarted = true;
 
@@ -3547,9 +3599,12 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }, (error) => {
       console.error("Leaderboard Error:", error);
-      listContainer.innerHTML = `<div class="empty"><p>Unable to load leaderboard right now.</p></div>`;
+      leaderboardListenerStarted = false;
+      listContainer.innerHTML = `<div class="empty"><p>Unable to load leaderboard right now.</p><button type="button" class="btn-main" style="margin-top:12px" onclick="loadLeaderboardData(true)">Retry</button></div>`;
     });
   }
+
+  window.loadLeaderboardData = loadLeaderboardData;
 
   /* =========================================================
      PUBLIC USER PROFILE ID CARD
@@ -4401,6 +4456,7 @@ async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.d
 function applyPaidCards(){paidCourseIds.forEach(id=>{document.querySelectorAll(`button[onclick*="${id}"]`).forEach(btn=>{const card=btn.closest('.course-card');if(!card)return;card.classList.add('paid-course-card');card.dataset.paidCourse=id;const badge=card.querySelector('.free-badge');if(badge){badge.textContent='₹99 • UPI';badge.classList.add('paid-badge');}btn.innerHTML='<i class="fa-solid fa-lock"></i> Pay ₹99 & Access';btn.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(id)};if(!card.dataset.paymentBound){card.dataset.paymentBound='1';card.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea'))return;openPayment(id)});}});});}
 function ensureHomeApprovedBox(){const anchor=document.querySelector('#homePage .blue-theme-card-1');if(!anchor)return null;let box=document.getElementById('approvedCoursesHome');if(!box){box=document.createElement('div');box.id='approvedCoursesHome';box.className='premium-user-course';box.innerHTML='<h5>My Unlocked Courses 🚀</h5><p>Admin-approved courses available in your account.</p><div class="approved-course-list" id="approvedCourseList"></div>';anchor.insertAdjacentElement('afterend',box);}return box;}
 async function loadApprovedHomeCourses(){if(!db||!currentUid)return;const box=ensureHomeApprovedBox();if(!box)return;const list=document.getElementById('approvedCourseList');list.innerHTML='<div style="font-size:12px;color:#64748b">Checking your approved courses…</div>';const s=await get(ref(db,`courseAccess/${currentUid}`)).catch(()=>null);if(!s||!s.exists()){box.style.display='none';return;}const data=s.val()||{};const ids=Object.keys(data).filter(id=>data[id]&&(data[id].verified===true||data[id].status==='verified')&&paidCourseIds.includes(id));if(!ids.length){box.style.display='none';return;}box.style.display='block';list.innerHTML=ids.map(id=>`<div class="approved-course-item" data-open-approved="${esc(id)}"><strong>${esc(courseNames[id])}</strong><span>✓ PURCHASE VERIFIED</span><button type="button">Open Course</button></div>`).join('');list.querySelectorAll('[data-open-approved]').forEach(el=>el.addEventListener('click',()=>openCourse(el.dataset.openApproved)));}
+window.loadApprovedHomeCoursesExternal=loadApprovedHomeCourses;
 async function submitPurchase(){const utr=utrEl.value.trim();if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}submitEl.disabled=true;showStatus('Submitting…','warn');try{const root=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);const old=await get(root);let pending=false;if(old.exists())old.forEach(x=>{if((x.val()||{}).status==='pending')pending=true;});if(pending){showStatus('This course already has a pending verification request.','warn');submitEl.disabled=false;return;}const p=push(root),now=Date.now();await set(p,{purchaseId:p.key,uid:currentUid,courseId:currentCourse,courseName:courseNames[currentCourse],amount:99,currency:'INR',utr,status:'pending',verified:false,submittedAt:now,name:currentProfile.name||'',email:currentProfile.email||'',mobile:currentProfile.mobile||'',branch:currentProfile.branch||'',profilePic:currentProfile.profilePic||''});showStatus('UTR submitted. Waiting for admin verification.','ok');watchAccess(currentCourse);}catch(e){console.error(e);showStatus('Could not submit: '+e.message,'err');submitEl.disabled=false;}}
 submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment()});
 const originalNavigate=window.navigateTo;window.navigateTo=function(pageId){if(paidCourseIds.includes(pageId)){openPayment(pageId);return;}return originalNavigate.apply(this,arguments)};

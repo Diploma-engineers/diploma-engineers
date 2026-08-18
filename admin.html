@@ -562,7 +562,8 @@ button:disabled{
 <style id="admin-switch-css">
 .admin-switch{display:flex;gap:8px;padding:14px 20px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:50}
 .admin-switch button{flex:1;max-width:240px;border:0;border-radius:12px;padding:12px 18px;font:700 14px Poppins,Arial;cursor:pointer;background:#eef2ff;color:#3730a3;transition:.25s}
-.admin-switch button.active{background:#111827;color:#fff;box-shadow:0 5px 15px #0002}
+ .admin-switch button.active{background:#111827;color:#fff;box-shadow:0 5px 15px #0002;transform:translateY(-1px)}
+.login-hint{margin-top:12px;font-size:11px;color:#667085;line-height:1.5;text-align:center}
 #coursePanel{display:none;background:#f5f7fb;min-height:100vh}
 #coursePanel .course-wrap{max-width:1180px;margin:auto;padding:18px}
 #coursePanel .top{background:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 8px 28px rgba(0,0,0,.07);display:flex;justify-content:space-between;align-items:center;gap:15px}
@@ -627,6 +628,7 @@ button:disabled{
         </button>
 
         <div id="error"></div>
+        <div class="login-hint">Use the same Admin Email & Password in both Firebase projects.</div>
     </div>
 </div>
 
@@ -832,7 +834,7 @@ button:disabled{
    FIREBASE IMPORT
 ===================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, push, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 /* =====================================================
@@ -854,6 +856,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+
+/* =====================================================
+   COURSE FIREBASE CONFIG + AUTH
+   The same Admin email/password must exist in BOTH
+   Firebase projects. Anonymous Auth is NOT used.
+===================================================== */
+const courseFirebaseConfig={
+    apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+    authDomain:"diploma-app-9a378.firebaseapp.com",
+    databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",
+    projectId:"diploma-app-9a378",
+    storageBucket:"diploma-app-9a378.firebasestorage.app",
+    messagingSenderId:"160233059797",
+    appId:"1:160233059797:web:be38130ed64f8bd0afb95c",
+    measurementId:"G-9646VK4C6L"
+};
+const courseApp=initializeApp(courseFirebaseConfig,"courseAdminApp");
+const courseAuth=getAuth(courseApp);
+const courseDb=getDatabase(courseApp);
+let courseAuthReady=!!courseAuth.currentUser;
 
 const CLOUD_NAME = "ub0qgzwa";
 const UPLOAD_PRESET = "news_upload";
@@ -899,7 +921,21 @@ loginBtn.addEventListener("click", async () => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
 
     try {
+        /* First authenticate against the original News Admin project. */
         await signInWithEmailAndPassword(auth, email, password);
+
+        /* Then authenticate the SAME credentials in the Course project. */
+        try {
+            await signInWithEmailAndPassword(courseAuth, email, password);
+            courseAuthReady = true;
+        } catch (courseError) {
+            courseAuthReady = false;
+            await signOut(auth);
+            throw new Error(
+                "Course Admin login failed. Create the same Email/Password Admin user in Firebase project diploma-app-9a378.\n\n"+
+                (courseError.code || courseError.message)
+            );
+        }
     } catch (error) {
         console.error(error);
         if (error.code === "auth/too-many-requests") {
@@ -941,6 +977,10 @@ onAuthStateChanged(auth, (user) => {
    LOGOUT LOGIC
 ===================================================== */
 logoutBtn.addEventListener("click", async () => {
+    try { await signOut(courseAuth); } catch(e) { console.warn("Course logout:",e); }
+    courseAuthReady=false;
+    courseStarted=false;
+    courseRows=[];
     await signOut(auth);
 });
 
@@ -1434,8 +1474,6 @@ setTimeout(function() {
 }, 5000);
 
 /* COURSE MODULE */
-const courseFirebaseConfig={apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",authDomain:"diploma-app-9a378.firebaseapp.com",databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",projectId:"diploma-app-9a378",storageBucket:"diploma-app-9a378.firebasestorage.app",messagingSenderId:"160233059797",appId:"1:160233059797:web:be38130ed64f8bd0afb95c"};
-const courseApp=initializeApp(courseFirebaseConfig,"courseAdminApp"),courseAuth=getAuth(courseApp),courseDb=getDatabase(courseApp);
 const COURSE_FILES={"civil-year-2-course":"civil-year-2-course.html","mechanical-year-2-course":"mechanical-year-2-course.html","cs-year-2-course":"cs-year-2-course.html","it-year-2-course":"it-year-2-course.html","electrical-year-2-course":"electrical-year-2-course.html","electronics-year-2-course":"electronics-year-2-course.html","agriculture-year-2-course":"agriculture-year-2-course.html","chemical-year-2-course":"chemical-year-2-course.html"};
 let courseRows=[],courseFilter="pending",courseStarted=false,courseStarting=false;
 const cEsc=v=>String(v??"").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m]));
@@ -1444,13 +1482,63 @@ const cFmt=v=>{if(!v)return "-";const n=Number(v);return Number.isFinite(n)?new 
 function cNotice(t,type=""){const e=document.getElementById("courseNotice");e.className="course-notice"+(type?" "+type:"");e.innerHTML=t}
 function cFlatten(s){const out=[];if(!s.exists())return out;s.forEach(u=>{const uid=u.key;Object.entries(u.val()||{}).forEach(([cid,cv])=>{if(!cv||typeof cv!=="object")return;Object.entries(cv).forEach(([key,p])=>{if(p&&typeof p==="object")out.push({uid,courseId:cid,purchaseKey:key,...p})})})});return out.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0))}
 function cRender(){const counts={pending:0,verified:0,rejected:0};courseRows.forEach(x=>{const s=cStatus(x);if(counts[s]!==undefined)counts[s]++});document.getElementById("courseTotalCount").textContent=courseRows.length;document.getElementById("coursePendingCount").textContent=counts.pending;document.getElementById("courseVerifiedCount").textContent=counts.verified;document.getElementById("courseRejectedCount").textContent=counts.rejected;document.querySelectorAll("[data-course-filter]").forEach(b=>b.classList.toggle("active",b.dataset.courseFilter===courseFilter));const data=courseFilter==="all"?courseRows:courseRows.filter(x=>cStatus(x)===courseFilter);if(!data.length){document.getElementById("courseList").innerHTML=`<div class="empty">No ${cEsc(courseFilter)} requests.</div>`;return}document.getElementById("courseList").innerHTML=data.map(d=>{const s=cStatus(d),name=d.name||"Engineer",pic=d.profilePic||d.photoURL||"",initial=(name.trim()[0]||"E").toUpperCase(),av=pic?`<img src="${cEsc(pic)}" alt="Profile">`:initial;let a="";if(s==="pending")a=`<button class="course-btn approve" data-caction="approve" data-uid="${cEsc(d.uid)}" data-course="${cEsc(d.courseId)}" data-key="${cEsc(d.purchaseKey)}">✓ Approve Payment & Give Access</button><button class="course-btn reject" data-caction="reject" data-uid="${cEsc(d.uid)}" data-course="${cEsc(d.courseId)}" data-key="${cEsc(d.purchaseKey)}">✕ Reject</button>`;else if(s==="verified"){const f=COURSE_FILES[d.courseId]||"";a=`<button class="course-btn course-link" data-file="${cEsc(f)}" ${f?"":"disabled"}>Open Course File</button>`}else a=`<div class="course-muted">This request was rejected.</div>`;return `<article class="request"><div class="head"><div class="user"><div class="avatar">${av}</div><div><div class="course">${cEsc(d.courseName||d.courseId||"Course")}</div><div class="course-muted">${cEsc(name)} • ${cEsc(d.branch||"Diploma Member")} • ${cEsc(d.email||"-")}</div></div></div><div class="amount">₹${cEsc(d.amount||99)}</div></div><div class="grid"><div class="item"><b>NAME</b><span>${cEsc(name)}</span></div><div class="item"><b>BRANCH</b><span>${cEsc(d.branch||"-")}</span></div><div class="item"><b>MOBILE</b><span>${cEsc(d.mobile||"-")}</span></div><div class="item"><b>EMAIL</b><span>${cEsc(d.email||"-")}</span></div><div class="item"><b>COURSE</b><span>${cEsc(d.courseName||d.courseId||"-")}</span></div><div class="item"><b>UTR</b><span class="utr">${cEsc(d.utr||"-")}</span></div><div class="item"><b>SUBMITTED</b><span>${cEsc(cFmt(d.submittedAt))}</span></div><div class="item"><b>STATUS</b><span>${cEsc(s.toUpperCase())}</span></div></div><div class="actions">${a}</div></article>`}).join("")}
-async function startCourse(){if(!window.__adminLoggedIn||courseStarted||courseStarting)return;courseStarting=true;cNotice("Connecting Course Firebase...");try{if(!courseAuth.currentUser)await signInAnonymously(courseAuth);onValue(ref(courseDb,"utrPurchases"),snap=>{courseRows=cFlatten(snap);cNotice(`Firebase connected • ${courseRows.length} purchase request(s) loaded. Verify UTR before approving.` ,"ok");cRender()},err=>cNotice("Course database error: "+cEsc(err.message),"err"));courseStarted=true}catch(e){cNotice("Course connection failed: "+cEsc(e.message),"err")}finally{courseStarting=false}}
+async function startCourse(){
+  if(!window.__adminLoggedIn) return;
+  if(courseStarted || courseStarting) return;
+  if(!courseAuth.currentUser || !courseAuthReady){
+    cNotice("Course Admin is not authenticated. Login with the same Admin Email/Password in both Firebase projects.","err");
+    return;
+  }
+  courseStarting=true;
+  cNotice("Connecting Course Firebase...");
+  try{
+    onValue(ref(courseDb,"utrPurchases"),snap=>{
+      courseRows=cFlatten(snap);
+      cNotice(`Firebase connected • ${courseRows.length} purchase request(s) loaded. Verify UTR before approving.`,"ok");
+      cRender();
+    },err=>{
+      console.error("Course database error:",err);
+      cNotice("Course database error: "+cEsc(err.message),"err");
+      document.getElementById("courseList").innerHTML=`<div class="error"><b>Course requests could not be loaded.</b><br><span>${cEsc(err.message)}</span></div>`;
+    });
+    courseStarted=true;
+  }catch(e){
+    console.error("Course connection failed:",e);
+    cNotice("Course connection failed: "+cEsc(e.message),"err");
+  }finally{courseStarting=false}
+}
 async function cApprove(uid,cid,key,btn){if(!confirm("Confirm genuine ₹99 payment/UTR? Student will receive course access."))return;btn.disabled=true;try{const pr=ref(courseDb,`utrPurchases/${uid}/${cid}/${key}`),s=await get(pr);if(!s.exists())throw Error("Purchase request not found.");const d=s.val()||{},now=Date.now();await update(pr,{status:"verified",verified:true,verifiedAt:now,verifiedBy:"authenticated-admin"});await set(ref(courseDb,`courseAccess/${uid}/${cid}`),{uid,courseId:cid,courseName:d.courseName||cid,amount:Number(d.amount)||99,currency:"INR",utr:d.utr||"",verified:true,status:"verified",purchaseId:d.purchaseId||key,grantedAt:now,verifiedBy:"authenticated-admin"});alert("Payment approved and course access granted.")}catch(e){alert("Approve failed: "+e.message)}finally{btn.disabled=false}}
 async function cReject(uid,cid,key,btn){if(!confirm("Reject this UTR/payment request?"))return;btn.disabled=true;try{await update(ref(courseDb,`utrPurchases/${uid}/${cid}/${key}`),{status:"rejected",verified:false,rejectedAt:Date.now(),rejectedBy:"authenticated-admin"});alert("Request rejected.")}catch(e){alert("Reject failed: "+e.message)}finally{btn.disabled=false}}
 document.getElementById("newsTab").onclick=()=>{document.getElementById("newsTab").classList.add("active");document.getElementById("courseTab").classList.remove("active");document.getElementById("newsPanel").style.display="block";document.getElementById("coursePanel").style.display="none"};
-document.getElementById("courseTab").onclick=()=>{if(!window.__adminLoggedIn)return alert("Please login as Admin first.");document.getElementById("courseTab").classList.add("active");document.getElementById("newsTab").classList.remove("active");document.getElementById("newsPanel").style.display="none";document.getElementById("coursePanel").style.display="block";startCourse()};
-document.querySelectorAll("[data-course-filter]").forEach(b=>b.onclick=()=>{courseFilter=b.dataset.courseFilter;cRender()});document.getElementById("courseRefreshBtn").onclick=()=>{courseStarted=false;startCourse()};
+document.getElementById("courseTab").onclick=()=>{
+  if(!window.__adminLoggedIn) return alert("Please login as Admin first.");
+  if(!courseAuth.currentUser || !courseAuthReady){
+    return alert("Course Admin is not authenticated. Use the same Admin Email/Password in the Course Firebase project.");
+  }
+  document.getElementById("courseTab").classList.add("active");
+  document.getElementById("newsTab").classList.remove("active");
+  document.getElementById("newsPanel").style.display="none";
+  document.getElementById("coursePanel").style.display="block";
+  startCourse();
+};
+document.querySelectorAll("[data-course-filter]").forEach(b=>b.onclick=()=>{courseFilter=b.dataset.courseFilter;cRender()});document.getElementById("courseRefreshBtn").onclick=()=>{
+  if(!courseAuth.currentUser || !courseAuthReady){ cNotice("Course Admin is not authenticated.","err"); return; }
+  courseStarted=false;
+  startCourse();
+};
 document.addEventListener("click",e=>{const b=e.target.closest("[data-caction]");if(b){const a=b.dataset;a.caction==="approve"?cApprove(a.uid,a.course,a.key,b):cReject(a.uid,a.course,a.key,b)}const f=e.target.closest("[data-file]");if(f&&f.dataset.file)window.open(f.dataset.file,"_blank","noopener,noreferrer")});
+
+/* Course Auth state: never expose Course panel to an unauthenticated user. */
+onAuthStateChanged(courseAuth,user=>{
+  courseAuthReady=!!user;
+  if(!user){
+    courseStarted=false;
+    courseRows=[];
+    if(window.__adminLoggedIn && document.getElementById("coursePanel").style.display==="block"){
+      cNotice("Course Admin session expired. Please login again.","err");
+    }
+  }
+});
 
 </script>
 

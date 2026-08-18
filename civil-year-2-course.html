@@ -2662,8 +2662,6 @@ body.faculty-modal-open { overflow:hidden; }
       </button>
       <div class="civil-purchase-icon"><i class="fas fa-hard-hat"></i></div><div style="margin:8px 0 16px;text-align:center;font-size:12px;font-weight:800;color:#2563eb;">
       Cashfree • ONE-TIME ₹499 • LIFETIME ACCESS
-    </div><div style="margin:10px 0 14px;text-align:center;font-size:12px;font-weight:800;color:#2563eb;">
-      ONE-TIME PAYMENT • LIFETIME ACCESS
     </div>
       <div class="civil-purchase-badge">CIVIL ENGINEERING</div>
       <h2 id="civilPurchaseTitle">Civil Special Course</h2>
@@ -2686,7 +2684,7 @@ body.faculty-modal-open { overflow:hidden; }
 
       <div id="civilPurchaseStatus" class="civil-purchase-status"></div>
 
-      <button id="civilPayButton" type="button" class="civil-pay-btn" onclick="startCivilPayment()">
+      <button id="civilPayButton" type="button" class="civil-pay-btn" onclick="payForCivilSpecialCourse()">
         <i class="fas fa-credit-card"></i>
         <span>Pay ₹499 & Get Full Course</span>
       </button>
@@ -3041,10 +3039,12 @@ window.addEventListener('DOMContentLoaded', () => {
   function isValidCivilPurchase(data) {
     if (!data || typeof data !== "object") return false;
     const purchased = data.purchased === true;
-    const paid = data.paid === true;
+    const paid = data.paid === true || String(data.status ?? "").trim().toLowerCase() === "paid";
     const amount = Number(data.amount ?? data.price ?? 0);
     const currency = String(data.currency ?? "").trim().toUpperCase();
+    const courseId = String(data.courseId ?? "").trim();
     return purchased && paid &&
+           courseId === CIVIL_SPECIAL_PURCHASE.key &&
            amount === CIVIL_SPECIAL_PURCHASE.amount &&
            currency === CIVIL_SPECIAL_PURCHASE.currency;
   }
@@ -3088,7 +3088,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (openGate) {
         setCivilPurchaseStatus(
-          "No valid ₹499 INR purchase was found for this account. Complete the payment and check again.",
+          "No verified ₹499 INR Civil purchase was found for this account. Complete the Cashfree payment and then check again.",
           "error"
         );
       }
@@ -3111,46 +3111,77 @@ window.addEventListener('DOMContentLoaded', () => {
     showCivilPurchaseGate();
     await checkCivilPurchase(true);
   };
-
-  window.startCivilPayment = function() {
-    if (!auth.currentUser) {
+  window.payForCivilSpecialCourse = async function() {
+    const user = auth.currentUser;
+    if (!user) {
       alert("Please login first.");
       return;
     }
 
-    if (CIVIL_PAYMENT_URL) {
-      window.open(CIVIL_PAYMENT_URL, "_blank", "noopener,noreferrer");
+    const payButton = document.getElementById("civilPayButton");
+    const originalHTML = payButton ? payButton.innerHTML : "";
+
+    try {
+      if (payButton) {
+        payButton.disabled = true;
+        payButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Creating secure payment...</span>';
+      }
+
+      setCivilPurchaseStatus("Creating secure ₹499 Cashfree order...", "info");
+
+      const idToken = await user.getIdToken(true);
+
+      const response = await fetch(CIVIL_ORDER_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + idToken
+        },
+        body: JSON.stringify({ courseId: CIVIL_SPECIAL_PURCHASE.key })
+      });
+
+      const raw = await response.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch (_) {}
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `Order API failed (${response.status}).`);
+      }
+
+      if (!data.payment_session_id) {
+        throw new Error("Cashfree payment_session_id was not returned by /api/create-cashfree-order.");
+      }
+
+      if (typeof Cashfree !== "function") {
+        throw new Error("Cashfree Checkout SDK is not loaded. Please refresh the page.");
+      }
+
+      const cashfree = Cashfree({ mode: CASHFREE_MODE });
+
+      setCivilPurchaseStatus("Opening Cashfree secure checkout...", "info");
+
+      await cashfree.checkout({
+        paymentSessionId: data.payment_session_id,
+        redirectTarget: "_modal"
+      });
+
       setCivilPurchaseStatus(
-        "Payment page opened. After payment, return here and tap “I have already paid — Check Access”.",
+        "Payment window closed. Waiting for verified payment confirmation...",
         "info"
       );
-      return;
-    }
 
-    setCivilPurchaseStatus(
-      "Secure Cashfree one-time payment: ₹499 INR. Access is unlocked only after the verified backend webhook updates your Firebase purchase.",
-      "error"
-    );
-  };
-
-
-  window.payForCivilSpecialCourse = async function() {
-    const user = auth.currentUser;
-    if (!user) return alert("Please login first.");
-    try {
-      const idToken = await user.getIdToken(true);
-      const response = await fetch("/api/create-cashfree-order", {
-        method: "POST",
-        headers: {"Content-Type":"application/json","Authorization":"Bearer " + idToken},
-        body: JSON.stringify({courseId:"civil_special"})
-      });
-      const data = await response.json();
-      if (!response.ok || !data.payment_session_id) throw new Error(data.error || "Unable to create payment order.");
-      const cashfree = Cashfree({mode:"sandbox"});
-      await cashfree.checkout({paymentSessionId:data.payment_session_id, redirectTarget:"_modal"});
+      // IMPORTANT: Never unlock from the frontend payment callback.
+      // Firebase access is granted only after the verified backend webhook writes the purchase.
       await waitForCivilVerifiedPurchase(120000);
+
     } catch (e) {
+      console.error("Civil Cashfree payment error:", e);
       setCivilPurchaseStatus(e.message || "Payment failed to start.", "error");
+    } finally {
+      if (payButton) {
+        payButton.disabled = false;
+        payButton.innerHTML = originalHTML || '<i class="fas fa-credit-card"></i><span>Pay ₹499 & Get Full Course</span>';
+      }
     }
   };
 

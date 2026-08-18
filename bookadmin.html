@@ -1,330 +1,240 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Books Admin</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Books</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#0f172a}
-.wrap{max-width:1200px;margin:auto;padding:20px}
-.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}
-h1,h2{margin:0}p{color:#64748b}
-.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}
-label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
-input,select{width:100%;padding:12px;border:1px solid #dbe1e8;border-radius:10px;font-size:14px;outline:0;background:#fff}
-input:focus,select:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
-button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-.primary{background:#2563eb;color:#fff}.secondary{background:#e2e8f0;color:#0f172a}.danger{background:#fee2e2;color:#b91c1c}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
-.status{margin-top:12px;padding:10px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:13px;display:none}
-.preview{margin-top:10px;display:none;align-items:center;gap:12px}
-.preview img{width:70px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 15px}
-.toolbar input{max-width:420px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}
-.stat{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:14px}
-.stat b{display:block;font-size:22px;margin-top:5px}
-.table{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:850px}
-th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px;vertical-align:middle}
-th{background:#f8fafc;position:sticky;top:0}
-td img{width:48px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb}
-.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700}
-.link{max-width:250px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.empty{text-align:center;padding:30px!important;color:#64748b}
-#app{display:none}#login{max-width:430px;margin:70px auto}
-@media(max-width:700px){
- .wrap{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}
- .top{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7f9fc;color:#111827; -webkit-tap-highlight-color: transparent;}
+#booksPage{width:100%;min-height:100vh;background:#f7f9fc}.books-container{width:100%;max-width:1400px;margin:auto;padding:20px}
+.books-search{height:52px;display:flex;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:0 16px;box-shadow:0 4px 15px #0000000a}
+.search-icon{font-size:25px;color:#64748b;margin-right:10px}.books-search input{width:100%;border:0;outline:0;background:transparent;font-size:15px}
+.books-result{margin:20px 2px 14px;display:flex;justify-content:space-between;align-items:center}#bookCount{font-size:14px;font-weight:700;color:#475569}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:16px;overflow:hidden;cursor:pointer;transition:.18s;box-shadow:0 5px 18px #0f172a0d; -webkit-tap-highlight-color: transparent; user-select: none;}
+.book-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px #0f172a1a}.book-cover{width:100%;aspect-ratio:3/4;background:#f1f5f9;overflow:hidden;position:relative}
+.book-cover img{width:100%;height:100%;object-fit:cover;display:block}.book-info{padding:13px}
+.book-title{font-size:15px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-category{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:6px;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:700}
+.book-pdf{position:absolute;top:10px;right:10px;padding:5px 8px;border-radius:6px;background:#fffffff2;color:#dc2626;font-size:10px;font-weight:800}
+.no-books{text-align:center;padding:70px 20px;color:#64748b}.error{text-align:center;padding:40px;color:#b91c1c}
+
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 30px;
 }
+.pagination button {
+  padding: 8px 14px;
+  border: 1px solid #dbe1e8;
+  background: #fff;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #0f172a;
+  -webkit-tap-highlight-color: transparent;
+}
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pagination button.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+@media(max-width:600px){.books-container{padding:14px}.books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.book-info{padding:10px}.book-title{font-size:13px}.books-search{height:48px}}
 </style>
 </head>
 <body>
-
-<div id="login" class="panel">
-<h1>Books Admin Login</h1>
-<p>Use the same Firebase Admin account used by your existing admin system.</p>
-<label>Email</label><input id="email" type="email" autocomplete="username">
-<label style="margin-top:12px">Password</label><input id="password" type="password" autocomplete="current-password">
-<div class="actions"><button class="primary" id="loginBtn">Login</button></div>
-<div id="loginStatus" class="status"></div>
-</div>
-
-<div id="app" class="wrap">
-<div class="top">
- <div><h1>Books Admin</h1><p>Add unlimited books with PDF link + thumbnail image. Data is stored in Firebase.</p></div>
- <div class="actions">
-  <button class="secondary" id="openBooks">Open Books Page</button>
-  <button class="danger" id="logout">Logout</button>
- </div>
-</div>
-
-<div class="stats">
- <div class="stat">Total Books<b id="totalBooks">0</b></div>
- <div class="stat">Categories<b id="totalCategories">0</b></div>
- <div class="stat">Showing<b id="showingBooks">0</b></div>
-</div>
-
-<div class="panel">
-<h2 id="formTitle">Add New Book</h2>
-<form id="form">
-<div class="grid" style="margin-top:15px">
- <div><label>Book Title *</label><input id="title" required placeholder="e.g. Engineering Mechanics"></div>
- <div><label>Category</label>
-  <select id="category">
-   <option>Book PDF</option><option>E-Book</option><option>Civil Engineering</option>
-   <option>Electrical Engineering</option><option>Mechanical Engineering</option>
-   <option>Computer Science</option><option>Electronics</option><option>Other</option>
-  </select>
- </div>
- <div class="full"><label>Book Link / PDF Link *</label><input id="pdf" type="url" placeholder="https://..." required></div>
- <div class="full">
-  <label>Thumbnail / Book Cover *</label>
-  <input id="imageFile" type="file" accept="image/*">
-  <div class="preview" id="preview"><img id="previewImg"><span id="previewText"></span></div>
- </div>
-</div>
-<div class="actions">
- <button class="primary" id="saveBtn">Add Book</button>
- <button type="button" class="secondary" id="cancel" style="display:none">Cancel Edit</button>
-</div>
-<div class="status" id="status"></div>
-</form>
-</div>
-
-<div class="panel">
-<h2 style="margin-bottom:14px">All Books</h2>
-<div class="toolbar">
- <input id="search" placeholder="Search by title or category...">
- <select id="filterCategory"><option value="">All Categories</option></select>
- <button class="secondary" id="clearSearch">Clear</button>
-</div>
-<div class="table">
-<table>
-<thead><tr><th>#</th><th>Image</th><th>Title</th><th>Category</th><th>PDF</th><th>Actions</th></tr></thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-</div>
-</div>
-
+<div id="booksPage"><div class="books-container">
+<div class="books-search"><span class="search-icon">⌕</span><input id="bookSearch" placeholder="Search books..." autocomplete="off"></div>
+<div class="books-result"><span id="bookCount">0 Books</span></div>
+<div class="books-grid" id="booksGrid"></div>
+<div class="pagination" id="pagination"></div>
+<div class="no-books" id="noBooks" style="display:none"><div style="font-size:48px">📚</div><h3>No Books Found</h3><p>Search करके दूसरी book try करें।</p></div>
+<div class="error" id="error" style="display:none"></div>
+</div></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import {getDatabase,ref,push,set,update,remove,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
- authDomain:"diplomaengineers-869df.firebaseapp.com",
- databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",
- projectId:"diplomaengineers-869df",
- storageBucket:"diplomaengineers-869df.appspot.com",
- messagingSenderId:"356779436080",
- appId:"1:356779436080:web:4b28da380e547420d0e5f5"
+import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+  authDomain: "diplomaengineers-869df.firebaseapp.com",
+  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+  projectId: "diplomaengineers-869df",
+  storageBucket: "diplomaengineers-869df.appspot.com",
+  messagingSenderId: "356779436080",
+  appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
+const app=initializeApp(firebaseConfig),db=getDatabase(app);
+const seed=[{
+      title: "Applied Mathematics 2nd",
+      category: "E-Book",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"
+    },
+    {
+      title: "Applied Physics 2nd",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"
+    },
+    {
+      title: "FEEE",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785266369195650990413638221471.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/feeee-bookbydiplomaengineers28329.pdf"
+    },
+    {
+      title: "CMAED",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dbac7207a1d60542f858e24f8037818545726630343.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/construction-management-and-entrepreneur-development.pdf"
+    },
+    {
+      title: "RMB",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000003f287207bf60eebf4e92a2608799479752795647630.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/repiar-and-maintenace-of-building.pdf"
+    },
+    {
+      title: "DSS",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"
+    },
+    {
+      title: "QSV",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000aba071fa9c8274e589af326e1002361587254253798.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/estimating-costing-valuation.pdf"
+    },
+    {
+      title: "RCC",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000c3a47207a300da5a2b16e3c32129627255035854469.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/reinforcement-cement-concrete.pdf"
+    },
+    {
+      title: "Earthquake Engineering",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e29472078fd4e34ab989848f7428787996213601794.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/03/earthquakeengineeringbyanubhavgangwar.pdf"
+    },
+    {
+      title: "IT System",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/itsysteme-bookbydiplomaengineers.pdf"
+    },
+    {
+      title: "Engineering Mechanics",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"
+    },
+    {
+      title: "Environmental Science",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/environmentalsciencee-bookbydiplomaengineers.pdf"
+    },
+    {
+      title: "Advanced Surveying",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png",
+      pdf: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/advancedsurveyinge-bookbydiplomaengineers-1.pdf"
+    },
+    {
+      title: "Hydraulics",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png",
+      pdf: "https://anubhav.finance.blog/wp-content/uploads/2026/05/hydraulicse-bookbydiplomaengineers-3.pdf"
+    },
+    {
+      title: "Theory Of Structures",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png",
+      pdf: "https://anubhav.finance.blog/wp-content/uploads/2026/05/theoryofstructurese-bookbydiplomaengineers-2.pdf"
+    },
+    {
+      title: "Water Resource Engineering",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000b09c71faa3990755017401f45126630317016264298.png",
+      pdf: "https://anubhav.finance.blog/wp-content/uploads/2026/05/waterresourceengineeringe-bookbydiplomaengineers-6.pdf"
+    },
+    {
+      title: "Public Health Engineering",
+      category: "Book PDF",
+      image: "https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f45c72079311416363f02c394789402397388481580.png",
+      pdf: "https://anubhav.finance.blog/wp-content/uploads/2026/05/publicheathengineeringe-bookbydiplomaengineers-4.pdf"
+    }
+  ];let books=[];
+let currentPage = 1;
+const itemsPerPage = 12;
 
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
-const CLOUD_NAME="ub0qgzwa",UPLOAD_PRESET="news_upload";
 const $=id=>document.getElementById(id);
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 
-let books=[],editId=null,unsubscribe=null;
+function render(){
+ const q=$("bookSearch").value.trim().toLowerCase();
+ const list=books.filter(b=>!q||String(b.title||"").toLowerCase().includes(q)||String(b.category||"").toLowerCase().includes(q));
+ 
+ $("bookCount").textContent=list.length+(list.length===1?" Book":" Books");
+ $("noBooks").style.display=list.length?"none":"block";
+ 
+ const totalPages = Math.ceil(list.length / itemsPerPage) || 1;
+ if(currentPage > totalPages) currentPage = 1;
 
-function esc(v){
- return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
- .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-function msg(text,error=false){
- $("status").textContent=text;$("status").style.display="block";
- $("status").style.background=error?"#fee2e2":"#eff6ff";
- $("status").style.color=error?"#b91c1c":"#1d4ed8";
-}
-function loginMsg(t){$("loginStatus").textContent=t;$("loginStatus").style.display="block";}
+ const start = (currentPage - 1) * itemsPerPage;
+ const paginatedList = list.slice(start, start + itemsPerPage);
 
-$("loginBtn").onclick=async()=>{
- try{
-  $("loginBtn").disabled=true;
-  await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value);
- }catch(e){loginMsg(e.message)}finally{$("loginBtn").disabled=false}
-};
-$("logout").onclick=()=>signOut(auth);
-$("openBooks").onclick=()=>window.open("books.html","_blank");
-
-onAuthStateChanged(auth,user=>{
- $("login").style.display=user?"none":"block";
- $("app").style.display=user?"block":"none";
- if(user) loadBooks();
- else if(unsubscribe){unsubscribe();unsubscribe=null;}
-});
-
-function loadBooks(){
- if(unsubscribe) unsubscribe();
- unsubscribe=onValue(ref(db,"books"),snap=>{
-  books=[];
-  if(snap.exists()) snap.forEach(x=>books.push({id:x.key,...x.val()}));
-  books.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-  updateStats();
-  updateCategoryFilter();
-  renderRows();
- },err=>msg("Firebase read failed: "+err.message,true));
-}
-
-function updateStats(){
- $("totalBooks").textContent=books.length;
- $("totalCategories").textContent=new Set(books.map(b=>b.category||"Book PDF")).size;
- $("showingBooks").textContent=document.querySelectorAll("#rows tr[data-row]").length;
-}
-
-function updateCategoryFilter(){
- const current=$("filterCategory").value;
- const cats=[...new Set(books.map(b=>b.category||"Book PDF"))].sort();
- $("filterCategory").innerHTML='<option value="">All Categories</option>'+
- cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
- if(cats.includes(current)) $("filterCategory").value=current;
-}
-
-function renderRows(){
- const q=$("search").value.trim().toLowerCase();
- const cat=$("filterCategory").value;
- const filtered=books.filter(b=>{
-  const okQ=!q||String(b.title||"").toLowerCase().includes(q)||String(b.category||"").toLowerCase().includes(q);
-  const okC=!cat||(b.category||"Book PDF")===cat;
-  return okQ&&okC;
+ $("booksGrid").innerHTML="";
+ paginatedList.forEach(b=>{
+  const c=document.createElement("article");c.className="book-card";c.onclick=()=>{if(b.pdf)window.open(b.pdf,"_blank","noopener")};
+  c.innerHTML=`<div class="book-cover"><img src="${esc(b.image)}" alt="${esc(b.title)}" loading="lazy"><span class="book-pdf">PDF</span></div><div class="book-info"><div class="book-title">${esc(b.title)}</div><span class="book-category">${esc(b.category||"Book PDF")}</span></div>`;
+  $("booksGrid").appendChild(c);
  });
- $("rows").innerHTML=filtered.length?filtered.map((b,i)=>`
- <tr data-row>
-  <td>${i+1}</td>
-  <td><img src="${esc(b.image||"")}" alt="" loading="lazy"></td>
-  <td><b>${esc(b.title)}</b></td>
-  <td><span class="badge">${esc(b.category||"Book PDF")}</span></td>
-  <td><a class="link" href="${esc(b.pdf)}" target="_blank" rel="noopener">Open PDF</a></td>
-  <td>
-   <button class="secondary" data-edit="${esc(b.id)}">Edit</button>
-   <button class="danger" data-del="${esc(b.id)}">Delete</button>
-  </td>
- </tr>`).join(""):`<tr><td colspan="6" class="empty">No books found.</td></tr>`;
 
- document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>editBook(x.dataset.edit));
- document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBook(x.dataset.del));
- $("showingBooks").textContent=filtered.length;
+ renderPagination(totalPages);
 }
 
-$("search").oninput=renderRows;
-$("filterCategory").onchange=renderRows;
-$("clearSearch").onclick=()=>{
- $("search").value="";$("filterCategory").value="";renderRows();
-};
+function renderPagination(totalPages){
+ const pag=$("pagination");
+ pag.innerHTML="";
+ if(totalPages <= 1) return;
 
-function compress(file){
- return new Promise((resolve,reject)=>{
-  const u=URL.createObjectURL(file),im=new Image();
-  im.onload=()=>{
-   let w=im.width,h=im.height,max=1400;
-   if(w>max){h=h*max/w;w=max}
-   const c=document.createElement("canvas");c.width=Math.round(w);c.height=Math.round(h);
-   c.getContext("2d").drawImage(im,0,0,c.width,c.height);
-   URL.revokeObjectURL(u);
-   c.toBlob(b=>b?resolve(new File([b],"book-thumb.jpg",{type:"image/jpeg"})):reject(new Error("Image compression failed")),"image/jpeg",.84);
-  };
-  im.onerror=()=>reject(new Error("Invalid image"));
-  im.src=u;
- });
-}
+ const prevBtn = document.createElement("button");
+ prevBtn.textContent = "Prev";
+ prevBtn.disabled = currentPage === 1;
+ prevBtn.onclick = () => { if(currentPage > 1) { currentPage--; render(); window.scrollTo({top:0, behavior:'smooth'}); } };
+ pag.appendChild(prevBtn);
 
-function upload(file){
- return new Promise((resolve,reject)=>{
-  const x=new XMLHttpRequest();
-  x.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
-  x.upload.onprogress=e=>{
-   if(e.lengthComputable)msg("Uploading thumbnail "+Math.round(e.loaded/e.total*100)+"%...");
-  };
-  x.onload=()=>{
-   try{
-    const d=JSON.parse(x.responseText);
-    if(x.status>=200&&x.status<300&&d.secure_url)resolve(d.secure_url);
-    else reject(new Error(d.error?.message||"Cloudinary upload failed"));
-   }catch(e){reject(new Error("Invalid Cloudinary response"))}
-  };
-  x.onerror=()=>reject(new Error("Cloudinary network error"));
-  const f=new FormData();f.append("file",file);f.append("upload_preset",UPLOAD_PRESET);x.send(f);
- });
-}
-
-$("imageFile").onchange=()=>{
- const f=$("imageFile").files[0];
- if(f){
-  $("previewImg").src=URL.createObjectURL(f);
-  $("preview").style.display="flex";
-  $("previewText").textContent=f.name;
+ for(let i=1; i<=totalPages; i++){
+  const btn = document.createElement("button");
+  btn.textContent = i;
+  if(i === currentPage) btn.className = "active";
+  btn.onclick = () => { currentPage = i; render(); window.scrollTo({top:0, behavior:'smooth'}); };
+  pag.appendChild(btn);
  }
-};
 
-$("form").onsubmit=async e=>{
- e.preventDefault();
- const title=$("title").value.trim();
- const category=$("category").value.trim()||"Book PDF";
- const pdf=$("pdf").value.trim();
- const file=$("imageFile").files[0];
-
- if(!title||!pdf)return msg("Book title and PDF link are required.",true);
- if(editId===null&&!file)return msg("Please upload a thumbnail image.",true);
-
- $("saveBtn").disabled=true;
- try{
-  let image=editId?books.find(x=>x.id===editId)?.image:"";
-  if(file){
-   msg("Preparing thumbnail...");
-   image=await upload(await compress(file));
-  }
-  const data={title,category,pdf,image,timestamp:Date.now()};
-  if(editId)await update(ref(db,"books/"+editId),data);
-  else await set(push(ref(db,"books")),data);
-  msg(editId?"Book updated successfully.":"Book added successfully.");
-  reset();
- }catch(err){msg(err.message,true)}
- finally{$("saveBtn").disabled=false}
-};
-
-function editBook(id){
- const b=books.find(x=>x.id===id);if(!b)return;
- editId=id;
- $("title").value=b.title||"";
- $("category").value=b.category||"Book PDF";
- if(!$("category").querySelector(`option[value="${CSS.escape(b.category||"Book PDF")}"]`)){
-  $("category").add(new Option(b.category||"Book PDF",b.category||"Book PDF"));
- }
- $("pdf").value=b.pdf||"";
- $("imageFile").required=false;
- $("formTitle").textContent="Edit Book";
- $("saveBtn").textContent="Update Book";
- $("cancel").style.display="inline-block";
- $("preview").style.display="flex";
- $("previewImg").src=b.image||"";
- $("previewText").textContent="Current thumbnail (upload new image only if you want to replace it)";
- window.scrollTo({top:0,behavior:"smooth"});
+ const nextBtn = document.createElement("button");
+ nextBtn.textContent = "Next";
+ nextBtn.disabled = currentPage === totalPages;
+ nextBtn.onclick = () => { if(currentPage < totalPages) { currentPage++; render(); window.scrollTo({top:0, behavior:'smooth'}); } };
+ pag.appendChild(nextBtn);
 }
 
-async function deleteBook(id){
- const b=books.find(x=>x.id===id);
- if(!b)return;
- if(!confirm(`Delete "${b.title}"?`))return;
- try{await remove(ref(db,"books/"+id));msg("Book deleted successfully.")}
- catch(e){msg(e.message,true)}
-}
+$("bookSearch").oninput=()=>{ currentPage = 1; render(); };
 
-function reset(){
- editId=null;
- $("form").reset();
- $("category").value="Book PDF";
- $("formTitle").textContent="Add New Book";
- $("saveBtn").textContent="Add Book";
- $("cancel").style.display="none";
- $("preview").style.display="none";
- $("imageFile").required=true;
-}
-$("cancel").onclick=reset;
+onValue(ref(db,"books"),snap=>{
+ books=[];if(snap.exists())snap.forEach(x=>books.push({id:x.key,...x.val()}));
+ if(!books.length) books=seed.slice();
+ render();
+},err=>{ $("error").style.display="block";$("error").textContent="Books could not be loaded: "+err.message;books=seed.slice();render(); });
 </script>
-</body>
-</html>
+</body></html>

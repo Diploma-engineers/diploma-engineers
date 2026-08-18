@@ -1109,7 +1109,7 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   .course-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
+.paid-course-card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}.paid-course-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.10)}.course-card{background:#fff;border:1px solid var(--border-light);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-subtle);display:flex;flex-direction:column;min-width:0}
 .card-header-banner{padding:18px;color:#fff;position:relative;min-height:142px}
 .card-header-banner.purple{background:linear-gradient(135deg,#7C3AED,#8B5CF6)}
 .card-header-banner.green{background:linear-gradient(135deg,#059669,#10B981)}
@@ -2219,7 +2219,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Civil Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="civil-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner green">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2246,7 +2246,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Mechanical Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="mechanical-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner orange">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2273,7 +2273,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Computer Science Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="cs-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner blue">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2300,7 +2300,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Information Technology Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="it-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner teal">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2327,7 +2327,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Electrical Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="electrical-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner red">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2354,7 +2354,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Electronics Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="electronics-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner indigo">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2381,7 +2381,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Agriculture Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="agriculture-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner pink">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2408,7 +2408,7 @@ body.upi-modal-open{overflow:hidden}
       </div>
 
       <!-- Chemical Engineering Year 2 Course -->
-      <div class="course-card">
+      <div class="course-card paid-course-card" data-paid-course="chemical-year-2-course" role="button" tabindex="0">
         <div class="card-header-banner cyan">
           <span class="paid-badge">₹99 • UPI</span>
           <div class="header-title-box">
@@ -2654,6 +2654,21 @@ body.upi-modal-open{overflow:hidden}
 </div>
 
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
+<script>
+  document.addEventListener("click", function(e){
+    const card=e.target.closest(".paid-course-card");
+    if(!card) return;
+    if(e.target.closest("button,a,input,select,textarea,label")) return;
+    const id=card.getAttribute("data-paid-course");
+    if(id && typeof window.openUPIPurchaseModal === "function") window.openUPIPurchaseModal(id);
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key!=="Enter" && e.key!==" ") return;
+    const card=e.target.closest(".paid-course-card");
+    if(!card || typeof window.openUPIPurchaseModal !== "function") return;
+    e.preventDefault(); window.openUPIPurchaseModal(card.getAttribute("data-paid-course"));
+  });
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";

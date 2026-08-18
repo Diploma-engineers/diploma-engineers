@@ -1634,17 +1634,60 @@ async function fastLogin(){
  if(!email||!pass){err.textContent='Enter Email and Password';return;}
  err.textContent='';loginButton.disabled=true;loginButton.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Secure Login...';
  try{
-   const [m,c]=await Promise.all([signInWithEmailAndPassword(auth,email,pass),signInWithEmailAndPassword(courseAuth,email,pass)]);
-   mainLogged=!!m.user;courseLogged=!!c.user;
-   if(ADMIN_MAIN_UID!=='YOUR_MAIN_ADMIN_UID' && m.user.uid!==ADMIN_MAIN_UID) throw new Error('News Admin UID is not authorized.');
-   if(ADMIN_COURSE_UID!=='YOUR_COURSE_ADMIN_UID' && c.user.uid!==ADMIN_COURSE_UID) throw new Error('Course Admin UID is not authorized.');
-   loginPage.style.display='none';appShell.style.display='block';
+   // MAIN LOGIN IS REQUIRED. COURSE LOGIN IS OPTIONAL SO A COURSE-FIREBASE
+   // ACCOUNT MISMATCH CANNOT BLOCK THE ENTIRE ADMIN PANEL.
+   const m=await signInWithEmailAndPassword(auth,email,pass);
+   mainLogged=!!m.user;
+
+   if(ADMIN_MAIN_UID!=='YOUR_MAIN_ADMIN_UID' && m.user.uid!==ADMIN_MAIN_UID){
+     throw new Error('News Admin UID is not authorized.');
+   }
+
+   let courseMessage='';
+   try{
+     const c=await signInWithEmailAndPassword(courseAuth,email,pass);
+     courseLogged=!!c.user;
+     if(ADMIN_COURSE_UID!=='YOUR_COURSE_ADMIN_UID' && c.user.uid!==ADMIN_COURSE_UID){
+       await signOut(courseAuth);
+       courseLogged=false;
+       courseMessage='Course Admin UID is not authorized for this login.';
+     }
+   }catch(courseErr){
+     courseLogged=false;
+     courseMessage='Course Firebase login not available for this account. News Admin is ready.';
+     console.warn('Course login:', courseErr);
+   }
+
+   loginPage.style.display='none';
+   appShell.style.display='block';
+   setPanel('news');
+
    try{loadNews();loadDatabase();}catch(e){console.warn('News panel load:',e)}
-   try{connect();}catch(e){console.warn('Course panel load:',e)}
+   if(courseLogged){
+     try{connect();}catch(e){console.warn('Course panel load:',e)}
+   }
+
+   if(courseMessage){
+     err.style.color='#b45309';
+     err.textContent=courseMessage;
+   }else{
+     err.textContent='';
+   }
  }catch(e){
-   await Promise.allSettled([signOut(auth),signOut(courseAuth)]);mainLogged=false;courseLogged=false;
-   err.textContent=e.code==='auth/invalid-credential'?'Wrong Email or Password.':e.message;
- }finally{loginButton.disabled=false;loginButton.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Fast Login';}
+   await Promise.allSettled([signOut(auth),signOut(courseAuth)]);
+   mainLogged=false;courseLogged=false;
+   const code=e?.code||'';
+   err.style.color='#dc2626';
+   if(code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/user-not-found')
+     err.textContent='Wrong Email or Password.';
+   else if(code==='auth/too-many-requests')
+     err.textContent='Too many login attempts. Please wait and try again.';
+   else
+     err.textContent=e?.message||'Login failed.';
+ }finally{
+   loginButton.disabled=false;
+   loginButton.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Fast Login';
+ }
 }
 loginButton.onclick=fastLogin;
 document.getElementById('superPassword').addEventListener('keydown',e=>{if(e.key==='Enter')fastLogin();});

@@ -591,7 +591,7 @@ button:disabled{
     box-shadow:0 4px 12px rgba(37,99,235,.22);
 }
 .admin-switch button i{margin-right:7px}
-#coursePanel{display:none}
+#coursePanel{display:none!important} #coursePanel.show{display:block!important}
 @media(max-width:600px){
     .admin-switch{padding:0 10px}
     .admin-switch button{font-size:13px;padding:11px 8px}
@@ -1934,7 +1934,6 @@ document.querySelectorAll(".c-tab").forEach(button=>{
 });
 
 $("refreshBtn").addEventListener("click",connect);
-connect();
 
 
 /* =========================
@@ -1949,33 +1948,35 @@ let courseLoaded = false;
 
 function showAdminSection(section){
     const isCourse = section === "course";
+
     newsTabBtn.classList.toggle("active", !isCourse);
     courseTabBtn.classList.toggle("active", isCourse);
-    newsMain.style.display = isCourse ? "none" : "block";
-    newsFooter.style.display = isCourse ? "none" : "block";
-    coursePanel.style.display = isCourse ? "block" : "none";
-    window.scrollTo({top:0, behavior:"smooth"});
 
-    if(isCourse && !courseLoaded){
-        courseLoaded = true;
-        if(typeof connect === "function") connect();
+    newsMain.style.display = isCourse ? "none" : "";
+    newsFooter.style.display = isCourse ? "none" : "";
+    coursePanel.classList.toggle("show", isCourse);
+
+    if(isCourse){
+        window.scrollTo(0,0);
+        if(!courseLoaded){
+            courseLoaded = true;
+            connect();
+        }
     }
 }
 
-newsTabBtn.addEventListener("click", () => showAdminSection("news"));
-courseTabBtn.addEventListener("click", () => showAdminSection("course"));
+newsTabBtn.onclick = function(e){
+    e.preventDefault();
+    showAdminSection("news");
+};
 
-onAuthStateChanged(auth, (user) => {
-    if(user){
-        showAdminSection("news");
-        courseLoaded = false;
-    }else{
-        coursePanel.style.display = "none";
-        newsMain.style.display = "none";
-        newsFooter.style.display = "none";
-    }
-});
+courseTabBtn.onclick = function(e){
+    e.preventDefault();
+    showAdminSection("course");
+};
 
+/* Always start on News after the main admin login succeeds. */
+showAdminSection("news");
 </script>
 
 </body>

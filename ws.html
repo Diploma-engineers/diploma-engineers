@@ -1,149 +1,1652 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diploma Engineers | BTE Result</title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Diploma Engineers | Super Admin</title>
+<link rel="icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-body{
+
+
+/* =========================
+   RESET
+========================= */
+
+*{
     margin:0;
-    font-family:'Segoe UI';
-    background:#0b1220;
-    color:white;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Poppins,Arial,sans-serif;
 }
 
-/* NAVBAR */
-.navbar{
-    background:#111827;
-    padding:15px;
+body{
+    background:#f1f5f9;
+    color:#172033;
+}
+
+/* LOADER */
+#page-loader {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .6s ease, visibility .6s ease;
+}
+#page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-content { width: min(90%, 500px); text-align: center; }
+.loader-logo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 25px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loader-ring {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 4px solid #edf1f6;
+  border-top-color: #2864e8;
+  border-right-color: #ff6500;
+  border-bottom-color: #2864e8;
+  animation: loaderRotate 1.8s linear infinite;
+}
+.loader-ring:after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 28px;
+  background: #ff6500;
+  border-radius: 10px;
+  top: -4px;
+  right: 5px;
+}
+@keyframes loaderRotate { to { transform: rotate(360deg); } }
+.loader-logo img {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  padding: 7px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 5px 25px rgba(0,0,0,.06);
+}
+.loader-title { font-size: 28px; font-weight: 800; line-height: 1.2; }
+.orange-text { color: #ff6500; }
+.blue-text { color: #2864e8; }
+.loader-subtitle { margin: 10px 0 30px; color: #64748b; font-size: 15px; }
+.progress-container { width: 100%; height: 7px; background: #e4e9ef; border-radius: 20px; overflow: hidden; }
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #2864e8, #2864e8, #ff6500);
+  border-radius: 20px;
+  transition: width .12s linear;
+}
+.loading-status {
+  margin-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 14px;
+}
+#progress-percent { color: #2864e8; font-weight: 700; }
+
+
+/* =========================
+   LOGIN
+========================= */
+
+#loginPage{
+    min-height:100vh;
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:center;
+    padding:20px;
 }
 
-.logo{
-    font-weight:bold;
-    color:#22c55e;
-}
-
-/* CARD */
-.card{
-    max-width:450px;
-    margin:60px auto;
-    background:#111;
-    padding:30px;
-    border-radius:20px;
-    border:1px solid #222;
-}
-
-/* INPUT */
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:1px solid #333;
-    background:#000;
-    color:white;
-}
-
-/* BUTTON */
-button{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    background:#22c55e;
-    border:none;
-    border-radius:10px;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-/* SUCCESS */
-.success{
-    display:none;
-    margin-top:15px;
-    color:#22c55e;
+.login-box{
+    width:390px;
+    max-width:100%;
+    background:#fff;
+    padding:35px;
+    border-radius:22px;
+    box-shadow: 0 15px 45px rgba(15,23,42,.12);
     text-align:center;
 }
 
-.success.active{
-    display:block;
+.logo{
+    width:85px;
+    height:85px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
 }
 
-/* VIEW BUTTON */
-.view{
+.login-box h2{
+    color:#2563eb;
+    margin-bottom:8px;
+}
+
+.login-box p{
+    color:#64748b;
+    font-size:14px;
+    margin-bottom:22px;
+}
+
+.input,
+textarea,
+select{
+    width:100%;
+    padding:13px 14px;
+    border:1px solid #dbe2ea;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+    margin-bottom:13px;
+    background:#fff;
+}
+
+.input:focus,
+textarea:focus,
+select:focus{
+    border-color:#2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+}
+
+textarea{
+    height:130px;
+    resize:vertical;
+}
+
+.login-btn,
+.primary-btn{
+    width:100%;
+    border:0;
+    padding:13px 18px;
+    background:#2563eb;
+    color:#fff;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.login-btn:hover,
+.primary-btn:hover{
+    background:#1d4ed8;
+}
+
+button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+#error{
+    margin-top:12px;
+    font-size:13px;
+    color:#dc2626;
+}
+
+/* =========================
+   ADMIN
+========================= */
+
+#adminPanel{
     display:none;
-    margin-top:10px;
 }
 
-.view.active{
+.navbar{
+    height:68px;
+    background:#2563eb;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    position:sticky;
+    top:0;
+    z-index:1000;
+}
+
+.navbar h2{
+    font-size:19px;
+}
+
+.logout{
+    border:0;
+    background:#fff;
+    color:#2563eb;
+    padding:9px 16px;
+    border-radius:9px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard{
+    width:100%;
+    max-width:1100px;
+    margin:auto;
+    padding:25px 18px 40px;
+}
+
+.welcome{
+    background:#fff;
+    padding:22px;
+    border-radius:17px;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(15,23,42,.06);
+}
+
+.welcome h1{
+    color:#2563eb;
+    font-size:24px;
+    margin-bottom:5px;
+}
+
+.welcome p{
+    color:#64748b;
+}
+
+/* =========================
+   STAT CARDS
+========================= */
+
+.cards{
+    display:grid;
+    grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:#fff;
+    padding:22px;
+    border-radius:16px;
+    box-shadow: 0 5px 20px rgba(15,23,42,.06);
+}
+
+.stat-card i{
+    font-size:28px;
+    color:#2563eb;
+    margin-bottom:10px;
+}
+
+.stat-card h3{
+    margin-bottom:4px;
+}
+
+.stat-card p{
+    color:#64748b;
+    font-size:13px;
+}
+
+/* =========================
+   BOX
+========================= */
+
+.box{
+    background:#fff;
+    padding:23px;
+    border-radius:17px;
+    margin-bottom:20px;
+    box-shadow: 0 5px 20px rgba(15,23,42,.06);
+}
+
+.box h2{
+    color:#2563eb;
+    font-size:19px;
+    margin-bottom:18px;
+}
+
+.label{
     display:block;
-}
-</style>
-</head>
-
-<body>
-
-<div class="navbar">
-    <div class="logo">Diploma Engineers</div>
-</div>
-
-<div class="card">
-    <h2>BTE Revaluation Result</h2>
-
-    <input type="text" id="enroll" placeholder="Enrollment No (E251...)" />
-    <input type="text" id="dob" placeholder="DD/MM/YYYY" />
-
-    <button onclick="generate()">Generate Link</button>
-
-    <div class="success" id="msg">✅ Link Generated</div>
-
-    <button class="view" id="openBtn" onclick="openResult()">Open Result</button>
-</div>
-
-<script>
-let finalURL = "";
-
-// DOB validation
-function validDOB(d){
-    return /^(\d{2})\/(\d{2})\/(\d{4})$/.test(d);
+    font-size:13px;
+    font-weight:600;
+    color:#334155;
+    margin:8px 0 7px;
 }
 
-// MAIN LOGIC (FINAL CORRECT)
-function generate(){
-    let enroll = document.getElementById("enroll").value.trim();
-    let dob = document.getElementById("dob").value.trim();
+/* =========================
+   FILE AREA
+========================= */
 
-    if(!enroll){
-        alert("Enter Enrollment");
+.file-box{
+    border:2px dashed #cbd5e1;
+    border-radius:12px;
+    padding:17px;
+    background:#f8fafc;
+    margin-bottom:13px;
+}
+
+.file-box:hover{
+    border-color:#2563eb;
+}
+
+.file-box input{
+    width:100%;
+}
+
+/* =========================
+   IMAGE PREVIEW
+========================= */
+
+#imagePreviewBox{
+    display:none;
+    margin:12px 0;
+}
+
+#imagePreview{
+    width:220px;
+    max-width:100%;
+    height:135px;
+    object-fit:cover;
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+}
+
+/* =========================
+   UPLOAD STATUS
+========================= */
+
+#uploadStatus{
+    display:none;
+    margin-top:15px;
+    padding:13px;
+    background:#eff6ff;
+    border-radius:10px;
+    color:#1d4ed8;
+    font-size:13px;
+}
+
+.progress{
+    width:100%;
+    height:8px;
+    background:#e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:9px;
+}
+
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:#2563eb;
+    transition:width .15s;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:8px;
+}
+
+.btn-row button{
+    flex:1;
+}
+
+.clear-btn{
+    border:0;
+    padding:13px;
+    border-radius:10px;
+    background:#e2e8f0;
+    color:#334155;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* =========================
+   NEWS LIST
+========================= */
+
+.news-list{
+    display:flex;
+    flex-direction:column;
+    gap:13px;
+}
+
+.news-card{
+    display:flex;
+    gap:15px;
+    padding:15px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+}
+
+.news-thumb{
+    width:155px;
+    height:100px;
+    flex-shrink:0;
+    border-radius:10px;
+    overflow:hidden;
+    background:#e2e8f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.news-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.no-image{
+    color:#94a3b8;
+    font-size:30px;
+}
+
+.news-content{
+    flex:1;
+    min-width:0;
+}
+
+.news-content h3{
+    font-size:16px;
+    margin-bottom:5px;
+    color:#0f172a;
+}
+
+.meta{
+    color:#64748b;
+    font-size:12px;
+    margin-bottom:7px;
+}
+
+.news-content p{
+    color:#475569;
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:10px;
+}
+
+.links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.links a,
+.delete-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:7px 10px;
+    border-radius:7px;
+    font-size:12px;
+    text-decoration:none;
+    border:0;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.image-link{ background:#dbeafe; color:#1d4ed8; }
+.pdf-link{ background:#fee2e2; color:#dc2626; }
+.external-link{ background:#dcfce7; color:#15803d; }
+.delete-btn{ background:#dc2626; color:white; }
+.delete-btn:hover{ background:#b91c1c; }
+
+/* =========================
+   BOOK
+========================= */
+
+.book-grid{
+    display:grid;
+    grid-template-columns: repeat(2,1fr);
+    gap:12px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    background:#2563eb;
+    color:#fff;
+    text-align:center;
+    padding:22px;
+}
+
+.footer p{
+    font-size:13px;
+    margin-top:4px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+    .navbar{ padding:0 13px; }
+    .navbar h2{ font-size:14px; }
+    .logout{ padding:8px 10px; font-size:12px; }
+    .dashboard{ padding:15px 10px 30px; }
+    .welcome h1{ font-size:20px; }
+    .box{ padding:17px; border-radius:14px; }
+    .book-grid{ grid-template-columns:1fr; }
+    .news-card{ flex-direction:column; }
+    .news-thumb{ width:100%; height:180px; }
+    .btn-row{ flex-direction:column; }
+    .links a, .delete-btn{ width:100%; justify-content:center; }
+}
+
+
+
+*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,Arial,sans-serif}
+body{background:#f4f7fb;color:#172033;min-height:100vh}
+.nav{height:70px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20;box-shadow:0 4px 18px rgba(37,99,235,.18)}
+.nav h2{font-size:19px} .logout{border:0;background:#fff;color:#2563eb;padding:9px 16px;border-radius:9px;font-weight:700;cursor:pointer}
+.container{max-width:1200px;margin:auto;padding:24px 18px 45px}
+.hero{background:#fff;border-radius:18px;padding:22px;box-shadow:0 6px 24px rgba(15,23,42,.06);display:flex;justify-content:space-between;align-items:center;gap:15px}
+.hero h1{font-size:24px;color:#2563eb} .hero p{color:#64748b;font-size:13px;margin-top:4px}
+.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer;font-size:13px}
+.refresh{background:#eef2ff;color:#3730a3} .btn:disabled{opacity:.55;cursor:not-allowed}
+.notice{margin:14px 0;padding:12px 14px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px}
+.notice.ok{background:#ecfdf3;color:#166534} .notice.err{background:#fef2f2;color:#991b1b}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:16px 0}
+.stat{background:#fff;border-radius:15px;padding:17px;box-shadow:0 5px 20px rgba(0,0,0,.05)}
+.stat b{display:block;color:#667085;font-size:12px} .stat span{font-size:27px;font-weight:800}
+.total span{color:#2563eb} .pending span{color:#d97706} .verified span{color:#16a34a} .rejected span{color:#dc2626}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.tab{background:#fff;border:1px solid #e2e8f0;color:#334155}
+.tab.active{background:#111827;color:#fff}
+.request{background:#fff;border-radius:18px;padding:19px;margin:14px 0;box-shadow:0 6px 24px rgba(15,23,42,.06)}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.user{display:flex;align-items:center;gap:13px;min-width:0}
+.avatar{width:54px;height:54px;border-radius:50%;overflow:hidden;background:#e8eef8;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.course{font-size:17px;font-weight:800;word-break:break-word}
+.muted{font-size:12px;color:#667085;word-break:break-word}
+.amount{background:#ecfdf3;color:#15803d;border-radius:9px;padding:8px 12px;font-weight:800;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:17px 0}
+.item{background:#f8fafc;border-radius:10px;padding:12px;min-width:0}
+.item b{display:block;font-size:10px;color:#667085;margin-bottom:4px} .item span{font-size:13px;font-weight:600;word-break:break-word}
+.utr{font-size:18px!important;letter-spacing:1px;color:#7c3aed!important}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.approve{background:#16a34a;color:#fff;flex:1;min-width:190px}
+.reject{background:#fee2e2;color:#b91c1c;flex:1;min-width:110px}
+.course-link{background:#eff6ff;color:#1d4ed8;flex:1}
+.empty{text-align:center;padding:45px;background:#fff;border-radius:18px;color:#667085;margin-top:14px}
+.footer{text-align:center;padding:24px;color:#64748b;font-size:12px}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-card{width:400px;max-width:100%;background:#fff;padding:32px;border-radius:20px;box-shadow:0 15px 45px rgba(15,23,42,.12);text-align:center}
+.login-card h1{color:#2563eb;font-size:23px;margin-bottom:7px} .login-card p{color:#64748b;font-size:13px;margin-bottom:20px}
+.input{width:100%;padding:13px 14px;border:1px solid #dbe2ea;border-radius:10px;outline:none;margin-bottom:12px;font-size:14px}
+.input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.login-btn{width:100%;background:#2563eb;color:#fff;border:0;padding:13px;border-radius:10px;font-weight:700;cursor:pointer}
+#error{color:#dc2626;font-size:12px;margin-top:12px}
+#admin{display:none}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.nav{padding:0 13px}.nav h2{font-size:14px}.container{padding:15px 10px 35px}.hero{align-items:flex-start;flex-direction:column}.stats,.grid{grid-template-columns:1fr}.head{align-items:flex-start;flex-direction:column}.amount{align-self:flex-start}.actions{flex-direction:column}}
+
+/* SUPER ADMIN */
+body{background:#f1f5f9!important}
+#superLogin{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#eff6ff,#f8fafc)}
+.super-card{width:410px;max-width:100%;background:#fff;padding:32px;border-radius:22px;box-shadow:0 20px 60px rgba(15,23,42,.14);text-align:center}
+.super-logo{width:78px;height:78px;border-radius:50%;object-fit:cover;margin-bottom:12px}
+.super-card h1{color:#2563eb;font-size:23px} .super-card p{color:#64748b;font-size:12px;margin:6px 0 20px}
+.super-input{width:100%;padding:13px;border:1px solid #dbe2ea;border-radius:10px;margin-bottom:11px;outline:none}
+.super-login{width:100%;border:0;background:#2563eb;color:#fff;padding:13px;border-radius:10px;font-weight:700;cursor:pointer}
+.super-error{color:#dc2626;font-size:12px;margin-top:10px;min-height:18px}
+#superApp{display:none}
+.super-nav{position:sticky;top:0;z-index:9999;height:70px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 5px 20px rgba(15,23,42,.06)}
+.super-brand{font-size:18px;font-weight:800;color:#172033} .super-brand i{color:#2563eb}
+.super-logout{border:0;background:#fee2e2;color:#b91c1c;padding:9px 13px;border-radius:9px;font-weight:700;cursor:pointer}
+.switch-wrap{display:flex;justify-content:center;padding:16px 12px;background:#f8fafc}
+.switch{position:relative;display:grid;grid-template-columns:1fr 1fr;background:#e5e7eb;border-radius:13px;padding:4px;width:min(520px,100%);box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+.switch-pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);background:#2563eb;border-radius:10px;transition:.25s;box-shadow:0 4px 12px rgba(37,99,235,.25)}
+.switch.course .switch-pill{transform:translateX(100%)}
+.switch button{position:relative;z-index:2;border:0;background:transparent;padding:12px 14px;border-radius:10px;font-weight:800;color:#475569;cursor:pointer}
+.switch button.active{color:#fff}
+.panel{display:none} .panel.active{display:block}
+.main-panel-shell{max-width:1120px;margin:auto}
+.course-panel-shell{min-height:calc(100vh - 125px)}
+#mainPanel .navbar{display:none} #coursePanel .nav{display:none}
+#mainPanel .dashboard{padding-top:24px}
+@media(max-width:600px){.super-nav{padding:0 12px}.super-brand{font-size:14px}.super-logout{font-size:11px}}
+</style></head><body>
+<div id="superLogin">
+ <div class="super-card">
+  <img class="super-logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg">
+  <h1><i class="fa-solid fa-user-shield"></i> Super Admin Login</h1>
+  <p>One login • News Admin + Course Approval Admin</p>
+  <input id="superEmail" class="super-input" type="email" placeholder="Admin Email" autocomplete="username">
+  <input id="superPassword" class="super-input" type="password" placeholder="Password" autocomplete="current-password">
+  <button id="superLoginBtn" class="super-login"><i class="fa-solid fa-right-to-bracket"></i> Fast Login</button>
+  <div id="superError" class="super-error"></div>
+ </div>
+</div>
+<div id="superApp">
+ <nav class="super-nav"><div class="super-brand"><i class="fa-solid fa-shield-halved"></i> Diploma Engineers Admin</div><button id="superLogout" class="super-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></nav>
+ <div class="switch-wrap"><div id="switch" class="switch"><div class="switch-pill"></div><button id="newsTab" class="active"><i class="fa-solid fa-newspaper"></i> NEWS ADMIN</button><button id="courseTab"><i class="fa-solid fa-graduation-cap"></i> COURSE ADMIN</button></div></div>
+ <section id="mainPanel" class="panel active"><div class="main-panel-shell">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <h2>
+            <i class="fa-solid fa-user-shield"></i>
+            Diploma Engineers Admin
+        </h2>
+        <button class="logout" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </button>
+    </nav>
+
+
+    <!-- DASHBOARD -->
+    <main class="dashboard">
+
+        <!-- WELCOME -->
+        <div class="welcome">
+            <h1>Welcome Admin</h1>
+            <p>Manage Diploma Engineers News & Study Material</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="cards">
+            <div class="stat-card">
+                <i class="fa-solid fa-newspaper"></i>
+                <h3 id="newsCount">0</h3>
+                <p>Published News</p>
+            </div>
+
+            <div class="stat-card">
+                <i class="fa-solid fa-file-pdf"></i>
+                <h3>Cloudinary</h3>
+                <p>Image & PDF Storage</p>
+            </div>
+
+            <div class="stat-card">
+                <i class="fa-solid fa-database"></i>
+                <h3>Firebase</h3>
+                <p>Realtime Database</p>
+            </div>
+        </div>
+
+        <!-- ADD NEWS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-newspaper"></i>
+                Publish News
+            </h2>
+
+            <label class="label">News Title</label>
+            <input class="input" id="newsTitle" maxlength="200" placeholder="Enter News Title">
+
+            <label class="label">News Description</label>
+            <textarea class="input" id="newsText" maxlength="3000" placeholder="Enter News Description"></textarea>
+
+            <div class="book-grid">
+                <div>
+                    <label class="label">Category</label>
+                    <select id="newsCategory" class="input">
+                        <option value="News">News</option>
+                        <option value="Notice">Notice</option>
+                        <option value="Result">Result</option>
+                        <option value="Admission">Admission</option>
+                        <option value="Scholarship">Scholarship</option>
+                        <option value="Job">Job</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="label">Publish Status</label>
+                    <input class="input" value="Ready to Publish" readonly>
+                </div>
+            </div>
+
+            <label class="label">Thumbnail Image</label>
+            <div class="file-box">
+                <input type="file" id="imageFile" accept="image/jpeg,image/png,image/webp">
+                <small>JPG, PNG or WEBP recommended</small>
+            </div>
+
+            <label class="label">OR Image URL</label>
+            <input class="input" id="imageUrlInput" type="url" placeholder="https://example.com/image.jpg">
+
+            <div id="imagePreviewBox">
+                <img id="imagePreview" alt="Thumbnail Preview">
+            </div>
+
+            <label class="label">PDF / Document</label>
+            <div class="file-box">
+                <input type="file" id="pdfFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
+                <small>PDF, DOC, XLS, PPT or ZIP</small>
+            </div>
+
+            <label class="label">External Link</label>
+            <input class="input" id="externalLink" type="url" placeholder="https://example.com">
+
+            <div id="uploadStatus">
+                <div id="statusText">Preparing upload...</div>
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="primary-btn" id="publishBtn">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Publish News
+                </button>
+                <button class="clear-btn" id="clearBtn">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Clear
+                </button>
+            </div>
+        </section>
+
+        <!-- BOOKS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-book-open"></i>
+                Add Study Material
+            </h2>
+
+            <div class="book-grid">
+                <input class="input" id="bookName" placeholder="Book / Material Name">
+                <input class="input" id="semester" placeholder="Semester">
+                <input class="input" id="branch" placeholder="Branch">
+                <input class="input" id="bookLink" type="url" placeholder="PDF / Book Link">
+            </div>
+
+            <button class="primary-btn" id="bookBtn">
+                <i class="fa-solid fa-plus"></i>
+                Add Study Material
+            </button>
+        </section>
+
+        <!-- NEWS DATABASE -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-server"></i>
+                Published News
+            </h2>
+            <div id="newsList" class="news-list">
+                Loading News...
+            </div>
+        </section>
+
+        <!-- DATABASE RECORDS -->
+        <section class="box">
+            <h2>
+                <i class="fa-solid fa-database"></i>
+                Database Records
+            </h2>
+            <div id="dataList">
+                Loading...
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <h3>Diploma Engineers</h3>
+        <p>Secure Admin Management Panel</p>
+        <p>© 2026 Diploma Engineers</p>
+    </footer>
+
+</div></section>
+ <section id="coursePanel" class="panel"><div class="course-panel-shell">
+<nav class="nav">
+  <h2><i class="fa-solid fa-user-shield"></i> Diploma Engineers — Course Admin</h2>
+  <button class="logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+</nav>
+
+<main class="container">
+  <div class="hero">
+    <div>
+      <h1><i class="fa-solid fa-graduation-cap"></i> Course Requests & Approval</h1>
+      <p>Review UTR/payment requests, approve genuine payments, and grant course access.</p>
+    </div>
+    <button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+  </div>
+
+  <div id="notice" class="notice">Login required.</div>
+  <div class="notice" style="background:#eff6ff;color:#1e40af">
+    <b>Admin Security:</b> Only the configured Firebase Admin UID can access this Course Approval Panel.
+  </div>
+
+  <div class="stats">
+    <div class="stat total"><b>Total Requests</b><span id="totalCount">0</span></div>
+    <div class="stat pending"><b>Requested / Pending</b><span id="pendingCount">0</span></div>
+    <div class="stat verified"><b>Approved</b><span id="verifiedCount">0</span></div>
+    <div class="stat rejected"><b>Rejected</b><span id="rejectedCount">0</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="btn tab active" data-filter="pending"><i class="fa-solid fa-clock"></i> Requested</button>
+    <button class="btn tab" data-filter="verified"><i class="fa-solid fa-circle-check"></i> Approved</button>
+    <button class="btn tab" data-filter="rejected"><i class="fa-solid fa-circle-xmark"></i> Rejected</button>
+    <button class="btn tab" data-filter="all"><i class="fa-solid fa-list"></i> All</button>
+  </div>
+
+  <div id="list"><div class="empty">Login to load purchase requests.</div></div>
+</main>
+
+<footer class="footer">
+  <b>Diploma Engineers</b><br>
+  Secure Course Approval Admin Panel • © 2026
+</footer>
+</div></section>
+</div>
+<script type="module">
+// ===== MAIN FIREBASE =====
+
+
+/* =====================================================
+   FIREBASE IMPORT
+===================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+/* =====================================================
+   FIREBASE CONFIG
+===================================================== */
+const firebaseConfig = {
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+};
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const CLOUD_NAME = "ub0qgzwa";
+const UPLOAD_PRESET = "news_upload";
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+const pageLoader = document.getElementById("page-loader");
+const loginPage = document.getElementById("loginPage");
+const adminPanel = document.getElementById("adminPanel");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const errorBox = document.getElementById("error");
+
+const publishBtn = document.getElementById("publishBtn");
+const clearBtn = document.getElementById("clearBtn");
+const imageFile = document.getElementById("imageFile");
+const imageUrlInput = document.getElementById("imageUrlInput");
+const pdfFile = document.getElementById("pdfFile");
+const imagePreviewBox = document.getElementById("imagePreviewBox");
+const imagePreview = document.getElementById("imagePreview");
+const uploadStatus = document.getElementById("uploadStatus");
+const statusText = document.getElementById("statusText");
+const progressBar = document.getElementById("progressBar");
+const newsList = document.getElementById("newsList");
+const dataList = document.getElementById("dataList");
+const newsCount = document.getElementById("newsCount");
+
+
+
+
+/* =====================================================
+   IMAGE PREVIEW
+===================================================== */
+imageFile.addEventListener("change", () => {
+    const file = imageFile.files[0];
+    if (!file) {
+        imagePreviewBox.style.display = "none";
         return;
     }
 
-    if(!validDOB(dob)){
-        alert("Enter DOB in DD/MM/YYYY");
+    if (!file.type.startsWith("image/")) {
+        alert("Please select an image.");
+        imageFile.value = "";
         return;
     }
 
-    let encEnroll = btoa(enroll); // KEEP E
-    let encDob = encodeURIComponent(btoa(dob));
+    const url = URL.createObjectURL(file);
+    imagePreview.src = url;
+    imagePreviewBox.style.display = "block";
+});
 
-    finalURL = `https://result.bteexam.com/Odd_Semester/reval/REVAL_RollNo.aspx?id=${encEnroll}&id2=${encDob}`;
 
-    document.getElementById("msg").classList.add("active");
-    document.getElementById("openBtn").classList.add("active");
+/* =====================================================
+   IMAGE COMPRESSION
+===================================================== */
+async function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            const MAX_WIDTH = 1400;
+
+            if (width > MAX_WIDTH) {
+                height = height * MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url);
+                if (!blob) {
+                    reject(new Error("Image compression failed"));
+                    return;
+                }
+                const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+                resolve(compressed);
+            }, "image/jpeg", 0.82);
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Unable to read image"));
+        };
+
+        img.src = url;
+    });
 }
 
-// OPEN RESULT
-function openResult(){
-    if(finalURL){
-        window.open(finalURL, "_blank");
+
+/* =====================================================
+   CLOUDINARY UPLOAD
+===================================================== */
+function uploadToCloudinary(file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+
+        xhr.open("POST", url, true);
+
+        xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                if (onProgress) onProgress(percent);
+            }
+        };
+
+        xhr.onload = function() {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
+                    resolve(data);
+                } else {
+                    reject(new Error(data.error?.message || "Cloudinary upload failed"));
+                }
+            } catch (error) {
+                reject(new Error("Invalid Cloudinary response"));
+            }
+        };
+
+        xhr.onerror = function() {
+            reject(new Error("Network error during upload"));
+        };
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+
+        xhr.send(formData);
+    });
+}
+
+
+/* =====================================================
+   PUBLISH NEWS
+===================================================== */
+publishBtn.addEventListener("click", async () => {
+    const title = document.getElementById("newsTitle").value.trim();
+    const text = document.getElementById("newsText").value.trim();
+    const category = document.getElementById("newsCategory").value;
+    const externalLink = document.getElementById("externalLink").value.trim();
+
+    if (!title || !text) {
+        alert("Please enter News Title and Description.");
+        return;
+    }
+
+    publishBtn.disabled = true;
+    clearBtn.disabled = true;
+    uploadStatus.style.display = "block";
+    progressBar.style.width = "0%";
+    statusText.innerText = "Preparing upload...";
+
+    try {
+        let finalImageUrl = imageUrlInput.value.trim();
+        let finalPdfUrl = "";
+
+        let imagePromise = null;
+        let pdfPromise = null;
+
+        if (imageFile.files.length) {
+            statusText.innerText = "Compressing image...";
+            const compressedImage = await compressImage(imageFile.files[0]);
+            imagePromise = uploadToCloudinary(compressedImage, (percent) => {
+                progressBar.style.width = percent + "%";
+                statusText.innerText = `Uploading image ${percent}%`;
+            });
+        }
+
+        if (pdfFile.files.length) {
+            pdfPromise = uploadToCloudinary(pdfFile.files[0], (percent) => {
+                statusText.innerText = `Uploading PDF ${percent}%`;
+            });
+        }
+
+        if (imagePromise || pdfPromise) {
+            statusText.innerText = "Uploading files...";
+            const results = await Promise.all([imagePromise, pdfPromise]);
+            if (results[0]) finalImageUrl = results[0].secure_url;
+            if (results[1]) finalPdfUrl = results[1].secure_url;
+        }
+
+        statusText.innerText = "Saving news to Firebase...";
+        const newsRef = push(ref(db, "news"));
+
+        await set(newsRef, {
+            title: title,
+            text: text,
+            desc: text,
+            thumb: finalImageUrl,
+            image: finalImageUrl,
+            pdf: finalPdfUrl,
+            link: externalLink,
+            cat: category,
+            category: category,
+            date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+            timestamp: Date.now()
+        });
+
+        statusText.innerText = "Published successfully.";
+        progressBar.style.width = "100%";
+        alert("News Published Successfully!");
+        clearForm();
+
+    } catch (error) {
+        console.error("Publish Error:", error);
+        alert("Upload failed:\n" + error.message);
+    } finally {
+        publishBtn.disabled = false;
+        clearBtn.disabled = false;
+        setTimeout(() => { uploadStatus.style.display = "none"; }, 1200);
+    }
+});
+
+
+/* =====================================================
+   CLEAR FORM
+===================================================== */
+function clearForm() {
+    document.getElementById("newsTitle").value = "";
+    document.getElementById("newsText").value = "";
+    document.getElementById("externalLink").value = "";
+    document.getElementById("newsCategory").value = "News";
+    imageFile.value = "";
+    pdfFile.value = "";
+    imageUrlInput.value = "";
+    imagePreview.src = "";
+    imagePreviewBox.style.display = "none";
+}
+
+clearBtn.addEventListener("click", clearForm);
+
+
+/* =====================================================
+   LOAD NEWS
+===================================================== */
+function loadNews() {
+    const newsRef = ref(db, "news");
+
+    onValue(newsRef, (snapshot) => {
+        newsList.innerHTML = "";
+
+        if (!snapshot.exists()) {
+            newsList.innerHTML = "<p>No News Published Yet.</p>";
+            newsCount.innerText = "0";
+            return;
+        }
+
+        const items = [];
+        snapshot.forEach((child) => {
+            items.push({ id: child.key, ...child.val() });
+        });
+
+        items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        newsCount.innerText = items.length;
+
+        items.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "news-card";
+
+            const thumb = document.createElement("div");
+            thumb.className = "news-thumb";
+
+            if (item.thumb) {
+                const img = document.createElement("img");
+                img.src = item.thumb;
+                img.loading = "lazy";
+                img.alt = item.title || "News";
+                thumb.appendChild(img);
+            } else {
+                thumb.innerHTML = '<i class="fa-solid fa-newspaper no-image"></i>';
+            }
+
+            const content = document.createElement("div");
+            content.className = "news-content";
+
+            const heading = document.createElement("h3");
+            heading.innerText = item.title || "Untitled";
+
+            const meta = document.createElement("div");
+            meta.className = "meta";
+            meta.innerText = `${item.cat || item.category || "News"} • ${item.date || ""}`;
+
+            const description = document.createElement("p");
+            description.innerText = item.text || item.desc || "";
+
+            const links = document.createElement("div");
+            links.className = "links";
+
+            if (item.thumb) {
+                const a = document.createElement("a");
+                a.href = item.thumb;
+                a.target = "_blank";
+                a.className = "image-link";
+                a.innerHTML = '<i class="fa-solid fa-image"></i> Image';
+                links.appendChild(a);
+            }
+
+            if (item.pdf) {
+                const a = document.createElement("a");
+                a.href = item.pdf;
+                a.target = "_blank";
+                a.className = "pdf-link";
+                a.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF / File';
+                links.appendChild(a);
+            }
+
+            if (item.link) {
+                const a = document.createElement("a");
+                a.href = item.link;
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "external-link";
+                a.innerHTML = '<i class="fa-solid fa-link"></i> Link';
+                links.appendChild(a);
+            }
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            deleteBtn.onclick = () => deleteNews(item.id);
+
+            links.appendChild(deleteBtn);
+            content.appendChild(heading);
+            content.appendChild(meta);
+            content.appendChild(description);
+            content.appendChild(links);
+
+            card.appendChild(thumb);
+            card.appendChild(content);
+
+            newsList.appendChild(card);
+        });
+    }, (error) => {
+        console.error("News Load Error:", error);
+        newsList.innerHTML = `<p style="color:#dc2626">Unable to Load News</p>`;
+    });
+}
+
+
+/* =====================================================
+   DELETE NEWS
+===================================================== */
+async function deleteNews(id) {
+    if (!confirm("Delete this news?")) return;
+
+    try {
+        await remove(ref(db, "news/" + id));
+        alert("News Deleted Successfully");
+    } catch (error) {
+        console.error(error);
+        alert("Delete failed: " + error.message);
     }
 }
-</script>
 
-</body>
-</html>
+
+/* =====================================================
+   ADD STUDY MATERIAL
+===================================================== */
+document.getElementById("bookBtn").addEventListener("click", async () => {
+    const name = document.getElementById("bookName").value.trim();
+    const semester = document.getElementById("semester").value.trim();
+    const branch = document.getElementById("branch").value.trim();
+    const link = document.getElementById("bookLink").value.trim();
+
+    if (!name || !link) {
+        alert("Enter Book Name and PDF Link.");
+        return;
+    }
+
+    const bookRef = push(ref(db, "books"));
+
+    try {
+        await set(bookRef, {
+            name: name,
+            semester: semester,
+            branch: branch,
+            link: link,
+            date: new Date().toLocaleString("en-IN"),
+            timestamp: Date.now()
+        });
+
+        alert("Study Material Added!");
+        document.getElementById("bookName").value = "";
+        document.getElementById("semester").value = "";
+        document.getElementById("branch").value = "";
+        document.getElementById("bookLink").value = "";
+    } catch (error) {
+        console.error(error);
+        alert("Book Add Failed: " + error.message);
+    }
+});
+
+
+/* =====================================================
+   LOAD DATABASE RECORDS
+===================================================== */
+function loadDatabase() {
+    const rootRef = ref(db);
+
+    onValue(rootRef, (snapshot) => {
+        dataList.innerHTML = "";
+        const data = snapshot.val();
+
+        if (!data) {
+            dataList.innerText = "No Data Found";
+            return;
+        }
+
+        Object.keys(data).forEach((section) => {
+            const sectionData = data[section];
+            if (!sectionData || typeof sectionData !== "object") return;
+
+            Object.keys(sectionData).slice(-30).forEach((id) => {
+                const item = sectionData[id];
+                const div = document.createElement("div");
+
+                const title = item.title || item.name || "Record";
+                const text = item.text || item.desc || item.link || "";
+
+                div.innerHTML = `
+                    <b>Section: ${escapeHTML(section)}</b><br><br>
+                    <strong>${escapeHTML(title)}</strong><br>
+                    <small>${escapeHTML(text)}</small><br><br>
+                    <button style="background:#dc2626;color:#fff;border:0;padding:7px 12px;border-radius:7px;cursor:pointer;" data-section="${escapeHTML(section)}" data-id="${escapeHTML(id)}">
+                        Delete
+                    </button>
+                `;
+
+                const btn = div.querySelector("button");
+                btn.addEventListener("click", () => {
+                    deleteDatabaseItem(section, id);
+                });
+
+                dataList.appendChild(div);
+            });
+        });
+    });
+}
+
+
+/* =====================================================
+   DELETE DATABASE ITEM
+===================================================== */
+async function deleteDatabaseItem(section, id) {
+    if (!confirm("Delete this database record?")) return;
+
+    try {
+        await remove(ref(db, section + "/" + id));
+        alert("Deleted Successfully");
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
+/* =====================================================
+   HELPER: ESCAPE HTML
+===================================================== */
+function escapeHTML(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+           }
+
+   /* =====================================================
+   INITIAL LOADER ANIMATION
+===================================================== */
+document.addEventListener("DOMContentLoaded", function() {
+    const loader = document.getElementById("page-loader");
+    const bar = document.getElementById("loader-progress-bar");
+    const percent = document.getElementById("progress-percent");
+
+    let progress = 0;
+    document.body.style.overflow = "hidden";
+
+    const timer = setInterval(function() {
+        progress += Math.floor(Math.random() * 5) + 2;
+
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(timer);
+
+            if (bar) bar.style.width = progress + "%";
+            if (percent) percent.textContent = progress + "%";
+
+            setTimeout(function() {
+                if (loader) loader.classList.add("hide");
+                document.body.style.overflow = "";
+            }, 450);
+
+            return;
+        }
+
+        if (bar) bar.style.width = progress + "%";
+        if (percent) percent.textContent = progress + "%";
+    }, 45);
+});
+
+/* Loader Fail-Safe */
+setTimeout(function() {
+    const loader = document.getElementById("page-loader");
+    if (loader && !loader.classList.contains("hide")) {
+        loader.classList.add("hide");
+        document.body.style.overflow = "";
+    }
+}, 5000);
+
+
+// ===== COURSE FIREBASE =====
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, onValue, get, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const courseFirebaseConfig = {
+    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+    authDomain: "diploma-app-9a378.firebaseapp.com",
+    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+    projectId: "diploma-app-9a378",
+    storageBucket: "diploma-app-9a378.firebasestorage.app",
+    messagingSenderId: "160233059797",
+    appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
+    measurementId: "G-9646VK4C6L"
+};
+const courseApp = initializeApp(courseFirebaseConfig, "courseApprovalApp");
+const courseAuth = getAuth(courseApp);
+const courseDb = getDatabase(courseApp);
+
+// ============================================================
+// COURSE ADMIN SECURITY
+// Replace YOUR_ADMIN_UID with the Firebase Authentication UID
+// of the authorized Course Admin account.
+// This UID must also be added in Course Firebase Database:
+// admins/YOUR_ADMIN_UID = true
+// ============================================================
+const ADMIN_UID = "YOUR_ADMIN_UID";
+
+function isCourseAdmin(user) {
+  return !!user && ADMIN_UID !== "YOUR_ADMIN_UID" && user.uid === ADMIN_UID;
+}
+
+
+const COURSE_FILES = {
+  "civil-year-2-course":"civil-year-2-course.html",
+  "mechanical-year-2-course":"mechanical-year-2-course.html",
+  "cs-year-2-course":"cs-year-2-course.html",
+  "it-year-2-course":"it-year-2-course.html",
+  "electrical-year-2-course":"electrical-year-2-course.html",
+  "electronics-year-2-course":"electronics-year-2-course.html",
+  "agriculture-year-2-course":"agriculture-year-2-course.html",
+  "chemical-year-2-course":"chemical-year-2-course.html"
+};
+
+let rows = [];
+let courseFilter = "pending";
+let stopListening = null;
+let starting = false;
+
+const $ = id => document.getElementById(id);
+function esc(v) {
+  return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+function fmt(v) {
+  if(!v) return "-";
+  const n = Number(v);
+  if(!Number.isFinite(n)) return "-";
+  return new Date(n).toLocaleString("en-IN", {dateStyle:"medium",timeStyle:"short"});
+}
+function statusOf(d) { return String(d.status || "pending").toLowerCase(); }
+function courseFile(id) { return COURSE_FILES[id] || ""; }
+function setNotice(text,type="warn") {
+  $("notice").className = "notice " + (type==="ok"?"ok":type==="err"?"err":"");
+  $("notice").innerHTML = text;
+}
+
+function flatten(snapshot) {
+  const out = [];
+  if(!snapshot.exists()) return out;
+  snapshot.forEach(uidSnap => {
+    const uid = uidSnap.key, value = uidSnap.val() || {};
+    Object.entries(value).forEach(([courseId, courseValue]) => {
+      if(!courseValue || typeof courseValue !== "object") return;
+      Object.entries(courseValue).forEach(([purchaseKey,purchaseValue]) => {
+        if(!purchaseValue || typeof purchaseValue !== "object") return;
+        out.push({uid,courseId,purchaseKey,...purchaseValue});
+      });
+    });
+  });
+  return out.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));
+}
+
+function render() {
+  const counts={pending:0,verified:0,rejected:0};
+  rows.forEach(r=>{const s=statusOf(r); if(counts[s]!==undefined) counts[s]++;});
+  $("totalCount").textContent=rows.length;
+  $("pendingCount").textContent=counts.pending;
+  $("verifiedCount").textContent=counts.verified;
+  $("rejectedCount").textContent=counts.rejected;
+
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.filter===courseFilter));
+  const data=courseFilter==="all"?rows:rows.filter(r=>statusOf(r)===courseFilter);
+
+  if(!data.length) {
+    $("list").innerHTML=`<div class="empty"><i class="fa-solid fa-circle-check" style="font-size:30px"></i><p style="margin-top:8px">No ${esc(courseFilter)} requests.</p></div>`;
+    return;
+  }
+
+  $("list").innerHTML=data.map(d=>{
+    const name=d.name||"Engineer", branch=d.branch||"Diploma Member";
+    const pic=d.profilePic||d.photoURL||"", initial=(name.trim()[0]||"E").toUpperCase();
+    const avatar=pic?`<img src="${esc(pic)}" alt="Profile" onerror="this.parentElement.innerHTML='${initial}'">`:initial;
+    const file=courseFile(d.courseId), s=statusOf(d);
+    let actions="";
+    if(s==="pending") {
+      actions=`<button class="btn approve" data-action="approve" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-circle-check"></i> Approve Payment & Give Access</button>
+      <button class="btn reject" data-action="reject" data-uid="${esc(d.uid)}" data-course="${esc(d.courseId)}" data-key="${esc(d.purchaseKey)}"><i class="fa-solid fa-xmark"></i> Reject</button>`;
+    } else if(s==="verified") {
+      actions=`<button class="btn course-link" data-file="${esc(file)}" ${file?"":"disabled"}><i class="fa-solid fa-file-code"></i> ${file?"Open Course File":"Course File Not Mapped"}</button>`;
+    } else {
+      actions=`<div class="muted"><i class="fa-solid fa-circle-xmark"></i> This request was rejected.</div>`;
+    }
+    return `<article class="request">
+      <div class="head">
+        <div class="user"><div class="avatar">${avatar}</div><div>
+          <div class="course">${esc(d.courseName||d.courseId||"Course")}</div>
+          <div class="muted">${esc(name)} • ${esc(branch)} • ${esc(d.email||"-")}</div>
+        </div></div>
+        <div class="amount">₹${esc(d.amount||99)}</div>
+      </div>
+      <div class="grid">
+        <div class="item"><b>NAME</b><span>${esc(name)}</span></div>
+        <div class="item"><b>BRANCH</b><span>${esc(branch)}</span></div>
+        <div class="item"><b>MOBILE</b><span>${esc(d.mobile||"-")}</span></div>
+        <div class="item"><b>EMAIL</b><span>${esc(d.email||"-")}</span></div>
+        <div class="item"><b>COURSE</b><span>${esc(d.courseName||d.courseId||"-")}</span></div>
+        <div class="item"><b>AMOUNT</b><span>₹${esc(d.amount||99)} INR</span></div>
+        <div class="item"><b>UTR</b><span class="utr">${esc(d.utr||"-")}</span></div>
+        <div class="item"><b>SUBMITTED</b><span>${esc(fmt(d.submittedAt))}</span></div>
+        <div class="item"><b>STATUS</b><span>${esc(s.toUpperCase())}</span></div>
+      </div>
+      <div class="actions">${actions}</div>
+    </article>`;
+  }).join("");
+}
+
+async function connect() {
+  if(starting) return;
+  starting=true;
+  if(stopListening) { stopListening(); stopListening=null; }
+  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Course Firebase...');
+  try {
+    if(!courseAuth.currentUser) throw new Error("Course Firebase admin session is not signed in.");
+    stopListening=onValue(ref(courseDb,"utrPurchases"),snap=>{
+      rows=flatten(snap);
+      setNotice(`Course Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR before approving.`,"ok");
+      render();
+    },err=>setNotice("Firebase database error: "+esc(err.message),"err"));
+  } catch(e) {
+    setNotice("Course Firebase error: "+esc(e.message),"err");
+  } finally { starting=false; }
+}
+
+async function approve(uid,courseId,key,button) {
+  if(!confirm("Confirm that the payment and UTR are genuine. This will grant course access.")) return;
+  const old=button.innerHTML;
+  button.disabled=true; button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
+  try {
+    // IMPORTANT: both purchase status and course access are written to the Course Firebase.
+    const purchaseRef=ref(courseDb,`utrPurchases/${uid}/${courseId}/${key}`);
+    const snap=await get(purchaseRef);
+    if(!snap.exists()) throw new Error("Purchase request not found.");
+    const d=snap.val()||{}, now=Date.now();
+    const adminEmail=courseAuth.currentUser?.email||"admin";
+    await update(purchaseRef,{status:"verified",verified:true,verifiedAt:now,verifiedBy:adminEmail});
+    await set(ref(courseDb,`courseAccess/${uid}/${courseId}`),{
+      uid,courseId,courseName:d.courseName||courseId,amount:Number(d.amount)||99,
+      currency:"INR",utr:d.utr||"",verified:true,status:"verified",
+      purchaseId:d.purchaseId||key,grantedAt:now,verifiedBy:adminEmail
+    });
+    alert("Payment approved successfully. Course access granted.");
+  } catch(e) {
+    alert("Approve failed:\n\n"+e.message);
+    button.disabled=false; button.innerHTML=old;
+  }
+}
+
+async function reject(uid,courseId,key,button) {
+  if(!confirm("Reject this UTR/payment request?")) return;
+  const old=button.innerHTML;
+  button.disabled=true; button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Rejecting...';
+  try {
+    await update(ref(courseDb,`utrPurchases/${uid}/${courseId}/${key}`),{
+      status:"rejected",verified:false,rejectedAt:Date.now(),
+      rejectedBy:(courseAuth.currentUser?.email||"admin")
+    });
+    alert("Request rejected.");
+  } catch(e) {
+    alert("Reject failed:\n\n"+e.message);
+    button.disabled=false; button.innerHTML=old;
+  }
+}
+
+
+
+
+
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{courseFilter=b.dataset.filter;render();}));
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-action]");
+  if(b) {
+    const args=[b.dataset.uid,b.dataset.course,b.dataset.key,b];
+    b.dataset.action==="approve"?approve(...args):reject(...args);
+    return;
+  }
+  const cb=e.target.closest("[data-file]");
+  if(cb&&cb.dataset.file) window.open(cb.dataset.file,"_blank","noopener,noreferrer");
+});
+
+
+
+// ===== SHARED FAST LOGIN =====
+const ADMIN_MAIN_UID = "YOUR_MAIN_ADMIN_UID";
+const ADMIN_COURSE_UID = "YOUR_COURSE_ADMIN_UID";
+let mainLogged=false, courseLogged=false;
+const loginPage=document.getElementById('superLogin'); const appShell=document.getElementById('superApp');
+const err=document.getElementById('superError'); const loginButton=document.getElementById('superLoginBtn');
+function setPanel(which){
+ document.getElementById('mainPanel').classList.toggle('active',which==='news');
+ document.getElementById('coursePanel').classList.toggle('active',which==='course');
+ document.getElementById('newsTab').classList.toggle('active',which==='news');
+ document.getElementById('courseTab').classList.toggle('active',which==='course');
+ document.getElementById('switch').classList.toggle('course',which==='course');
+}
+document.getElementById('newsTab').onclick=()=>setPanel('news');
+document.getElementById('courseTab').onclick=()=>setPanel('course');
+document.getElementById('superLogout').onclick=async()=>{await Promise.allSettled([signOut(auth),signOut(courseAuth)]);location.reload();};
+async function fastLogin(){
+ const email=document.getElementById('superEmail').value.trim(), pass=document.getElementById('superPassword').value;
+ if(!email||!pass){err.textContent='Enter Email and Password';return;}
+ err.textContent='';loginButton.disabled=true;loginButton.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Secure Login...';
+ try{
+   const [m,c]=await Promise.all([signInWithEmailAndPassword(auth,email,pass),signInWithEmailAndPassword(courseAuth,email,pass)]);
+   mainLogged=!!m.user;courseLogged=!!c.user;
+   if(ADMIN_MAIN_UID!=='YOUR_MAIN_ADMIN_UID' && m.user.uid!==ADMIN_MAIN_UID) throw new Error('News Admin UID is not authorized.');
+   if(ADMIN_COURSE_UID!=='YOUR_COURSE_ADMIN_UID' && c.user.uid!==ADMIN_COURSE_UID) throw new Error('Course Admin UID is not authorized.');
+   loginPage.style.display='none';appShell.style.display='block';
+   try{loadNews();loadDatabase();}catch(e){console.warn('News panel load:',e)}
+   try{connect();}catch(e){console.warn('Course panel load:',e)}
+ }catch(e){
+   await Promise.allSettled([signOut(auth),signOut(courseAuth)]);mainLogged=false;courseLogged=false;
+   err.textContent=e.code==='auth/invalid-credential'?'Wrong Email or Password.':e.message;
+ }finally{loginButton.disabled=false;loginButton.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Fast Login';}
+}
+loginButton.onclick=fastLogin;
+document.getElementById('superPassword').addEventListener('keydown',e=>{if(e.key==='Enter')fastLogin();});
+// Existing child auth listeners are intentionally neutralized by the shared login UI.
+</script></body></html>

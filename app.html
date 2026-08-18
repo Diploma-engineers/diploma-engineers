@@ -1869,14 +1869,17 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
     </div>
 
     <!-- PREMIUM ACCESS CARD -->
-    <div class="blue-theme-card-1" onclick="navigateTo('coursePage')">
-      <div class="content">
+    <div class="blue-theme-card-1" id="homeUnlockCard" onclick="navigateTo('coursePage')">
+      <div class="content" id="homeUnlockDefault">
         <h4>Unlock Courses 🚀</h4>
         <p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>
       </div>
-      <div class="icon-box">
+      <div class="icon-box" id="homeUnlockIcon">
         <i class="fas fa-graduation-cap"></i>
       </div>
+    </div>
+    <div id="approvedHomeCourses" class="approved-home-wrap">
+      <div class="approved-home-grid" id="approvedHomeGrid"></div>
     </div>
 
     <!-- SEMESTER CARDS -->
@@ -4362,6 +4365,20 @@ window.addEventListener('DOMContentLoaded', () => {
 .payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
 .payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;gap:12px;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.utr-input:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12)}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
 </style>
+<style>
+/* APPROVED COURSE CARDS ON HOME */
+.approved-home-wrap{margin-top:12px;display:none}
+.approved-home-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:650px){.approved-home-grid{grid-template-columns:repeat(2,1fr)}}
+.approved-home-card{background:#fff;border:1px solid #dbeafe;border-radius:16px;padding:15px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:0 7px 20px rgba(15,23,42,.07);transition:transform .18s,box-shadow .18s}
+.approved-home-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(15,23,42,.12)}
+.approved-home-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:20px;flex:none}
+.approved-home-info{min-width:0;flex:1}
+.approved-home-info h5{margin:0 0 4px;font-size:14px;font-weight:800;color:#172033}
+.approved-home-info p{margin:0;color:#64748b;font-size:11px;line-height:1.4}
+.approved-home-open{border:0;border-radius:9px;background:#2563eb;color:#fff;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+.approved-home-status{display:inline-flex;align-items:center;gap:4px;margin-top:6px;color:#15803d;font-size:10px;font-weight:800}
+</style>
 <div id="paymentOverlay" class="payment-overlay" aria-hidden="true">
  <div class="payment-modal" role="dialog" aria-modal="true">
   <div class="payment-head"><h3>Course Purchase • ₹99</h3><button class="payment-close" id="paymentClose" type="button">×</button></div>
@@ -4385,10 +4402,85 @@ const courseNames={
  "civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2"
 };
 const overlay=document.getElementById('paymentOverlay'), courseNameEl=document.getElementById('paymentCourseName'), utrEl=document.getElementById('paymentUTR'), submitEl=document.getElementById('paymentSubmit'), statusEl=document.getElementById('paymentStatus');
-let db2=null,auth2=null,currentUid=null,currentUser=null,currentCourse=null,accessStop=null;
+let db2=null,auth2=null,currentUid=null,currentUser=null,currentCourse=null,accessStop=null,approvedAccessStop=null;
+
+function escapeHome(v){return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+function renderApprovedHomeCourses(accessData){
+  const wrap=document.getElementById('approvedHomeCourses');
+  const grid=document.getElementById('approvedHomeGrid');
+  const def=document.getElementById('homeUnlockDefault');
+  const icon=document.getElementById('homeUnlockIcon');
+  const homeCard=document.getElementById('homeUnlockCard');
+  if(!wrap||!grid)return;
+  const approved=[];
+  Object.entries(accessData||{}).forEach(([courseId,d])=>{
+    if(!d||typeof d!=='object')return;
+    if(d.verified===true || d.status==='verified') approved.push({courseId,...d});
+  });
+  if(!approved.length){
+    wrap.style.display='none';
+    if(homeCard)homeCard.style.display='flex';
+    if(def){def.style.display='block';def.innerHTML='<h4>Unlock Courses 🚀</h4><p>Get exclusive video courses, handwritten notes, PYQ solutions & e-books.</p>';}
+    if(icon)icon.innerHTML='<i class="fas fa-graduation-cap"></i>';
+    return;
+  }
+  if(homeCard)homeCard.style.display='none';
+  if(def){def.innerHTML='<h4>My Purchased Courses 🎓</h4><p>Your verified course access is ready. Open your course below.</p>';}
+  if(icon)icon.innerHTML='<i class="fas fa-circle-check"></i>';
+  wrap.style.display='block';
+  grid.innerHTML=approved.map(d=>{
+    const id=escapeHome(d.courseId);
+    const name=escapeHome(d.courseName||courseNames[d.courseId]||d.courseId);
+    const file=courseFileForHome(d.courseId);
+    return `<div class="approved-home-card" role="button" tabindex="0" data-approved-course="${id}">
+      <div class="approved-home-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="approved-home-info">
+        <h5>${name}</h5>
+        <p>Video lectures • Notes • PYQ • E-books</p>
+        <div class="approved-home-status"><i class="fas fa-check-circle"></i> Payment Verified</div>
+      </div>
+      <button class="approved-home-open" type="button" data-approved-course="${id}">OPEN</button>
+    </div>`;
+  }).join('');
+}
+function courseFileForHome(courseId){
+  const map={
+    'civil-year-2-course':'civil-year-2-course.html',
+    'mechanical-year-2-course':'mechanical-year-2-course.html',
+    'cs-year-2-course':'cs-year-2-course.html',
+    'it-year-2-course':'it-year-2-course.html',
+    'electrical-year-2-course':'electrical-year-2-course.html',
+    'electronics-year-2-course':'electronics-year-2-course.html',
+    'agriculture-year-2-course':'agriculture-year-2-course.html',
+    'chemical-year-2-course':'chemical-year-2-course.html'
+  };
+  return map[courseId]||'';
+}
+function openApprovedHomeCourse(courseId){
+  if(!courseId)return;
+  closePayment();
+  if(typeof originalNavigate==='function') originalNavigate(courseId);
+  else if(typeof window.navigateTo==='function') window.navigateTo(courseId);
+}
+function startApprovedHomeListener(){
+  if(!db2||!currentUid)return;
+  if(approvedAccessStop)approvedAccessStop();
+  approvedAccessStop=onValue(ref(db2,`courseAccess/${currentUid}`),snap=>{
+    renderApprovedHomeCourses(snap.exists()?snap.val():{});
+  },err=>{
+    console.warn('Approved course access read failed',err);
+  });
+}
 
 function status(text,type='warn'){statusEl.textContent=text;statusEl.className='payment-status '+type;}
 function openPayment(courseId){currentCourse=courseId;courseNameEl.textContent=courseNames[courseId]||courseId;utrEl.value='';statusEl.className='payment-status';statusEl.textContent='';submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');setTimeout(()=>utrEl.focus(),80);checkAccess(courseId);}
+async function openPaidCourseOrPayment(courseId){
+ if(currentUid){
+  const access=await getAccess(courseId).catch(()=>null);
+  if(access && (access.verified===true || access.status==='verified')){openCourse(courseId);return;}
+ }
+ openPayment(courseId);
+}
 function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');if(accessStop){accessStop();accessStop=null;}currentCourse=null;}
 async function getAccess(courseId){if(!currentUid||!db2)return null;const s=await get(ref(db2,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
 function openCourse(courseId){closePayment();if(typeof originalNavigate==='function'){originalNavigate(courseId);}else{location.hash=courseId;}}
@@ -4403,6 +4495,7 @@ async function loadUserAndSetup(user){
  currentUid=user.uid; currentUser={email:user.email||'',name:user.displayName||'',profilePic:user.photoURL||''};
  try{const s=await get(ref(db2,`users/${user.uid}`));if(s.exists())currentUser={...currentUser,...(s.val()||{})};}catch(e){console.warn('Profile read failed',e)}
  setupCards();
+ startApprovedHomeListener();
 }
 function setupCards(){
  paidCourseIds.forEach(id=>{
@@ -4412,11 +4505,16 @@ function setupCards(){
      card.classList.add('paid-course-card'); card.dataset.paidCourse=id;
      const badge=card.querySelector('.free-badge'); if(badge){badge.textContent='₹99 • UPI';badge.classList.add('paid-badge');}
      btn.innerHTML='<i class="fa-solid fa-lock"></i> Pay ₹99 & Access';
-     btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();openPayment(id);};
-     card.addEventListener('click',(ev)=>{if(ev.target.closest('button,a,input,select,textarea'))return;openPayment(id);});
+     btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();openPaidCourseOrPayment(id);};
+     card.addEventListener('click',(ev)=>{if(ev.target.closest('button,a,input,select,textarea'))return;openPaidCourseOrPayment(id);});
    });
  });
 }
+document.addEventListener('click',e=>{
+ const btn=e.target.closest('[data-approved-course]');
+ if(btn){e.preventDefault();e.stopPropagation();openApprovedHomeCourse(btn.dataset.approvedCourse);}
+});
+
 submitEl.addEventListener('click',async()=>{
  const utr=utrEl.value.trim();
  if(!currentUid||!currentCourse){status('Please login first.','err');return;}

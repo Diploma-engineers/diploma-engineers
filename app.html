@@ -3191,8 +3191,14 @@ window.addEventListener('DOMContentLoaded', () => {
     onValue(purchaseRef,snap=>{if(stopped||!snap.exists())return;const value=snap.val()||{};activePurchaseRecord=value;renderPurchaseDetails(value);if(String(value.status||"").toLowerCase()==="rejected")stop();});
   }
 
+  function getPurchaseAdminEmail(){
+    const authEmail=String(auth.currentUser?.email||'').trim().toLowerCase();
+    const profileEmail=String(currentUserData?.email||'').trim().toLowerCase();
+    return authEmail || profileEmail;
+  }
+
   function isPurchaseAdmin(){
-    const email=String(auth.currentUser?.email||'').trim().toLowerCase();
+    const email=getPurchaseAdminEmail();
     return !!email && ADMIN_EMAILS.includes(email);
   }
 
@@ -3202,10 +3208,23 @@ window.addEventListener('DOMContentLoaded', () => {
     const notice=document.getElementById('adminPurchaseAccessNotice');
     const list=document.getElementById('adminPurchaseList');
     if(!notice||!list)return;
+    if(!auth.currentUser){
+      notice.innerHTML='<i class="fas fa-spinner fa-spin"></i> Checking login...';
+      list.innerHTML='<div class="admin-empty"><i class="fas fa-spinner fa-spin"></i><p style="margin:8px 0 0;font-weight:800;">Checking admin account...</p></div>';
+      return;
+    }
     if(!isPurchaseAdmin()){
-      notice.innerHTML='<i class="fas fa-lock"></i> Admin access required. Please login with the purchase-admin email.';
+      // Phone/password login may not expose an email on auth.currentUser.
+      // In that case currentUserData.email is used as the configured admin email.
+      if(!auth.currentUser.email && !currentUserData?.email){
+        notice.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading your profile...';
+        list.innerHTML='<div class="admin-empty"><i class="fas fa-spinner fa-spin"></i><p style="margin:8px 0 0;font-weight:800;">Checking admin email...</p></div>';
+        setTimeout(()=>{ if(document.getElementById('purchaseVerificationPage')?.classList.contains('active')) loadPurchaseVerificationPage(); },700);
+        return;
+      }
+      notice.innerHTML='<i class="fas fa-lock"></i> Admin access required. Logged-in email: '+adminEscape(getPurchaseAdminEmail()||'not available');
       const stats=document.getElementById('adminPurchaseStats'); if(stats) stats.innerHTML='';
-      list.innerHTML='<div class="admin-empty"><i class="fas fa-shield-halved"></i><p style="margin:8px 0 0;font-weight:800;">You are not authorized to verify purchases.</p></div>';
+      list.innerHTML='<div class="admin-empty"><i class="fas fa-shield-halved"></i><p style="margin:8px 0 0;font-weight:800;">You are not authorized to verify purchases.</p><small>Login with '+adminEscape(PURCHASE_EMAIL)+'.</small></div>';
       return;
     }
     notice.innerHTML='<i class="fas fa-shield-halved"></i> Admin mode: verify the customer payment after checking the UTR in your UPI/bank records.';
@@ -3527,6 +3546,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (adminPurchaseBtn) {
       const email = String(data.email || auth.currentUser?.email || "").trim().toLowerCase();
       adminPurchaseBtn.style.display = ADMIN_EMAILS.includes(email) ? "block" : "none";
+      if (window.location.hash === "#purchaseVerificationPage") {
+        setTimeout(() => loadPurchaseVerificationPage(), 50);
+      }
     }
 
     const avatarBox = document.getElementById("profileAvatarBox");

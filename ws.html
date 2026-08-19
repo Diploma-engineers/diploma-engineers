@@ -1027,6 +1027,16 @@ const firebaseConfig = {
     messagingSenderId: "356779436080",
     appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
+   const firebaseConfig = {
+    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+    authDomain: "diplomaengineers-869df.firebaseapp.com",
+    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId: "diplomaengineers-869df",
+    storageBucket: "diplomaengineers-869df.appspot.com",
+    messagingSenderId: "356779436080",
+    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+};
+
 /* =====================================================
    INITIALIZATION
 ===================================================== */
@@ -1079,19 +1089,9 @@ const newsList = document.getElementById("newsList");
 const dataList = document.getElementById("dataList");
 const newsCount = document.getElementById("newsCount");
 
-/* ADMIN_LOADER_FALLBACK */
-setTimeout(()=>{ if(pageLoader && !pageLoader.classList.contains("hide")){ pageLoader.classList.add("hide"); document.body.style.overflow=""; } }, 3000);
-
 /* =====================================================
    SINGLE LOGIN FOR NEWS + COURSE ADMIN
 ===================================================== */
-function withTimeout(promise, ms, message){
-    return Promise.race([
-        promise,
-        new Promise((_, reject)=>setTimeout(()=>reject(new Error(message)), ms))
-    ]);
-}
-
 loginBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -1106,47 +1106,26 @@ loginBtn.addEventListener("click", async () => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
 
     try {
-        // 1) Authenticate admin in the News/Admin Firebase project.
-        await withTimeout(
-            signInWithEmailAndPassword(auth, email, password),
-            12000,
-            "News Firebase login timed out. Check your internet connection and Firebase Authentication."
-        );
+        await signInWithEmailAndPassword(auth, email, password);
 
-        // 2) Authenticate the same admin in the Course Firebase project.
-        // Course approval is protected by Course Firebase RTDB rules.
-        await withTimeout(
-            signInWithEmailAndPassword(courseAuth, email, password),
-            12000,
-            "Course Firebase login timed out. Make sure the same admin Email/Password user exists in diploma-app-9a378."
-        );
-
-        // Give Firebase auth state listeners a moment to update, then open panel.
-        if (!courseAuth.currentUser) {
-            throw new Error("Course Firebase login did not create an authenticated session.");
+        try {
+            await signInWithEmailAndPassword(courseAuth, email, password);
+        } catch (courseError) {
+            await signOut(auth);
+            throw new Error(
+                "News Admin login successful, but the same admin account is not present in Course Firebase. " +
+                "Create the same Email/Password user in diploma-app-9a378 → Authentication → Users."
+            );
         }
 
-        loginPage.style.display = "none";
-        adminPanel.style.display = "block";
-        loadNews();
-        loadDatabase();
-        loadBooksTab();
-        if (typeof connectCourseAdmin === "function") connectCourseAdmin();
-
     } catch (error) {
-        console.error("Admin login error:", error);
-        try { await signOut(courseAuth); } catch (_) {}
-        try { await signOut(auth); } catch (_) {}
-
-        const code = error?.code || "";
-        if (code === "auth/too-many-requests") {
+        console.error(error);
+        if (error.code === "auth/too-many-requests") {
             errorBox.innerText = "Too many attempts. Please wait and try again.";
-        } else if (code === "auth/invalid-credential" || code === "auth/invalid-login-credentials") {
+        } else if (error.code === "auth/invalid-credential") {
             errorBox.innerText = "Wrong Email or Password.";
-        } else if (code === "auth/user-not-found") {
-            errorBox.innerText = "Admin account not found in this Firebase project.";
         } else {
-            errorBox.innerText = error?.message || "Login failed.";
+            errorBox.innerText = error.message;
         }
     } finally {
         loginBtn.disabled = false;
@@ -1527,7 +1506,24 @@ function bookMsg(text, error=false){
 
 document.getElementById("openBooks").onclick = () => window.open("books.html", "_blank");
 
-function loadBooksTab() {
+
+async function checkNewsAdminDatabaseAccess() {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Admin login session is missing.");
+    if (user.email !== "astar22072006@gmail.com") {
+        throw new Error("This Firebase account is not authorized as News/Books admin.");
+    }
+    await get(ref(db, "books"));
+    return true;
+}
+
+async function loadBooksTab() {
+    try {
+        await checkNewsAdminDatabaseAccess();
+    } catch (err) {
+        bookMsg("Books Firebase permission failed: " + err.message, true);
+        return;
+    }
     onValue(ref(db, "books"), snap => {
         bookItems = [];
         if(snap.exists()) snap.forEach(x => bookItems.push({id: x.key, ...x.val()}));
@@ -1975,7 +1971,7 @@ async function approve(uid,courseId,key,button){
   button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
 
   try{
-    const purchaseRef=ref(courseDb, `utrPurchases/${uid}/${courseId}/${key}`);
+    const purchaseRef=ref(db, `utrPurchases/${uid}/${courseId}/${key}`);
     const snap=await get(purchaseRef);
     if(!snap.exists()) throw new Error("Purchase request not found.");
 

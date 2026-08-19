@@ -645,6 +645,46 @@ button:disabled{
 #booksAdminSection .table{overflow-x:auto; width: 100%;}
 #booksAdminSection .top {display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px;}
 
+
+/* =========================
+   ADMIN PROFILE
+========================= */
+.profile-area{display:flex;align-items:center;margin-left:14px;}
+.profile-trigger{display:flex;align-items:center;gap:8px;border:0;background:rgba(255,255,255,.14);color:#fff;padding:6px 10px 6px 6px;border-radius:999px;cursor:pointer;font:600 13px Poppins,Arial,sans-serif;}
+.profile-trigger:hover{background:rgba(255,255,255,.22);}
+.profile-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid #fff;background:#fff;display:block;}
+.profile-name{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.profile-modal{position:fixed;inset:0;background:rgba(15,23,42,.58);display:none;align-items:center;justify-content:center;padding:20px;z-index:200000;overflow:auto;}
+.profile-modal.show{display:flex;}
+.profile-card{width:min(980px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;box-shadow:0 25px 80px rgba(15,23,42,.28);}
+.profile-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:#2563eb;color:#fff;}
+.profile-head h2{margin:0;font-size:18px;}
+.profile-close{width:38px;height:38px;border:0;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;font-size:17px;}
+.profile-body{padding:20px;}
+.profile-preview{display:flex;align-items:center;gap:18px;padding:15px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:15px;margin-bottom:18px;}
+.profile-big-avatar{width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 5px 18px rgba(15,23,42,.12);background:#fff;flex:none;}
+.profile-preview h3{margin:0 0 3px;color:#172033;font-size:18px;}
+.profile-preview p{margin:0 0 10px;color:#64748b;font-size:12px;font-weight:700;}
+.profile-photo-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.profile-photo-label,.profile-photo-actions button{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:9px;padding:9px 12px;cursor:pointer;font:600 12px Poppins,Arial,sans-serif;}
+.profile-photo-label{background:#2563eb;color:#fff;}
+.profile-photo-label input{display:none;}
+.profile-grid,.profile-social-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.profile-field.full{grid-column:1/-1;}
+.profile-field label{display:block;font-size:12px;font-weight:700;color:#334155;margin:0 0 6px;}
+.profile-field input,.profile-field textarea{width:100%;padding:11px 12px;border:1px solid #dbe2ea;border-radius:10px;outline:none;background:#fff;font:400 13px Poppins,Arial,sans-serif;color:#172033;}
+.profile-field input:focus,.profile-field textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.profile-field textarea{min-height:90px;resize:vertical;}
+.profile-social-label{display:flex!important;align-items:center;gap:7px;}
+.profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+.profile-cancel,.profile-save{border:0;border-radius:10px;padding:11px 17px;cursor:pointer;font:700 13px Poppins,Arial,sans-serif;}
+.profile-cancel{background:#e2e8f0;color:#334155;}
+.profile-save{background:#2563eb;color:#fff;}
+.profile-save:disabled{opacity:.65;cursor:not-allowed;}
+.profile-status{display:none;margin-top:12px;padding:10px 12px;border-radius:9px;font-size:12px;}
+.profile-status.ok{display:block;background:#ecfdf3;color:#166534;}
+.profile-status.err{display:block;background:#fef2f2;color:#991b1b;}
+
 /* =========================
    MOBILE RESPONSIVENESS FIXES
 ========================= */
@@ -743,10 +783,19 @@ button:disabled{
 
     <!-- NAVBAR -->
     <nav class="navbar">
-        <h2>
-            <i class="fa-solid fa-user-shield"></i>
-            Diploma Engineers Admin
-        </h2>
+        <div style="display:flex;align-items:center;min-width:0;">
+            <h2>
+                <i class="fa-solid fa-user-shield"></i>
+                Diploma Engineers Admin
+            </h2>
+            <div class="profile-area">
+                <button class="profile-trigger" id="profileTrigger" type="button" title="Open Admin Profile">
+                    <img class="profile-avatar" id="navProfileAvatar" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Admin Profile">
+                    <span class="profile-name" id="navProfileName">Admin</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                </button>
+            </div>
+        </div>
         <button class="logout" id="logoutBtn">
             <i class="fa-solid fa-right-from-bracket"></i>
             Logout
@@ -996,6 +1045,54 @@ button:disabled{
         </div>
     </div>
 
+    <!-- ADMIN PROFILE MODAL -->
+    <div class="profile-modal" id="profileModal" aria-hidden="true" style="display:none;">
+        <div class="profile-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+            <div class="profile-head">
+                <h2 id="profileTitle"><i class="fa-solid fa-user-gear"></i> Admin Profile</h2>
+                <button class="profile-close" id="profileClose" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="profile-body">
+                <div class="profile-preview">
+                    <img class="profile-big-avatar" id="profileAvatarPreview" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile Preview">
+                    <div style="min-width:0;flex:1;">
+                        <h3 id="profilePreviewName">Admin</h3>
+                        <p id="profilePreviewDesignation">ADMIN</p>
+                        <div class="profile-photo-actions">
+                            <label class="profile-photo-label"><i class="fa-solid fa-camera"></i> Change Picture<input type="file" id="profilePhoto" accept="image/jpeg,image/png,image/webp"></label>
+                            <button type="button" id="profileRemovePhoto" style="background:#fee2e2;color:#b91c1c;"><i class="fa-solid fa-trash"></i> Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-grid">
+                    <div class="profile-field"><label>Full Name</label><input id="profileName" maxlength="80" placeholder="Enter your name"></div>
+                    <div class="profile-field"><label>Designation</label><input id="profileDesignation" value="ADMIN" maxlength="50" placeholder="ADMIN"></div>
+                    <div class="profile-field"><label>Branch</label><input id="profileBranch" maxlength="100" placeholder="Civil / Electrical / Electronics etc."></div>
+                    <div class="profile-field"><label>Mobile</label><input id="profileMobile" type="tel" maxlength="20" placeholder="Enter mobile number"></div>
+                    <div class="profile-field full"><label>Email</label><input id="profileEmail" type="email" readonly></div>
+                    <div class="profile-field full"><label>Address</label><textarea id="profileAddress" maxlength="300" placeholder="Enter address"></textarea></div>
+                    <div class="profile-field full"><label>About</label><textarea id="profileAbout" maxlength="800" placeholder="Write something about yourself..."></textarea></div>
+                </div>
+
+                <h3 style="margin:22px 0 12px;color:#2563eb;font-size:17px;"><i class="fa-solid fa-share-nodes"></i> Social Media & Contact</h3>
+                <div class="profile-social-grid">
+                    <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-facebook" style="color:#1877f2"></i> Facebook</label><input id="profileFacebook" type="url" placeholder="https://facebook.com/..."></div>
+                    <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-youtube" style="color:#ff0000"></i> YouTube</label><input id="profileYoutube" type="url" placeholder="https://youtube.com/..."></div>
+                    <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-telegram" style="color:#229ed9"></i> Telegram</label><input id="profileTelegram" type="url" placeholder="https://t.me/..."></div>
+                    <div class="profile-field"><label class="profile-social-label"><i class="fa-solid fa-envelope" style="color:#2563eb"></i> Email Link</label><input id="profileEmailLink" type="email" placeholder="your@email.com"></div>
+                    <div class="profile-field full"><label class="profile-social-label"><i class="fa-brands fa-whatsapp" style="color:#25d366"></i> WhatsApp</label><input id="profileWhatsapp" type="tel" placeholder="Mobile number with country code, e.g. 919876543210"></div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="profile-cancel" id="profileCancel" type="button">Cancel</button>
+                    <button class="profile-save" id="profileSave" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
+                </div>
+                <div class="profile-status" id="profileStatus"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer class="footer">
         <h3>Diploma Engineers</h3>
@@ -1080,8 +1177,163 @@ const dataList = document.getElementById("dataList");
 const newsCount = document.getElementById("newsCount");
 
 /* =====================================================
+   ADMIN PROFILE
+   ===================================================== */
+const DEFAULT_PROFILE_IMAGE = "https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg";
+const profileModal = document.getElementById("profileModal");
+const profileTrigger = document.getElementById("profileTrigger");
+const profileClose = document.getElementById("profileClose");
+const profileCancel = document.getElementById("profileCancel");
+const profileSave = document.getElementById("profileSave");
+const profileStatus = document.getElementById("profileStatus");
+const profilePhoto = document.getElementById("profilePhoto");
+const profileAvatarPreview = document.getElementById("profileAvatarPreview");
+const navProfileAvatar = document.getElementById("navProfileAvatar");
+const navProfileName = document.getElementById("navProfileName");
+const profilePreviewName = document.getElementById("profilePreviewName");
+const profilePreviewDesignation = document.getElementById("profilePreviewDesignation");
+let adminProfile = {};
+
+const profileFields = [
+  "profileName","profileDesignation","profileBranch","profileMobile","profileEmail","profileAddress","profileAbout",
+  "profileFacebook","profileYoutube","profileTelegram","profileEmailLink","profileWhatsapp"
+];
+
+function getProfileForm(){
+  const o = {};
+  profileFields.forEach(id => { const el=document.getElementById(id); if(el) o[id.replace("profile","").toLowerCase()] = el.value.trim(); });
+  o.name = document.getElementById("profileName").value.trim();
+  o.designation = document.getElementById("profileDesignation").value.trim() || "ADMIN";
+  o.branch = document.getElementById("profileBranch").value.trim();
+  o.mobile = document.getElementById("profileMobile").value.trim();
+  o.email = document.getElementById("profileEmail").value.trim();
+  o.address = document.getElementById("profileAddress").value.trim();
+  o.about = document.getElementById("profileAbout").value.trim();
+  o.facebook = document.getElementById("profileFacebook").value.trim();
+  o.youtube = document.getElementById("profileYoutube").value.trim();
+  o.telegram = document.getElementById("profileTelegram").value.trim();
+  o.emailLink = document.getElementById("profileEmailLink").value.trim();
+  o.whatsapp = document.getElementById("profileWhatsapp").value.trim();
+  o.photo = adminProfile.photo || DEFAULT_PROFILE_IMAGE;
+  o.updatedAt = Date.now();
+  return o;
+}
+
+function setProfileStatus(text, ok=true){
+  profileStatus.textContent = text;
+  profileStatus.className = "profile-status " + (ok ? "ok" : "err");
+}
+
+function updateProfilePreview(){
+  const name = document.getElementById("profileName").value.trim() || "Admin";
+  const designation = document.getElementById("profileDesignation").value.trim() || "ADMIN";
+  profilePreviewName.textContent = name;
+  profilePreviewDesignation.textContent = designation;
+  navProfileName.textContent = name;
+  const photo = adminProfile.photo || DEFAULT_PROFILE_IMAGE;
+  profileAvatarPreview.src = photo;
+  navProfileAvatar.src = photo;
+}
+
+function fillProfile(data){
+  adminProfile = data || {};
+  const map = {
+    profileName: data?.name || "", profileDesignation: data?.designation || "ADMIN", profileBranch: data?.branch || "",
+    profileMobile: data?.mobile || "", profileEmail: auth.currentUser?.email || data?.email || "", profileAddress: data?.address || "",
+    profileAbout: data?.about || "", profileFacebook: data?.facebook || "", profileYoutube: data?.youtube || "",
+    profileTelegram: data?.telegram || "", profileEmailLink: data?.emailLink || data?.email || "", profileWhatsapp: data?.whatsapp || ""
+  };
+  Object.entries(map).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
+  updateProfilePreview();
+}
+
+async function loadAdminProfile(){
+  const user = auth.currentUser;
+  if(!user) return;
+  try{
+    const snap = await get(ref(db, "adminProfiles/" + user.uid));
+    fillProfile(snap.exists() ? snap.val() : {name:"Admin",designation:"ADMIN",email:user.email,photo:DEFAULT_PROFILE_IMAGE});
+  }catch(err){
+    console.error("Profile load error:",err);
+    fillProfile({name:"Admin",designation:"ADMIN",email:user.email,photo:DEFAULT_PROFILE_IMAGE});
+  }
+}
+
+function openProfile(){
+  if(!auth.currentUser) return;
+  profileStatus.className="profile-status";
+  profileModal.classList.add("show"); profileModal.style.display="flex";
+  profileModal.setAttribute("aria-hidden","false");
+  loadAdminProfile();
+}
+function closeProfile(){
+  profileModal.classList.remove("show"); profileModal.style.display="none";
+  profileModal.setAttribute("aria-hidden","true");
+}
+profileTrigger.addEventListener("click",openProfile);
+profileClose.addEventListener("click",closeProfile);
+profileCancel.addEventListener("click",closeProfile);
+profileModal.addEventListener("click",e=>{ if(e.target===profileModal) closeProfile(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeProfile(); });
+document.getElementById("profileName").addEventListener("input",updateProfilePreview);
+document.getElementById("profileDesignation").addEventListener("input",updateProfilePreview);
+
+profilePhoto.addEventListener("change",async()=>{
+  const file=profilePhoto.files?.[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ alert("Please select an image file."); profilePhoto.value=""; return; }
+  try{
+    setProfileStatus("Uploading profile picture...",true);
+    const compressed=await compressImage(file);
+    const result=await uploadToCloudinary(compressed);
+    adminProfile.photo=result.secure_url;
+    updateProfilePreview();
+    setProfileStatus("Profile picture ready. Click Save Profile.",true);
+  }catch(err){ setProfileStatus("Photo upload failed: "+err.message,false); }
+});
+
+document.getElementById("profileRemovePhoto").addEventListener("click",()=>{
+  adminProfile.photo=DEFAULT_PROFILE_IMAGE;
+  profilePhoto.value="";
+  updateProfilePreview();
+  setProfileStatus("Default picture selected. Click Save Profile.",true);
+});
+
+profileSave.addEventListener("click",async()=>{
+  const user=auth.currentUser;
+  if(!user){ setProfileStatus("Please login again.",false); return; }
+  profileSave.disabled=true;
+  profileSave.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  try{
+    const data=getProfileForm();
+    data.uid=user.uid;
+    await set(ref(db,"adminProfiles/"+user.uid),data);
+    adminProfile=data;
+    updateProfilePreview();
+    setProfileStatus("Profile saved successfully.",true);
+    setTimeout(closeProfile,700);
+  }catch(err){
+    console.error("Profile save error:",err);
+    setProfileStatus("Unable to save profile: "+err.message,false);
+  }finally{
+    profileSave.disabled=false;
+    profileSave.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Profile';
+  }
+});
+
+/* ADMIN_LOADER_FALLBACK */
+setTimeout(()=>{ if(pageLoader && !pageLoader.classList.contains("hide")){ pageLoader.classList.add("hide"); document.body.style.overflow=""; } }, 3000);
+
+/* =====================================================
    SINGLE LOGIN FOR NEWS + COURSE ADMIN
 ===================================================== */
+function withTimeout(promise, ms, message){
+    return Promise.race([
+        promise,
+        new Promise((_, reject)=>setTimeout(()=>reject(new Error(message)), ms))
+    ]);
+}
+
 loginBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -1096,26 +1348,48 @@ loginBtn.addEventListener("click", async () => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
 
     try {
-        await signInWithEmailAndPassword(auth, email, password);
+        // 1) Authenticate admin in the News/Admin Firebase project.
+        await withTimeout(
+            signInWithEmailAndPassword(auth, email, password),
+            12000,
+            "News Firebase login timed out. Check your internet connection and Firebase Authentication."
+        );
 
-        try {
-            await signInWithEmailAndPassword(courseAuth, email, password);
-        } catch (courseError) {
-            await signOut(auth);
-            throw new Error(
-                "News Admin login successful, but the same admin account is not present in Course Firebase. " +
-                "Create the same Email/Password user in diploma-app-9a378 → Authentication → Users."
-            );
+        // 2) Authenticate the same admin in the Course Firebase project.
+        // Course approval is protected by Course Firebase RTDB rules.
+        await withTimeout(
+            signInWithEmailAndPassword(courseAuth, email, password),
+            12000,
+            "Course Firebase login timed out. Make sure the same admin Email/Password user exists in diploma-app-9a378."
+        );
+
+        // Give Firebase auth state listeners a moment to update, then open panel.
+        if (!courseAuth.currentUser) {
+            throw new Error("Course Firebase login did not create an authenticated session.");
         }
 
+        loginPage.style.display = "none";
+        adminPanel.style.display = "block";
+        loadNews();
+        loadDatabase();
+        loadBooksTab();
+        loadAdminProfile();
+        if (typeof connectCourseAdmin === "function") connectCourseAdmin();
+
     } catch (error) {
-        console.error(error);
-        if (error.code === "auth/too-many-requests") {
+        console.error("Admin login error:", error);
+        try { await signOut(courseAuth); } catch (_) {}
+        try { await signOut(auth); } catch (_) {}
+
+        const code = error?.code || "";
+        if (code === "auth/too-many-requests") {
             errorBox.innerText = "Too many attempts. Please wait and try again.";
-        } else if (error.code === "auth/invalid-credential") {
+        } else if (code === "auth/invalid-credential" || code === "auth/invalid-login-credentials") {
             errorBox.innerText = "Wrong Email or Password.";
+        } else if (code === "auth/user-not-found") {
+            errorBox.innerText = "Admin account not found in this Firebase project.";
         } else {
-            errorBox.innerText = error.message;
+            errorBox.innerText = error?.message || "Login failed.";
         }
     } finally {
         loginBtn.disabled = false;
@@ -1138,6 +1412,7 @@ onAuthStateChanged(auth, (user) => {
         loadNews();
         loadDatabase();
         loadBooksTab();
+        loadAdminProfile();
         if (typeof connectCourseAdmin === "function") connectCourseAdmin();
     } else if (user && !courseAuth.currentUser) {
         loginPage.style.display = "flex";
@@ -1341,7 +1616,7 @@ publishBtn.addEventListener("click", async () => {
 
     } catch (error) {
         console.error("Publish Error:", error);
-        alert("Upload failed:\n" + error.message);
+        alert("Upload failed: " + error.message);
     } finally {
         publishBtn.disabled = false;
         clearBtn.disabled = false;
@@ -1496,24 +1771,7 @@ function bookMsg(text, error=false){
 
 document.getElementById("openBooks").onclick = () => window.open("books.html", "_blank");
 
-
-async function checkNewsAdminDatabaseAccess() {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Admin login session is missing.");
-    if (user.email !== "astar22072006@gmail.com") {
-        throw new Error("This Firebase account is not authorized as News/Books admin.");
-    }
-    await get(ref(db, "books"));
-    return true;
-}
-
-async function loadBooksTab() {
-    try {
-        await checkNewsAdminDatabaseAccess();
-    } catch (err) {
-        bookMsg("Books Firebase permission failed: " + err.message, true);
-        return;
-    }
+function loadBooksTab() {
     onValue(ref(db, "books"), snap => {
         bookItems = [];
         if(snap.exists()) snap.forEach(x => bookItems.push({id: x.key, ...x.val()}));
@@ -1961,7 +2219,7 @@ async function approve(uid,courseId,key,button){
   button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
 
   try{
-    const purchaseRef=ref(db, `utrPurchases/${uid}/${courseId}/${key}`);
+    const purchaseRef=ref(courseDb, `utrPurchases/${uid}/${courseId}/${key}`);
     const snap=await get(purchaseRef);
     if(!snap.exists()) throw new Error("Purchase request not found.");
 
@@ -1995,7 +2253,7 @@ async function approve(uid,courseId,key,button){
 
     alert("Payment approved successfully.");
   }catch(e){
-    alert("Approve failed:\n\n"+e.message);
+    alert("Approve failed: " + e.message);
     button.disabled=false;
     button.innerHTML=oldText;
   }
@@ -2021,7 +2279,7 @@ async function reject(uid,courseId,key,button){
     );
     alert("Request rejected.");
   }catch(e){
-    alert("Reject failed:\n\n"+e.message);
+    alert("Reject failed: " + e.message);
     button.disabled=false;
     button.innerHTML=oldText;
   }

@@ -1,1602 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Diploma Engineers | Admin Panel</title>
-
-<link rel="icon" href="favicon.ico">
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+<title>Course Approval Admin • Diploma Engineers</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-
-/* =========================
-   RESET
-========================= */
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Poppins,Arial,sans-serif;
-}
-
-body{
-    background:#f1f5f9;
-    color:#172033;
-}
-
-/* LOADER */
-#page-loader {
-  position: fixed;
-  inset: 0;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999999;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .6s ease, visibility .6s ease;
-}
-#page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
-.loader-content { width: min(90%, 500px); text-align: center; }
-.loader-logo {
-  width: 150px;
-  height: 150px;
-  margin: 0 auto 25px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.loader-ring {
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  border: 4px solid #edf1f6;
-  border-top-color: #2864e8;
-  border-right-color: #ff6500;
-  border-bottom-color: #2864e8;
-  animation: loaderRotate 1.8s linear infinite;
-}
-.loader-ring:after {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 28px;
-  background: #ff6500;
-  border-radius: 10px;
-  top: -4px;
-  right: 5px;
-}
-@keyframes loaderRotate { to { transform: rotate(360deg); } }
-.loader-logo img {
-  width: 105px;
-  height: 105px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #fff;
-  padding: 7px;
-  position: relative;
-  z-index: 2;
-  box-shadow: 0 5px 25px rgba(0,0,0,.06);
-}
-.loader-title { font-size: 28px; font-weight: 800; line-height: 1.2; }
-.orange-text { color: #ff6500; }
-.blue-text { color: #2864e8; }
-.loader-subtitle { margin: 10px 0 30px; color: #64748b; font-size: 15px; }
-.progress-container { width: 100%; height: 7px; background: #e4e9ef; border-radius: 20px; overflow: hidden; }
-.progress-bar {
-  width: 0;
-  height: 100%;
-  background: linear-gradient(90deg, #2864e8, #2864e8, #ff6500);
-  border-radius: 20px;
-  transition: width .12s linear;
-}
-.loading-status {
-  margin-top: 9px;
-  display: flex;
-  justify-content: space-between;
-  color: #64748b;
-  font-size: 14px;
-}
-#progress-percent { color: #2864e8; font-weight: 700; }
-
-
-/* =========================
-   LOGIN
-========================= */
-
-#loginPage{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-}
-
-.login-box{
-    width:390px;
-    max-width:100%;
-    background:#fff;
-    padding:35px;
-    border-radius:22px;
-    box-shadow: 0 15px 45px rgba(15,23,42,.12);
-    text-align:center;
-}
-
-.logo{
-    width:85px;
-    height:85px;
-    border-radius:50%;
-    object-fit:cover;
-    margin-bottom:15px;
-}
-
-.login-box h2{
-    color:#2563eb;
-    margin-bottom:8px;
-}
-
-.login-box p{
-    color:#64748b;
-    font-size:14px;
-    margin-bottom:22px;
-}
-
-.input,
-textarea,
-select{
-    width:100%;
-    padding:13px 14px;
-    border:1px solid #dbe2ea;
-    border-radius:10px;
-    outline:none;
-    font-size:14px;
-    margin-bottom:13px;
-    background:#fff;
-}
-
-.input:focus,
-textarea:focus,
-select:focus{
-    border-color:#2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.08);
-}
-
-textarea{
-    height:130px;
-    resize:vertical;
-}
-
-.login-btn,
-.primary-btn{
-    width:100%;
-    border:0;
-    padding:13px 18px;
-    background:#2563eb;
-    color:#fff;
-    border-radius:10px;
-    font-size:15px;
-    font-weight:600;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.login-btn:hover,
-.primary-btn:hover{
-    background:#1d4ed8;
-}
-
-button:disabled{
-    opacity:.65;
-    cursor:not-allowed;
-}
-
-#error{
-    margin-top:12px;
-    font-size:13px;
-    color:#dc2626;
-}
-
-/* =========================
-   ADMIN
-========================= */
-
-#adminPanel{
-    display:none;
-}
-
-.navbar, .course-nav{
-    height:68px;
-    background:#2563eb;
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 25px;
-    position:sticky;
-    top:0;
-    z-index:1000;
-}
-
-.navbar h2, .course-nav h2{
-    font-size:19px;
-}
-
-.logout{
-    border:0;
-    background:#fff;
-    color:#2563eb;
-    padding:9px 16px;
-    border-radius:9px;
-    font-weight:600;
-    cursor:pointer;
-}
-
-/* =========================
-   DASHBOARD
-========================= */
-
-.dashboard, .course-container{
-    width:100%;
-    max-width:1100px;
-    margin:auto;
-    padding:25px 18px 40px;
-}
-
-.welcome, .course-hero{
-    background:#fff;
-    padding:22px;
-    border-radius:17px;
-    margin-bottom:20px;
-    box-shadow:0 5px 20px rgba(15,23,42,.06);
-}
-
-.welcome h1, .course-hero h1{
-    color:#2563eb;
-    font-size:24px;
-    margin-bottom:5px;
-}
-
-.welcome p, .course-hero p{
-    color:#64748b;
-}
-
-/* =========================
-   STAT CARDS
-========================= */
-
-.cards, .course-stats{
-    display:grid;
-    grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
-    gap:16px;
-    margin-bottom:20px;
-}
-
-.stat-card, .course-stat{
-    background:#fff;
-    padding:22px;
-    border-radius:16px;
-    box-shadow: 0 5px 20px rgba(15,23,42,.06);
-}
-
-.stat-card i{
-    font-size:28px;
-    color:#2563eb;
-    margin-bottom:10px;
-}
-
-.stat-card h3, .course-stat span{
-    margin-bottom:4px;
-    font-size:22px;
-    font-weight:700;
-    display:block;
-    color:#0f172a;
-}
-
-.stat-card p, .course-stat b{
-    color:#64748b;
-    font-size:13px;
-}
-
-/* =========================
-   BOX & COURSE MODULE STYLING
-========================= */
-
-.box{
-    background:#fff;
-    padding:23px;
-    border-radius:17px;
-    margin-bottom:20px;
-    box-shadow: 0 5px 20px rgba(15,23,42,.06);
-}
-
-.box h2{
-    color:#2563eb;
-    font-size:19px;
-    margin-bottom:18px;
-}
-
-.label{
-    display:block;
-    font-size:13px;
-    font-weight:600;
-    color:#334155;
-    margin:8px 0 7px;
-}
-
-/* FILE AREA */
-.file-box{
-    border:2px dashed #cbd5e1;
-    border-radius:12px;
-    padding:17px;
-    background:#f8fafc;
-    margin-bottom:13px;
-}
-.file-box:hover{ border-color:#2563eb; }
-.file-box input{ width:100%; }
-
-/* IMAGE PREVIEW */
-#imagePreviewBox{
-    display:none;
-    margin:12px 0;
-}
-#imagePreview{
-    width:220px;
-    max-width:100%;
-    height:135px;
-    object-fit:cover;
-    border-radius:12px;
-    border:1px solid #e2e8f0;
-}
-
-/* UPLOAD STATUS */
-#uploadStatus{
-    display:none;
-    margin-top:15px;
-    padding:13px;
-    background:#eff6ff;
-    border-radius:10px;
-    color:#1d4ed8;
-    font-size:13px;
-}
-.progress{
-    width:100%;
-    height:8px;
-    background:#e5e7eb;
-    border-radius:10px;
-    overflow:hidden;
-    margin-top:9px;
-}
-.progress-bar{
-    width:0%;
-    height:100%;
-    background:#2563eb;
-    transition:width .15s;
-}
-
-/* BUTTONS */
-.btn-row{
-    display:flex;
-    gap:10px;
-    margin-top:8px;
-}
-.btn-row button{ flex:1; }
-.clear-btn{
-    border:0;
-    padding:13px;
-    border-radius:10px;
-    background:#e2e8f0;
-    color:#334155;
-    font-weight:600;
-    cursor:pointer;
-}
-
-/* NEWS LIST */
-.news-list{
-    display:flex;
-    flex-direction:column;
-    gap:13px;
-}
-.news-card{
-    display:flex;
-    gap:15px;
-    padding:15px;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:14px;
-}
-.news-thumb{
-    width:155px;
-    height:100px;
-    flex-shrink:0;
-    border-radius:10px;
-    overflow:hidden;
-    background:#e2e8f0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-.news-thumb img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-.no-image{ color:#94a3b8; font-size:30px; }
-.news-content{ flex:1; min-width:0; }
-.news-content h3{ font-size:16px; margin-bottom:5px; color:#0f172a; }
-.meta{ color:#64748b; font-size:12px; margin-bottom:7px; }
-.news-content p{ color:#475569; font-size:13px; line-height:1.6; margin-bottom:10px; }
-.links{ display:flex; flex-wrap:wrap; gap:7px; }
-.links a, .delete-btn{
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    padding:7px 10px;
-    border-radius:7px;
-    font-size:12px;
-    text-decoration:none;
-    border:0;
-    cursor:pointer;
-    font-weight:600;
-}
-.image-link{ background:#dbeafe; color:#1d4ed8; }
-.pdf-link{ background:#fee2e2; color:#dc2626; }
-.external-link{ background:#dcfce7; color:#15803d; }
-.delete-btn{ background:#dc2626; color:white; }
-.delete-btn:hover{ background:#b91c1c; }
-
-/* BOOK GRID */
-.book-grid{
-    display:grid;
-    grid-template-columns: repeat(2,1fr);
-    gap:12px;
-}
-
-/* COURSE MODULE SPECIFIC */
-.course-hero{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; }
-.course-notice{ padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:14px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
-.course-notice.err{ background:#ffeeef; color:#dc2626; border-color:#fecaca; }
-.course-notice.ok{ background:#f0fdf4; color:#15803d; border-color:#bbf7d0; }
-
-.course-tabs{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
-.btn{ border:0; padding:10px 16px; border-radius:9px; font-weight:600; cursor:pointer; background:#e2e8f0; color:#334155; display:inline-flex; align-items:center; gap:6px; font-size:13px; }
-.btn.tab.active{ background:#2563eb; color:#fff; }
-.btn.refresh{ background:#0284c7; color:#fff; }
-.btn.approve{ background:#16a34a; color:#fff; }
-.btn.reject{ background:#dc2626; color:#fff; }
-.btn.course-link{ background:#7c3aed; color:#fff; }
-
-.request{ background:#fff; border-radius:14px; padding:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
-.request .head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px; border-bottom:1px solid #f1f5f9; padding-bottom:12px; }
-.request .user{ display:flex; gap:12px; align-items:center; }
-.request .avatar{ width:45px; height:45px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#475569; overflow:hidden; }
-.request .avatar img{ width:100%; height:100%; object-fit:cover; }
-.request .course{ font-weight:700; font-size:15px; color:#0f172a; }
-.request .muted{ color:#64748b; font-size:12px; }
-.request .amount{ font-size:18px; font-weight:700; color:#16a34a; }
-
-.request .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:15px; background:#f8fafc; padding:12px; border-radius:10px; }
-.request .grid .item{ font-size:12px; }
-.request .grid .item b{ display:block; color:#64748b; margin-bottom:2px; font-size:11px; }
-.request .grid .item span{ color:#0f172a; font-weight:600; }
-.request .grid .item span.utr{ color:#2563eb; font-family:monospace; font-size:13px; }
-
-.request .actions{ display:flex; gap:10px; flex-wrap:wrap; }
-.empty{ text-align:center; padding:40px; color:#64748b; background:#fff; border-radius:14px; border:1px dashed #cbd5e1; }
-
-/* FOOTER */
-.footer, .course-footer{
-    background:#2563eb;
-    color:#fff;
-    text-align:center;
-    padding:22px;
-}
-.footer p, .course-footer{ font-size:13px; margin-top:4px; }
-
-/* UNIFIED PANEL SWITCH */
-.panel-switch{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-left:auto;
-  margin-right:12px;
-}
-.panel-switch button{
-  border:0;
-  padding:9px 14px;
-  border-radius:9px;
-  background:rgba(255,255,255,.18);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-  transition:.2s;
-}
-.panel-switch button.active{background:#fff;color:#2563eb}
-#coursePanel{display:none}
-.course-panel{min-height:100vh;background:#f4f7fb}
-
-@media(max-width:700px){
-    .navbar, .course-nav{ padding:0 13px; }
-    .navbar h2, .course-nav h2{ font-size:14px; }
-    .logout{ padding:8px 10px; font-size:12px; }
-    .dashboard, .course-container{ padding:15px 10px 30px; }
-    .welcome h1, .course-hero h1{ font-size:20px; }
-    .box{ padding:17px; border-radius:14px; }
-    .book-grid{ grid-template-columns:1fr; }
-    .news-card{ flex-direction:column; }
-    .news-thumb{ width:100%; height:180px; }
-    .btn-row{ flex-direction:column; }
-    .links a, .delete-btn{ width:100%; justify-content:center; }
-    .panel-switch{margin-right:6px;gap:4px}
-    .panel-switch button{padding:7px 9px;font-size:11px}
-}
-
+:root{--primary:#2563eb;--dark:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc;--green:#16a34a;--red:#dc2626;--orange:#ea580c}
+*{box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif}
+body{margin:0;background:var(--bg);color:var(--dark)}
+button{cursor:pointer}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#eff6ff,#f8fafc)}
+.login-card{width:min(100%,430px);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(15,23,42,.10)}
+.logo{width:58px;height:58px;border-radius:17px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:25px;margin-bottom:16px}
+.login-card h1{font-size:23px;font-weight:800;margin:0 0 5px}.login-card p{font-size:12px;color:var(--muted)}
+.field{margin-top:14px}.field label{font-size:12px;font-weight:800;margin-bottom:7px;display:block}.field input{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:12px;outline:0;background:#f8fafc}.field input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.10)}
+.primary{border:0;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-weight:800;border-radius:12px;padding:12px;width:100%;margin-top:16px}
+.msg{font-size:12px;margin-top:12px;padding:10px 12px;border-radius:10px;display:none}.msg.err{display:block;background:#fef2f2;color:#991b1b}.msg.ok{display:block;background:#ecfdf5;color:#166534}
+#adminApp{display:none}.top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 18px}.top-inner{max-width:1400px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.brand-icon{width:40px;height:40px;border-radius:12px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center}.brand strong{font-size:15px}.brand span{display:block;color:var(--muted);font-size:10px}.logout{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800;color:#334155}
+.container-app{max-width:1400px;margin:auto;padding:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}.stat small{color:var(--muted);font-size:11px;font-weight:700}.stat strong{display:block;font-size:25px;margin-top:4px}.stat.pending strong{color:#d97706}.stat.approved strong{color:var(--green)}.stat.rejected strong{color:var(--red)}
+.toolbar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.toolbar input,.toolbar select{border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:0;font-size:12px;background:#fff}.toolbar input{flex:1;min-width:210px}.refresh{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:10px;padding:9px 12px;font-weight:800;font-size:12px}
+.request-list{display:grid;gap:12px}.request{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 4px 18px rgba(15,23,42,.04)}.request-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.course{font-size:16px;font-weight:800}.sub{font-size:11px;color:var(--muted);margin-top:4px}.badge{padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}.badge.pending{background:#fff7ed;color:#c2410c}.badge.approved{background:#ecfdf5;color:#15803d}.badge.rejected{background:#fef2f2;color:#b91c1c}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.info{background:#f8fafc;border:1px solid #eef2f7;border-radius:11px;padding:10px;min-width:0}.info label{display:block;font-size:9px;text-transform:uppercase;color:#94a3b8;font-weight:800;margin-bottom:4px}.info div{font-size:12px;font-weight:700;word-break:break-word}.utr{color:#1d4ed8;font-family:monospace}
+.actions{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}.btn{border:0;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:800}.approve{background:#16a34a;color:#fff}.reject{background:#dc2626;color:#fff}.details{background:#eff6ff;color:#1d4ed8}.disabled{opacity:.55;pointer-events:none}
+.empty{text-align:center;background:#fff;border:1px dashed #cbd5e1;border-radius:16px;padding:45px;color:var(--muted);font-size:13px}.empty i{font-size:30px;margin-bottom:10px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.52);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}.modal-box{width:min(100%,520px);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}.modal-box h3{font-size:17px;font-weight:800;margin:0 0 12px}.close{float:right;border:0;background:#f1f5f9;border-radius:50%;width:34px;height:34px}.detail-row{padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12px}.detail-row b{display:inline-block;width:120px;color:#64748b}.notice{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;padding:11px;font-size:11px;line-height:1.5;margin-top:15px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.info-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.container-app{padding:12px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:21px}.info-grid{grid-template-columns:1fr 1fr}.request{padding:13px}.top{padding:10px 12px}}
 </style>
-
 </head>
-
 <body>
 
-<!-- ================= LOADER ================= -->
-<div id="page-loader">
-    <div class="loader-content">
-        <div class="loader-logo">
-            <div class="loader-ring"></div>
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers Logo">
-        </div>
-
-        <h1 class="loader-title">
-            <span class="orange-text">DIPLOMA</span>
-            <span class="blue-text">ENGINEERS</span>
-        </h1>
-
-        <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
-
-        <div class="progress-container">
-            <div class="progress-bar" id="loader-progress-bar"></div>
-        </div>
-
-        <div class="loading-status">
-            <span>Loading...</span>
-            <span id="progress-percent">0%</span>
-        </div>
-    </div>
-</div>
-
-
-<!-- =========================
-     LOGIN
-========================= -->
-
-<div id="loginPage">
-    <div class="login-box">
-        <img class="logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers">
-        <h2>Admin Login</h2>
-        <p>Diploma Engineers Management Panel</p>
-
-        <input class="input" id="email" type="email" autocomplete="email" placeholder="Enter Admin Email">
-        <input class="input" id="password" type="password" autocomplete="current-password" placeholder="Enter Password">
-
-        <button class="login-btn" id="loginBtn">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            Login
-        </button>
-
-        <div id="error"></div>
-    </div>
-</div>
-
-
-<!-- =========================
-     ADMIN PANEL (NEWS & BOOKS)
-========================= -->
-
-<div id="adminPanel">
-
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <h2>
-            <i class="fa-solid fa-user-shield"></i>
-            Diploma Engineers Admin
-        </h2>
-        <div class="panel-switch">
-            <button id="newsSwitch" class="active"><i class="fa-solid fa-newspaper"></i> News</button>
-            <button id="courseSwitch"><i class="fa-solid fa-graduation-cap"></i> Course</button>
-        </div>
-        <button class="logout" id="logoutBtn">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            Logout
-        </button>
-    </nav>
-
-
-    <!-- DASHBOARD -->
-    <main class="dashboard">
-
-        <!-- WELCOME -->
-        <div class="welcome">
-            <h1>Welcome Admin</h1>
-            <p>Manage Diploma Engineers News & Study Material</p>
-        </div>
-
-        <!-- STATS -->
-        <div class="cards">
-            <div class="stat-card">
-                <i class="fa-solid fa-newspaper"></i>
-                <h3 id="newsCount">0</h3>
-                <p>Published News</p>
-            </div>
-
-            <div class="stat-card">
-                <i class="fa-solid fa-file-pdf"></i>
-                <h3>Cloudinary</h3>
-                <p>Image & PDF Storage</p>
-            </div>
-
-            <div class="stat-card">
-                <i class="fa-solid fa-database"></i>
-                <h3>Firebase</h3>
-                <p>Realtime Database</p>
-            </div>
-        </div>
-
-        <!-- ADD NEWS -->
-        <section class="box">
-            <h2>
-                <i class="fa-solid fa-newspaper"></i>
-                Publish News
-            </h2>
-
-            <label class="label">News Title</label>
-            <input class="input" id="newsTitle" maxlength="200" placeholder="Enter News Title">
-
-            <label class="label">News Description</label>
-            <textarea class="input" id="newsText" maxlength="3000" placeholder="Enter News Description"></textarea>
-
-            <div class="book-grid">
-                <div>
-                    <label class="label">Category</label>
-                    <select id="newsCategory" class="input">
-                        <option value="News">News</option>
-                        <option value="Notice">Notice</option>
-                        <option value="Result">Result</option>
-                        <option value="Admission">Admission</option>
-                        <option value="Scholarship">Scholarship</option>
-                        <option value="Job">Job</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="label">Publish Status</label>
-                    <input class="input" value="Ready to Publish" readonly>
-                </div>
-            </div>
-
-            <label class="label">Thumbnail Image</label>
-            <div class="file-box">
-                <input type="file" id="imageFile" accept="image/jpeg,image/png,image/webp">
-                <small>JPG, PNG or WEBP recommended</small>
-            </div>
-
-            <label class="label">OR Image URL</label>
-            <input class="input" id="imageUrlInput" type="url" placeholder="https://example.com/image.jpg">
-
-            <div id="imagePreviewBox">
-                <img id="imagePreview" alt="Thumbnail Preview">
-            </div>
-
-            <label class="label">PDF / Document</label>
-            <div class="file-box">
-                <input type="file" id="pdfFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip">
-                <small>PDF, DOC, XLS, PPT or ZIP</small>
-            </div>
-
-            <label class="label">External Link</label>
-            <input class="input" id="externalLink" type="url" placeholder="https://example.com">
-
-            <div id="uploadStatus">
-                <div id="statusText">Preparing upload...</div>
-                <div class="progress">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-            </div>
-
-            <div class="btn-row">
-                <button class="primary-btn" id="publishBtn">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    Publish News
-                </button>
-                <button class="clear-btn" id="clearBtn">
-                    <i class="fa-solid fa-rotate-left"></i>
-                    Clear
-                </button>
-            </div>
-        </section>
-
-        <!-- BOOKS -->
-        <section class="box">
-            <h2>
-                <i class="fa-solid fa-book-open"></i>
-                Add Study Material
-            </h2>
-
-            <div class="book-grid">
-                <input class="input" id="bookName" placeholder="Book / Material Name">
-                <input class="input" id="semester" placeholder="Semester">
-                <input class="input" id="branch" placeholder="Branch">
-                <input class="input" id="bookLink" type="url" placeholder="PDF / Book Link">
-            </div>
-
-            <button class="primary-btn" id="bookBtn">
-                <i class="fa-solid fa-plus"></i>
-                Add Study Material
-            </button>
-        </section>
-
-        <!-- NEWS DATABASE -->
-        <section class="box">
-            <h2>
-                <i class="fa-solid fa-server"></i>
-                Published News
-            </h2>
-            <div id="newsList" class="news-list">
-                Loading News...
-            </div>
-        </section>
-
-        <!-- DATABASE RECORDS -->
-        <section class="box">
-            <h2>
-                <i class="fa-solid fa-database"></i>
-                Database Records
-            </h2>
-            <div id="dataList">
-                Loading...
-            </div>
-        </section>
-
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        <h3>Diploma Engineers</h3>
-        <p>Secure Admin Management Panel</p>
-        <p>© 2026 Diploma Engineers</p>
-    </footer>
-
-</div>
-
-
-
-<!-- =========================
-     COURSE PANEL
-========================= -->
-<div id="coursePanel" class="course-panel">
-
-<nav class="course-nav">
-  <h2><i class="fa-solid fa-user-shield"></i> Diploma Engineers — Course Admin</h2>
-  <button class="logout" id="courseLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-</nav>
-
-<main class="course-container">
-  <div class="course-hero">
-    <div>
-      <h1><i class="fa-solid fa-graduation-cap"></i> Course Requests & Approval</h1>
-      <p>Review UTR/payment requests, approve genuine payments, and grant course access.</p>
-    </div>
-    <button class="btn refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+<section id="loginScreen">
+  <div class="login-card">
+    <div class="logo"><i class="fa-solid fa-shield-halved"></i></div>
+    <h1>Course Approval Admin</h1>
+    <p>Login with your Firebase admin account to verify ₹99 course payments and unlock course access.</p>
+    <div class="field"><label>ADMIN EMAIL</label><input id="email" type="email" autocomplete="username" placeholder="admin@example.com"></div>
+    <div class="field"><label>PASSWORD</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+    <button class="primary" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+    <div id="loginMsg" class="msg"></div>
+    <div class="notice"><b>Security:</b> This page checks an admin allow-list/role, but Firebase Realtime Database Rules must also restrict <code>utrPurchases</code> and <code>courseAccess</code>. Client-side admin checks alone are not security.</div>
   </div>
+</section>
 
-  <div id="courseNotice" class="course-notice">Login required.</div>
+<section id="adminApp">
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand"><div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div><div><strong>Diploma Engineers</strong><span>Course Payment Verification</span></div></div>
+      <div><div id="adminEmail" style="font-size:10px;color:#64748b;text-align:right"></div><button class="logout" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button></div>
+    </div>
+  </header>
+  <main class="container-app">
+    <div class="stats">
+      <div class="stat"><small>TOTAL REQUESTS</small><strong id="totalCount">0</strong></div>
+      <div class="stat pending"><small>PENDING</small><strong id="pendingCount">0</strong></div>
+      <div class="stat approved"><small>APPROVED</small><strong id="approvedCount">0</strong></div>
+      <div class="stat rejected"><small>REJECTED</small><strong id="rejectedCount">0</strong></div>
+    </div>
+    <div class="toolbar">
+      <input id="search" placeholder="Search name, email, UTR, course or UID...">
+      <select id="statusFilter"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+      <select id="courseFilter"><option value="all">All Courses</option></select>
+      <button class="refresh" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+    <div id="requestList" class="request-list"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><br>Loading requests...</div></div>
+  </main>
+</section>
 
-  <div class="course-stats">
-    <div class="course-stat"><b>Total Requests</b><span id="courseTotalCount">0</span></div>
-    <div class="course-stat"><b>Requested / Pending</b><span id="coursePendingCount">0</span></div>
-    <div class="course-stat"><b>Approved</b><span id="courseVerifiedCount">0</span></div>
-    <div class="course-stat"><b>Rejected</b><span id="courseRejectedCount">0</span></div>
+<div id="detailOverlay" class="overlay">
+  <div class="modal-box">
+    <button class="close" onclick="closeDetails()">×</button>
+    <h3>Payment Request Details</h3>
+    <div id="detailBody"></div>
   </div>
-
-  <div class="course-tabs">
-    <button class="btn tab active" data-course-filter="pending"><i class="fa-solid fa-clock"></i> Requested</button>
-    <button class="btn tab" data-course-filter="verified"><i class="fa-solid fa-circle-check"></i> Approved</button>
-    <button class="btn tab" data-course-filter="rejected"><i class="fa-solid fa-circle-xmark"></i> Rejected</button>
-    <button class="btn tab" data-course-filter="all"><i class="fa-solid fa-list"></i> All</button>
-  </div>
-
-  <div id="courseList"><div class="empty">Login to load purchase requests.</div></div>
-</main>
-
-<footer class="course-footer">
-  <b>Diploma Engineers</b><br>
-  Secure Course Approval Admin Panel • © 2026
-</footer>
-
 </div>
 
 <script type="module">
-
-/* =====================================================
-   FIREBASE IMPORT
-===================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, push, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-/* =====================================================
-   FIREBASE CONFIG
-===================================================== */
+/* SAME FIREBASE PROJECT AS THE UPLOADED APP */
 const firebaseConfig = {
-    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-    authDomain: "diplomaengineers-869df.firebaseapp.com",
-    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-    projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.appspot.com",
-    messagingSenderId: "356779436080",
-    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
+  apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+  authDomain: "diploma-app-9a378.firebaseapp.com",
+  databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+  projectId: "diploma-app-9a378",
+  storageBucket: "diploma-app-9a378.firebasestorage.app",
+  messagingSenderId: "160233059797",
+  appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-/* =====================================================
-   COURSE FIREBASE (SECOND DATABASE)
-===================================================== */
-const courseFirebaseConfig = {
-    apiKey: "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
-    authDomain: "diploma-app-9a378.firebaseapp.com",
-    databaseURL: "https://diploma-app-9a378-default-rtdb.firebaseio.com",
-    projectId: "diploma-app-9a378",
-    storageBucket: "diploma-app-9a378.firebasestorage.app",
-    messagingSenderId: "160233059797",
-    appId: "1:160233059797:web:be38130ed64f8bd0afb95c",
-    measurementId: "G-9646VK4C6L"
-};
-const courseApp = initializeApp(courseFirebaseConfig, "courseApprovalApp");
-const courseAuth = getAuth(courseApp);
-const courseDb = getDatabase(courseApp);
+/* Put admin emails here OR use users/{uid}/role = "admin" OR admins/{uid}=true */
+const ADMIN_EMAILS = [
+  /* "your-admin-email@gmail.com" */
+];
 
-const CLOUD_NAME = "ub0qgzwa";
-const UPLOAD_PRESET = "news_upload";
-
-/* =====================================================
-   ELEMENTS
-===================================================== */
-const pageLoader = document.getElementById("page-loader");
-const loginPage = document.getElementById("loginPage");
-const adminPanel = document.getElementById("adminPanel");
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const courseLogoutBtn = document.getElementById("courseLogoutBtn");
-const errorBox = document.getElementById("error");
-
-const publishBtn = document.getElementById("publishBtn");
-const clearBtn = document.getElementById("clearBtn");
-const imageFile = document.getElementById("imageFile");
-const imageUrlInput = document.getElementById("imageUrlInput");
-const pdfFile = document.getElementById("pdfFile");
-const imagePreviewBox = document.getElementById("imagePreviewBox");
-const imagePreview = document.getElementById("imagePreview");
-const uploadStatus = document.getElementById("uploadStatus");
-const statusText = document.getElementById("statusText");
-const progressBar = document.getElementById("progressBar");
-const newsList = document.getElementById("newsList");
-const dataList = document.getElementById("dataList");
-const newsCount = document.getElementById("newsCount");
-
-/* =====================================================
-   LOGIN LOGIC
-===================================================== */
-loginBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    if (!email || !password) {
-        errorBox.innerText = "Enter Email and Password";
-        return;
-    }
-
-    errorBox.innerText = "";
-    loginBtn.disabled = true;
-    loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
-
-    try {
-        await Promise.all([
-            signInWithEmailAndPassword(auth, email, password),
-            signInWithEmailAndPassword(courseAuth, email, password).catch(e => console.warn("Course login warning:", e.message))
-        ]);
-    } catch (error) {
-        console.error(error);
-        if (error.code === "auth/too-many-requests") {
-            errorBox.innerText = "Too many attempts. Please wait and try again.";
-        } else if (error.code === "auth/invalid-credential") {
-            errorBox.innerText = "Wrong Email or Password.";
-        } else {
-            errorBox.innerText = error.message;
-        }
-    } finally {
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-    }
-});
-
-/* =====================================================
-   AUTH STATE MANAGEMENT
-===================================================== */
-onAuthStateChanged(auth, (user) => {
-    if (pageLoader && !pageLoader.classList.contains("hide")) {
-        pageLoader.classList.add("hide");
-        document.body.style.overflow = "";
-    }
-
-    if (user) {
-        loginPage.style.display = "none";
-        adminPanel.style.display = "block";
-        loadNews();
-        loadDatabase();
-    } else {
-        loginPage.style.display = "flex";
-        adminPanel.style.display = "none";
-        document.getElementById("coursePanel").style.display = "none";
-    }
-});
-
-/* =====================================================
-   LOGOUT LOGIC
-===================================================== */
-async function handleLogout() {
-    try {
-        await Promise.all([signOut(auth), signOut(courseAuth)]);
-    } catch(e) {}
-}
-
-logoutBtn.addEventListener("click", handleLogout);
-courseLogoutBtn.addEventListener("click", handleLogout);
-
-/* =====================================================
-   IMAGE PREVIEW & COMPRESSION
-===================================================== */
-imageFile.addEventListener("change", () => {
-    const file = imageFile.files[0];
-    if (!file) {
-        imagePreviewBox.style.display = "none";
-        return;
-    }
-    if (!file.type.startsWith("image/")) {
-        alert("Please select an image.");
-        imageFile.value = "";
-        return;
-    }
-    const url = URL.createObjectURL(file);
-    imagePreview.src = url;
-    imagePreviewBox.style.display = "block";
-});
-
-async function compressImage(file) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-            let width = img.width;
-            let height = img.height;
-            const MAX_WIDTH = 1400;
-            if (width > MAX_WIDTH) {
-                height = height * MAX_WIDTH / width;
-                width = MAX_WIDTH;
-            }
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob((blob) => {
-                URL.revokeObjectURL(url);
-                if (!blob) {
-                    reject(new Error("Image compression failed"));
-                    return;
-                }
-                const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
-                resolve(compressed);
-            }, "image/jpeg", 0.82);
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(new Error("Unable to read image"));
-        };
-        img.src = url;
-    });
-}
-
-/* =====================================================
-   CLOUDINARY UPLOAD
-===================================================== */
-function uploadToCloudinary(file, onProgress) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
-        xhr.open("POST", url, true);
-        xhr.upload.onprogress = function(event) {
-            if (event.lengthComputable) {
-                const percent = Math.round((event.loaded / event.total) * 100);
-                if (onProgress) onProgress(percent);
-            }
-        };
-        xhr.onload = function() {
-            try {
-                const data = JSON.parse(xhr.responseText);
-                if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
-                    resolve(data);
-                } else {
-                    reject(new Error(data.error?.message || "Cloudinary upload failed"));
-                }
-            } catch (error) {
-                reject(new Error("Invalid Cloudinary response"));
-            }
-        };
-        xhr.onerror = function() {
-            reject(new Error("Network error during upload"));
-        };
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", UPLOAD_PRESET);
-        xhr.send(formData);
-    });
-}
-
-/* =====================================================
-   PUBLISH NEWS
-===================================================== */
-publishBtn.addEventListener("click", async () => {
-    const title = document.getElementById("newsTitle").value.trim();
-    const text = document.getElementById("newsText").value.trim();
-    const category = document.getElementById("newsCategory").value;
-    const externalLink = document.getElementById("externalLink").value.trim();
-
-    if (!title || !text) {
-        alert("Please enter News Title and Description.");
-        return;
-    }
-
-    publishBtn.disabled = true;
-    clearBtn.disabled = true;
-    uploadStatus.style.display = "block";
-    progressBar.style.width = "0%";
-    statusText.innerText = "Preparing upload...";
-
-    try {
-        let finalImageUrl = imageUrlInput.value.trim();
-        let finalPdfUrl = "";
-
-        let imagePromise = null;
-        let pdfPromise = null;
-
-        if (imageFile.files.length) {
-            statusText.innerText = "Compressing image...";
-            const compressedImage = await compressImage(imageFile.files[0]);
-            imagePromise = uploadToCloudinary(compressedImage, (percent) => {
-                progressBar.style.width = percent + "%";
-                statusText.innerText = `Uploading image ${percent}%`;
-            });
-        }
-
-        if (pdfFile.files.length) {
-            pdfPromise = uploadToCloudinary(pdfFile.files[0], (percent) => {
-                statusText.innerText = `Uploading PDF ${percent}%`;
-            });
-        }
-
-        if (imagePromise || pdfPromise) {
-            statusText.innerText = "Uploading files...";
-            const results = await Promise.all([imagePromise, pdfPromise]);
-            if (results[0]) finalImageUrl = results[0].secure_url;
-            if (results[1]) finalPdfUrl = results[1].secure_url;
-        }
-
-        statusText.innerText = "Saving news to Firebase...";
-        const newsRef = push(ref(db, "news"));
-
-        await set(newsRef, {
-            title: title,
-            text: text,
-            desc: text,
-            thumb: finalImageUrl,
-            image: finalImageUrl,
-            pdf: finalPdfUrl,
-            link: externalLink,
-            cat: category,
-            category: category,
-            date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
-            timestamp: Date.now()
-        });
-
-        statusText.innerText = "Published successfully.";
-        progressBar.style.width = "100%";
-        alert("News Published Successfully!");
-        clearForm();
-
-    } catch (error) {
-        console.error("Publish Error:", error);
-        alert("Upload failed:\n" + error.message);
-    } finally {
-        publishBtn.disabled = false;
-        clearBtn.disabled = false;
-        setTimeout(() => { uploadStatus.style.display = "none"; }, 1200);
-    }
-});
-
-function clearForm() {
-    document.getElementById("newsTitle").value = "";
-    document.getElementById("newsText").value = "";
-    document.getElementById("externalLink").value = "";
-    document.getElementById("newsCategory").value = "News";
-    imageFile.value = "";
-    pdfFile.value = "";
-    imageUrlInput.value = "";
-    imagePreview.src = "";
-    imagePreviewBox.style.display = "none";
-}
-
-clearBtn.addEventListener("click", clearForm);
-
-/* =====================================================
-   LOAD NEWS
-===================================================== */
-function loadNews() {
-    const newsRef = ref(db, "news");
-    onValue(newsRef, (snapshot) => {
-        newsList.innerHTML = "";
-        if (!snapshot.exists()) {
-            newsList.innerHTML = "<p>No News Published Yet.</p>";
-            newsCount.innerText = "0";
-            return;
-        }
-        const items = [];
-        snapshot.forEach((child) => {
-            items.push({ id: child.key, ...child.val() });
-        });
-        items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        newsCount.innerText = items.length;
-
-        items.forEach((item) => {
-            const card = document.createElement("div");
-            card.className = "news-card";
-
-            const thumb = document.createElement("div");
-            thumb.className = "news-thumb";
-            if (item.thumb) {
-                const img = document.createElement("img");
-                img.src = item.thumb;
-                img.loading = "lazy";
-                img.alt = item.title || "News";
-                thumb.appendChild(img);
-            } else {
-                thumb.innerHTML = '<i class="fa-solid fa-newspaper no-image"></i>';
-            }
-
-            const content = document.createElement("div");
-            content.className = "news-content";
-
-            const heading = document.createElement("h3");
-            heading.innerText = item.title || "Untitled";
-
-            const meta = document.createElement("div");
-            meta.className = "meta";
-            meta.innerText = `${item.cat || item.category || "News"} • ${item.date || ""}`;
-
-            const description = document.createElement("p");
-            description.innerText = item.text || item.desc || "";
-
-            const links = document.createElement("div");
-            links.className = "links";
-
-            if (item.thumb) {
-                const a = document.createElement("a");
-                a.href = item.thumb;
-                a.target = "_blank";
-                a.className = "image-link";
-                a.innerHTML = '<i class="fa-solid fa-image"></i> Image';
-                links.appendChild(a);
-            }
-            if (item.pdf) {
-                const a = document.createElement("a");
-                a.href = item.pdf;
-                a.target = "_blank";
-                a.className = "pdf-link";
-                a.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF / File';
-                links.appendChild(a);
-            }
-            if (item.link) {
-                const a = document.createElement("a");
-                a.href = item.link;
-                a.target = "_blank";
-                a.rel = "noopener";
-                a.className = "external-link";
-                a.innerHTML = '<i class="fa-solid fa-link"></i> Link';
-                links.appendChild(a);
-            }
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-btn";
-            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-            deleteBtn.onclick = () => deleteNews(item.id);
-
-            links.appendChild(deleteBtn);
-            content.appendChild(heading);
-            content.appendChild(meta);
-            content.appendChild(description);
-            content.appendChild(links);
-
-            card.appendChild(thumb);
-            card.appendChild(content);
-            newsList.appendChild(card);
-        });
-    }, (error) => {
-        console.error("News Load Error:", error);
-        newsList.innerHTML = `<p style="color:#dc2626">Unable to Load News</p>`;
-    });
-}
-
-async function deleteNews(id) {
-    if (!confirm("Delete this news?")) return;
-    try {
-        await remove(ref(db, "news/" + id));
-        alert("News Deleted Successfully");
-    } catch (error) {
-        alert("Delete failed: " + error.message);
-    }
-}
-
-/* =====================================================
-   ADD STUDY MATERIAL
-===================================================== */
-document.getElementById("bookBtn").addEventListener("click", async () => {
-    const name = document.getElementById("bookName").value.trim();
-    const semester = document.getElementById("semester").value.trim();
-    const branch = document.getElementById("branch").value.trim();
-    const link = document.getElementById("bookLink").value.trim();
-
-    if (!name || !link) {
-        alert("Enter Book Name and PDF Link.");
-        return;
-    }
-
-    const bookRef = push(ref(db, "books"));
-    try {
-        await set(bookRef, {
-            name: name,
-            semester: semester,
-            branch: branch,
-            link: link,
-            date: new Date().toLocaleString("en-IN"),
-            timestamp: Date.now()
-        });
-        alert("Study Material Added!");
-        document.getElementById("bookName").value = "";
-        document.getElementById("semester").value = "";
-        document.getElementById("branch").value = "";
-        document.getElementById("bookLink").value = "";
-    } catch (error) {
-        alert("Book Add Failed: " + error.message);
-    }
-});
-
-/* =====================================================
-   LOAD DATABASE RECORDS
-===================================================== */
-function loadDatabase() {
-    const rootRef = ref(db);
-    onValue(rootRef, (snapshot) => {
-        dataList.innerHTML = "";
-        const data = snapshot.val();
-        if (!data) {
-            dataList.innerText = "No Data Found";
-            return;
-        }
-        Object.keys(data).forEach((section) => {
-            const sectionData = data[section];
-            if (!sectionData || typeof sectionData !== "object") return;
-
-            Object.keys(sectionData).slice(-30).forEach((id) => {
-                const item = sectionData[id];
-                const div = document.createElement("div");
-                const title = item.title || item.name || "Record";
-                const text = item.text || item.desc || item.link || "";
-
-                div.innerHTML = `
-                    <b>Section: ${escapeHTML(section)}</b><br><br>
-                    <strong>${escapeHTML(title)}</strong><br>
-                    <small>${escapeHTML(text)}</small><br><br>
-                    <button style="background:#dc2626;color:#fff;border:0;padding:7px 12px;border-radius:7px;cursor:pointer;" data-section="${escapeHTML(section)}" data-id="${escapeHTML(id)}">
-                        Delete
-                    </button>
-                `;
-                div.querySelector("button").addEventListener("click", () => {
-                    deleteDatabaseItem(section, id);
-                });
-                dataList.appendChild(div);
-            });
-        });
-    });
-}
-
-async function deleteDatabaseItem(section, id) {
-    if (!confirm("Delete this database record?")) return;
-    try {
-        await remove(ref(db, section + "/" + id));
-        alert("Deleted Successfully");
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-function escapeHTML(value) {
-    return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-/* =====================================================
-   INITIAL LOADER ANIMATION
-===================================================== */
-document.addEventListener("DOMContentLoaded", function() {
-    const loader = document.getElementById("page-loader");
-    const bar = document.getElementById("loader-progress-bar");
-    const percent = document.getElementById("progress-percent");
-
-    let progress = 0;
-    document.body.style.overflow = "hidden";
-
-    const timer = setInterval(function() {
-        progress += Math.floor(Math.random() * 5) + 2;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(timer);
-            if (bar) bar.style.width = progress + "%";
-            if (percent) percent.textContent = progress + "%";
-            setTimeout(function() {
-                if (loader) loader.classList.add("hide");
-                document.body.style.overflow = "";
-            }, 450);
-            return;
-        }
-        if (bar) bar.style.width = progress + "%";
-        if (percent) percent.textContent = progress + "%";
-    }, 45);
-});
-
-setTimeout(function() {
-    const loader = document.getElementById("page-loader");
-    if (loader && !loader.classList.contains("hide")) {
-        loader.classList.add("hide");
-        document.body.style.overflow = "";
-    }
-}, 5000);
-
-/* =====================================================
-   COURSE ADMIN MODULE LOGIC
-===================================================== */
-const COURSE_FILES = {
-  "civil-year-2-course":"civil-year-2-course.html",
-  "mechanical-year-2-course":"mechanical-year-2-course.html",
-  "cs-year-2-course":"cs-year-2-course.html",
-  "it-year-2-course":"it-year-2-course.html",
-  "electrical-year-2-course":"electrical-year-2-course.html",
-  "electronics-year-2-course":"electronics-year-2-course.html",
-  "agriculture-year-2-course":"agriculture-year-2-course.html",
-  "chemical-year-2-course":"chemical-year-2-course.html"
+const courseNames = {
+  "civil-year-2-course":"Civil Engineering Year 2",
+  "mechanical-year-2-course":"Mechanical Engineering Year 2",
+  "cs-year-2-course":"Computer Science Engineering Year 2",
+  "it-year-2-course":"Information Technology Year 2",
+  "electrical-year-2-course":"Electrical Engineering Year 2",
+  "electronics-year-2-course":"Electronics Engineering Year 2",
+  "agriculture-year-2-course":"Agriculture Engineering Year 2",
+  "chemical-year-2-course":"Chemical Engineering Year 2"
 };
 
-let rows = [];
-let courseFilter = "pending";
-let stopListening = null;
-let starting = false;
+let allRequests = [];
+let listenerUnsub = null;
+let currentAdmin = null;
 
-function fmt(v) {
-  if(!v) return "-";
-  const n = Number(v);
-  if(!Number.isFinite(n)) return "-";
-  return new Date(n).toLocaleString("en-IN", {dateStyle:"medium",timeStyle:"short"});
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m]));
+const fmt = ts => ts ? new Date(Number(ts)).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}) : "-";
+
+function setLoginMsg(text,type="err"){ const el=$("loginMsg"); el.textContent=text||""; el.className="msg "+(text?type:""); }
+function statusOf(r){ return r.status || (r.verified===true ? "approved" : "pending"); }
+function isAllowedEmail(email){ return ADMIN_EMAILS.map(x=>x.toLowerCase()).includes(String(email||"").toLowerCase()); }
+
+async function checkAdmin(user){
+  if(isAllowedEmail(user.email)) return true;
+  try{
+    const [u,a] = await Promise.all([
+      get(ref(db,`users/${user.uid}`)),
+      get(ref(db,`admins/${user.uid}`))
+    ]);
+    const ud = u.exists() ? (u.val()||{}) : {};
+    const av = a.exists() ? a.val() : false;
+    return ud.role==="admin" || ud.isAdmin===true || av===true || av?.role==="admin";
+  }catch(e){
+    console.error("Admin role check:",e);
+    return false;
+  }
 }
-function statusOf(d) { return String(d.status || "pending").toLowerCase(); }
-function courseFile(id) { return COURSE_FILES[id] || ""; }
 
-function setNotice(text, type="warn") {
-  const noticeEl = document.getElementById("courseNotice");
-  if(!noticeEl) return;
-  noticeEl.className = "course-notice " + (type==="ok"?"ok":type==="err"?"err":"");
-  noticeEl.innerHTML = text;
+async function login(){
+  const email=$("email").value.trim(), password=$("password").value;
+  if(!email||!password){setLoginMsg("Enter admin email and password.");return;}
+  $("loginBtn").disabled=true;
+  setLoginMsg("Signing in...","ok");
+  try{
+    await signInWithEmailAndPassword(auth,email,password);
+  }catch(e){
+    console.error(e);
+    setLoginMsg(e.code==="auth/invalid-credential" ? "Invalid email or password." : (e.message||"Login failed."));
+    $("loginBtn").disabled=false;
+  }
 }
 
-function flatten(snapshot) {
-  const out = [];
-  if(!snapshot.exists()) return out;
-  snapshot.forEach(uidSnap => {
-    const uid = uidSnap.key, value = uidSnap.val() || {};
-    Object.entries(value).forEach(([courseId, courseValue]) => {
-      if(!courseValue || typeof courseValue !== "object") return;
-      Object.entries(courseValue).forEach(([purchaseKey, purchaseValue]) => {
-        if(!purchaseValue || typeof purchaseValue !== "object") return;
-        out.push({uid, courseId, purchaseKey, ...purchaseValue});
+function showAdmin(user){
+  currentAdmin=user;
+  $("loginScreen").style.display="none";
+  $("adminApp").style.display="block";
+  $("adminEmail").textContent=user.email||user.uid;
+  $("loginBtn").disabled=false;
+  startListener();
+}
+
+function hideAdmin(){
+  $("adminApp").style.display="none";
+  $("loginScreen").style.display="flex";
+  $("loginBtn").disabled=false;
+  if(listenerUnsub){listenerUnsub();listenerUnsub=null;}
+  allRequests=[];
+}
+
+function startListener(){
+  if(listenerUnsub) listenerUnsub();
+  const root=ref(db,"utrPurchases");
+  listenerUnsub=onValue(root,snap=>{
+    const out=[];
+    if(snap.exists()){
+      snap.forEach(userSnap=>{
+        const uid=userSnap.key;
+        userSnap.forEach(courseSnap=>{
+          const courseId=courseSnap.key;
+          courseSnap.forEach(reqSnap=>{
+            const v=reqSnap.val()||{};
+            out.push({ ...v, uid:v.uid||uid, courseId:v.courseId||courseId, purchaseId:v.purchaseId||reqSnap.key });
+          });
+        });
       });
-    });
+    }
+    out.sort((a,b)=>Number(b.submittedAt||0)-Number(a.submittedAt||0));
+    allRequests=out;
+    populateCourseFilter();
+    render();
+  },err=>{
+    console.error(err);
+    $("requestList").innerHTML=`<div class="empty"><i class="fa-solid fa-lock"></i><br>Could not read requests.<br><small>${esc(err.message||"Check Firebase Rules.")}</small></div>`;
   });
-  return out.sort((a,b)=>(Number(b.submittedAt)||0)-(Number(a.submittedAt)||0));
 }
 
-function renderCourses() {
-  const counts = {pending:0, verified:0, rejected:0};
-  rows.forEach(r => {
-    const s = statusOf(r);
-    if(counts[s] !== undefined) counts[s]++;
+function populateCourseFilter(){
+  const select=$("courseFilter"), old=select.value;
+  const ids=[...new Set(allRequests.map(r=>r.courseId).filter(Boolean))];
+  select.innerHTML='<option value="all">All Courses</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(courseNames[id]||id)}</option>`).join("");
+  if(ids.includes(old)) select.value=old;
+}
+
+function render(){
+  const q=$("search").value.trim().toLowerCase(), sf=$("statusFilter").value, cf=$("courseFilter").value;
+  $("totalCount").textContent=allRequests.length;
+  $("pendingCount").textContent=allRequests.filter(r=>statusOf(r)==="pending").length;
+  $("approvedCount").textContent=allRequests.filter(r=>statusOf(r)==="approved" || r.verified===true).length;
+  $("rejectedCount").textContent=allRequests.filter(r=>statusOf(r)==="rejected").length;
+
+  const list=allRequests.filter(r=>{
+    const hay=[r.name,r.email,r.utr,r.courseName,r.courseId,r.uid,r.mobile,r.college].join(" ").toLowerCase();
+    return (!q||hay.includes(q)) && (sf==="all"||statusOf(r)===sf) && (cf==="all"||r.courseId===cf);
   });
-  
-  document.getElementById("courseTotalCount").textContent = rows.length;
-  document.getElementById("coursePendingCount").textContent = counts.pending;
-  document.getElementById("courseVerifiedCount").textContent = counts.verified;
-  document.getElementById("courseRejectedCount").textContent = counts.rejected;
 
-  const data = courseFilter === "all" ? rows : rows.filter(r => statusOf(r) === courseFilter);
-  const listEl = document.getElementById("courseList");
-
-  if(!data.length) {
-    listEl.innerHTML = `<div class="empty"><i class="fa-solid fa-circle-check" style="font-size:30px"></i><p style="margin-top:8px">No ${escapeHTML(courseFilter)} requests.</p></div>`;
+  if(!list.length){
+    $("requestList").innerHTML='<div class="empty"><i class="fa-solid fa-inbox"></i><br>No matching payment requests.</div>';
     return;
   }
-
-  listEl.innerHTML = data.map(d => {
-    const name = d.name || "Engineer", branch = d.branch || "Diploma Member";
-    const pic = d.profilePic || d.photoURL || "", initial = (name.trim()[0] || "E").toUpperCase();
-    const avatar = pic ? `<img src="${escapeHTML(pic)}" alt="Profile" onerror="this.parentElement.innerHTML='${initial}'">` : initial;
-    const file = courseFile(d.courseId), s = statusOf(d);
-    let actions = "";
-    
-    if(s === "pending") {
-      actions = `<button class="btn approve" onclick="window.approvePayment('${escapeHTML(d.uid)}', '${escapeHTML(d.courseId)}', '${escapeHTML(d.purchaseKey)}', this)"><i class="fa-solid fa-circle-check"></i> Approve Payment & Give Access</button>
-      <button class="btn reject" onclick="window.rejectPayment('${escapeHTML(d.uid)}', '${escapeHTML(d.courseId)}', '${escapeHTML(d.purchaseKey)}', this)"><i class="fa-solid fa-xmark"></i> Reject</button>`;
-    } else if(s === "verified") {
-      actions = `<button class="btn course-link" onclick="window.open('${escapeHTML(file)}','_blank')" ${file?"":"disabled"}><i class="fa-solid fa-file-code"></i> ${file?"Open Course File":"Course File Not Mapped"}</button>`;
-    } else {
-      actions = `<div class="muted"><i class="fa-solid fa-circle-xmark"></i> This request was rejected.</div>`;
-    }
-
-    return `<article class="request">
-      <div class="head">
-        <div class="user"><div class="avatar">${avatar}</div><div>
-          <div class="course">${escapeHTML(d.courseName || d.courseId || "Course")}</div>
-          <div class="muted">${escapeHTML(name)} • ${escapeHTML(branch)} • ${escapeHTML(d.email || "-")}</div>
-        </div></div>
-        <div class="amount">₹${escapeHTML(d.amount || 99)}</div>
-      </div>
-      <div class="grid">
-        <div class="item"><b>NAME</b><span>${escapeHTML(name)}</span></div>
-        <div class="item"><b>BRANCH</b><span>${escapeHTML(branch)}</span></div>
-        <div class="item"><b>MOBILE</b><span>${escapeHTML(d.mobile || "-")}</span></div>
-        <div class="item"><b>EMAIL</b><span>${escapeHTML(d.email || "-")}</span></div>
-        <div class="item"><b>COURSE</b><span>${escapeHTML(d.courseName || d.courseId || "-")}</span></div>
-        <div class="item"><b>AMOUNT</b><span>₹${escapeHTML(d.amount || 99)} INR</span></div>
-        <div class="item"><b>UTR</b><span class="utr">${escapeHTML(d.utr || "-")}</span></div>
-        <div class="item"><b>SUBMITTED</b><span>${escapeHTML(fmt(d.submittedAt))}</span></div>
-        <div class="item"><b>STATUS</b><span>${escapeHTML(s.toUpperCase())}</span></div>
-      </div>
-      <div class="actions">${actions}</div>
-    </article>`;
-  }).join("");
+  $("requestList").innerHTML=list.map(card).join("");
 }
 
-async function connectCourseDb() {
-  if(starting) return;
-  starting = true;
-  if(stopListening) { stopListening(); stopListening = null; }
-  setNotice('<i class="fa-solid fa-spinner fa-spin"></i> Connecting to Course Firebase...');
-  try {
-    if(!courseAuth.currentUser) throw new Error("Course Firebase session is not signed in.");
-    stopListening = onValue(ref(courseDb, "utrPurchases"), snap => {
-      rows = flatten(snap);
-      setNotice(`Course Firebase connected • ${rows.length} purchase request(s) loaded. Verify the UTR before approving.`, "ok");
-      renderCourses();
-    }, err => setNotice("Firebase database error: " + escapeHTML(err.message), "err"));
-  } catch(e) {
-    setNotice("Course Firebase error: " + escapeHTML(e.message), "err");
-  } finally { starting = false; }
+function card(r){
+  const s=statusOf(r), approved=s==="approved"||r.verified===true, rejected=s==="rejected";
+  const course=courseNames[r.courseId]||r.courseName||r.courseId||"Unknown Course";
+  return `<article class="request">
+    <div class="request-head">
+      <div><div class="course">${esc(course)}</div><div class="sub">${esc(r.name||"Unknown user")} • ${esc(r.email||r.uid||"")}</div></div>
+      <span class="badge ${s}">${s.toUpperCase()}</span>
+    </div>
+    <div class="info-grid">
+      <div class="info"><label>UTR / Transaction ID</label><div class="utr">${esc(r.utr||"-")}</div></div>
+      <div class="info"><label>Amount</label><div>₹${esc(r.amount??99)} ${esc(r.currency||"INR")}</div></div>
+      <div class="info"><label>Submitted</label><div>${esc(fmt(r.submittedAt))}</div></div>
+      <div class="info"><label>Student</label><div>${esc(r.branch||"Diploma Member")}</div></div>
+    </div>
+    <div class="actions">
+      ${(!approved&&!rejected)?`<button class="btn approve" onclick="approveRequest(${JSON.stringify(r.purchaseId)},${JSON.stringify(r.uid)},${JSON.stringify(r.courseId)})"><i class="fa-solid fa-check"></i> Approve & Unlock</button>
+      <button class="btn reject" onclick="rejectRequest(${JSON.stringify(r.purchaseId)},${JSON.stringify(r.uid)},${JSON.stringify(r.courseId)})"><i class="fa-solid fa-xmark"></i> Reject</button>`:""}
+      <button class="btn details" onclick="showDetails(${JSON.stringify(r.purchaseId)},${JSON.stringify(r.uid)},${JSON.stringify(r.courseId)})"><i class="fa-solid fa-eye"></i> Details</button>
+    </div>
+  </article>`;
 }
 
-window.approvePayment = async function(uid, courseId, key, button) {
-  if(!confirm("Confirm that the payment and UTR are genuine. This will grant course access.")) return;
-  const old = button.innerHTML;
-  button.disabled = true; 
-  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
-  try {
-    const purchaseRef = ref(courseDb, `utrPurchases/${uid}/${courseId}/${key}`);
-    const snap = await get(purchaseRef);
-    if(!snap.exists()) throw new Error("Purchase request not found.");
-    const d = snap.val() || {}, now = Date.now();
-    const adminEmail = courseAuth.currentUser?.email || "admin";
-    
-    await update(purchaseRef, {status: "verified", verified: true, verifiedAt: now, verifiedBy: adminEmail});
-    await set(ref(courseDb, `courseAccess/${uid}/${courseId}`), {
-      uid, courseId, courseName: d.courseName || courseId, amount: Number(d.amount) || 99,
-      currency: "INR", utr: d.utr || "", verified: true, status: "verified",
-      purchaseId: d.purchaseId || key, grantedAt: now, verifiedBy: adminEmail
+async function approveRequest(purchaseId,uid,courseId){
+  if(!confirm("Approve this payment and unlock the course for this student?")) return;
+  try{
+    const requestRef=ref(db,`utrPurchases/${uid}/${courseId}/${purchaseId}`);
+    const accessRef=ref(db,`courseAccess/${uid}/${courseId}`);
+    const snap=await get(requestRef);
+    if(!snap.exists()) throw new Error("Payment request no longer exists.");
+    const r=snap.val()||{}, now=Date.now();
+    await set(accessRef,{
+      uid, courseId,
+      courseName:courseNames[courseId]||r.courseName||courseId,
+      verified:true,
+      status:"verified",
+      amount:Number(r.amount||99),
+      currency:r.currency||"INR",
+      utr:r.utr||"",
+      purchaseId,
+      approvedAt:now,
+      approvedBy:currentAdmin?.email||currentAdmin?.uid||"admin"
     });
-    alert("Payment approved successfully. Course access granted.");
-  } catch(e) {
-    alert("Approve failed:\n\n" + e.message);
-    button.disabled = false; 
-    button.innerHTML = old;
-  }
-};
-
-window.rejectPayment = async function(uid, courseId, key, button) {
-  if(!confirm("Reject this UTR/payment request?")) return;
-  const old = button.innerHTML;
-  button.disabled = true; 
-  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rejecting...';
-  try {
-    await update(ref(courseDb, `utrPurchases/${uid}/${courseId}/${key}`), {
-      status: "rejected", verified: false, rejectedAt: Date.now(),
-      rejectedBy: (courseAuth.currentUser?.email || "admin")
+    await update(requestRef,{
+      status:"approved",
+      verified:true,
+      approvedAt:now,
+      approvedBy:currentAdmin?.email||currentAdmin?.uid||"admin"
     });
-    alert("Request rejected.");
-  } catch(e) {
-    alert("Reject failed:\n\n" + e.message);
-    button.disabled = false; 
-    button.innerHTML = old;
-  }
-};
-
-/* =====================================================
-   TAB & PANEL SWITCHING
-===================================================== */
-function showAdminPanel(panel) {
-    const newsPanel = document.getElementById("adminPanel");
-    const coursePanel = document.getElementById("coursePanel");
-    const newsSwitch = document.getElementById("newsSwitch");
-    const courseSwitch = document.getElementById("courseSwitch");
-
-    if (panel === "course") {
-        newsPanel.style.display = "none";
-        coursePanel.style.display = "block";
-        newsSwitch.classList.remove("active");
-        courseSwitch.classList.add("active");
-        if (courseAuth.currentUser) {
-            connectCourseDb();
-        } else {
-            setNotice("Course Firebase login session not available. Use valid credentials.", "err");
-        }
-    } else {
-        coursePanel.style.display = "none";
-        newsPanel.style.display = "block";
-        newsSwitch.classList.add("active");
-        courseSwitch.classList.remove("active");
-    }
+    alert("Approved successfully. Course access is now unlocked.");
+  }catch(e){console.error(e);alert("Approval failed: "+e.message);}
 }
 
-document.getElementById("newsSwitch").addEventListener("click", () => showAdminPanel("news"));
-document.getElementById("courseSwitch").addEventListener("click", () => showAdminPanel("course"));
-document.getElementById("refreshBtn").addEventListener("click", () => connectCourseDb());
+async function rejectRequest(purchaseId,uid,courseId){
+  const reason=prompt("Enter rejection reason (optional):","Payment could not be verified.");
+  if(reason===null) return;
+  try{
+    const requestRef=ref(db,`utrPurchases/${uid}/${courseId}/${purchaseId}`);
+    const now=Date.now();
+    await update(requestRef,{
+      status:"rejected",
+      verified:false,
+      rejectedAt:now,
+      rejectedBy:currentAdmin?.email||currentAdmin?.uid||"admin",
+      rejectionReason:reason.trim()
+    });
+    alert("Payment request rejected.");
+  }catch(e){console.error(e);alert("Rejection failed: "+e.message);}
+}
 
-document.querySelectorAll(".course-tabs .tab").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    document.querySelectorAll(".course-tabs .tab").forEach(b => b.classList.remove("active"));
-    const target = e.currentTarget;
-    target.classList.add("active");
-    courseFilter = target.getAttribute("data-course-filter");
-    renderCourses();
-  });
+function findReq(purchaseId,uid,courseId){
+  return allRequests.find(r=>r.purchaseId===purchaseId&&r.uid===uid&&r.courseId===courseId);
+}
+window.showDetails=(purchaseId,uid,courseId)=>{
+  const r=findReq(purchaseId,uid,courseId); if(!r)return;
+  const rows=[
+    ["Course",courseNames[r.courseId]||r.courseName||r.courseId],
+    ["Status",statusOf(r)],
+    ["Name",r.name],["Email",r.email],["Mobile",r.mobile],
+    ["Branch",r.branch],["College",r.college],["Semester",r.semester],
+    ["UID",r.uid],["UTR / Transaction ID",r.utr],["Amount",`₹${r.amount??99} ${r.currency||"INR"}`],
+    ["Submitted",fmt(r.submittedAt)],["Purchase ID",r.purchaseId],
+    ["Approved By",r.approvedBy],["Approved At",fmt(r.approvedAt)],
+    ["Rejected By",r.rejectedBy],["Rejected At",fmt(r.rejectedAt)],["Reason",r.rejectionReason]
+  ];
+  $("detailBody").innerHTML=rows.filter(x=>x[1]!==undefined&&x[1]!==null&&x[1]!=="").map(x=>`<div class="detail-row"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join("");
+  $("detailOverlay").style.display="flex";
+};
+window.closeDetails=()=>{$("detailOverlay").style.display="none";};
+
+$("loginBtn").onclick=login;
+$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+$("search").oninput=render;
+$("statusFilter").onchange=render;
+$("courseFilter").onchange=render;
+$("refreshBtn").onclick=()=>startListener();
+$("logoutBtn").onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){hideAdmin();return;}
+  try{
+    const allowed=await checkAdmin(user);
+    if(!allowed){
+      await signOut(auth);
+      setLoginMsg("This Firebase account is not authorized as an admin.");
+      return;
+    }
+    showAdmin(user);
+  }catch(e){
+    await signOut(auth);
+    setLoginMsg("Admin verification failed: "+e.message);
+  }
 });
 
+$("detailOverlay").addEventListener("click",e=>{if(e.target===$("detailOverlay"))closeDetails()});
 </script>
-
 </body>
 </html>

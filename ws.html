@@ -1028,26 +1028,6 @@ const firebaseConfig = {
     appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
    /* =====================================================
-   FIREBASE IMPORT
-===================================================== */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, push, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-/* =====================================================
-   FIREBASE CONFIG
-===================================================== */
-const firebaseConfig = {
-    apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-    authDomain: "diplomaengineers-869df.firebaseapp.com",
-    databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-    projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.appspot.com",
-    messagingSenderId: "356779436080",
-    appId: "1:356779436080:web:4b28da380e547420d0e5f5"
-};
-
-/* =====================================================
    INITIALIZATION
 ===================================================== */
 const app = initializeApp(firebaseConfig);
@@ -1120,6 +1100,7 @@ loginBtn.addEventListener("click", async () => {
 
         try {
             await signInWithEmailAndPassword(courseAuth, email, password);
+            updateAdminScreen();
         } catch (courseError) {
             await signOut(auth);
             throw new Error(
@@ -1146,28 +1127,47 @@ loginBtn.addEventListener("click", async () => {
 /* =====================================================
    AUTH STATE MANAGEMENT
 ===================================================== */
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+    if (user && !courseAuth.currentUser) {
+        // The first Firebase project is the master admin login.
+        // Keep the UI locked until the same account is authenticated in the
+        // course Firebase project as well, because course rules are enforced there.
+        try {
+            const currentEmail = user.email;
+            if (currentEmail) {
+                // Do not ask for the password again here. The course login is
+                // performed by the Login button and will trigger the listener below.
+            }
+        } catch (e) { console.error(e); }
+    }
+    updateAdminScreen();
+});
+
+onAuthStateChanged(courseAuth, () => {
+    updateAdminScreen();
+});
+
+function updateAdminScreen() {
     if (pageLoader && !pageLoader.classList.contains("hide")) {
         pageLoader.classList.add("hide");
         document.body.style.overflow = "";
     }
 
-    if (user && courseAuth.currentUser) {
+    const masterUser = auth.currentUser;
+    const courseUser = courseAuth.currentUser;
+
+    if (masterUser && courseUser && masterUser.uid === courseUser.uid) {
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
         loadNews();
         loadDatabase();
         loadBooksTab();
         if (typeof connectCourseAdmin === "function") connectCourseAdmin();
-    } else if (user && !courseAuth.currentUser) {
-        loginPage.style.display = "flex";
-        adminPanel.style.display = "none";
-        errorBox.innerText = "Course Admin session is missing. Please login again.";
     } else {
         loginPage.style.display = "flex";
         adminPanel.style.display = "none";
     }
-});
+}
 
 /* =====================================================
    LOGOUT LOGIC

@@ -6,19 +6,28 @@
     <title>Expert Faculty - Team</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Social and Modal Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Custom styles matching your card layout components */
         .faculty-slider-wrapper {
             width: 100%;
-            overflow-x: auto;
             padding: 2rem 1rem;
-            scrollbar-width: thin;
         }
+        /* Mobile par 2 columns grid */
         .scroll-container {
-            display: flex;
-            gap: 2rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
             justify-content: center;
-            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        /* Desktop ya tablets par 3 columns grid */
+        @media (min-width: 768px) {
+            .scroll-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 2rem;
+            }
         }
         .faculty-card {
             background: #ffffff;
@@ -26,9 +35,11 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             transition: all 0.3s ease;
             overflow: hidden;
-            width: 280px;
+            width: 100%;
+            max-width: 280px;
             cursor: pointer;
             border: 1px solid #f1f5f9;
+            margin: 0 auto;
         }
         .faculty-card:hover {
             transform: translateY(-5px);
@@ -36,9 +47,12 @@
         }
         .faculty-arch-bg {
             background: #e2e8f0;
-            height: 260px;
-            overflow: hidden;
-            position: relative;
+            height: 180px;
+        }
+        @media (min-width: 768px) {
+            .faculty-arch-bg {
+                height: 260px;
+            }
         }
         .faculty-arch-bg img {
             width: 100%;
@@ -50,101 +64,271 @@
             transform: scale(1.05);
         }
         .faculty-info {
-            padding: 1.5rem;
+            padding: 1rem;
             text-align: center;
         }
+        @media (min-width: 768px) {
+            .faculty-info {
+                padding: 1.5rem;
+            }
+        }
         .faculty-info h4 {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 0.25rem;
         }
+        @media (min-width: 768px) {
+            .faculty-info h4 {
+                font-size: 1.25rem;
+            }
+        }
         .faculty-sub {
             display: block;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 500;
             color: #64748b;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .faculty-sub {
+                font-size: 0.875rem;
+                margin-bottom: 0.75rem;
+            }
         }
         .exp-badge {
             display: inline-block;
             background-color: #eff6ff;
             color: #2563eb;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 600;
-            padding: 0.25rem 0.75rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 9999px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        .section-title {
-            text-align: center;
-            font-size: 2.25rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-        }
-        .section-title span {
-            color: #2563eb;
+        @media (min-width: 768px) {
+            .exp-badge {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.75rem;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans antialiased">
+<body class="bg-slate-50 font-sans antialiased flex flex-col min-h-screen">
 
-    <!-- EXPERT FACULTY SECTION -->
-    <div class="section-title">Expert <span>Faculty</span></div>
-    
-    <div class="faculty-slider-wrapper">
-      <div class="scroll-container faculty-scroll" id="facultySlider">
-        
-        <!-- Faculty 1 -->
-        <div class="faculty-card" onclick="openFacultyProfile('anubhav')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFacultyProfile('anubhav')}">
-          <div class="faculty-arch-bg">
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png" alt="Anubhav Gangwar">
-          </div>
-          <div class="faculty-info">
-            <h4>Anubhav Gangwar</h4>
-            <span class="faculty-sub">Founder / CEO</span>
-            <div class="exp-badge">4+ Years Exp</div>
+    <!-- DYNAMIC HEADER CONTAINER -->
+    <div id="site-header"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow">
+        <!-- Page Title Section -->
+        <section class="py-12 px-4 text-center max-w-4xl mx-auto">
+            <span class="text-blue-600 font-semibold tracking-wider uppercase text-sm bg-blue-50 px-3 py-1 rounded-full">Leadership & Mentors</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold mt-3 tracking-tight text-slate-900">Expert <span>Faculty</span></h1>
+            <p class="mt-3 text-slate-600">Click on any profile card to view detailed background, social links, experience, and share options.</p>
+        </section>
+
+        <!-- EXPERT FACULTY GRID -->
+        <div class="faculty-slider-wrapper max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-16">
+          <div class="scroll-container faculty-scroll" id="facultySlider">
+            
+            <!-- Faculty 1 -->
+            <div class="faculty-card" onclick="openFacultyModal('anubhav')" role="button" tabindex="0">
+              <div class="faculty-arch-bg">
+                <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png" alt="Anubhav Gangwar">
+              </div>
+              <div class="faculty-info">
+                <h4>Anubhav Gangwar</h4>
+                <span class="faculty-sub">Founder / CEO</span>
+                <div class="exp-badge">4+ Years Exp</div>
+              </div>
+            </div>
+
+            <!-- Faculty 2 -->
+            <div class="faculty-card" onclick="openFacultyModal('mukesh')" role="button" tabindex="0">
+              <div class="faculty-arch-bg">
+                <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png" alt="Mukesh Singh">
+              </div>
+              <div class="faculty-info">
+                <h4>Mukesh Singh</h4>
+                <span class="faculty-sub">Co-founder / News Expert</span>
+                <div class="exp-badge">4+ Years Exp</div>
+              </div>
+            </div>
+
+            <!-- Faculty 3 -->
+            <div class="faculty-card" onclick="openFacultyModal('rambohd')" role="button" tabindex="0">
+              <div class="faculty-arch-bg">
+                <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png" alt="Rambohd Yadav">
+              </div>
+              <div class="faculty-info">
+                <h4>Rambohd Yadav</h4>
+                <span class="faculty-sub">Content Admin</span>
+                <div class="exp-badge">3+ Years Exp</div>
+              </div>
+            </div>
+
           </div>
         </div>
+    </main>
 
-        <!-- Faculty 2 -->
-        <div class="faculty-card" onclick="openFacultyProfile('mukesh')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFacultyProfile('mukesh')}">
-          <div class="faculty-arch-bg">
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png" alt="Mukesh Singh">
-          </div>
-          <div class="faculty-info">
-            <h4>Mukesh Singh</h4>
-            <span class="faculty-sub">Co-founder / News Expert</span>
-            <div class="exp-badge">4+ Years Exp</div>
-          </div>
+    <!-- POPUP PROFILE MODAL -->
+    <div id="profileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative transform scale-95 transition-transform duration-300" id="modalContentBox">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-28 relative">
+                <button onclick="closeFacultyModal()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 pb-6 pt-0 relative text-center">
+                <div class="relative -mt-14 mb-3 inline-block">
+                    <img id="modalImg" src="" alt="Faculty Profile" class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md mx-auto">
+                </div>
+                <h3 id="modalName" class="text-2xl font-bold text-slate-900 font-serif"></h3>
+                <p id="modalRole" class="text-blue-600 font-semibold text-sm mt-1"></p>
+                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase mt-2">NEWS & UPDATES</p>
+                <p id="modalBio" class="text-slate-600 text-sm mt-1 px-4"></p>
+
+                <div class="flex justify-center space-x-3 my-6">
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fab fa-telegram-plane"></i></a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fab fa-instagram"></i></a>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="border border-slate-100 bg-slate-50/50 p-3 rounded-2xl text-center shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Experience</span>
+                        <span id="modalExp" class="text-sm font-bold text-slate-800"></span>
+                    </div>
+                    <div class="border border-slate-100 bg-slate-50/50 p-3 rounded-2xl text-center shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role Type</span>
+                        <span id="modalRoleType" class="text-sm font-bold text-slate-800"></span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="shareProfile()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <a id="modalExternalLink" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors shadow-md shadow-blue-500/20 text-center flex items-center justify-center">
+                        View Profile
+                    </a>
+                </div>
+            </div>
         </div>
-
-        <!-- Faculty 3 -->
-        <div class="faculty-card" onclick="openFacultyProfile('rambohd')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFacultyProfile('rambohd')}">
-          <div class="faculty-arch-bg">
-            <img src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png" alt="Rambohd Yadav">
-          </div>
-          <div class="faculty-info">
-            <h4>Rambohd Yadav</h4>
-            <span class="faculty-sub">Content Admin</span>
-            <div class="exp-badge">3+ Years Exp</div>
-          </div>
-        </div>
-
-      </div>
     </div>
 
-    <!-- JavaScript Handler for Clicks/Interactions -->
+    <!-- DYNAMIC FOOTER CONTAINER -->
+    <div id="site-footer"></div>
+
+    <!-- SCRIPT FOR FETCHING COMPONENTS & INTERACTIONS -->
     <script>
-        function openFacultyProfile(profileId) {
-            console.log("Opening profile for: " + profileId);
-            // Add your custom redirection or modal display logic here
-            alert("Viewing profile details for: " + profileId);
+        async function loadComponent(id, file) {
+            try {
+                let response = await fetch(file);
+                if (response.ok) {
+                    let html = await response.text();
+                    document.getElementById(id).innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading component:', error);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadComponent("site-header", "header.html");
+            loadComponent("site-footer", "footer.html");
+        });
+
+        const facultyData = {
+            'anubhav': {
+                name: 'Anubhav Gangwar',
+                role: 'Founder / CEO',
+                roleType: 'Founder',
+                exp: '4+ Years',
+                bio: 'Leading the technical platform initiatives, project management, and student support systems.',
+                img: 'https://anubhavfinance.wordpress.com/wp-content/uploads/2025/09/1000210734.png'
+            },
+            'mukesh': {
+                name: 'Mukesh Singh',
+                role: 'Co-founder / News Expert',
+                roleType: 'Co-founder',
+                exp: '4+ Years',
+                bio: 'Helping students with educational news, daily updates, and academic guidance.',
+                img: 'https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2345267399853346496252617.png'
+            },
+            'rambohd': {
+                name: 'Rambohd Yadav',
+                role: 'Content Admin',
+                roleType: 'Admin',
+                exp: '3+ Years',
+                bio: 'Curating quality content, educational notes, and learning materials for students.',
+                img: 'https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260814_2355137798351973400648930.png'
+            }
+        };
+
+        let currentActiveKey = '';
+
+        function openFacultyModal(key) {
+            const data = facultyData[key];
+            if (!data) return;
+            currentActiveKey = key;
+
+            document.getElementById('modalName').innerText = data.name;
+            document.getElementById('modalRole').innerText = data.role;
+            document.getElementById('modalBio').innerText = data.bio;
+            document.getElementById('modalExp').innerText = data.exp;
+            document.getElementById('modalRoleType').innerText = data.roleType;
+            document.getElementById('modalImg').src = data.img;
+
+            const modal = document.getElementById('profileModal');
+            const box = document.getElementById('modalContentBox');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-95');
+                box.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeFacultyModal() {
+            const modal = document.getElementById('profileModal');
+            const box = document.getElementById('modalContentBox');
+            modal.classList.add('opacity-0');
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function shareProfile() {
+            const data = facultyData[currentActiveKey];
+            if (!data) return;
+
+            const shareData = {
+                title: data.name + ' - ' + data.role,
+                text: 'Check out ' + data.name + ' (' + data.role + ') profile on Diploma Platform!',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData).catch((err) => console.log('Error sharing:', err));
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Profile link copied to clipboard!');
+                });
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('profileModal');
+            if (event.target === modal) {
+                closeFacultyModal();
+            }
         }
     </script>
-
 </body>
 </html>

@@ -1573,6 +1573,31 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   .feedback-star-btn{flex:1 1 68px;padding:9px 6px;}
 }
 
+/* APP-LIKE PROTECTION */
+html,body,#app{
+  -webkit-user-select:none !important;
+  -moz-user-select:none !important;
+  user-select:none !important;
+  -webkit-touch-callout:none !important;
+  -webkit-tap-highlight-color:transparent;
+}
+input,textarea,select,[contenteditable="true"]{
+  -webkit-user-select:none !important;
+  user-select:none !important;
+}
+img,svg,video,iframe{
+  -webkit-user-drag:none !important;
+  user-drag:none !important;
+}
+.app-protect-overlay{position:fixed;inset:0;display:none;z-index:2147483000;background:#fff;align-items:center;justify-content:center;padding:20px}
+.app-protect-overlay.show{display:flex}
+.app-protect-box{width:min(420px,100%);text-align:center;padding:28px 20px;border:1px solid #e5e7eb;border-radius:22px;background:#fff;box-shadow:0 18px 55px rgba(15,23,42,.12)}
+.app-protect-box .brand{font-weight:900;color:#2563eb;font-size:18px;margin-bottom:8px}
+.app-protect-box .icon{font-size:34px;color:#2563eb;margin-bottom:10px}
+.app-protect-box h3{margin:0 0 7px;font-size:17px;color:#0f172a}
+.app-protect-box p{margin:0;color:#64748b;font-size:12px;line-height:1.55}
+.app-protect-box button{margin-top:15px;border:0;border-radius:11px;padding:10px 17px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}
+
 /* ROBUST EXTERNAL FILE VIEWER */
 .external-page { padding: 0 !important; max-width: none !important; width: 100% !important; min-height: calc(100vh - 58px); }
 .external-frame-wrap { position: relative; width: 100%; min-height: calc(100vh - 58px); background: #fff; overflow: hidden; }
@@ -1817,7 +1842,7 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
       <div class="home-external-error" id="trendingFetchError">
         <i class="fas fa-triangle-exclamation"></i>
         <h4>Trending page could not be loaded</h4>
-        <p>Make sure <b>tranding-no-box.html</b> is uploaded in the same folder as the main app.</p>
+        <p>The content could not be loaded right now. Please check your connection and try again.</p>
         <button type="button" onclick="loadTrendingPage(true)">Retry</button>
       </div>
       <iframe
@@ -2922,6 +2947,7 @@ window.addEventListener('DOMContentLoaded', () => {
       frame.dataset.loaded='true';
       if(loading) loading.style.display='none';
       if(errorBox) errorBox.style.display='none';
+      frame.style.display='block';
 
       // Same-origin height adjustment for pages with dynamic content.
       const resize = () => {
@@ -2967,7 +2993,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderPageUI(pageId);
 
     if (pushToHistory) {
-      history.pushState({ pageId }, "", "#" + pageId);
+      history.pushState({ pageId }, "", window.location.pathname + window.location.search);
     }
     window.scrollTo({top:0, left:0, behavior:'instant'});
   };
@@ -2981,7 +3007,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.addEventListener("popstate", (e) => {
-    const pageId = e.state?.pageId || window.location.hash.substring(1) || defaultPage;
+    const pageId = e.state?.pageId || defaultPage;
     if (EXTERNAL_FILE_MAP[pageId]) loadPortalFromFile(pageId);
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
@@ -3126,13 +3152,12 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "block";
 
-        const initialHash = window.location.hash.substring(1);
-        const targetPage = initialHash || defaultPage;
+        const targetPage = defaultPage;
         if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
         if (targetPage === 'leaderboardPage') loadLeaderboardData(true);
         loadFeedbackData();
         initFeedbackForm();
-        history.replaceState({ pageId: targetPage }, "", "#" + targetPage);
+        history.replaceState({ pageId: targetPage }, "", window.location.pathname + window.location.search);
         renderPageUI(targetPage);
         loadNewsData();
         openSharedUserCardFromUrl();
@@ -4183,7 +4208,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="box">
             <i class="fas fa-triangle-exclamation" style="font-size:30px;color:#ef4444;margin-bottom:10px;"></i>
             <h3>Page could not be loaded</h3>
-            <p>The Students&#39; Trusted Learning Platform could not load this page. Please wait and try again.</p>
+            <p>The content could not be loaded right now. Please check your internet connection and try again.</p>
             <button class="external-retry" type="button" onclick="loadPortalFromFile('${escapeHTML(portalId)}', true)">Retry</button>
           </div>
         </div>
@@ -4197,6 +4222,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const showError = () => {
       if (loading) loading.style.display = 'none';
+      if (frame) { frame.style.display = 'none'; frame.src = 'about:blank'; }
       if (errorBox) errorBox.style.display = 'flex';
       container.dataset.loaded = 'false';
     };
@@ -4223,12 +4249,27 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (body) body.style.margin = body.style.margin || '0';
         if (doc?.documentElement) doc.documentElement.style.background = '#fff';
+
+        // Apply the same app-like no-selection protection inside local child pages.
+        if (doc && !doc.getElementById('__de_app_lock_style')) {
+          const lockStyle = doc.createElement('style');
+          lockStyle.id = '__de_app_lock_style';
+          lockStyle.textContent = `html,body,*{user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none!important}img,svg,video{user-drag:none!important;-webkit-user-drag:none!important}`;
+          (doc.head || doc.documentElement).appendChild(lockStyle);
+          ['contextmenu','selectstart','dragstart','copy','cut'].forEach(type => doc.addEventListener(type, e => e.preventDefault(), true));
+          doc.addEventListener('keydown', e => {
+            const k=String(e.key||'').toLowerCase();
+            if((e.ctrlKey||e.metaKey)&&['a','c','u','s','p'].includes(k)){e.preventDefault();e.stopPropagation();}
+            if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['i','j','c'].includes(k))){e.preventDefault();e.stopPropagation();}
+          }, true);
+        }
       } catch (e) {
         // Cross-origin is still valid; iframe itself will display the page.
       }
 
       if (loading) loading.style.display = 'none';
       if (errorBox) errorBox.style.display = 'none';
+      if (frame) frame.style.display = 'block';
       container.dataset.loaded = 'true';
     }, {once:true});
 
@@ -4267,12 +4308,10 @@ window.addEventListener('DOMContentLoaded', () => {
     container.dataset.loaded = "true";
   }
 
-  // Restore the route after the Firebase auth state is ready.
-  // A hash route never blocks the main app; external pages are isolated in iframes.
+  // App-like routing: internal page IDs and child filenames are not exposed in the address bar.
   window.addEventListener('load', () => {
-    const hashPage = window.location.hash.replace('#','').trim();
-    const initialPage = hashPage && (document.getElementById(hashPage) || EXTERNAL_FILE_MAP[hashPage]) ? hashPage : defaultPage;
-    history.replaceState({pageId: initialPage}, '', '#' + initialPage);
+    const initialPage = defaultPage;
+    history.replaceState({pageId: initialPage}, '', window.location.pathname + window.location.search);
     if (EXTERNAL_FILE_MAP[initialPage]) loadPortalFromFile(initialPage);
     if (initialPage === 'leaderboardPage') loadLeaderboardData();
     if (initialPage === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
@@ -4451,6 +4490,17 @@ window.addEventListener('DOMContentLoaded', () => {
 .payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
 </style>
 
+<!-- APP PROTECTION / OFFLINE FALLBACK -->
+<div id="appProtectionOverlay" class="app-protect-overlay" aria-hidden="true">
+  <div class="app-protect-box">
+    <div class="brand">Diploma Engineers</div>
+    <div class="icon"><i class="fas fa-wifi"></i></div>
+    <h3 id="appProtectionTitle">Content could not be loaded</h3>
+    <p id="appProtectionMessage">Please check your internet connection and try again.</p>
+    <button type="button" onclick="window.location.reload()">Try Again</button>
+  </div>
+</div>
+
 <!-- Firebase purchase UI -->
 <div id="paymentOverlay" class="payment-overlay" aria-hidden="true">
  <div class="payment-modal" role="dialog" aria-modal="true">
@@ -4466,6 +4516,34 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
  </div>
 </div>
+
+<script>
+(function(){
+  const blockedKeys = new Set(['c','u','s','p','a']);
+  const isEditable = el => el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+  document.addEventListener('contextmenu', e => e.preventDefault(), {capture:true});
+  document.addEventListener('selectstart', e => e.preventDefault(), {capture:true});
+  document.addEventListener('dragstart', e => e.preventDefault(), {capture:true});
+  document.addEventListener('copy', e => e.preventDefault(), {capture:true});
+  document.addEventListener('cut', e => e.preventDefault(), {capture:true});
+  document.addEventListener('keydown', e => {
+    const key = String(e.key || '').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && blockedKeys.has(key)) { e.preventDefault(); e.stopPropagation(); return false; }
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(key))) { e.preventDefault(); e.stopPropagation(); return false; }
+  }, {capture:true});
+  document.addEventListener('dragover', e => e.preventDefault(), {capture:true});
+  window.addEventListener('offline', () => {
+    const ov=document.getElementById('appProtectionOverlay');
+    const title=document.getElementById('appProtectionTitle');
+    const msg=document.getElementById('appProtectionMessage');
+    if(ov){ title.textContent='No Internet Connection'; msg.textContent='Please check your internet connection and try again.'; ov.classList.add('show'); ov.setAttribute('aria-hidden','false'); }
+  });
+  window.addEventListener('online', () => {
+    const ov=document.getElementById('appProtectionOverlay');
+    if(ov){ ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); }
+  });
+})();
+</script>
 
 <script type="module">
 import {getDatabase,ref,get,push,set,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";

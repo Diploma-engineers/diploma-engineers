@@ -1239,26 +1239,6 @@
       background: #2563eb;
     }
 
-    #topBtn {
-      position: fixed;
-      right: 25px;
-      bottom: 25px;
-      width: 48px;
-      height: 48px;
-      border: none;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
-      transition: all 0.35s ease;
-    }
-
     @media (max-width: 992px) {
       .container-custom { flex-direction: column; text-align: center; }
       .hero h1 { font-size: 44px; }
@@ -1766,14 +1746,6 @@
     width: 18px;
   }
 
-  #topBtn {
-    right: 12px;
-    bottom: 12px;
-    width: 38px;
-    height: 38px;
-    font-size: 14px;
-  }
-
   /* Prevent long text/links from creating horizontal overflow */
   .hero *,
   .state-board-section *,
@@ -1809,7 +1781,44 @@
   .social-card h4 { font-size: 10px; }
 }
 
-  </style>
+  
+/* Board navigation mobile fit */
+@media (max-width: 576px) {
+  .board-banner {
+    padding: 22px 12px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+  }
+
+  .board-banner h2 {
+    font-size: 18px;
+    line-height: 1.25;
+    letter-spacing: 0.2px;
+  }
+
+  .board-banner .underline-bar {
+    width: 42px;
+    height: 3px;
+    margin-bottom: 16px;
+  }
+
+  .board-pill-container {
+    padding: 8px;
+    gap: 7px;
+    border-radius: 15px;
+  }
+
+  .board-pill {
+    flex: 1 1 calc(33.333% - 7px);
+    min-width: 0;
+    justify-content: center;
+    padding: 9px 6px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+}
+
+</style>
 </head>
 
 <body>
@@ -1914,12 +1923,29 @@
         <h2>STATE BOARD DIPLOMA SOLUTIONS</h2>
         <div class="underline-bar"></div>
         <div class="board-pill-container">
-          <a href="#" class="board-pill active">BTEUP</a>
-          <a href="#" class="board-pill">STBTE <span class="soon">soon</span></a>
-          <a href="#" class="board-pill">BSEB <span class="soon">soon</span></a>
-          <a href="#" class="board-pill">GSEB <span class="soon">soon</span></a>
-          <a href="#" class="board-pill">RBSE <span class="soon">soon</span></a>
-          <a href="#" class="board-pill">PSEB <span class="soon">soon</span></a>
+          <a href="bteup.html" class="board-pill active">
+            BTEUP
+          </a>
+
+          <a href="stbte.html" class="board-pill">
+            STBTE
+          </a>
+
+          <a href="bseb.html" class="board-pill">
+            BSEB
+          </a>
+
+          <a href="gseb.html" class="board-pill">
+            GSEB
+          </a>
+
+          <a href="rbse.html" class="board-pill">
+            RBSE
+          </a>
+
+          <a href="pseb.html" class="board-pill">
+            PSEB
+          </a>
         </div>
       </div>
 
@@ -2314,7 +2340,6 @@
   <!-- FOOTER FETCH CONTAINER -->
   <div id="footer"></div>
 
-  <button id="topBtn" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
 
   <!-- Bootstrap 5 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2337,6 +2362,19 @@
     // Fetch Components
     fetchComponent("header", "header.html");
     fetchComponent("footer", "footer.html");
+
+    // Remove any dynamically loaded floating downward button without affecting
+    // normal "Read More" chevrons or other page controls.
+    function removeDownwardButton() {
+      const selectors = [
+        '#scrollDownBtn', '#downBtn', '#scroll-down',
+        '.scroll-down', '.scroll-down-btn', '.down-btn', '.down-button',
+        '[aria-label="Scroll down"]', '[aria-label="Scroll Down"]'
+      ];
+      document.querySelectorAll(selectors.join(',')).forEach(el => el.remove());
+    }
+    removeDownwardButton();
+    new MutationObserver(removeDownwardButton).observe(document.body, { childList: true, subtree: true });
 
     document.addEventListener("DOMContentLoaded", function () {
 
@@ -2529,16 +2567,6 @@
       createDots();
       updateSlider();
       startAutoSlide();
-
-      // Scroll To Top Button
-      const topBtn = document.getElementById("topBtn");
-      window.addEventListener("scroll", () => {
-        topBtn.style.display = window.scrollY > 300 ? "flex" : "none";
-      });
-
-      topBtn.addEventListener("click", () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
 
     });
 

@@ -117,8 +117,25 @@
 </head>
 <body class="bg-slate-50 font-sans antialiased flex flex-col min-h-screen">
 
-    <!-- DYNAMIC HEADER CONTAINER -->
-    <div id="site-header"></div>
+    <!-- HEADER -->
+    <div id="header"></div>
+
+    <script>
+        fetch("header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header").innerHTML = data;
+                
+                // Attach menu toggle event right after header is fetched and loaded into the DOM
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                const mobileMenu = document.getElementById('mobileMenu');
+                if (mobileMenuBtn && mobileMenu) {
+                    mobileMenuBtn.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+            });
+    </script>
 
     <!-- MAIN CONTENT -->
     <main class="flex-grow">
@@ -220,39 +237,19 @@
         </div>
     </div>
 
-    <!-- DYNAMIC FOOTER CONTAINER -->
-    <div id="site-footer"></div>
+    <!-- FOOTER -->
+    <div id="footer"></div>
 
-    <!-- SCRIPT FOR FETCHING COMPONENTS & INTERACTIONS -->
     <script>
-        async function loadComponent(id, file) {
-            try {
-                let response = await fetch(file);
-                if (response.ok) {
-                    let html = await response.text();
-                    document.getElementById(id).innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading component:', error);
-            }
-        }
+        fetch("footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer").innerHTML = data;
+            });
+    </script>
 
-        // Load Header & Footer and initialize menu click listeners once loaded
-        document.addEventListener("DOMContentLoaded", async () => {
-            await loadComponent("site-header", "header.html");
-            await loadComponent("site-footer", "footer.html");
-
-            // Setup Mobile Menu toggle listener safely *after* header is rendered
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
-
+    <!-- FACULTY MODAL & INTERACTION SCRIPT -->
+    <script>
         const facultyData = {
             'anubhav': {
                 name: 'Anubhav Gangwar',

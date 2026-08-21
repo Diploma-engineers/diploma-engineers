@@ -237,18 +237,19 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            loadComponent("site-header", "header.html");
-            loadComponent("site-footer", "footer.html");
-        });
+        // Load Header & Footer and initialize menu click listeners once loaded
+        document.addEventListener("DOMContentLoaded", async () => {
+            await loadComponent("site-header", "header.html");
+            await loadComponent("site-footer", "footer.html");
 
-        // Event Delegation for dynamically fetched Mobile Menu Toggle
-        document.addEventListener('click', function(event) {
-            const toggleBtn = event.target.closest('#mobileMenuBtn');
-            const menu = document.getElementById('mobileMenu');
+            // Setup Mobile Menu toggle listener safely *after* header is rendered
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
 
-            if (toggleBtn && menu) {
-                menu.classList.toggle('hidden');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
             }
         });
 

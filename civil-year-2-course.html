@@ -481,9 +481,6 @@
         <!-- SCREEN 1B: RESOURCE FOLDER VIEW -->
         <div id="resourceView" class="resource-view">
             <div class="resource-toolbar">
-                <button class="btn btn-sm btn-outline-primary fw-bold py-0 px-2" style="font-size:.6rem;" onclick="closeResourceFolder()">
-                    <i class="fas fa-arrow-left me-1"></i> Back
-                </button>
                 <div class="resource-title-wrap">
                     <h6 id="resourceViewTitle" class="resource-title">Important PYQ</h6>
                     <div id="resourceViewSubtitle" class="resource-subtitle"></div>
@@ -495,14 +492,9 @@
             </div>
             <div id="resourceList"></div>
         </div>
-        </div>
 
         <!-- SCREEN 2: LECTURE PLAYER VIEW -->
         <div id="lectureView" class="hidden">
-            <button class="btn btn-sm btn-outline-primary mb-1 ms-1 fw-bold py-0 px-2" style="font-size: 0.6rem;" onclick="goBackToSubjects()">
-                <i class="fas fa-arrow-left me-1"></i> Back
-            </button>
-            
             <div class="player-layout">
                 <!-- Left Section -->
                 <div>
@@ -848,6 +840,14 @@
             const items = resourceData[semKey][type] || [];
             const title = type === 'importantPYQ' ? 'Important PYQ / Important Questions' : 'Short Notes';
 
+            // Create a history entry so the mobile/app Back button returns
+            // from the resource screen to the subjects screen.
+            history.pushState(
+                { diplomaEngineersModule: true, view: 'resource', sem: currentSem, resource: type },
+                '',
+                window.location.href
+            );
+
             document.getElementById('subjectsView').style.display = 'none';
             document.getElementById('lectureView').classList.add('hidden');
             document.getElementById('resourceView').classList.add('active');
@@ -896,23 +896,35 @@
         function closeResourceFolder() {
             document.getElementById('resourceView').classList.remove('active');
             document.getElementById('subjectsView').style.display = '';
+            document.getElementById('subjectsView').classList.remove('hidden');
             window.scrollTo(0, 0);
         }
 
         function openSubject(semKey, key) {
             currentSubjectKey = key;
-            history.pushState({ view: 'lecture', sem: semKey, subject: key }, "", "#lecture");
+
+            // Keep the parent/app navigation and mobile browser back button in control.
+            // A history entry is created only for opening the lecture screen.
+            history.pushState(
+                {
+                    diplomaEngineersModule: true,
+                    view: 'lecture',
+                    sem: semKey,
+                    subject: key
+                },
+                '',
+                '#lecture'
+            );
+
             showLectureView();
             playVideo(semKey, key, 0);
         }
 
-        function goBackToSubjects() {
-            history.back();
-        }
-
         function showLectureView() {
             document.getElementById('subjectsView').classList.add('hidden');
+            document.getElementById('resourceView').classList.remove('active');
             document.getElementById('lectureView').classList.remove('hidden');
+            window.scrollTo(0, 0);
         }
 
         function showSubjectsView() {
@@ -920,16 +932,54 @@
             document.getElementById('resourceView').classList.remove('active');
             document.getElementById('subjectsView').style.display = '';
             document.getElementById('subjectsView').classList.remove('hidden');
-            document.getElementById('videoPlayer').src = "";
+
+            const player = document.getElementById('videoPlayer');
+            if (player) player.src = '';
+
+            window.scrollTo(0, 0);
         }
 
+        // Mobile browser/app back button support.
+        // The module does NOT render its own Back button.
         window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.view === 'lecture') {
-                showLectureView();
-            } else {
-                showSubjectsView();
+            if (event.state && event.state.diplomaEngineersModule) {
+                if (event.state.view === 'lecture') {
+                    showLectureView();
+                    return;
+                }
+                if (event.state.view === 'resource') {
+                    const sem = event.state.sem || currentSem;
+                    const type = event.state.resource || 'importantPYQ';
+                    currentSem = sem;
+                    const items = resourceData['sem' + sem][type] || [];
+                    document.getElementById('subjectsView').style.display = 'none';
+                    document.getElementById('lectureView').classList.add('hidden');
+                    document.getElementById('resourceView').classList.add('active');
+                    document.getElementById('resourceViewTitle').innerText = type === 'importantPYQ' ? 'Important PYQ / Important Questions' : 'Short Notes';
+                    document.getElementById('resourceViewSubtitle').innerText = `${sem === 3 ? 'Third' : 'Fourth'} Semester • ${items.length} PDF${items.length !== 1 ? 's' : ''}`;
+                    renderResourceList(items);
+                    window.scrollTo(0, 0);
+                    return;
+                }
             }
+            // Parent/app history or mobile Back reached the module's base state.
+            showSubjectsView();
         });
+
+        // Optional API for the parent app. If the parent app's Back button needs
+        // to close this module, it can call window.DiplomaEngineersBack().
+        window.DiplomaEngineersBack = function() {
+            const lectureOpen = document.getElementById('lectureView') &&
+                !document.getElementById('lectureView').classList.contains('hidden');
+            const resourceOpen = document.getElementById('resourceView') &&
+                document.getElementById('resourceView').classList.contains('active');
+
+            if (lectureOpen || resourceOpen) {
+                history.back();
+                return true;
+            }
+            return false;
+        };
 
         function playVideo(semKey, key, index) {
             currentVideoIndex = index;

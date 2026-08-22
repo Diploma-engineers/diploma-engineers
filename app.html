@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1887,6 +1886,21 @@ img,svg,video,iframe{
 
 
 .tracking-modal{max-height:calc(100vh - 32px);overflow:auto}.tracking-modal .payment-body{padding:18px}.tracking-modal .payment-head{background:linear-gradient(135deg,#2563eb,#3b82f6)}.tracking-modal .payment-tracking-card{margin:0;border:0;box-shadow:none;background:#fff;padding:4px 2px 0}.tracking-modal .course-tracking-btn{background:#eff6ff;border-color:#dbeafe}.tracking-modal .track-success{margin-bottom:2px}
+
+
+/* ===== SCREENSHOT / COPY PROTECTION (BEST EFFORT FOR WEB) ===== */
+html,body{
+  -webkit-user-select:none !important;
+  user-select:none !important;
+  -webkit-touch-callout:none !important;
+}
+img,video,canvas{
+  -webkit-user-drag:none !important;
+  user-drag:none !important;
+}
+@media print{
+  html,body{display:none !important;}
+}
 
 </style>
 </head>
@@ -5269,6 +5283,8 @@ async function submitPurchase(){
   const utr=utrEl.value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
+  /* DIRECT PAYMENT SUCCESS SOUND */
+  if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
     const root=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);
@@ -5407,6 +5423,48 @@ if(coursePageRoot)courseCardsObserver.observe(coursePageRoot,{childList:true,sub
 <script>
 window.playPaymentSuccessSound=function(){const a=document.getElementById('paymentSuccessSound');if(!a)return;try{a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}};
 </script>
+
+<script>
+/* ===== SCREENSHOT / SCREEN-CAPTURE DETERRENCE =====
+   Browser HTML cannot guarantee OS-level screenshot blocking. This blocks
+   common browser capture/copy shortcuts and covers the page when it loses
+   focus. Android native builds should additionally use FLAG_SECURE.
+*/
+(function(){
+  const blocked=(e)=>{
+    const k=String(e.key||'').toLowerCase();
+    const blockedKey = k==='printscreen' || k==='f12' ||
+      (e.ctrlKey && ['s','p','u','c','x'].includes(k)) ||
+      (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(k));
+    if(blockedKey){e.preventDefault();e.stopPropagation();return false;}
+  };
+  document.addEventListener('keydown',blocked,true);
+  document.addEventListener('contextmenu',e=>e.preventDefault(),true);
+  document.addEventListener('dragstart',e=>e.preventDefault(),true);
+  document.addEventListener('selectstart',e=>{
+    if(!e.target.closest('input,textarea')) e.preventDefault();
+  },true);
+
+  let cover;
+  function showCover(){
+    if(!cover){
+      cover=document.createElement('div');
+      cover.id='screenProtectionCover';
+      cover.innerHTML='<div><i class="fa-solid fa-shield-halved"></i><span>Protected Content</span></div>';
+      Object.assign(cover.style,{position:'fixed',inset:'0',zIndex:'2147483647',display:'grid',placeItems:'center',background:'#fff'});
+      const box=cover.firstElementChild;
+      Object.assign(box.style,{display:'flex',flexDirection:'column',alignItems:'center',gap:'10px',fontFamily:'Poppins,sans-serif',fontSize:'14px',fontWeight:'600',color:'#2563eb'});
+      const icon=box.querySelector('i');
+      if(icon) icon.style.fontSize='28px';
+    }
+    if(!document.body.contains(cover)) document.body.appendChild(cover);
+  }
+  function hideCover(){if(cover&&cover.parentNode)cover.remove();}
+  window.addEventListener('blur',showCover);
+  window.addEventListener('focus',hideCover);
+  document.addEventListener('visibilitychange',()=>document.hidden?showCover():hideCover());
+})();
+</script>
+
 </body>
 </html>
-

@@ -1885,6 +1885,9 @@ img,svg,video,iframe{
   .payment-tracking-card{padding:14px}
 }
 
+
+.tracking-modal{max-height:calc(100vh - 32px);overflow:auto}.tracking-modal .payment-body{padding:18px}.tracking-modal .payment-head{background:linear-gradient(135deg,#2563eb,#3b82f6)}.tracking-modal .payment-tracking-card{margin:0;border:0;box-shadow:none;background:#fff;padding:4px 2px 0}.tracking-modal .course-tracking-btn{background:#eff6ff;border-color:#dbeafe}.tracking-modal .track-success{margin-bottom:2px}
+
 </style>
 </head>
 <body>
@@ -5004,6 +5007,14 @@ window.addEventListener('DOMContentLoaded', () => {
  </div>
 </div>
 
+<!-- Tracking modal: same centered card style as the QR/payment modal -->
+<div id="trackingOverlay" class="payment-overlay" aria-hidden="true">
+  <div class="payment-modal tracking-modal" role="dialog" aria-modal="true">
+    <div class="payment-head tracking-head"><h3>Payment Verification</h3><button class="payment-close" id="trackingClose" type="button">×</button></div>
+    <div class="payment-body" id="trackingModalBody"></div>
+  </div>
+</div>
+
 <script>
 (function(){
   const blockedKeys = new Set(['c','u','s','p','a']);
@@ -5065,10 +5076,11 @@ return Object.keys(v).length>0;
 return false;
 };
 function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;statusEl.style.display=t?'block':'none';}
-function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
+function closeTracking(){const o=document.getElementById('trackingOverlay');if(o){o.style.display='none';o.setAttribute('aria-hidden','true');}}
+function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');closeTracking();if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
 function openCourse(courseId){closePayment();if(typeof window.navigateTo==='function')window.navigateTo(courseId);}
 async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
-function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>{if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);}},err=>console.warn('Course access listener:',err));}
+function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>{if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);}},err=>console.warn('Course access listener:',err));}
 async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();}
 function getCourseCard(courseId){
@@ -5077,12 +5089,16 @@ function getCourseCard(courseId){
 }
 function removeTrackingCard(card){const h=card?.querySelector('.payment-tracking-host');if(h)h.remove();}
 function showTrackingOnCard(courseId){
-  const card=getCourseCard(courseId); if(!card)return;
-  let host=card.querySelector('.payment-tracking-host');
-  if(!host){host=document.createElement('div');host.className='payment-tracking-host';card.appendChild(host);}
-  host.innerHTML=trackingStatusHtml(courseId,'pending');
-  host.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(!currentUid){alert('Please login first.');return;}
+  currentCourse=courseId;
+  const o=document.getElementById('trackingOverlay');
+  const body=document.getElementById('trackingModalBody');
+  if(!o||!body)return;
+  body.innerHTML=trackingStatusHtml(courseId,'pending');
+  o.style.display='flex';o.setAttribute('aria-hidden','false');
+  watchAccess(courseId);
 }
+
 function setPaidCardState(courseId,state){
   const card=getCourseCard(courseId); if(!card)return;
   const btn=card.querySelector('button'); if(!btn)return;
@@ -5295,7 +5311,7 @@ async function submitPurchase(){
     submitEl.disabled=false;
   }
 }
-submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment();});
+submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);document.getElementById('trackingClose').addEventListener('click',closeTracking);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment();});document.getElementById('trackingOverlay').addEventListener('click',e=>{if(e.target.id==='trackingOverlay')closeTracking();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment();});
 const originalNavigate=window.navigateTo;window.navigateTo=async function(pageId){if(paidCourseIds.includes(pageId)){if(!currentUid){alert('Please login first.');return;}const access=await accessValue(pageId).catch(()=>null);if(isApproved(access))return originalNavigate.apply(this,arguments);return openPayment(pageId);}return originalNavigate.apply(this,arguments);};
 const existingApps=getApps(),existingApp=existingApps[0];if(existingApp){db=getDatabase(existingApp);auth2=getAuth(existingApp);onAuthStateChanged(auth2,user=>{if(user)loadProfile(user);else{currentUid=null;if(homeAccessUnsub){homeAccessUnsub();homeAccessUnsub=null;}restoreHomeUnlockCard();}});}
 

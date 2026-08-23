@@ -221,6 +221,19 @@
             display: none !important;
         }
 
+
+
+        .resources-section { margin-top: 12px; }
+        .resources-heading { font-size: .72rem; font-weight: 800; margin: 0 2px 6px; color: var(--text-main); }
+        .resource-folders { display: grid; grid-template-columns: 1fr; gap: 5px; }
+        .folder-card { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px; display:flex; align-items:center; gap:8px; }
+        .folder-icon { width:30px; height:30px; border-radius:6px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .folder-info { flex:1; min-width:0; }
+        .folder-title { margin:0; font-size:.68rem; font-weight:800; }
+        .folder-meta { font-size:.52rem; color:#64748b; }
+        .view-btn { border:0; background:var(--primary-light); color:var(--primary); border-radius:5px; font-size:.56rem; font-weight:700; padding:4px 7px; }
+        .folder-arrow { font-size:.55rem; color:#94a3b8; }
+
         .credit-notice {
             background: #fff;
             border: 1px solid var(--border);
@@ -257,6 +270,11 @@
 
             <!-- Subjects Grid container -->
             <div class="subjects-grid" id="subjectListContainer"></div>
+
+            <div class="resources-section">
+                <div class="resources-heading"><i class="fas fa-folder-open"></i> Study Resources</div>
+                <div id="resourceFolders" class="resource-folders"></div>
+            </div>
         </div>
 
         <!-- SCREEN 2: LECTURE PLAYER VIEW -->
@@ -374,6 +392,11 @@
             }
         };
 
+        const resourceData = {
+            sem3: { importantPYQ: [], shortNotes: [] },
+            sem4: { importantPYQ: [], shortNotes: [] }
+        };
+
         let currentSem = 3;
         let currentSubjectKey = '';
         let currentVideoIndex = 0;
@@ -401,6 +424,30 @@
                 </div>`;
             }
             document.getElementById('subjectListContainer').innerHTML = listHtml;
+            renderResourceFolders(sem);
+        }
+
+        function renderResourceFolders(sem) {
+            const data = resourceData['sem' + sem];
+            document.getElementById('resourceFolders').innerHTML = `
+                <div class="folder-card">
+                    <div class="folder-icon"><i class="fas fa-file-circle-question"></i></div>
+                    <div class="folder-info">
+                        <p class="folder-title">Important PYQ / Important Questions</p>
+                        <span class="folder-meta">${data.importantPYQ.length ? data.importantPYQ.length + ' PDF' : 'No resources added yet'}</span>
+                    </div>
+                    <button class="view-btn" type="button">View</button>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
+                </div>
+                <div class="folder-card">
+                    <div class="folder-icon"><i class="fas fa-note-sticky"></i></div>
+                    <div class="folder-info">
+                        <p class="folder-title">Short Notes</p>
+                        <span class="folder-meta">${data.shortNotes.length ? data.shortNotes.length + ' PDF' : 'No resources added yet'}</span>
+                    </div>
+                    <button class="view-btn" type="button">View</button>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
+                </div>`;
         }
 
         function openSubject(semKey, key) {

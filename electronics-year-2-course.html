@@ -233,6 +233,10 @@
             width: 100%;
             max-width: 100%;
         }
+    
+
+        .resources-section{margin-top:8px}.resources-title{font-size:.72rem;font-weight:700;margin:8px 2px 5px}.folder-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;align-items:center;gap:8px;margin-bottom:5px}.folder-icon{width:30px;height:30px;border-radius:6px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.8rem}.folder-info{flex:1;cursor:pointer}.folder-title{margin:0;font-size:.68rem;font-weight:700}.folder-meta{font-size:.52rem;color:#64748b}.view-btn{border:0;border-radius:10px;background:var(--primary);color:#fff;font-size:.55rem;padding:4px 8px}.folder-arrow{font-size:.55rem;color:#64748b}.resource-view{display:none}.resource-view.active{display:block}.resource-search{margin-bottom:6px}.resource-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;align-items:center;gap:8px;margin-bottom:5px;cursor:pointer}.resource-item .resource-name{flex:1;font-size:.65rem;font-weight:700}.empty-resource{padding:20px;text-align:center;color:#64748b;font-size:.65rem}
+
     </style>
 </head>
 <body>
@@ -257,6 +261,19 @@
 
             <!-- Subjects Grid container -->
             <div class="subjects-grid" id="subjectListContainer"></div>
+            <div class="resources-section">
+                <div class="resources-title"><i class="fas fa-folder-open me-1"></i>Study Resources</div>
+                <div id="resourceFolders"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN: RESOURCE VIEW -->
+        <div id="resourceView" class="resource-view">
+            <button class="btn btn-sm btn-outline-primary mb-2 ms-1 fw-bold py-0 px-2" style="font-size:.6rem;" onclick="goBackToResources()"><i class="fas fa-arrow-left me-1"></i> Back</button>
+            <h6 id="resourceViewTitle" class="fw-bold mb-0" style="font-size:.75rem;"></h6>
+            <span id="resourceViewSubtitle" class="text-muted" style="font-size:.55rem;"></span>
+            <input id="resourceSearchInput" class="form-control form-control-sm resource-search mt-2" placeholder="Search PDF..." oninput="filterResources(this.value)">
+            <div id="resourceList"></div>
         </div>
 
         <!-- SCREEN 2: LECTURE PLAYER VIEW -->
@@ -382,6 +399,25 @@
             }
         };
 
+        const resourceData = {
+            sem3: {
+                importantPYQ: [
+                    {title:"ELECTRONICS DEVICES AND CIRCUITS (EDC) IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=15E1RHJ6CbZJoQb-CNOK0kW1-wmfM4NnC&usp=drive_copy"},
+                    {title:"ELECTRONIC INSTRUMENTATION and MEASUREMENT IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=1kdQltsJICFgyceE6vyrgT1Gl54oEvRl3&usp=drive_copy"},
+                    {title:"DIGITAL ELECTRONICS IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=1FLm0YucF5GtrSLQwE_O4VzMB-TXCZ7F6&usp=drive_copy"}
+                ],
+                shortNotes: []
+            },
+            sem4: {
+                importantPYQ: [
+                    {title:"PRINCIPLES OF ELECTRONIC COMMUNICATION IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=1Og-Feu7MzA4cnfn8UIVcL56ysNFysO7p&usp=drive_copy"},
+                    {title:"MICROPROCESSOR AND ITS APPLICATIONS IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=1opcb07fx0JnuNKiyhAcYVX4jDwnM-xoW&usp=drive_copy"},
+                    {title:"LINEAR INTEGRATED CIRCUIT IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",url:"https://drive.google.com/open?id=1WzFKiYMDD-6YLo5cE98mLyNfRIPYWAUp&usp=drive_copy"}
+                ],
+                shortNotes: []
+            }
+        };
+
         let currentSem = 3;
         let currentSubjectKey = '';
         let currentVideoIndex = 0;
@@ -409,7 +445,31 @@
                 </div>`;
             }
             document.getElementById('subjectListContainer').innerHTML = listHtml;
+            renderResourceFolders(sem);
         }
+
+        function renderResourceFolders(sem) {
+            const d=resourceData['sem'+sem];
+            document.getElementById('resourceFolders').innerHTML=`
+                <div class="folder-card"><div class="folder-icon"><i class="fas fa-file-circle-question"></i></div><div class="folder-info" onclick="openResourceFolder('importantPYQ')"><p class="folder-title">Important PYQ / Important Questions</p><span class="folder-meta">${d.importantPYQ.length} PDFs • ${sem===3?'Third':'Fourth'} Semester</span></div><button class="view-btn" onclick="openResourceFolder('importantPYQ')">View</button><i class="fas fa-chevron-right folder-arrow"></i></div>
+                <div class="folder-card"><div class="folder-icon"><i class="fas fa-note-sticky"></i></div><div class="folder-info" onclick="openResourceFolder('shortNotes')"><p class="folder-title">Short Notes</p><span class="folder-meta">Notes will be added soon</span></div><button class="view-btn" onclick="openResourceFolder('shortNotes')">View</button><i class="fas fa-chevron-right folder-arrow"></i></div>`;
+        }
+        function openResourceFolder(type){
+            const items=resourceData['sem'+currentSem][type]||[];
+            history.pushState({view:'resource',sem:currentSem,resource:type},'', '#resource');
+            document.getElementById('subjectsView').classList.add('hidden');
+            document.getElementById('lectureView').classList.add('hidden');
+            document.getElementById('resourceView').classList.add('active');
+            document.getElementById('resourceViewTitle').innerText=type==='importantPYQ'?'Important PYQ / Important Questions':'Short Notes';
+            document.getElementById('resourceViewSubtitle').innerText=`${currentSem===3?'Third':'Fourth'} Semester • ${items.length} PDF${items.length!==1?'s':''}`;
+            renderResourceList(items);
+        }
+        function renderResourceList(items){
+            const box=document.getElementById('resourceList');
+            box.innerHTML=items.length?items.map(x=>`<div class="resource-item" data-search="${x.title.toLowerCase()}" onclick="window.open('${x.url}','_blank')"><div class="folder-icon"><i class="fas fa-file-pdf"></i></div><div class="resource-name">${x.title}</div><i class="fas fa-chevron-right folder-arrow"></i></div>`).join(''):'<div class="empty-resource">Notes will be added soon.</div>';
+        }
+        function filterResources(q){q=(q||'').toLowerCase();document.querySelectorAll('.resource-item').forEach(x=>x.style.display=!q||x.dataset.search.includes(q)?'flex':'none');}
+        function goBackToResources(){history.back();}
 
         function openSubject(semKey, key) {
             currentSubjectKey = key;
@@ -424,11 +484,13 @@
 
         function showLectureView() {
             document.getElementById('subjectsView').classList.add('hidden');
+            document.getElementById('resourceView').classList.remove('active');
             document.getElementById('lectureView').classList.remove('hidden');
         }
 
         function showSubjectsView() {
             document.getElementById('lectureView').classList.add('hidden');
+            document.getElementById('resourceView').classList.remove('active');
             document.getElementById('subjectsView').classList.remove('hidden');
             document.getElementById('videoPlayer').src = "";
         }
@@ -436,6 +498,15 @@
         window.addEventListener('popstate', function(event) {
             if (event.state && event.state.view === 'lecture') {
                 showLectureView();
+            } else if (event.state && event.state.view === 'resource') {
+                currentSem=event.state.sem||currentSem;
+                document.getElementById('subjectsView').classList.add('hidden');
+                document.getElementById('lectureView').classList.add('hidden');
+                document.getElementById('resourceView').classList.add('active');
+                const type=event.state.resource||'importantPYQ', items=resourceData['sem'+currentSem][type]||[];
+                document.getElementById('resourceViewTitle').innerText=type==='importantPYQ'?'Important PYQ / Important Questions':'Short Notes';
+                document.getElementById('resourceViewSubtitle').innerText=`${currentSem===3?'Third':'Fourth'} Semester • ${items.length} PDF${items.length!==1?'s':''}`;
+                renderResourceList(items);
             } else {
                 showSubjectsView();
             }

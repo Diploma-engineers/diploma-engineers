@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Agriculture Engineering - Third Year (Sem 5 & Sem 6)</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-app: #f4f5f9;
+            --surface: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --text-main: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-app);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            padding: 6px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .sem-toggle-container {
+            background: #e2e8f0;
+            border-radius: 25px;
+            padding: 3px;
+            display: flex;
+            gap: 3px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .sem-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 6px 0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #64748b;
+            border-radius: 22px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .sem-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .subjects-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .subjects-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .app-card {
+            background: var(--surface);
+            border-radius: 6px;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            width: 100%;
+            max-width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .app-card:active {
+            transform: scale(0.98);
+        }
+
+        .icon-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .player-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        @media (min-width: 992px) {
+            .player-layout {
+                grid-template-columns: 3fr 1fr;
+            }
+        }
+
+        .video-box {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .video-box iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .action-chip {
+            background: var(--bg-app);
+            padding: 3px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            border: none;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .action-chip.liked {
+            background: #ffe4e6;
+            color: #e11d48;
+        }
+
+        .playlist-card {
+            background: var(--surface);
+            border-radius: 5px;
+            padding: 5px 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid var(--border);
+            margin-bottom: 4px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .playlist-card.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .play-badge {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            flex-shrink: 0;
+        }
+
+        .playlist-card.active .play-badge {
+            background: var(--primary);
+            color: white;
+        }
+
+        .star-rating .fa-star {
+            color: #cbd5e0;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .star-rating .fa-star.active {
+            color: #f59e0b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .credit-notice {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.58rem;
+            color: #64748b;
+            line-height: 1.3;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .tools-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+
+        .search-btn {
+            flex: 0 0 auto;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--primary);
+            border-radius: 6px;
+            height: 30px;
+            padding: 0 10px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .search-box {
+            display: none;
+            margin-bottom: 6px;
+            position: relative;
+        }
+
+        .search-box.show {
+            display: block;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 30px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0 30px 0 10px;
+            font-size: 0.65rem;
+            outline: none;
+            background: #fff;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 7px;
+            top: 6px;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.65rem;
+            cursor: pointer;
+        }
+
+        .resource-section {
+            margin-top: 7px;
+        }
+
+        .resource-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px;
+            margin-bottom: 4px;
+        }
+
+        .resource-heading h6 {
+            font-size: 0.65rem;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        .folder-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: transform .15s, border-color .15s;
+        }
+
+        .folder-card:active {
+            transform: scale(.985);
+        }
+
+        .folder-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            color: var(--primary);
+            flex-shrink: 0;
+            font-size: .72rem;
+        }
+
+        .folder-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .folder-title {
+            font-size: .67rem;
+            font-weight: 800;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .folder-meta {
+            font-size: .52rem;
+            color: #64748b;
+        }
+
+        .folder-arrow {
+            color: #94a3b8;
+            font-size: .58rem;
+        }
+
+        .resource-view {
+            display: none;
+        }
+
+        .resource-view.active {
+            display: block;
+        }
+
+        .resource-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+
+        .resource-title-wrap {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .resource-title {
+            font-size: .72rem;
+            font-weight: 800;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .resource-subtitle {
+            font-size: .52rem;
+            color: #64748b;
+        }
+
+        .resource-search {
+            margin-bottom: 6px;
+        }
+
+        .resource-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 4px;
+        }
+
+        .resource-icon {
+            width: 27px;
+            height: 27px;
+            border-radius: 5px;
+            background: #fff1f2;
+            color: #e11d48;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: .7rem;
+        }
+
+        .resource-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .resource-name {
+            font-size: .61rem;
+            line-height: 1.15;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .resource-meta {
+            font-size: .5rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .view-btn {
+            border: 0;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 5px;
+            padding: 5px 8px;
+            font-size: .55rem;
+            font-weight: 800;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .empty-resource {
+            background: #fff;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            padding: 14px 8px;
+            text-align: center;
+            color: #64748b;
+            font-size: .58rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- SUBJECTS VIEW -->
+    <div id="subjectsView">
+
+        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+            <div>
+                <h6 class="fw-bold mb-0" style="font-size:0.75rem;">
+                    Agriculture Engineering
+                </h6>
+
+                <span class="text-muted" style="font-size:0.55rem;">
+                    Third Year Portal (Sem 5 & Sem 6)
+                </span>
+            </div>
+
+            <span class="badge bg-primary rounded-pill px-2 py-1"
+                  style="font-size:0.5rem;">
+                2026
+            </span>
+        </div>
+
+        <!-- SEMESTER SWITCH -->
+        <div class="sem-toggle-container">
+
+            <button id="btnSem5"
+                    class="sem-btn active"
+                    onclick="switchSemester(5)">
+                Fifth Semester
+            </button>
+
+            <button id="btnSem6"
+                    class="sem-btn"
+                    onclick="switchSemester(6)">
+                Sixth Semester
+            </button>
+
+        </div>
+
+        <!-- SEARCH -->
+        <div class="tools-row">
+            <button class="search-btn" onclick="toggleMainSearch()">
+                <i class="fas fa-search me-1"></i>
+                Search
+            </button>
+        </div>
+
+        <div id="mainSearchBox" class="search-box">
+
+            <input id="mainSearchInput"
+                   type="search"
+                   placeholder="Subject, PYQ ya Short Notes search karein..."
+                   oninput="filterMainContent(this.value)">
+
+            <button class="search-clear" onclick="clearMainSearch()">
+                <i class="fas fa-times"></i>
+            </button>
+
+        </div>
+
+        <div class="subjects-grid" id="subjectListContainer"></div>
+
+        <!-- RESOURCES -->
+        <div class="resource-section" id="resourceFoldersSection">
+
+            <div class="resource-heading">
+                <h6>
+                    <i class="fas fa-folder-open text-primary me-1"></i>
+                    Study Resources
+                </h6>
+            </div>
+
+            <div id="resourceFolders"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RESOURCE VIEW -->
+    <div id="resourceView" class="resource-view">
+
+        <div class="resource-toolbar">
+
+            <div class="resource-title-wrap">
+
+                <h6 id="resourceViewTitle"
+                    class="resource-title">
+                    Important PYQ
+                </h6>
+
+                <div id="resourceViewSubtitle"
+                     class="resource-subtitle">
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="resource-search search-box show">
+
+            <input id="resourceSearchInput"
+                   type="search"
+                   placeholder="PDF search karein..."
+                   oninput="filterResources(this.value)">
+
+            <button class="search-clear"
+                    onclick="clearResourceSearch()">
+                <i class="fas fa-times"></i>
+            </button>
+
+        </div>
+
+        <div id="resourceList"></div>
+
+    </div>
+
+
+    <!-- LECTURE VIEW -->
+    <div id="lectureView" class="hidden">
+
+        <button class="btn btn-sm btn-outline-primary mb-1 ms-1 fw-bold py-0 px-2"
+                style="font-size:0.6rem;"
+                onclick="goBackToSubjects()">
+
+            <i class="fas fa-arrow-left me-1"></i>
+            Back
+
+        </button>
+
+        <div class="player-layout">
+
+            <!-- PLAYER -->
+            <div>
+
+                <div class="video-box mb-1 shadow-sm">
+
+                    <iframe id="videoPlayer"
+                            src=""
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+
+                </div>
+
+
+                <!-- VIDEO INFO -->
+                <div class="bg-white rounded-3 border mb-1 shadow-sm"
+                     style="padding:6px;">
+
+                    <h6 id="videoTitle"
+                        class="fw-bold mb-1 text-dark"
+                        style="font-size:0.75rem;line-height:1.1;">
+                        Lecture Title
+                    </h6>
+
+                    <p id="videoDesc"
+                       class="text-muted mb-1"
+                       style="font-size:0.6rem;">
+                        Description...
+                    </p>
+
+
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 pt-1 border-top">
+
+                        <button id="likeBtn"
+                                class="action-chip"
+                                onclick="toggleLike()">
+
+                            <i class="far fa-heart"></i>
+
+                            <span id="likeText">
+                                Like
+                            </span>
+
+                            (<span id="likeCount">142</span>)
+
+                        </button>
+
+
+                        <a id="pdfDownloadBtn"
+                           href="#"
+                           target="_blank"
+                           class="action-chip bg-primary text-white">
+
+                            <i class="fas fa-file-pdf"></i>
+                            PDF Notes
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- RATING -->
+                    <div class="d-flex align-items-center justify-content-between mt-1 pt-1 border-top">
+
+                        <span class="text-muted fw-bold"
+                              style="font-size:0.6rem;">
+                            Rate:
+                        </span>
+
+                        <div class="star-rating d-flex gap-1">
+
+                            <i class="fas fa-star"
+                               onclick="rateVideo(1)"></i>
+
+                            <i class="fas fa-star"
+                               onclick="rateVideo(2)"></i>
+
+                            <i class="fas fa-star"
+                               onclick="rateVideo(3)"></i>
+
+                            <i class="fas fa-star"
+                               onclick="rateVideo(4)"></i>
+
+                            <i class="fas fa-star"
+                               onclick="rateVideo(5)"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CREDIT -->
+                <div class="credit-notice shadow-sm">
+
+                    <span class="fw-bold text-dark d-block mb-1">
+
+                        <i class="fas fa-info-circle text-primary me-1"></i>
+
+                        Educational Purpose & Credit Notice:
+
+                    </span>
+
+                    यह video students की educational help के उद्देश्य से share किया गया है।
+                    Original creator के knowledge और content का हम पूरा सम्मान करते हैं।
+                    किसी भी copyright concern के लिए संपर्क करें:
+
+                    <a href="mailto:astar22072006@gmail.com"
+                       class="text-primary text-decoration-none fw-bold">
+                        astar22072006@gmail.com
+                    </a>
+
+                </div>
+
+
+                <!-- COMMENTS -->
+                <div class="bg-white rounded-3 border shadow-sm mt-1"
+                     style="padding:6px;">
+
+                    <h6 class="fw-bold mb-1"
+                        style="font-size:0.65rem;">
+
+                        <i class="far fa-comments me-1 text-primary"></i>
+                        Comments
+
+                    </h6>
+
+                    <div class="input-group input-group-sm mb-1">
+
+                        <input type="text"
+                               id="commentInput"
+                               class="form-control"
+                               placeholder="Sawaal likhein..."
+                               style="font-size:0.65rem;height:26px;">
+
+                        <button class="btn btn-primary px-2 fw-bold"
+                                style="font-size:0.65rem;height:26px;"
+                                onclick="addComment()">
+                            Send
+                        </button>
+
+                    </div>
+
+                    <div id="commentsList"
+                         class="d-flex flex-column gap-1">
+
+                        <div class="bg-light rounded-2"
+                             style="font-size:0.6rem;padding:4px;">
+
+                            <span class="fw-bold d-block text-dark"
+                                  style="font-size:0.55rem;">
+                                Student
+                            </span>
+
+                            <span class="text-muted">
+                                Agriculture Engineering lecture is very helpful!
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PLAYLIST -->
+            <div>
+
+                <h6 class="fw-bold mb-1 text-secondary px-1"
+                    style="font-size:0.65rem;">
+                    Lectures List
+                </h6>
+
+                <div id="playlistContainer"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   AGRICULTURE ENGINEERING THIRD YEAR
+   ========================================================= */
+
+const appData = {
+
+    /* =========================
+       SEMESTER 5
+       ========================= */
+
+    sem5: {
+
+        estimatingCosting: {
+
+            title: "Estimating and Costing",
+
+            videos: [
+
+                {
+                    title: "1. Estimating and Costing | Introduction",
+                    desc: "Basic concepts of estimation, costing and valuation.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. Estimating | Building Estimation",
+                    desc: "Basic building estimation and quantity calculation.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        },
+
+
+        soilWaterConservation: {
+
+            title: "Soil and Water Conservation Engineering",
+
+            videos: [
+
+                {
+                    title: "1. Soil and Water Conservation | Introduction",
+                    desc: "Fundamentals of soil erosion and water conservation.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. Soil Conservation | Erosion Control",
+                    desc: "Methods of controlling soil erosion.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        },
+
+
+        dairyFoodEngineering: {
+
+            title: "Dairy and Food Engineering",
+
+            videos: [
+
+                {
+                    title: "1. Dairy and Food Engineering | Introduction",
+                    desc: "Basic concepts of dairy and food processing.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. Dairy Engineering | Processing Equipment",
+                    desc: "Important dairy and food processing equipment.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        },
+
+
+        remoteSensingGIS: {
+
+            title: "Remote Sensing and GIS",
+
+            videos: [
+
+                {
+                    title: "1. Remote Sensing and GIS | Introduction",
+                    desc: "Introduction to remote sensing and geographical information systems.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. GIS | Mapping and Applications",
+                    desc: "GIS mapping concepts and agriculture applications.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        }
+
+    },
+
+
+    /* =========================
+       SEMESTER 6
+       ========================= */
+
+    sem6: {
+
+        programElective02: {
+
+            title: "Program Elective - 02",
+
+            videos: [
+
+                {
+                    title: "1. Program Elective - 02 | Introduction",
+                    desc: "Program Elective - 02 study material and introduction.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. Program Elective - 02 | Important Topics",
+                    desc: "Important topics and examination preparation.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        },
+
+
+        entrepreneurship: {
+
+            title: "Entrepreneurship and Start-up",
+
+            videos: [
+
+                {
+                    title: "1. Entrepreneurship and Start-up | Introduction",
+                    desc: "Basics of entrepreneurship and startup ecosystem.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                },
+
+                {
+                    title: "2. Entrepreneurship | Business Planning",
+                    desc: "Business ideas, planning and startup development.",
+                    url: "https://player.cloudinary.com/embed/?cloud_name=h7g2sxct&public_id=VID_20260812_101229_651",
+                    pdf: "#"
+                }
+
+            ]
+
+        }
+
+    }
+
+};
+
+
+/* =========================================================
+   STUDY RESOURCES
+   ========================================================= */
+
+const resourceData = {
+
+    sem5: {
+
+        importantPYQ: [
+
+            {
+                title: "Estimating and Costing IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            },
+
+            {
+                title: "Soil and Water Conservation Engineering IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            },
+
+            {
+                title: "Dairy and Food Engineering IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            },
+
+            {
+                title: "Remote Sensing and GIS IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            }
+
+        ],
+
+        shortNotes: []
+
+    },
+
+
+    sem6: {
+
+        importantPYQ: [
+
+            {
+                title: "Program Elective - 02 IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            },
+
+            {
+                title: "Entrepreneurship and Start-up IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS",
+                url: "#"
+            }
+
+        ],
+
+        shortNotes: []
+
+    }
+
+};
+
+
+/* =========================================================
+   VARIABLES
+   ========================================================= */
+
+let currentSem = 5;
+let currentSubjectKey = "";
+let currentVideoIndex = 0;
+let isLiked = false;
+
+
+/* =========================================================
+   SEMESTER SWITCH
+   ========================================================= */
+
+function switchSemester(sem) {
+
+    currentSem = sem;
+
+    document.getElementById("btnSem5")
+        .classList.toggle("active", sem === 5);
+
+    document.getElementById("btnSem6")
+        .classList.toggle("active", sem === 6);
+
+    renderSubjects(sem);
+
+}
+
+
+/* =========================================================
+   RENDER SUBJECTS
+   ========================================================= */
+
+function renderSubjects(sem) {
+
+    const semKey = "sem" + sem;
+
+    const subjects = appData[semKey];
+
+    let listHtml = "";
+
+    for (let key in subjects) {
+
+        listHtml += `
+
+        <div class="app-card d-flex align-items-center subject-item"
+             data-search="${subjects[key].title.toLowerCase()}"
+             style="gap:6px;"
+             onclick="openSubject('${semKey}','${key}')">
+
+            <div class="icon-circle">
+                <i class="fas fa-book-open"></i>
+            </div>
+
+            <div style="overflow:hidden;flex-grow:1;">
+
+                <h6 class="mb-0 fw-bold text-truncate"
+                    style="font-size:0.7rem;">
+                    ${subjects[key].title}
+                </h6>
+
+                <span class="text-muted"
+                      style="font-size:0.55rem;">
+                    ${subjects[key].videos.length} Lectures & Notes
+                </span>
+
+            </div>
+
+            <i class="fas fa-chevron-right text-muted"
+               style="font-size:.55rem;">
+            </i>
+
+        </div>
+
+        `;
+
+    }
+
+    document.getElementById("subjectListContainer").innerHTML =
+        listHtml;
+
+    renderResourceFolders(sem);
+
+    filterMainContent(
+        document.getElementById("mainSearchInput")?.value || ""
+    );
+
+}
+
+
+/* =========================================================
+   RESOURCE FOLDERS
+   ========================================================= */
+
+function renderResourceFolders(sem) {
+
+    const semKey = "sem" + sem;
+
+    const pyqCount =
+        resourceData[semKey].importantPYQ.length;
+
+    const notesCount =
+        resourceData[semKey].shortNotes.length;
+
+    document.getElementById("resourceFolders").innerHTML = `
+
+        <div class="folder-card"
+             data-search="important pyq important questions previous year question">
+
+            <div class="folder-icon">
+                <i class="fas fa-file-circle-question"></i>
+            </div>
+
+            <div class="folder-info"
+                 onclick="openResourceFolder('importantPYQ')">
+
+                <p class="folder-title">
+                    Important PYQ / Important Questions
+                </p>
+
+                <span class="folder-meta">
+                    ${pyqCount} PDF${pyqCount !== 1 ? "s" : ""}
+                    • ${sem === 5 ? "Fifth" : "Sixth"} Semester
+                </span>
+
+            </div>
+
+            <button class="view-btn"
+                    onclick="openResourceFolder('importantPYQ');event.stopPropagation();">
+                View
+            </button>
+
+            <i class="fas fa-chevron-right folder-arrow"></i>
+
+        </div>
+
+
+        <div class="folder-card"
+             data-search="short notes shortnote notes">
+
+            <div class="folder-icon">
+                <i class="fas fa-note-sticky"></i>
+            </div>
+
+            <div class="folder-info"
+                 onclick="openResourceFolder('shortNotes')">
+
+                <p class="folder-title">
+                    Short Notes
+                </p>
+
+                <span class="folder-meta">
+
+                    ${
+                        notesCount
+                        ? notesCount + " PDF" + (notesCount !== 1 ? "s" : "")
+                        : "Notes will be added soon"
+                    }
+
+                </span>
+
+            </div>
+
+            <button class="view-btn"
+                    onclick="openResourceFolder('shortNotes');event.stopPropagation();">
+                View
+            </button>
+
+            <i class="fas fa-chevron-right folder-arrow"></i>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   MAIN SEARCH
+   ========================================================= */
+
+function toggleMainSearch() {
+
+    const box =
+        document.getElementById("mainSearchBox");
+
+    box.classList.toggle("show");
+
+    if (box.classList.contains("show")) {
+
+        document.getElementById("mainSearchInput").focus();
+
+    }
+
+}
+
+
+function filterMainContent(query) {
+
+    const q =
+        (query || "").trim().toLowerCase();
+
+    document.querySelectorAll(".subject-item")
+        .forEach(card => {
+
+            card.style.display =
+                (!q || card.dataset.search.includes(q))
+                ? "flex"
+                : "none";
+
+        });
+
+
+    document.querySelectorAll("#resourceFolders .folder-card")
+        .forEach(card => {
+
+            const hay =
+                (card.dataset.search || "").toLowerCase();
+
+            card.style.display =
+                (!q || hay.includes(q))
+                ? "flex"
+                : "none";
+
+        });
+
+}
+
+
+function clearMainSearch() {
+
+    const input =
+        document.getElementById("mainSearchInput");
+
+    input.value = "";
+
+    filterMainContent("");
+
+    input.focus();
+
+}
+
+
+/* =========================================================
+   RESOURCE OPEN
+   ========================================================= */
+
+function openResourceFolder(type) {
+
+    const semKey = "sem" + currentSem;
+
+    const items =
+        resourceData[semKey][type] || [];
+
+    const title =
+        type === "importantPYQ"
+        ? "Important PYQ / Important Questions"
+        : "Short Notes";
+
+
+    history.pushState(
+
+        {
+            diplomaEngineersModule: true,
+            view: "resource",
+            sem: currentSem,
+            resource: type
+        },
+
+        "",
+
+        window.location.href
+
+    );
+
+
+    document.getElementById("subjectsView")
+        .style.display = "none";
+
+    document.getElementById("lectureView")
+        .classList.add("hidden");
+
+    document.getElementById("resourceView")
+        .classList.add("active");
+
+
+    document.getElementById("resourceViewTitle")
+        .innerText = title;
+
+
+    document.getElementById("resourceViewSubtitle")
+        .innerText =
+        `${currentSem === 5 ? "Fifth" : "Sixth"} Semester • ${items.length} PDF${items.length !== 1 ? "s" : ""}`;
+
+
+    document.getElementById("resourceSearchInput")
+        .value = "";
+
+
+    renderResourceList(items);
+
+    window.scrollTo(0, 0);
+
+}
+
+
+/* =========================================================
+   RESOURCE LIST
+   ========================================================= */
+
+function renderResourceList(items) {
+
+    const container =
+        document.getElementById("resourceList");
+
+
+    if (!items.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-resource">
+
+                <i class="fas fa-folder-open d-block mb-2"
+                   style="font-size:1rem;">
+                </i>
+
+                Short Notes अभी add नहीं किए गए हैं।
+
+                <br>
+
+                Notes add होते ही यहाँ दिखाई देंगे.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML = items.map((item, index) => `
+
+        <div class="resource-card resource-item"
+             data-search="${item.title.toLowerCase()}">
+
+            <div class="resource-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+
+            <div class="resource-info">
+
+                <p class="resource-name">
+                    ${index + 1}. ${item.title}
+                </p>
+
+                <div class="resource-meta">
+                    PDF • Diploma Engineers
+                </div>
+
+            </div>
+
+            <a class="view-btn"
+               href="${item.url}"
+               target="_blank"
+               rel="noopener noreferrer">
+
+                <i class="fas fa-eye me-1"></i>
+                View
+
+            </a>
+
+        </div>
+
+    `).join("");
+
+}
+
+
+/* =========================================================
+   RESOURCE SEARCH
+   ========================================================= */
+
+function filterResources(query) {
+
+    const q =
+        (query || "").trim().toLowerCase();
+
+    document.querySelectorAll(".resource-item")
+        .forEach(card => {
+
+            card.style.display =
+                (!q || card.dataset.search.includes(q))
+                ? "flex"
+                : "none";
+
+        });
+
+}
+
+
+function clearResourceSearch() {
+
+    const input =
+        document.getElementById("resourceSearchInput");
+
+    input.value = "";
+
+    filterResources("");
+
+    input.focus();
+
+}
+
+
+/* =========================================================
+   OPEN SUBJECT
+   ========================================================= */
+
+function openSubject(semKey, key) {
+
+    currentSubjectKey = key;
+
+    history.pushState(
+
+        {
+            diplomaEngineersModule: true,
+            view: "lecture",
+            sem: semKey,
+            subject: key
+        },
+
+        "",
+
+        "#lecture"
+
+    );
+
+    showLectureView();
+
+    playVideo(semKey, key, 0);
+
+}
+
+
+/* =========================================================
+   LECTURE VIEW
+   ========================================================= */
+
+function showLectureView() {
+
+    document.getElementById("subjectsView")
+        .classList.add("hidden");
+
+    document.getElementById("resourceView")
+        .classList.remove("active");
+
+    document.getElementById("lectureView")
+        .classList.remove("hidden");
+
+    window.scrollTo(0, 0);
+
+}
+
+
+function showSubjectsView() {
+
+    document.getElementById("lectureView")
+        .classList.add("hidden");
+
+    document.getElementById("resourceView")
+        .classList.remove("active");
+
+    document.getElementById("subjectsView")
+        .style.display = "";
+
+    document.getElementById("subjectsView")
+        .classList.remove("hidden");
+
+
+    const player =
+        document.getElementById("videoPlayer");
+
+    if (player) {
+
+        player.src = "";
+
+    }
+
+    window.scrollTo(0, 0);
+
+}
+
+
+function goBackToSubjects() {
+
+    history.back();
+
+}
+
+
+/* =========================================================
+   BROWSER / APP BACK
+   ========================================================= */
+
+window.addEventListener("popstate", function(event) {
+
+    if (
+        event.state &&
+        event.state.diplomaEngineersModule
+    ) {
+
+        if (event.state.view === "lecture") {
+
+            showLectureView();
+
+            return;
+
+        }
+
+
+        if (event.state.view === "resource") {
+
+            const sem =
+                event.state.sem || currentSem;
+
+            const type =
+                event.state.resource || "importantPYQ";
+
+            currentSem = sem;
+
+            const items =
+                resourceData["sem" + sem][type] || [];
+
+
+            document.getElementById("subjectsView")
+                .style.display = "none";
+
+            document.getElementById("lectureView")
+                .classList.add("hidden");
+
+            document.getElementById("resourceView")
+                .classList.add("active");
+
+
+            document.getElementById("resourceViewTitle")
+                .innerText =
+                type === "importantPYQ"
+                ? "Important PYQ / Important Questions"
+                : "Short Notes";
+
+
+            document.getElementById("resourceViewSubtitle")
+                .innerText =
+                `${sem === 5 ? "Fifth" : "Sixth"} Semester • ${items.length} PDF${items.length !== 1 ? "s" : ""}`;
+
+
+            renderResourceList(items);
+
+            window.scrollTo(0, 0);
+
+            return;
+
+        }
+
+    }
+
+    showSubjectsView();
+
+});
+
+
+/* =========================================================
+   PARENT APP BACK API
+   ========================================================= */
+
+window.DiplomaEngineersBack = function() {
+
+    const lectureOpen =
+        document.getElementById("lectureView") &&
+        !document.getElementById("lectureView")
+            .classList.contains("hidden");
+
+
+    const resourceOpen =
+        document.getElementById("resourceView") &&
+        document.getElementById("resourceView")
+            .classList.contains("active");
+
+
+    if (lectureOpen || resourceOpen) {
+
+        history.back();
+
+        return true;
+
+    }
+
+    return false;
+
+};
+
+
+/* =========================================================
+   PLAY VIDEO
+   ========================================================= */
+
+function playVideo(semKey, key, index) {
+
+    currentVideoIndex = index;
+
+    const vid =
+        appData[semKey][key].videos[index];
+
+
+    document.getElementById("videoPlayer")
+        .src = vid.url;
+
+
+    document.getElementById("videoTitle")
+        .innerText = vid.title;
+
+
+    document.getElementById("videoDesc")
+        .innerText = vid.desc;
+
+
+    document.getElementById("pdfDownloadBtn")
+        .href = vid.pdf;
+
+
+    isLiked = false;
+
+
+    document.getElementById("likeBtn")
+        .classList.remove("liked");
+
+
+    document.getElementById("likeText")
+        .innerText = "Like";
+
+
+    document.getElementById("likeCount")
+        .innerText = "142";
+
+
+    rateVideo(0);
+
+
+    let listHtml = "";
+
+
+    appData[semKey][key].videos
+        .forEach((v, i) => {
+
+            const isActive =
+                i === index ? "active" : "";
+
+            const iconClass =
+                i === index ? "fa-play" : "fa-film";
+
+
+            listHtml += `
+
+                <div class="playlist-card ${isActive}"
+                     onclick="playVideo('${semKey}','${key}',${i})">
+
+                    <div class="play-badge">
+
+                        <i class="fas ${iconClass}"></i>
+
+                    </div>
+
+                    <div style="overflow:hidden;">
+
+                        <h6 class="mb-0 fw-bold text-truncate"
+                            style="font-size:0.6rem;line-height:1.1;">
+
+                            ${v.title}
+
+                        </h6>
+
+                        <span class="text-muted"
+                              style="font-size:0.5rem;">
+                            Lecture
+                        </span>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+
+    document.getElementById("playlistContainer")
+        .innerHTML = listHtml;
+
+}
+
+
+/* =========================================================
+   LIKE
+   ========================================================= */
+
+function toggleLike() {
+
+    const likeBtn =
+        document.getElementById("likeBtn");
+
+    let count =
+        parseInt(
+            document.getElementById("likeCount").innerText
+        );
+
+
+    if (!isLiked) {
+
+        likeBtn.classList.add("liked");
+
+        document.getElementById("likeText")
+            .innerText = "Liked";
+
+        document.getElementById("likeCount")
+            .innerText = count + 1;
+
+        isLiked = true;
+
+    } else {
+
+        likeBtn.classList.remove("liked");
+
+        document.getElementById("likeText")
+            .innerText = "Like";
+
+        document.getElementById("likeCount")
+            .innerText = count - 1;
+
+        isLiked = false;
+
+    }
+
+}
+
+
+/* =========================================================
+   RATING
+   ========================================================= */
+
+function rateVideo(stars) {
+
+    const iconList =
+        document.querySelectorAll(
+            ".star-rating .fa-star"
+        );
+
+
+    iconList.forEach((star, index) => {
+
+        if (index < stars) {
+
+            star.classList.add("active");
+
+        } else {
+
+            star.classList.remove("active");
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   COMMENTS
+   ========================================================= */
+
+function addComment() {
+
+    const input =
+        document.getElementById("commentInput");
+
+
+    if (input.value.trim() !== "") {
+
+        const list =
+            document.getElementById("commentsList");
+
+
+        list.innerHTML = `
+
+            <div class="bg-light rounded-2"
+                 style="font-size:0.6rem;padding:4px;">
+
+                <span class="fw-bold d-block text-dark"
+                      style="font-size:0.55rem;">
+                    You
+                </span>
+
+                <span class="text-muted">
+                    ${input.value.trim()}
+                </span>
+
+            </div>
+
+        ` + list.innerHTML;
+
+
+        input.value = "";
+
+    }
+
+}
+
+
+/* =========================================================
+   INITIAL LOAD
+   ========================================================= */
+
+renderSubjects(5);
+
+</script>
+
+</body>
+</html>

@@ -233,6 +233,186 @@
             width: 100%;
             max-width: 100%;
         }
+        .tools-row {
+            display:flex;
+            gap:5px;
+            margin-bottom:6px;
+        }
+        .search-btn {
+            flex:0 0 auto;
+            border:1px solid var(--border);
+            background:#fff;
+            color:var(--primary);
+            border-radius:6px;
+            height:30px;
+            padding:0 10px;
+            font-size:.62rem;
+            font-weight:700;
+            cursor:pointer;
+        }
+        .search-box {
+            display:none;
+            margin-bottom:6px;
+            position:relative;
+        }
+        .search-box.show { display:block; }
+        .search-box input {
+            width:100%;
+            height:30px;
+            border:1px solid var(--border);
+            border-radius:6px;
+            padding:0 30px 0 10px;
+            font-size:.65rem;
+            outline:none;
+            background:#fff;
+        }
+        .search-box input:focus { border-color:var(--primary); }
+        .search-clear {
+            position:absolute;
+            right:7px;
+            top:6px;
+            border:0;
+            background:transparent;
+            color:#64748b;
+            font-size:.65rem;
+            cursor:pointer;
+        }
+        .resource-section {
+            margin-top:7px;
+        }
+        .resource-heading {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 2px;
+            margin-bottom:4px;
+        }
+        .resource-heading h6 {
+            font-size:.65rem;
+            margin:0;
+            font-weight:800;
+        }
+        .folder-card {
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:6px;
+            padding:6px 8px;
+            display:flex;
+            align-items:center;
+            gap:7px;
+            margin-bottom:4px;
+            cursor:pointer;
+            transition:transform .15s, border-color .15s;
+        }
+        .folder-card:active { transform:scale(.985); }
+        .folder-icon {
+            width:28px;
+            height:28px;
+            border-radius:6px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#eff6ff;
+            color:var(--primary);
+            flex-shrink:0;
+            font-size:.72rem;
+        }
+        .folder-info { min-width:0; flex:1; }
+        .folder-title {
+            font-size:.67rem;
+            font-weight:800;
+            margin:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .folder-meta {
+            font-size:.52rem;
+            color:#64748b;
+        }
+        .folder-arrow {
+            color:#94a3b8;
+            font-size:.58rem;
+        }
+        .resource-view { display:none; }
+        .resource-view.active { display:block; }
+        .resource-toolbar {
+            display:flex;
+            align-items:center;
+            gap:5px;
+            margin-bottom:6px;
+        }
+        .resource-title-wrap { flex:1; min-width:0; }
+        .resource-title {
+            font-size:.72rem;
+            font-weight:800;
+            margin:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .resource-subtitle {
+            font-size:.52rem;
+            color:#64748b;
+        }
+        .resource-search {
+            margin-bottom:6px;
+        }
+        .resource-card {
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:6px;
+            padding:7px;
+            display:flex;
+            align-items:center;
+            gap:7px;
+            margin-bottom:4px;
+        }
+        .resource-icon {
+            width:27px;
+            height:27px;
+            border-radius:5px;
+            background:#fff1f2;
+            color:#e11d48;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+            font-size:.7rem;
+        }
+        .resource-info { min-width:0; flex:1; }
+        .resource-name {
+            font-size:.61rem;
+            line-height:1.15;
+            font-weight:700;
+            margin:0;
+        }
+        .resource-meta {
+            font-size:.5rem;
+            color:#64748b;
+            margin-top:2px;
+        }
+        .view-btn {
+            border:0;
+            background:var(--primary);
+            color:#fff;
+            border-radius:5px;
+            padding:5px 8px;
+            font-size:.55rem;
+            font-weight:800;
+            text-decoration:none;
+            flex-shrink:0;
+        }
+        .empty-resource {
+            background:#fff;
+            border:1px dashed var(--border);
+            border-radius:6px;
+            padding:14px 8px;
+            text-align:center;
+            color:#64748b;
+            font-size:.58rem;
+        }
+
     </style>
 </head>
 <body>
@@ -255,17 +435,47 @@
                 <button id="btnSem4" class="sem-btn" onclick="switchSemester(4)">Fourth Semester</button>
             </div>
 
+            <div class="tools-row">
+                <button class="search-btn" onclick="toggleMainSearch()">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+
+            <div id="mainSearchBox" class="search-box">
+                <input id="mainSearchInput" type="search" placeholder="Subject, PYQ ya Short Notes search karein..." oninput="filterMainContent(this.value)">
+                <button class="search-clear" onclick="clearMainSearch()" aria-label="Clear search"><i class="fas fa-times"></i></button>
+            </div>
+
             <!-- Subjects Grid container -->
             <div class="subjects-grid" id="subjectListContainer"></div>
+
+            <!-- Study Resources Folders -->
+            <div class="resource-section" id="resourceFoldersSection">
+                <div class="resource-heading">
+                    <h6><i class="fas fa-folder-open text-primary me-1"></i> Study Resources</h6>
+                </div>
+                <div id="resourceFolders"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN 1B: RESOURCE FOLDER VIEW -->
+        <div id="resourceView" class="resource-view">
+            <div class="resource-toolbar">
+                <div class="resource-title-wrap">
+                    <h6 id="resourceViewTitle" class="resource-title">Important PYQ</h6>
+                    <div id="resourceViewSubtitle" class="resource-subtitle"></div>
+                </div>
+            </div>
+            <div class="resource-search search-box show">
+                <input id="resourceSearchInput" type="search" placeholder="PDF search karein..." oninput="filterResources(this.value)">
+                <button class="search-clear" onclick="clearResourceSearch()" aria-label="Clear search"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="resourceList"></div>
         </div>
 
         <!-- SCREEN 2: LECTURE PLAYER VIEW -->
         <div id="lectureView" class="hidden">
-            <button class="btn btn-sm btn-outline-primary mb-1 ms-1 fw-bold py-0 px-2" style="font-size: 0.6rem;" onclick="goBackToSubjects()">
-                <i class="fas fa-arrow-left me-1"></i> Back
-            </button>
-            
-            <div class="player-layout">
+<div class="player-layout">
                 <!-- Left Section -->
                 <div>
                     <div class="video-box mb-1 shadow-sm">
@@ -382,6 +592,27 @@
             }
         };
 
+        const resourceData = {
+            sem3: {
+                importantPYQ: [
+                    { title: "Operating System IMP. QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1upAna7Bx5qowCMT5LoeNqNuy3gnKJiV0&usp=drive_copy" },
+                    { title: "DATA BASE MANAGEMENT SYSTEM IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1xEk6l5CZxlivKr3Tz-GNvVKi3v-mPdHq&usp=drive_copy" },
+                    { title: "COMPUTER NETWORK IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1QLZqJYEFkm_25zetnpHY8tFMN4VOniwe&usp=drive_copy" }
+                ],
+                shortNotes: []
+            },
+            sem4: {
+                importantPYQ: [
+                    { title: "SOFTWARE ENGINEERING IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1A0-mj4NgXzb4ZnZSpbCx_0yV38z6jTlQ&usp=drive_copy" },
+                    { title: "INTRODUCTION TO e-GOVERNANCE IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1PCVa5JRlONi4kwl2Rvcwon5LRiOfrmuq&usp=drive_copy" },
+                    { title: "DATA STRUCTURES USING C IMPORTANT QUESTIONS BY DIPLOMA ENGINEERS", url: "https://drive.google.com/open?id=1pbOvhXjH-fujoX1yzDOHZQiczrrfhTIb&usp=drive_copy" }
+                ],
+                shortNotes: []
+            }
+        };
+
+        // Add CS PDFs here in the same format:
+        // { title: "PDF NAME", url: "https://drive.google.com/..." }
         let currentSem = 3;
         let currentSubjectKey = '';
         let currentVideoIndex = 0;
@@ -398,48 +629,197 @@
             const semKey = 'sem' + sem;
             const subjects = appData[semKey];
             let listHtml = '';
-            
-            for(let key in subjects) {
-                listHtml += `<div class="app-card d-flex align-items-center" style="gap: 6px;" onclick="openSubject('${semKey}', '${key}')">
+
+            for (let key in subjects) {
+                listHtml += `<div class="app-card d-flex align-items-center subject-item" data-search="${subjects[key].title.toLowerCase()}" style="gap: 6px;" onclick="openSubject('${semKey}', '${key}')">
                     <div class="icon-circle"><i class="fas fa-laptop-code"></i></div>
                     <div style="overflow: hidden; flex-grow: 1;">
                         <h6 class="mb-0 fw-bold text-truncate" style="font-size:0.7rem;">${subjects[key].title}</h6>
                         <span class="text-muted" style="font-size:0.55rem;">${subjects[key].videos.length} Lectures & Notes</span>
                     </div>
+                    <i class="fas fa-chevron-right text-muted" style="font-size:.55rem;"></i>
                 </div>`;
             }
+
             document.getElementById('subjectListContainer').innerHTML = listHtml;
+            renderResourceFolders(sem);
+            filterMainContent(document.getElementById('mainSearchInput')?.value || '');
+        }
+
+        function renderResourceFolders(sem) {
+            const semKey = 'sem' + sem;
+            const pyqCount = resourceData[semKey].importantPYQ.length;
+            const notesCount = resourceData[semKey].shortNotes.length;
+
+            document.getElementById('resourceFolders').innerHTML = `
+                <div class="folder-card" data-search="important pyq important questions previous year question">
+                    <div class="folder-icon"><i class="fas fa-file-circle-question"></i></div>
+                    <div class="folder-info" onclick="openResourceFolder('importantPYQ')">
+                        <p class="folder-title">Important PYQ / Important Questions</p>
+                        <span class="folder-meta">${pyqCount ? pyqCount + ' PDF' + (pyqCount !== 1 ? 's' : '') : 'PYQ will be added soon'} • ${sem === 3 ? 'Third' : 'Fourth'} Semester</span>
+                    </div>
+                    <button class="view-btn" onclick="openResourceFolder('importantPYQ'); event.stopPropagation();">View</button>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
+                </div>
+                <div class="folder-card" data-search="short notes shortnote notes">
+                    <div class="folder-icon"><i class="fas fa-note-sticky"></i></div>
+                    <div class="folder-info" onclick="openResourceFolder('shortNotes')">
+                        <p class="folder-title">Short Notes</p>
+                        <span class="folder-meta">${notesCount ? notesCount + ' PDF' + (notesCount !== 1 ? 's' : '') : 'Notes will be added soon'}</span>
+                    </div>
+                    <button class="view-btn" onclick="openResourceFolder('shortNotes'); event.stopPropagation();">View</button>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
+                </div>`;
+        }
+
+        function toggleMainSearch() {
+            const box = document.getElementById('mainSearchBox');
+            box.classList.toggle('show');
+            if (box.classList.contains('show')) document.getElementById('mainSearchInput').focus();
+        }
+
+        function filterMainContent(query) {
+            const q = (query || '').trim().toLowerCase();
+            document.querySelectorAll('.subject-item').forEach(card => {
+                card.style.display = (!q || card.dataset.search.includes(q)) ? 'flex' : 'none';
+            });
+            document.querySelectorAll('#resourceFolders .folder-card').forEach(card => {
+                const hay = (card.dataset.search || '').toLowerCase();
+                card.style.display = (!q || hay.includes(q)) ? 'flex' : 'none';
+            });
+        }
+
+        function clearMainSearch() {
+            const input = document.getElementById('mainSearchInput');
+            input.value = '';
+            filterMainContent('');
+            input.focus();
+        }
+
+        function openResourceFolder(type) {
+            const semKey = 'sem' + currentSem;
+            const items = resourceData[semKey][type] || [];
+            const title = type === 'importantPYQ' ? 'Important PYQ / Important Questions' : 'Short Notes';
+
+            history.pushState(
+                { diplomaEngineersModule: true, view: 'resource', sem: currentSem, resource: type },
+                '',
+                window.location.href
+            );
+
+            document.getElementById('subjectsView').style.display = 'none';
+            document.getElementById('lectureView').classList.add('hidden');
+            document.getElementById('resourceView').classList.add('active');
+            document.getElementById('resourceViewTitle').innerText = title;
+            document.getElementById('resourceViewSubtitle').innerText =
+                `${currentSem === 3 ? 'Third' : 'Fourth'} Semester • ${items.length} PDF${items.length !== 1 ? 's' : ''}`;
+            document.getElementById('resourceSearchInput').value = '';
+            renderResourceList(items, title);
+            window.scrollTo(0, 0);
+        }
+
+        function renderResourceList(items, folderTitle) {
+            const container = document.getElementById('resourceList');
+            if (!items.length) {
+                container.innerHTML = `<div class="empty-resource"><i class="fas fa-folder-open d-block mb-2" style="font-size:1rem;"></i>${folderTitle} अभी add नहीं किए गए हैं।<br>Resources add होते ही यहाँ दिखाई देंगे.</div>`;
+                return;
+            }
+
+            container.innerHTML = items.map((item, index) => `
+                <div class="resource-card resource-item" data-search="${item.title.toLowerCase()}">
+                    <div class="resource-icon"><i class="fas fa-file-pdf"></i></div>
+                    <div class="resource-info">
+                        <p class="resource-name">${index + 1}. ${item.title}</p>
+                        <div class="resource-meta">PDF • Diploma Engineers</div>
+                    </div>
+                    <a class="view-btn" href="${item.url}" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-eye me-1"></i>View
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function filterResources(query) {
+            const q = (query || '').trim().toLowerCase();
+            document.querySelectorAll('.resource-item').forEach(card => {
+                card.style.display = (!q || card.dataset.search.includes(q)) ? 'flex' : 'none';
+            });
+        }
+
+        function clearResourceSearch() {
+            const input = document.getElementById('resourceSearchInput');
+            input.value = '';
+            filterResources('');
+            input.focus();
         }
 
         function openSubject(semKey, key) {
             currentSubjectKey = key;
-            history.pushState({ view: 'lecture', sem: semKey, subject: key }, "", "#lecture");
+            history.pushState(
+                { diplomaEngineersModule: true, view: 'lecture', sem: semKey, subject: key },
+                '',
+                '#lecture'
+            );
             showLectureView();
             playVideo(semKey, key, 0);
         }
 
-        function goBackToSubjects() {
-            history.back();
-        }
-
         function showLectureView() {
             document.getElementById('subjectsView').classList.add('hidden');
+            document.getElementById('resourceView').classList.remove('active');
             document.getElementById('lectureView').classList.remove('hidden');
+            window.scrollTo(0, 0);
         }
 
         function showSubjectsView() {
             document.getElementById('lectureView').classList.add('hidden');
+            document.getElementById('resourceView').classList.remove('active');
+            document.getElementById('subjectsView').style.display = '';
             document.getElementById('subjectsView').classList.remove('hidden');
-            document.getElementById('videoPlayer').src = "";
+            const player = document.getElementById('videoPlayer');
+            if (player) player.src = '';
+            window.scrollTo(0, 0);
         }
 
+        // Mobile/browser Back system: resource/lecture -> previous screen -> parent app.
         window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.view === 'lecture') {
-                showLectureView();
-            } else {
-                showSubjectsView();
+            if (event.state && event.state.diplomaEngineersModule) {
+                if (event.state.view === 'lecture') {
+                    showLectureView();
+                    return;
+                }
+                if (event.state.view === 'resource') {
+                    const sem = event.state.sem || currentSem;
+                    const type = event.state.resource || 'importantPYQ';
+                    currentSem = sem;
+                    const items = resourceData['sem' + sem][type] || [];
+                    const title = type === 'importantPYQ' ? 'Important PYQ / Important Questions' : 'Short Notes';
+                    document.getElementById('subjectsView').style.display = 'none';
+                    document.getElementById('lectureView').classList.add('hidden');
+                    document.getElementById('resourceView').classList.add('active');
+                    document.getElementById('resourceViewTitle').innerText = title;
+                    document.getElementById('resourceViewSubtitle').innerText =
+                        `${sem === 3 ? 'Third' : 'Fourth'} Semester • ${items.length} PDF${items.length !== 1 ? 's' : ''}`;
+                    renderResourceList(items, title);
+                    window.scrollTo(0, 0);
+                    return;
+                }
             }
+            showSubjectsView();
         });
+
+        // Optional parent-app Back API.
+        window.DiplomaEngineersBack = function() {
+            const lectureOpen = document.getElementById('lectureView') &&
+                !document.getElementById('lectureView').classList.contains('hidden');
+            const resourceOpen = document.getElementById('resourceView') &&
+                document.getElementById('resourceView').classList.contains('active');
+            if (lectureOpen || resourceOpen) {
+                history.back();
+                return true;
+            }
+            return false;
+        };
 
         function playVideo(semKey, key, index) {
             currentVideoIndex = index;

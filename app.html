@@ -1382,12 +1382,16 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   position: fixed;
   bottom: 0; left: 0;
   width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  min-height: 70px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0 6px;
+  align-items: flex-end;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border-light);
+  box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.07);
   z-index: 99;
 }
 
@@ -1395,22 +1399,77 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
   text-decoration: none;
   color: var(--muted-text);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   border: none;
   background: none;
   padding: 0;
   flex: 1;
+  min-height: 52px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: 1.15;
+  transition: color .2s ease, transform .2s ease;
 }
 
 .bottom-nav .nav-link-btn i {
   display: block;
-  font-size: 16px;
-  margin-bottom: 2px;
+  font-size: 18px;
+  margin-bottom: 5px;
 }
 
 .bottom-nav .nav-link-btn.active { color: var(--primary); }
+
+/* Floating center Books button - inspired by the supplied app reference */
+.bottom-nav .nav-books-center {
+  position: relative;
+  overflow: visible;
+  color: var(--primary);
+}
+
+.bottom-nav .nav-books-center .nav-books-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  left: 50%;
+  top: -30px;
+  transform: translateX(-50%);
+  background: linear-gradient(145deg, #2f76f6, #1655cf);
+  color: #fff;
+  border: 5px solid rgba(255,255,255,.98);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, .30), inset 0 1px 0 rgba(255,255,255,.20);
+}
+
+.bottom-nav .nav-books-center .nav-books-icon i {
+  margin: 0;
+  font-size: 21px;
+  color: #fff;
+}
+
+.bottom-nav .nav-books-center .nav-books-label {
+  margin-top: 1px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.bottom-nav .nav-books-center:active .nav-books-icon {
+  transform: translateX(-50%) scale(.94);
+}
+
+@media (max-width: 420px) {
+  .bottom-nav { min-height: 68px; }
+  .bottom-nav .nav-books-center .nav-books-icon {
+    width: 54px;
+    height: 54px;
+    top: -28px;
+  }
+}
 
 
 /* =========================================================
@@ -3414,8 +3473,9 @@ html,body{max-width:100%;overflow-x:hidden}
     <button class="nav-link-btn" id="tab-notesPage" onclick="navigateTo('notesPage')">
       <i class="fas fa-code-branch"></i>Branch
     </button>
-    <button class="nav-link-btn" id="tab-booksPage" onclick="navigateTo('booksPage')">
-      <i class="fas fa-book"></i>Books
+    <button class="nav-link-btn nav-books-center" id="tab-booksPage" onclick="navigateTo('booksPage')" aria-label="Books">
+      <span class="nav-books-icon"><i class="fas fa-book-open"></i></span>
+      <span class="nav-books-label">Books</span>
     </button>
     <button class="nav-link-btn" id="tab-coursePage" onclick="navigateTo('coursePage')">
       <i class="fas fa-graduation-cap"></i>Courses

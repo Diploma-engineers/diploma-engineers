@@ -2582,6 +2582,39 @@
 }
 
 </style>
+
+<style id="section-sliding-system">
+/* ===== ALL SECTION SLIDING SYSTEM ===== */
+html{scroll-behavior:smooth}
+.reveal-section{opacity:0;transform:translate3d(70px,0,0);transition:opacity .75s ease,transform .75s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
+.reveal-section.slide-left{transform:translate3d(-70px,0,0)}
+.reveal-section.slide-right{transform:translate3d(70px,0,0)}
+.reveal-section.slide-up{transform:translate3d(0,60px,0)}
+.reveal-section.is-visible{opacity:1;transform:translate3d(0,0,0)}
+
+/* Sliding effect for cards/content inside every section */
+.reveal-section .feature-card,.reveal-section .course-card,.reveal-section .branch-card,.reveal-section .social-card,.reveal-section .stat-card,.reveal-section .news-page,.reveal-section .updates-card,.reveal-section .feedback-card,.reveal-section .course-slide-card,.reveal-section .motivation-card,.reveal-section .eng-card{opacity:0;transform:translate3d(0,35px,0);transition:opacity .65s ease,transform .65s cubic-bezier(.22,1,.36,1)}
+.reveal-section.is-visible .feature-card,.reveal-section.is-visible .course-card,.reveal-section.is-visible .branch-card,.reveal-section.is-visible .social-card,.reveal-section.is-visible .stat-card,.reveal-section.is-visible .news-page,.reveal-section.is-visible .updates-card,.reveal-section.is-visible .feedback-card,.reveal-section.is-visible .course-slide-card,.reveal-section.is-visible .motivation-card,.reveal-section.is-visible .eng-card{opacity:1;transform:translate3d(0,0,0)}
+.reveal-section.is-visible > *{transition-delay:.05s}
+.reveal-section.is-visible .feature-card:nth-child(1),.reveal-section.is-visible .course-card:nth-child(1),.reveal-section.is-visible .branch-card:nth-child(1),.reveal-section.is-visible .social-card:nth-child(1),.reveal-section.is-visible .stat-card:nth-child(1),.reveal-section.is-visible .course-slide-card:nth-child(1){transition-delay:.08s}
+.reveal-section.is-visible .feature-card:nth-child(2),.reveal-section.is-visible .course-card:nth-child(2),.reveal-section.is-visible .branch-card:nth-child(2),.reveal-section.is-visible .social-card:nth-child(2),.reveal-section.is-visible .stat-card:nth-child(2),.reveal-section.is-visible .course-slide-card:nth-child(2){transition-delay:.16s}
+.reveal-section.is-visible .feature-card:nth-child(3),.reveal-section.is-visible .course-card:nth-child(3),.reveal-section.is-visible .branch-card:nth-child(3),.reveal-section.is-visible .social-card:nth-child(3),.reveal-section.is-visible .stat-card:nth-child(3),.reveal-section.is-visible .course-slide-card:nth-child(3){transition-delay:.24s}
+.reveal-section.is-visible .feature-card:nth-child(4),.reveal-section.is-visible .course-card:nth-child(4),.reveal-section.is-visible .branch-card:nth-child(4),.reveal-section.is-visible .social-card:nth-child(4),.reveal-section.is-visible .stat-card:nth-child(4),.reveal-section.is-visible .course-slide-card:nth-child(4){transition-delay:.32s}
+.reveal-section.is-visible .feature-card:nth-child(5),.reveal-section.is-visible .course-card:nth-child(5),.reveal-section.is-visible .branch-card:nth-child(5),.reveal-section.is-visible .social-card:nth-child(5),.reveal-section.is-visible .stat-card:nth-child(5),.reveal-section.is-visible .course-slide-card:nth-child(5){transition-delay:.40s}
+
+@media (max-width:600px){
+  .reveal-section{transform:translate3d(35px,0,0);transition-duration:.6s}
+  .reveal-section.slide-left{transform:translate3d(-35px,0,0)}
+  .reveal-section.slide-right{transform:translate3d(35px,0,0)}
+  .reveal-section.slide-up{transform:translate3d(0,35px,0)}
+  .reveal-section .feature-card,.reveal-section .course-card,.reveal-section .branch-card,.reveal-section .social-card,.reveal-section .stat-card,.reveal-section .news-page,.reveal-section .updates-card,.reveal-section .feedback-card,.reveal-section .course-slide-card,.reveal-section .motivation-card,.reveal-section .eng-card{transform:translate3d(0,22px,0)}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal-section,.reveal-section.slide-left,.reveal-section.slide-right,.reveal-section.slide-up,.reveal-section .feature-card,.reveal-section .course-card,.reveal-section .branch-card,.reveal-section .social-card,.reveal-section .stat-card,.reveal-section .news-page,.reveal-section .updates-card,.reveal-section .feedback-card,.reveal-section .course-slide-card,.reveal-section .motivation-card,.reveal-section .eng-card{opacity:1!important;transform:none!important;transition:none!important}
+}
+</style>
+
 </head>
 
 <body>
@@ -3997,6 +4030,43 @@ function closeWidget() {
   </div>
 </div>
 <!-- =========================================================== -->
+
+
+<script id="section-sliding-js">
+(function(){
+  function initSectionSliding(){
+    const sections=[...document.querySelectorAll('main section, body > section, section')];
+    if(!sections.length)return;
+    sections.forEach((section,index)=>{
+      section.classList.add('reveal-section');
+      section.classList.add(index%2===0?'slide-right':'slide-left');
+      section.setAttribute('data-slide-section','true');
+    });
+    const observer=new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('is-visible');
+        }else{
+          entry.target.classList.remove('is-visible');
+        }
+      });
+    },{threshold:.12,rootMargin:'0px 0px -60px 0px'});
+    document.querySelectorAll('[data-slide-section]').forEach(el=>observer.observe(el));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initSectionSliding);
+  else initSectionSliding();
+  // Re-scan after dynamically fetched header/footer/content loads.
+  const mo=new MutationObserver(()=>{
+    document.querySelectorAll('section:not([data-slide-section])').forEach((section)=>{
+      const all=[...document.querySelectorAll('section')];
+      const i=all.indexOf(section);
+      section.classList.add('reveal-section',i%2===0?'slide-right':'slide-left');
+      section.setAttribute('data-slide-section','true');
+    });
+  });
+  mo.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 
 </body>
 

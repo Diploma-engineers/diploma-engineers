@@ -201,9 +201,10 @@ async function loadExternalHTML(targetId, fileName){
 
     const data = await response.text();
 
-    // IMPORTANT: header.html is kept completely unchanged.
-    // Its CSS is isolated inside an iframe so global selectors such as
-    // body, *, .header, h1, etc. cannot affect pyq.html.
+    // IMPORTANT: header.html itself is not changed.
+    // Load it as a real page inside a same-origin iframe. This keeps its
+    // CSS completely isolated while preserving its original HTML, links,
+    // event handlers and scripts exactly as they are.
     if(targetId === "header"){
       target.innerHTML = "";
 
@@ -212,61 +213,50 @@ async function loadExternalHTML(targetId, fileName){
       frame.title = "Website Header";
       frame.setAttribute("scrolling", "no");
       frame.setAttribute("frameborder", "0");
-      frame.style.cssText =
-        "display:block;width:100%;border:0;margin:0;padding:0;" +
-        "height:90px;overflow:hidden;background:transparent;";
+      frame.style.cssText = "display:block;width:100%;height:1px;border:0;margin:0;padding:0;overflow:hidden;background:transparent;";
 
-      const baseHref = new URL(".", window.location.href).href;
-      const resizeBridge = `
-<script>
-(function(){
-  function sendHeight(){
-    var h = Math.max(
-      document.documentElement.scrollHeight || 0,
-      document.body ? document.body.scrollHeight : 0,
-      document.documentElement.offsetHeight || 0,
-      document.body ? document.body.offsetHeight : 0
-    );
-    parent.postMessage({type:"pyq-header-height", height:h}, "*");
-  }
-  window.addEventListener("load", sendHeight);
-  window.addEventListener("resize", sendHeight);
-  if(window.ResizeObserver && document.body){
-    new ResizeObserver(sendHeight).observe(document.body);
-  }
-  setInterval(sendHeight, 500);
-})();
-<\/script>`;
-
-      frame.srcdoc =
-        '<!DOCTYPE html><html><head><base href="' +
-        baseHref.replace(/"/g, "&quot;") +
-        '"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-        '</head><body style="margin:0;padding:0;overflow:hidden;">' +
-        data + resizeBridge + '</body></html>';
-
+      // Using src instead of srcdoc is important: header.html runs exactly
+      // like it does on other pages, so its original JavaScript keeps working.
+      frame.src = fileName + "?v=" + Date.now();
       target.appendChild(frame);
 
-      const resizeHandler = function(event){
-        if(!event.data || event.data.type !== "pyq-header-height") return;
-        if(event.source !== frame.contentWindow) return;
-        const height = Math.max(45, Math.min(500, Number(event.data.height) || 90));
-        frame.style.height = height + "px";
+      let observer = null;
+      const resizeHeader = function(){
+        try{
+          const doc = frame.contentDocument;
+          if(!doc) return;
+          const root = doc.documentElement;
+          const body = doc.body;
+          const h = Math.max(
+            root ? root.scrollHeight : 0,
+            root ? root.offsetHeight : 0,
+            body ? body.scrollHeight : 0,
+            body ? body.offsetHeight : 0
+          );
+          if(h > 0) frame.style.height = Math.min(Math.max(h, 40), 600) + "px";
+        }catch(e){
+          console.warn("Header resize error:", e);
+        }
       };
 
-      window.addEventListener("message", resizeHandler);
-
       frame.addEventListener("load", function(){
+        resizeHeader();
         try{
-          const h = frame.contentDocument &&
-                    Math.max(
-                      frame.contentDocument.documentElement.scrollHeight,
-                      frame.contentDocument.body ? frame.contentDocument.body.scrollHeight : 0
-                    );
-          if(h) frame.style.height = Math.max(45, Math.min(500, h)) + "px";
+          const doc = frame.contentDocument;
+          if(doc && doc.body && window.ResizeObserver){
+            observer = new ResizeObserver(resizeHeader);
+            observer.observe(doc.documentElement);
+            observer.observe(doc.body);
+          }
+          if(doc){
+            doc.addEventListener("click", function(){ setTimeout(resizeHeader, 50); });
+          }
         }catch(e){}
+        setTimeout(resizeHeader, 100);
+        setTimeout(resizeHeader, 500);
       }, {once:true});
 
+      window.addEventListener("resize", resizeHeader);
       return;
     }
 

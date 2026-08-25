@@ -184,105 +184,217 @@ h1{font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-1px}
 <script>
 
 // =====================================================
-// HEADER / FOOTER FETCH - robust same-origin loader
+// HEADER / FOOTER FETCH - FULL WORKABLE VERSION
 // =====================================================
+
+const deLoadedAssets = new Set();
+
+function deAbsoluteUrl(value, baseUrl){
+  try{
+    return new URL(value, baseUrl).href;
+  }catch(e){
+    return value;
+  }
+}
+
+function deEnsureStylesheet(href, key){
+  if(document.querySelector(`link[data-de-asset="${key}"]`)) return;
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  link.dataset.deAsset = key;
+  document.head.appendChild(link);
+}
+
+function deEnsureBootstrap(){
+  deEnsureStylesheet(
+    "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
+    "bootstrap-css"
+  );
+
+  deEnsureStylesheet(
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+    "fontawesome-css"
+  );
+
+  if(window.bootstrap) return Promise.resolve();
+
+  if(document.querySelector('script[data-de-asset="bootstrap-js"]')){
+    return new Promise(resolve => {
+      const wait = setInterval(() => {
+        if(window.bootstrap){
+          clearInterval(wait);
+          resolve();
+        }
+      }, 20);
+      setTimeout(() => {
+        clearInterval(wait);
+        resolve();
+      }, 5000);
+    });
+  }
+
+  return new Promise(resolve => {
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js";
+    script.dataset.deAsset = "bootstrap-js";
+    script.onload = resolve;
+    script.onerror = resolve;
+    document.head.appendChild(script);
+  });
+}
+
 async function loadExternalHTML(targetId, fileName){
   const target = document.getElementById(targetId);
   if(!target) return false;
 
   try{
-    const url = new URL(fileName, window.location.href);
-    url.searchParams.set("v", Date.now());
+    const pageUrl = new URL(fileName, window.location.href);
+    pageUrl.searchParams.set("_v", Date.now());
 
-    const response = await fetch(url.href, {
+    const response = await fetch(pageUrl.href, {
       method: "GET",
       cache: "no-store",
       credentials: "same-origin"
     });
 
     if(!response.ok){
-      throw new Error(`${fileName} not found (HTTP ${response.status})`);
+      throw new Error(`${fileName} HTTP ${response.status}`);
     }
 
     const html = await response.text();
-    if(!html.trim()){
-      throw new Error(`${fileName} is empty`);
-    }
+    if(!html.trim()) throw new Error(`${fileName} is empty`);
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-    // Load styles/assets declared by header.html or footer.html.
-    doc.head.querySelectorAll(
-      'link[rel="stylesheet"], link[rel="preload"], link[rel="icon"]'
-    ).forEach(link => {
-      const href = link.getAttribute("href");
-      if(!href) return;
+    // IMPORTANT:
+    // Header/Footer CSS must be placed in the MAIN document <head>.
+    // This prevents the unstyled/raw HTML problem shown in the screenshot.
+    doc.querySelectorAll("style").forEach(sourceStyle => {
+      const css = sourceStyle.textContent || "";
+      if(!css.trim()) return;
 
-      const absoluteHref = new URL(href, url.href).href;
-      const alreadyLoaded = [...document.head.querySelectorAll("link")]
-        .some(x => x.href === absoluteHref);
+      const key = "style:" + css.trim();
 
-      if(!alreadyLoaded){
-        const clone = document.createElement("link");
-
-        [...link.attributes].forEach(attr => {
-          if(attr.name.toLowerCase() === "href"){
-            clone.setAttribute("href", absoluteHref);
-          }else{
-            clone.setAttribute(attr.name, attr.value);
-          }
-        });
-
-        document.head.appendChild(clone);
+      if(!deLoadedAssets.has(key)){
+        const style = document.createElement("style");
+        style.setAttribute("data-de-fragment", fileName);
+        style.textContent = css;
+        document.head.appendChild(style);
+        deLoadedAssets.add(key);
       }
     });
 
-    // Insert the fetched body content into the target container.
-    target.innerHTML = "";
+    // Load any stylesheet links used by the fragment.
+    doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"]').forEach(sourceLink => {
+      const href = sourceLink.getAttribute("href");
+      if(!href) return;
 
-    const sourceBody = doc.body || doc.documentElement;
-    const fragment = document.createDocumentFragment();
+      const absolute = deAbsoluteUrl(href, pageUrl.href);
+      const key = "link:" + absolute;
 
-    [...sourceBody.childNodes].forEach(node => {
-      fragment.appendChild(document.importNode(node, true));
+      if(deLoadedAssets.has(key)) return;
+
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = absolute;
+      link.setAttribute("data-de-fragment", fileName);
+
+      document.head.appendChild(link);
+      deLoadedAssets.add(key);
     });
 
-    target.appendChild(fragment);
+    // The current Diploma Engineers header depends on Bootstrap
+    // and Font Awesome for layout, dropdowns, mobile menu and icons.
+    await deEnsureBootstrap();
 
-    // Scripts inserted through innerHTML/importNode do not execute.
-    // Recreate them so header/footer JavaScript remains functional.
-    const scripts = [...target.querySelectorAll("script")];
+    // Insert only the fragment's visible HTML.
+    target.innerHTML = "";
 
-    for(const oldScript of scripts){
-      const newScript = document.createElement("script");
+    const sourceRoot = doc.body || doc.documentElement;
 
-      [...oldScript.attributes].forEach(attr => {
+    [...sourceRoot.childNodes].forEach(node => {
+      if(
+        node.nodeType === Node.ELEMENT_NODE &&
+        ["style","script"].includes(node.tagName.toLowerCase())
+      ){
+        return;
+      }
+
+      target.appendChild(document.importNode(node, true));
+    });
+
+    // Execute scripts from the fetched fragment after its HTML exists.
+    const scripts = [...sourceRoot.querySelectorAll("script")];
+
+    for(const sourceScript of scripts){
+      const script = document.createElement("script");
+
+      [...sourceScript.attributes].forEach(attr => {
         let value = attr.value;
 
         if(attr.name.toLowerCase() === "src"){
-          value = new URL(value, url.href).href;
+          value = deAbsoluteUrl(value, pageUrl.href);
         }
 
-        newScript.setAttribute(attr.name, value);
+        script.setAttribute(attr.name, value);
       });
 
-      if(oldScript.src){
-        await new Promise((resolve, reject) => {
-          newScript.onload = resolve;
-          newScript.onerror = () => reject(
-            new Error(`Failed to load script: ${newScript.src}`)
-          );
-          oldScript.replaceWith(newScript);
+      if(sourceScript.src){
+        await new Promise(resolve => {
+          script.onload = resolve;
+          script.onerror = resolve;
+          document.head.appendChild(script);
         });
       }else{
-        newScript.textContent = oldScript.textContent;
-        oldScript.replaceWith(newScript);
+        script.textContent = sourceScript.textContent || "";
+        target.appendChild(script);
       }
     }
 
+    // Initialise Bootstrap dropdown and mobile collapse.
+    if(window.bootstrap){
+      target.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(el => {
+        try{
+          bootstrap.Dropdown.getOrCreateInstance(el);
+        }catch(e){}
+      });
+
+      target.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+        try{
+          const selector = el.getAttribute("data-bs-target");
+          const collapseTarget = selector
+            ? document.querySelector(selector)
+            : null;
+
+          if(collapseTarget){
+            bootstrap.Collapse.getOrCreateInstance(collapseTarget, {
+              toggle:false
+            });
+          }
+        }catch(e){}
+      });
+    }
+
+    // Active navigation item.
+    const current =
+      window.location.pathname.split("/").pop() || "index.html";
+
+    target.querySelectorAll(".nav-link").forEach(link => {
+      const href = (link.getAttribute("href") || "").split("/").pop();
+
+      if(href === current){
+        target.querySelectorAll(".nav-link")
+          .forEach(x => x.classList.remove("active"));
+
+        link.classList.add("active");
+      }
+    });
+
     target.dispatchEvent(new CustomEvent("externalhtmlready", {
-      detail: { file: fileName, url: url.href }
+      detail:{file:fileName}
     }));
 
     return true;
@@ -294,8 +406,7 @@ async function loadExternalHTML(targetId, fileName){
 
     const fallback = document.createElement("div");
     fallback.style.cssText =
-      "padding:12px;text-align:center;color:#64748b;font:600 12px Plus Jakarta Sans,sans-serif;";
-
+      "padding:12px;text-align:center;color:#64748b;font:600 12px Arial,sans-serif;";
     fallback.textContent =
       targetId === "header"
         ? "Header could not be loaded. Please refresh."
@@ -306,11 +417,11 @@ async function loadExternalHTML(targetId, fileName){
   }
 }
 
-function loadHeader(){
+async function loadHeader(){
   return loadExternalHTML("header", "header.html");
 }
 
-function loadFooter(){
+async function loadFooter(){
   return loadExternalHTML("footer", "footer.html");
 }
 

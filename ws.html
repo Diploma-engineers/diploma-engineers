@@ -244,19 +244,6 @@ body{
     font-weight:800;
 }
 
-/* FOOTER */
-footer{
-    text-align:center;
-    padding:35px 20px;
-    background:#081d3b;
-    color:#b8c7dc;
-    font-size:14px;
-}
-
-footer strong{
-    color:white;
-}
-
 /* MOBILE */
 @media(max-width:850px){
 
@@ -912,6 +899,22 @@ body{
     }
 }
 
+
+/* FETCHED COMPONENT SAFETY */
+.component-slot{
+    width:100%;
+    min-height:0;
+    margin:0;
+    padding:0;
+}
+.component-failed{
+    display:none!important;
+}
+#header,#footer{
+    position:relative;
+    z-index:50;
+}
+
 </style>
 </head>
 
@@ -1423,8 +1426,55 @@ body{
         try {
             const response = await fetch(file, { cache: "no-store" });
             if (!response.ok) throw new Error(file + " returned " + response.status);
-            const html = await response.text();
-            host.innerHTML = html;
+
+            const source = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(source, "text/html");
+
+            /*
+             * header.html/footer.html may be complete HTML documents.
+             * Never inject <html>, <head>, <body> or closing tags inside
+             * our page. Extract their styles and body markup instead.
+             */
+            doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                const href = link.getAttribute("href");
+                if (!href) return;
+                const absolute = new URL(href, new URL(file, document.baseURI)).href;
+                if (![...document.head.querySelectorAll('link[rel="stylesheet"]')]
+                    .some(x => x.href === absolute)) {
+                    const clone = document.createElement("link");
+                    clone.rel = "stylesheet";
+                    clone.href = absolute;
+                    document.head.appendChild(clone);
+                }
+            });
+
+            doc.querySelectorAll("style").forEach(style => {
+                const clone = document.createElement("style");
+                clone.textContent = style.textContent || "";
+                clone.dataset.componentStyle = file;
+                document.head.appendChild(clone);
+            });
+
+            const markup = doc.body ? doc.body.innerHTML : source;
+            host.innerHTML = markup;
+
+            /* Re-run component scripts safely after their markup exists. */
+            doc.querySelectorAll("script").forEach(oldScript => {
+                const script = document.createElement("script");
+                [...oldScript.attributes].forEach(attr => {
+                    if (attr.name !== "type" || attr.value !== "application/ld+json") {
+                        script.setAttribute(attr.name, attr.value);
+                    }
+                });
+                if (oldScript.src) {
+                    script.src = new URL(oldScript.getAttribute("src"), new URL(file, document.baseURI)).href;
+                } else {
+                    script.textContent = oldScript.textContent || "";
+                }
+                host.appendChild(script);
+            });
+
             host.classList.add("component-loaded");
         } catch (error) {
             console.error("Component load failed:", error);

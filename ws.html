@@ -335,10 +335,39 @@ footer strong{
     .feature-image img{border-radius:15px;}
 }
 
+
+/* FETCHABLE HEADER / FOOTER */
+.component-slot {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+}
+#header {
+    position: relative;
+    z-index: 1000;
+}
+#footer {
+    position: relative;
+    z-index: 10;
+}
+@media (max-width: 600px) {
+    body {
+        width: 100%;
+        min-width: 0;
+    }
+    .component-slot {
+        width: 100%;
+    }
+}
+
 </style>
 </head>
 
 <body>
+
+<!-- FETCHABLE HEADER -->
+<div id="header" class="component-slot" aria-label="Site header"></div>
+
 
 <!-- HERO -->
 <section class="hero">
@@ -737,10 +766,43 @@ footer strong{
 </section>
 
 
-<!-- FOOTER -->
-<footer>
-    © 2026 <strong>Diploma Engineers</strong> — Learn • Grow • Succeed
-</footer>
+<!-- FETCHABLE FOOTER -->
+<div id="footer" class="component-slot" aria-label="Site footer"></div>
+
+<script>
+(function () {
+    "use strict";
+
+    async function loadComponent(id, file) {
+        const host = document.getElementById(id);
+        if (!host) return;
+
+        try {
+            const response = await fetch(file, { cache: "no-store" });
+            if (!response.ok) throw new Error(file + " returned " + response.status);
+            const html = await response.text();
+            host.innerHTML = html;
+            host.classList.add("component-loaded");
+        } catch (error) {
+            console.error("Component load failed:", error);
+            host.innerHTML = "";
+            host.classList.add("component-failed");
+        }
+    }
+
+    function loadSiteComponents() {
+        // Keep the existing component filenames exactly as requested.
+        loadComponent("header", "header.html");
+        loadComponent("footer", "footer.html");
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadSiteComponents, { once: true });
+    } else {
+        loadSiteComponents();
+    }
+})();
+</script>
 
 </body>
 </html>

@@ -975,40 +975,267 @@ body{
 
 async function loadHeader(){
 
-    const header=
-        document.getElementById("header");
-
+    const header = document.getElementById("header");
     if(!header) return;
 
     try{
 
-        const response=
-            await fetch(
-                "header.html",
-                {
-                    cache:"no-cache"
-                }
-            );
+        const response = await fetch("header.html", {
+            method:"GET",
+            cache:"no-cache"
+        });
 
         if(!response.ok){
-
-            throw new Error(
-                "header.html not found"
-            );
-
+            throw new Error("header.html not found");
         }
 
-        header.innerHTML=
-            await response.text();
+        const headerHTML = await response.text();
+
+        /* Parse fetched header safely */
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(headerHTML, "text/html");
+
+        /* Copy header HTML */
+        header.innerHTML = doc.body ? doc.body.innerHTML : headerHTML;
+
+        /* Copy header styles */
+        doc.querySelectorAll('style').forEach(oldStyle=>{
+            const style = document.createElement("style");
+            style.textContent = oldStyle.textContent;
+            style.dataset.fetchedHeaderStyle = "true";
+            document.head.appendChild(style);
+        });
+
+        /* Copy external CSS */
+        doc.querySelectorAll('link[rel="stylesheet"]').forEach(oldLink=>{
+            const href = oldLink.getAttribute("href");
+            if(!href) return;
+
+            const exists = document.querySelector(
+                `link[data-header-css="${CSS.escape(href)}"]`
+            );
+
+            if(!exists){
+                const link = document.createElement("link");
+                link.rel = "stylesheet";
+                link.href = href;
+                link.dataset.headerCss = href;
+                document.head.appendChild(link);
+            }
+        });
+
+        /*
+         * IMPORTANT:
+         * Scripts inserted through innerHTML do NOT execute.
+         * Re-create every header script so menu/login/dropdown
+         * JavaScript from header.html can actually run.
+         */
+        const scripts = doc.querySelectorAll("script");
+
+        scripts.forEach(oldScript=>{
+
+            const script = document.createElement("script");
+
+            for(const attr of oldScript.attributes){
+                script.setAttribute(attr.name, attr.value);
+            }
+
+            if(oldScript.src){
+                script.src = oldScript.src;
+            }else{
+                script.textContent = oldScript.textContent;
+            }
+
+            document.body.appendChild(script);
+        });
+
+        /*
+         * Bootstrap bundle is required if header uses
+         * Bootstrap dropdown/collapse.
+         */
+        if(!window.bootstrap){
+            await new Promise(resolve=>{
+
+                const existing = document.querySelector(
+                    'script[src*="bootstrap.bundle"]'
+                );
+
+                if(existing){
+                    if(window.bootstrap){
+                        resolve();
+                        return;
+                    }
+
+                    existing.addEventListener("load", resolve, {once:true});
+                    setTimeout(resolve, 1500);
+                    return;
+                }
+
+                const bootstrapScript = document.createElement("script");
+                bootstrapScript.src =
+                    "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js";
+
+                bootstrapScript.onload = resolve;
+                bootstrapScript.onerror = resolve;
+
+                document.body.appendChild(bootstrapScript);
+            });
+        }
+
+        /*
+         * Re-initialize Bootstrap dropdowns/collapses after
+         * dynamic header insertion.
+         */
+        if(window.bootstrap){
+
+            header.querySelectorAll(
+                '[data-bs-toggle="dropdown"]'
+            ).forEach(el=>{
+                try{
+                    bootstrap.Dropdown.getOrCreateInstance(el);
+                }catch(e){}
+            });
+
+            header.querySelectorAll(
+                '[data-bs-toggle="collapse"]'
+            ).forEach(el=>{
+                try{
+                    const selector = el.getAttribute("data-bs-target");
+                    const target = selector
+                        ? document.querySelector(selector)
+                        : null;
+
+                    if(target){
+                        bootstrap.Collapse.getOrCreateInstance(
+                            target,
+                            {toggle:false}
+                        );
+                    }
+                }catch(e){}
+            });
+        }
+
+        /*
+         * Mobile menu fallback for headers that don't use
+         * Bootstrap correctly.
+         */
+        header.querySelectorAll(
+            '[data-bs-toggle="collapse"]'
+        ).forEach(toggle=>{
+
+            if(toggle.dataset.resultHeaderBound === "1") return;
+            toggle.dataset.resultHeaderBound = "1";
+
+            toggle.addEventListener("click", function(){
+
+                if(window.bootstrap) return;
+
+                const selector =
+                    this.getAttribute("data-bs-target");
+
+                const target = selector
+                    ? document.querySelector(selector)
+                    : this.nextElementSibling;
+
+                if(!target) return;
+
+                target.classList.toggle("show");
+
+                this.setAttribute(
+                    "aria-expanded",
+                    target.classList.contains("show")
+                        ? "true"
+                        : "false"
+                );
+            });
+        });
+
+        /*
+         * Login dropdown fallback.
+         */
+        header.querySelectorAll(
+            '[data-bs-toggle="dropdown"]'
+        ).forEach(toggle=>{
+
+            if(toggle.dataset.resultDropdownBound === "1") return;
+            toggle.dataset.resultDropdownBound = "1";
+
+            toggle.addEventListener("click", function(event){
+
+                if(window.bootstrap) return;
+
+                event.preventDefault();
+
+                const menu =
+                    this.parentElement?.querySelector(".dropdown-menu") ||
+                    this.nextElementSibling;
+
+                if(!menu) return;
+
+                header.querySelectorAll(
+                    ".dropdown-menu.show"
+                ).forEach(other=>{
+                    if(other !== menu){
+                        other.classList.remove("show");
+                    }
+                });
+
+                menu.classList.toggle("show");
+
+                this.setAttribute(
+                    "aria-expanded",
+                    menu.classList.contains("show")
+                        ? "true"
+                        : "false"
+                );
+            });
+        });
+
+        /*
+         * Close mobile menu after navigation.
+         */
+        header.querySelectorAll("a[href]").forEach(link=>{
+
+            if(link.dataset.resultNavBound === "1") return;
+            link.dataset.resultNavBound = "1";
+
+            link.addEventListener("click", ()=>{
+
+                header.querySelectorAll(
+                    ".navbar-collapse.show"
+                ).forEach(collapse=>{
+
+                    if(window.bootstrap){
+                        try{
+                            bootstrap.Collapse
+                                .getOrCreateInstance(collapse)
+                                .hide();
+                        }catch(e){
+                            collapse.classList.remove("show");
+                        }
+                    }else{
+                        collapse.classList.remove("show");
+                    }
+                });
+            });
+        });
 
     }
     catch(error){
 
-        console.error(
-            "Header Error:",
-            error
-        );
+        console.error("Header Error:", error);
 
+        header.innerHTML = `
+            <div style="
+                padding:12px 16px;
+                text-align:center;
+                font-family:Poppins,sans-serif;
+                font-size:12px;
+                color:#667085;
+            ">
+                Header could not be loaded.
+            </div>
+        `;
     }
 
 }

@@ -22,6 +22,14 @@
   rel="stylesheet"
 >
 
+<!-- Font Awesome: required by the shared header/footer social & floating icons -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+>
+
 
 <style>
 
@@ -1455,6 +1463,59 @@ body{
 }
 
 
+
+/* =====================================================
+   SHARED HEADER / FOOTER COMPATIBILITY FIX
+   ===================================================== */
+
+/* Keep fetched shared components inside the page width. */
+#header,
+#footer{
+  display:block;
+  box-sizing:border-box;
+  flex:0 0 auto;
+}
+
+/* Font Awesome icons must never collapse inside the shared footer/header. */
+#header i[class*="fa-"],
+#footer i[class*="fa-"],
+#header .fa,
+#footer .fa{
+  font-family:"Font Awesome 6 Free","Font Awesome 6 Brands" !important;
+  font-style:normal;
+  font-weight:900;
+  display:inline-block;
+  line-height:1;
+}
+
+/* If the shared footer has a centered content wrapper, keep it responsive. */
+#footer .container,
+#footer .footer-container,
+#footer .footer-inner,
+#footer .footer-content{
+  width:100%;
+  max-width:1200px;
+  margin-left:auto;
+  margin-right:auto;
+  box-sizing:border-box;
+}
+
+/* Prevent horizontal overflow from shared footer/floating buttons. */
+#footer img,
+#footer svg{
+  max-width:100%;
+}
+
+@media(max-width:767px){
+  #footer .container,
+  #footer .footer-container,
+  #footer .footer-inner,
+  #footer .footer-content{
+    width:100%;
+    max-width:100%;
+  }
+}
+
 /* =====================================================
    REDUCED MOTION
 ===================================================== */
@@ -1960,16 +2021,19 @@ async function loadHeader(){
     }
 
 
-    const html =
-      await response.text();
-
+    const rawHtml = await response.text();
 
     /*
-     * Insert header
+     * Shared header files sometimes arrive as a complete HTML document.
+     * Extract only <body> content in that case.
      */
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(rawHtml, "text/html");
+    const html = parsed.body && parsed.body.innerHTML.trim()
+      ? parsed.body.innerHTML
+      : rawHtml;
 
-    header.innerHTML =
-      html;
+    header.innerHTML = html;
 
 
     /*
@@ -2156,8 +2220,16 @@ async function loadFooter(){
     }
 
 
-    footer.innerHTML =
-      await response.text();
+    const rawHtml = await response.text();
+
+    /* Same protection for footer.html. */
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(rawHtml, "text/html");
+    const html = parsed.body && parsed.body.innerHTML.trim()
+      ? parsed.body.innerHTML
+      : rawHtml;
+
+    footer.innerHTML = html;
 
 
   }

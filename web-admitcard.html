@@ -13,16 +13,16 @@
     rel="stylesheet"
 >
 
-<!-- Bootstrap Icons / Font Awesome -->
-<link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    rel="stylesheet"
->
-
-<!-- Poppins -->
+<!-- Google Font -->
 <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet"
+>
+
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 >
 
 <style>
@@ -61,23 +61,20 @@ a{
 #header{
     width:100%;
     position:relative;
-    z-index:9999;
+    z-index:99999;
 }
 
 
 /*
    IMPORTANT:
-   Header dropdown/collapse must remain above
-   the admit page content.
+   Header ke andar jo fixed/sticky elements hain
+   unko page ke upar properly display karne ke liye.
 */
 
-#header,
-#header *{
-    position:relative;
-}
-
-#header .dropdown-menu{
-    z-index:100000;
+#header *,
+#header *::before,
+#header *::after{
+    box-sizing:border-box;
 }
 
 
@@ -86,6 +83,7 @@ a{
 ===================================================== */
 
 .admit-page{
+
     position:relative;
     min-height:100vh;
     overflow:hidden;
@@ -110,6 +108,7 @@ a{
 ===================================================== */
 
 .sticker{
+
     position:absolute;
     z-index:1;
 
@@ -510,7 +509,6 @@ a{
     flex-direction:column;
 
     align-items:center;
-
     justify-content:center;
 
     gap:15px;
@@ -531,7 +529,6 @@ a{
         3px solid #e5e7eb;
 
     border-top-color:#2563eb;
-
     border-right-color:#7c3aed;
 
     animation:
@@ -734,6 +731,10 @@ a{
 }
 
 
+/* =====================================================
+   EXTRA SMALL
+===================================================== */
+
 @media(max-width:400px){
 
     .admit-hero h1{
@@ -820,7 +821,6 @@ a{
         Mobile Friendly
 
     </div>
-
 
 
     <!-- =================================================
@@ -930,7 +930,9 @@ a{
 
 
 
-            <!-- ADMIT CARD -->
+            <!-- =================================================
+                 ADMITCARD.HTML WILL LOAD HERE
+            ================================================== -->
 
             <div id="admitCardContent"></div>
 
@@ -1009,6 +1011,7 @@ a{
 </main>
 
 
+
 <!-- =====================================================
      FOOTER
 ===================================================== -->
@@ -1016,32 +1019,193 @@ a{
 <div id="footer"></div>
 
 
+
 <!-- =====================================================
      BOOTSTRAP JS
+     IMPORTANT FOR HEADER MENU / DROPDOWN
 ===================================================== -->
 
 <script
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
 
 
 <script>
 
 /* =====================================================
-   GLOBAL HEADER STATE
+   GLOBAL SCRIPT LOADER
 ===================================================== */
 
-let headerLoaded = false;
+const loadedExternalScripts = new Set();
+
+
+function loadExternalScript(src){
+
+    return new Promise((resolve,reject)=>{
+
+        if(!src){
+
+            resolve();
+
+            return;
+        }
+
+
+        /*
+         * Convert relative URLs to absolute URL
+         */
+
+        let absoluteSrc;
+
+        try{
+
+            absoluteSrc =
+                new URL(
+                    src,
+                    window.location.href
+                ).href;
+
+        }
+        catch(error){
+
+            resolve();
+
+            return;
+        }
+
+
+        /*
+         * Prevent duplicate script loading
+         */
+
+        if(
+            loadedExternalScripts.has(
+                absoluteSrc
+            )
+        ){
+
+            resolve();
+
+            return;
+        }
+
+
+        /*
+         * Check existing script
+         */
+
+        const existing =
+            document.querySelector(
+                `script[data-dynamic-src="${CSS.escape(absoluteSrc)}"]`
+            );
+
+
+        if(existing){
+
+            loadedExternalScripts.add(
+                absoluteSrc
+            );
+
+            resolve();
+
+            return;
+        }
+
+
+        const script =
+            document.createElement(
+                "script"
+            );
+
+
+        script.src =
+            absoluteSrc;
+
+        script.async = false;
+
+        script.dataset.dynamicSrc =
+            absoluteSrc;
+
+
+        script.onload = ()=>{
+
+            loadedExternalScripts.add(
+                absoluteSrc
+            );
+
+            resolve();
+
+        };
+
+
+        script.onerror = ()=>{
+
+            console.warn(
+                "Script could not load:",
+                absoluteSrc
+            );
+
+            resolve();
+
+        };
+
+
+        document.body.appendChild(
+            script
+        );
+
+    });
+
+}
 
 
 /* =====================================================
-   LOAD HEADER
+   EXECUTE INLINE SCRIPT
+===================================================== */
+
+function executeInlineScript(code){
+
+    if(!code || !code.trim()) return;
+
+
+    try{
+
+        const script =
+            document.createElement(
+                "script"
+            );
+
+        script.textContent =
+            code;
+
+        document.body.appendChild(
+            script
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Inline Script Error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   HEADER FETCH
 ===================================================== */
 
 async function loadHeader(){
 
     const header =
-        document.getElementById("header");
+        document.getElementById(
+            "header"
+        );
+
 
     if(!header) return;
 
@@ -1050,11 +1214,10 @@ async function loadHeader(){
 
         const response =
             await fetch(
-                "header.html?v=" +
-                Date.now(),
+                "header.html",
                 {
                     method:"GET",
-                    cache:"no-store"
+                    cache:"no-cache"
                 }
             );
 
@@ -1063,6 +1226,688 @@ async function loadHeader(){
 
             throw new Error(
                 "header.html not found"
+            );
+
+        }
+
+
+        const html =
+            await response.text();
+
+
+        /*
+         * Parse header HTML
+         */
+
+        const parser =
+            new DOMParser();
+
+
+        const doc =
+            parser.parseFromString(
+                html,
+                "text/html"
+            );
+
+
+        /*
+         * Remove old dynamically loaded
+         * header scripts if required
+         */
+
+        header.innerHTML =
+            doc.body
+               ? doc.body.innerHTML
+               : html;
+
+
+        /*
+         * Load stylesheet from header
+         */
+
+        const headerStyles =
+            doc.querySelectorAll(
+                'link[rel="stylesheet"]'
+            );
+
+
+        headerStyles.forEach(
+            link=>{
+
+                const href =
+                    link.getAttribute(
+                        "href"
+                    );
+
+
+                if(!href) return;
+
+
+                let absoluteHref;
+
+                try{
+
+                    absoluteHref =
+                        new URL(
+                            href,
+                            window.location.href
+                        ).href;
+
+                }
+                catch(e){
+
+                    return;
+                }
+
+
+                const exists =
+                    document.querySelector(
+                        `link[data-header-css="${CSS.escape(absoluteHref)}"]`
+                    );
+
+
+                if(!exists){
+
+                    const newLink =
+                        document.createElement(
+                            "link"
+                        );
+
+
+                    newLink.rel =
+                        "stylesheet";
+
+                    newLink.href =
+                        absoluteHref;
+
+                    newLink.dataset.headerCss =
+                        absoluteHref;
+
+
+                    document.head.appendChild(
+                        newLink
+                    );
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Execute header scripts
+         *
+         * THIS IS THE MAIN FIX
+         */
+
+        const headerScripts =
+            doc.querySelectorAll(
+                "script"
+            );
+
+
+        for(
+            const oldScript
+            of headerScripts
+        ){
+
+            const src =
+                oldScript.getAttribute(
+                    "src"
+                );
+
+
+            if(src){
+
+                await loadExternalScript(
+                    src
+                );
+
+            }
+            else{
+
+                executeInlineScript(
+                    oldScript.textContent
+                );
+
+            }
+
+        }
+
+
+        /*
+         * Reinitialize Bootstrap components
+         */
+
+        initializeBootstrapHeader();
+
+
+        /*
+         * Reinitialize common menu systems
+         */
+
+        initializeHeaderMenus();
+
+
+    }
+    catch(error){
+
+        console.error(
+            "Header Error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   BOOTSTRAP HEADER INITIALIZER
+===================================================== */
+
+function initializeBootstrapHeader(){
+
+    /*
+     * Bootstrap Collapse
+     */
+
+    document
+        .querySelectorAll(
+            '#header [data-bs-toggle="collapse"]'
+        )
+        .forEach(
+            element=>{
+
+                try{
+
+                    new bootstrap.Collapse(
+                        element,
+                        {
+                            toggle:false
+                        }
+                    );
+
+                }
+                catch(error){
+
+                    /*
+                     * Bootstrap may already have
+                     * initialized this element.
+                     */
+
+                }
+
+            }
+        );
+
+
+    /*
+     * Bootstrap Dropdown
+     */
+
+    document
+        .querySelectorAll(
+            '#header [data-bs-toggle="dropdown"]'
+        )
+        .forEach(
+            element=>{
+
+                try{
+
+                    bootstrap.Dropdown.getOrCreateInstance(
+                        element
+                    );
+
+                }
+                catch(error){
+
+                    console.warn(
+                        "Dropdown initialization error:",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+}
+
+
+/* =====================================================
+   HEADER MENU FIX
+===================================================== */
+
+function initializeHeaderMenus(){
+
+    const header =
+        document.getElementById(
+            "header"
+        );
+
+
+    if(!header) return;
+
+
+    /*
+     * Find common mobile menu buttons
+     */
+
+    const menuButtons =
+        header.querySelectorAll(
+            `
+            .menu-toggle,
+            .hamburger,
+            .hamburger-btn,
+            .mobile-menu-btn,
+            .mobile-toggle,
+            #menuToggle,
+            #mobileMenuToggle,
+            [data-menu-toggle]
+            `
+        );
+
+
+    menuButtons.forEach(
+        button=>{
+
+            /*
+             * Prevent duplicate event listeners
+             */
+
+            if(
+                button.dataset.menuFixed ===
+                "true"
+            ){
+
+                return;
+            }
+
+
+            button.dataset.menuFixed =
+                "true";
+
+
+            button.addEventListener(
+                "click",
+                function(event){
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+
+                    /*
+                     * Bootstrap navbar
+                     */
+
+                    const navbar =
+                        button.closest(
+                            ".navbar"
+                        );
+
+
+                    if(navbar){
+
+                        const collapse =
+                            navbar.querySelector(
+                                ".navbar-collapse"
+                            );
+
+
+                        if(collapse){
+
+                            const instance =
+                                bootstrap.Collapse.getOrCreateInstance(
+                                    collapse,
+                                    {
+                                        toggle:false
+                                    }
+                                );
+
+
+                            if(
+                                collapse.classList.contains(
+                                    "show"
+                                )
+                            ){
+
+                                instance.hide();
+
+                            }
+                            else{
+
+                                instance.show();
+
+                            }
+
+                            return;
+                        }
+
+                    }
+
+
+                    /*
+                     * Custom menu
+                     */
+
+                    const targetSelector =
+                        button.getAttribute(
+                            "data-target"
+                        ) ||
+                        button.getAttribute(
+                            "data-menu-target"
+                        );
+
+
+                    let menu = null;
+
+
+                    if(targetSelector){
+
+                        try{
+
+                            menu =
+                                document.querySelector(
+                                    targetSelector
+                                );
+
+                        }
+                        catch(e){}
+
+                    }
+
+
+                    /*
+                     * Common menu IDs/classes
+                     */
+
+                    if(!menu){
+
+                        menu =
+                            header.querySelector(
+                                `
+                                #mobileMenu,
+                                #mobile-menu,
+                                #navMenu,
+                                #nav-menu,
+                                .mobile-menu,
+                                .mobile-nav,
+                                .nav-menu,
+                                .navbar-menu
+                                `
+                            );
+
+                    }
+
+
+                    if(menu){
+
+                        menu.classList.toggle(
+                            "show"
+                        );
+
+                        menu.classList.toggle(
+                            "active"
+                        );
+
+                        menu.classList.toggle(
+                            "open"
+                        );
+
+                        menu.style.display =
+                            (
+                                menu.classList.contains(
+                                    "show"
+                                ) ||
+                                menu.classList.contains(
+                                    "active"
+                                ) ||
+                                menu.classList.contains(
+                                    "open"
+                                )
+                            )
+                            ? "block"
+                            : "";
+
+                    }
+
+
+                    button.classList.toggle(
+                        "active"
+                    );
+
+                }
+            );
+
+        });
+
+
+    /*
+     * Mobile menu links
+     *
+     * Menu open रहने पर link click करने पर
+     * menu automatically close होगा.
+     */
+
+    header
+        .querySelectorAll(
+            "a"
+        )
+        .forEach(
+            link=>{
+
+                if(
+                    link.dataset.menuLinkFixed ===
+                    "true"
+                ){
+
+                    return;
+                }
+
+
+                link.dataset.menuLinkFixed =
+                    "true";
+
+
+                link.addEventListener(
+                    "click",
+                    function(){
+
+                        /*
+                         * Bootstrap navbar
+                         */
+
+                        const navbar =
+                            link.closest(
+                                ".navbar"
+                            );
+
+
+                        if(navbar){
+
+                            const collapse =
+                                navbar.querySelector(
+                                    ".navbar-collapse"
+                                );
+
+
+                            if(
+                                collapse &&
+                                collapse.classList.contains(
+                                    "show"
+                                )
+                            ){
+
+                                try{
+
+                                    bootstrap.Collapse
+                                        .getOrCreateInstance(
+                                            collapse
+                                        )
+                                        .hide();
+
+                                }
+                                catch(e){}
+
+                            }
+
+                        }
+
+
+                        /*
+                         * Custom mobile menus
+                         */
+
+                        header
+                            .querySelectorAll(
+                                `
+                                .mobile-menu.show,
+                                .mobile-menu.active,
+                                .mobile-menu.open,
+                                #mobileMenu.show,
+                                #mobileMenu.active,
+                                #mobileMenu.open
+                                `
+                            )
+                            .forEach(
+                                menu=>{
+
+                                    menu.classList.remove(
+                                        "show",
+                                        "active",
+                                        "open"
+                                    );
+
+                                    /*
+                                     * Don't force display:none
+                                     * permanently because CSS
+                                     * may control it.
+                                     */
+
+                                }
+                            );
+
+                    }
+                );
+
+            });
+
+
+    /*
+     * Dropdown menus
+     */
+
+    header
+        .querySelectorAll(
+            ".dropdown"
+        )
+        .forEach(
+            dropdown=>{
+
+                const toggle =
+                    dropdown.querySelector(
+                        ".dropdown-toggle"
+                    );
+
+
+                if(!toggle) return;
+
+
+                if(
+                    toggle.dataset.customDropdownFixed ===
+                    "true"
+                ){
+
+                    return;
+                }
+
+
+                toggle.dataset.customDropdownFixed =
+                    "true";
+
+
+                toggle.addEventListener(
+                    "click",
+                    function(event){
+
+                        /*
+                         * Bootstrap dropdown already handles it
+                         */
+
+                        if(
+                            toggle.hasAttribute(
+                                "data-bs-toggle"
+                            )
+                        ){
+
+                            return;
+                        }
+
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+
+                        dropdown.classList.toggle(
+                            "show"
+                        );
+
+
+                        const menu =
+                            dropdown.querySelector(
+                                ".dropdown-menu"
+                            );
+
+
+                        if(menu){
+
+                            menu.classList.toggle(
+                                "show"
+                            );
+
+                        }
+
+                    }
+                );
+
+            });
+
+
+}
+
+
+/* =====================================================
+   FOOTER FETCH
+===================================================== */
+
+async function loadFooter(){
+
+    const footer =
+        document.getElementById(
+            "footer"
+        );
+
+
+    if(!footer) return;
+
+
+    try{
+
+        const response =
+            await fetch(
+                "footer.html",
+                {
+                    method:"GET",
+                    cache:"no-cache"
+                }
+            );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "footer.html not found"
             );
 
         }
@@ -1083,769 +1928,45 @@ async function loadHeader(){
             );
 
 
-        /*
-         * ==========================================
-         * LOAD HEADER HTML
-         * ==========================================
-         */
-
-        if(doc.body){
-
-            header.innerHTML =
-                doc.body.innerHTML;
-
-        }
-        else{
-
-            header.innerHTML =
-                html;
-
-        }
+        footer.innerHTML =
+            doc.body
+               ? doc.body.innerHTML
+               : html;
 
 
         /*
-         * ==========================================
-         * LOAD HEADER CSS
-         * ==========================================
+         * Footer scripts
          */
 
         doc.querySelectorAll(
-            'link[rel="stylesheet"]'
-        ).forEach(link => {
-
-            const href =
-                link.getAttribute("href");
-
-            if(!href) return;
-
-
-            const exists =
-                document.querySelector(
-                    `link[data-header-css="${href}"]`
-                );
-
-
-            if(exists) return;
-
-
-            const newLink =
-                document.createElement(
-                    "link"
-                );
-
-
-            newLink.rel =
-                "stylesheet";
-
-            newLink.href =
-                href;
-
-            newLink.dataset.headerCss =
-                href;
-
-
-            document.head.appendChild(
-                newLink
-            );
-
-        });
-
-
-        /*
-         * ==========================================
-         * LOAD HEADER STYLE
-         * ==========================================
-         */
-
-        doc.querySelectorAll(
-            "style"
-        ).forEach(style => {
-
-            const newStyle =
-                document.createElement(
-                    "style"
-                );
-
-
-            newStyle.textContent =
-                style.textContent;
-
-
-            newStyle.dataset.headerStyle =
-                "true";
-
-
-            document.head.appendChild(
-                newStyle
-            );
-
-        });
-
-
-        /*
-         * ==========================================
-         * EXECUTE HEADER SCRIPTS
-         * ==========================================
-         */
-
-        const scripts =
-            doc.querySelectorAll(
-                "script"
-            );
-
-
-        for(
-            const oldScript
-            of scripts
-        ){
-
-            /*
-             * External script
-             */
-
-            if(oldScript.src){
+            "script"
+        ).forEach(
+            oldScript=>{
 
                 const src =
                     oldScript.getAttribute(
                         "src"
                     );
 
-                if(!src) continue;
 
+                if(src){
 
-                const absoluteSrc =
-                    new URL(
-                        src,
-                        window.location.href
-                    ).href;
-
-
-                const exists =
-                    document.querySelector(
-                        `script[data-header-script="${absoluteSrc}"]`
-                    );
-
-
-                if(exists) continue;
-
-
-                const newScript =
-                    document.createElement(
-                        "script"
-                    );
-
-
-                newScript.src =
-                    absoluteSrc;
-
-
-                newScript.dataset.headerScript =
-                    absoluteSrc;
-
-
-                /*
-                 * Preserve async/defer/type
-                 */
-
-                for(
-                    const attr
-                    of oldScript.attributes
-                ){
-
-                    if(
-                        attr.name !== "src"
-                    ){
-
-                        newScript.setAttribute(
-                            attr.name,
-                            attr.value
-                        );
-
-                    }
-
-                }
-
-
-                document.body.appendChild(
-                    newScript
-                );
-
-            }
-
-            /*
-             * Inline script
-             */
-
-            else{
-
-                const code =
-                    oldScript.textContent ||
-                    "";
-
-
-                if(!code.trim()) continue;
-
-
-                const newScript =
-                    document.createElement(
-                        "script"
-                    );
-
-
-                newScript.textContent =
-                    code;
-
-
-                newScript.dataset.headerInline =
-                    "true";
-
-
-                document.body.appendChild(
-                    newScript
-                );
-
-            }
-
-        }
-
-
-        headerLoaded = true;
-
-
-        /*
-         * ==========================================
-         * FORCE MENU INITIALIZATION
-         * ==========================================
-         */
-
-        setTimeout(
-            initializeHeaderMenu,
-            50
-        );
-
-
-        setTimeout(
-            initializeHeaderMenu,
-            300
-        );
-
-
-        setTimeout(
-            initializeHeaderMenu,
-            1000
-        );
-
-
-        console.log(
-            "Header loaded successfully"
-        );
-
-    }
-    catch(error){
-
-        console.error(
-            "Header Error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   FORCE HEADER MENU INITIALIZATION
-===================================================== */
-
-function initializeHeaderMenu(){
-
-    const header =
-        document.getElementById("header");
-
-    if(!header) return;
-
-
-    /*
-     * ==========================================
-     * BOOTSTRAP DROPDOWNS
-     * ==========================================
-     */
-
-    if(
-        window.bootstrap &&
-        bootstrap.Dropdown
-    ){
-
-        header
-            .querySelectorAll(
-                '[data-bs-toggle="dropdown"]'
-            )
-            .forEach(button => {
-
-                try{
-
-                    bootstrap.Dropdown
-                        .getOrCreateInstance(
-                            button
-                        );
-
-                }
-                catch(error){
-
-                    console.warn(
-                        "Dropdown init error:",
-                        error
+                    loadExternalScript(
+                        src
                     );
 
                 }
+                else{
 
-            });
-
-    }
-
-
-    /*
-     * ==========================================
-     * BOOTSTRAP COLLAPSE / MOBILE MENU
-     * ==========================================
-     */
-
-    if(
-        window.bootstrap &&
-        bootstrap.Collapse
-    ){
-
-        header
-            .querySelectorAll(
-                '[data-bs-toggle="collapse"]'
-            )
-            .forEach(button => {
-
-                const targetSelector =
-                    button.getAttribute(
-                        "data-bs-target"
-                    ) ||
-                    button.getAttribute(
-                        "href"
+                    executeInlineScript(
+                        oldScript.textContent
                     );
-
-
-                if(!targetSelector) return;
-
-
-                let target = null;
-
-
-                try{
-
-                    target =
-                        document.querySelector(
-                            targetSelector
-                        );
-
-                }
-                catch(error){
-
-                    return;
-
-                }
-
-
-                if(!target) return;
-
-
-                try{
-
-                    bootstrap.Collapse
-                        .getOrCreateInstance(
-                            target,
-                            {
-                                toggle:false
-                            }
-                        );
-
-                }
-                catch(error){
-
-                    console.warn(
-                        "Collapse init error:",
-                        error
-                    );
-
-                }
-
-            });
-
-    }
-
-
-    /*
-     * ==========================================
-     * COMMON MOBILE MENU BUTTONS
-     * ==========================================
-     *
-     * Handles custom headers which don't use
-     * Bootstrap attributes.
-     */
-
-    const menuButtons =
-        header.querySelectorAll(
-            ".menu-toggle, " +
-            ".mobile-menu-toggle, " +
-            ".hamburger, " +
-            ".menu-btn, " +
-            ".nav-toggle, " +
-            ".navbar-toggler"
-        );
-
-
-    menuButtons.forEach(button => {
-
-        /*
-         * Prevent duplicate listener
-         */
-
-        if(
-            button.dataset.menuFixed === "true"
-        ){
-
-            return;
-
-        }
-
-
-        /*
-         * If Bootstrap already handles it,
-         * don't add another toggle.
-         */
-
-        const isBootstrap =
-            button.hasAttribute(
-                "data-bs-toggle"
-            );
-
-
-        if(isBootstrap){
-
-            button.dataset.menuFixed =
-                "true";
-
-            return;
-
-        }
-
-
-        button.dataset.menuFixed =
-            "true";
-
-
-        button.addEventListener(
-            "click",
-            function(event){
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                /*
-                 * Find menu target
-                 */
-
-                let target = null;
-
-
-                const targetSelector =
-                    button.getAttribute(
-                        "data-target"
-                    ) ||
-                    button.getAttribute(
-                        "data-menu"
-                    ) ||
-                    button.getAttribute(
-                        "aria-controls"
-                    );
-
-
-                if(targetSelector){
-
-                    try{
-
-                        target =
-                            document.querySelector(
-                                targetSelector.startsWith("#")
-                                ? targetSelector
-                                : "#" + targetSelector
-                            );
-
-                    }
-                    catch(error){}
-
-                }
-
-
-                /*
-                 * Common header menu selectors
-                 */
-
-                if(!target){
-
-                    target =
-                        header.querySelector(
-                            ".mobile-menu, " +
-                            ".mobile-nav, " +
-                            ".nav-menu, " +
-                            ".navbar-collapse, " +
-                            ".menu, " +
-                            ".navigation"
-                        );
-
-                }
-
-
-                if(!target) return;
-
-
-                /*
-                 * Toggle menu
-                 */
-
-                const opened =
-                    target.classList.toggle(
-                        "show"
-                    );
-
-
-                target.classList.toggle(
-                    "active",
-                    opened
-                );
-
-
-                target.style.display =
-                    opened
-                    ? "block"
-                    : "";
-
-
-                button.classList.toggle(
-                    "active",
-                    opened
-                );
-
-
-                button.setAttribute(
-                    "aria-expanded",
-                    String(opened)
-                );
-
-            }
-        );
-
-    }
-
-
-    /*
-     * ==========================================
-     * CUSTOM DROPDOWN FALLBACK
-     * ==========================================
-     */
-
-    const dropdownButtons =
-        header.querySelectorAll(
-            ".dropdown-toggle:not([data-bs-toggle]), " +
-            ".dropbtn, " +
-            ".dropdown-btn"
-        );
-
-
-    dropdownButtons.forEach(button => {
-
-        if(
-            button.dataset.customDropdownFixed ===
-            "true"
-        ){
-
-            return;
-
-        }
-
-
-        button.dataset.customDropdownFixed =
-            "true";
-
-
-        button.addEventListener(
-            "click",
-            function(event){
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                const parent =
-                    button.closest(
-                        ".dropdown"
-                    );
-
-
-                if(!parent) return;
-
-
-                const menu =
-                    parent.querySelector(
-                        ".dropdown-menu"
-                    );
-
-
-                if(!menu) return;
-
-
-                /*
-                 * Close other dropdowns
-                 */
-
-                header
-                    .querySelectorAll(
-                        ".dropdown-menu.show"
-                    )
-                    .forEach(other => {
-
-                        if(other !== menu){
-
-                            other.classList.remove(
-                                "show"
-                            );
-
-                            other.style.display =
-                                "";
-
-                        }
-
-                    });
-
-
-                const opened =
-                    menu.classList.toggle(
-                        "show"
-                    );
-
-
-                menu.style.display =
-                    opened
-                    ? "block"
-                    : "";
-
-            }
-        );
-
-    }
-
-
-    /*
-     * ==========================================
-     * CLOSE DROPDOWNS ON OUTSIDE CLICK
-     * ==========================================
-     */
-
-    if(
-        !document.body.dataset.headerOutsideClick
-    ){
-
-        document.body.dataset.headerOutsideClick =
-            "true";
-
-
-        document.addEventListener(
-            "click",
-            function(event){
-
-                if(
-                    !header.contains(
-                        event.target
-                    )
-                ){
-
-                    header
-                        .querySelectorAll(
-                            ".dropdown-menu.show"
-                        )
-                        .forEach(menu => {
-
-                            menu.classList.remove(
-                                "show"
-                            );
-
-                            /*
-                             * Don't force display
-                             * on Bootstrap dropdown.
-                             */
-
-                            if(
-                                !menu.closest(
-                                    ".navbar-collapse"
-                                )
-                            ){
-
-                                menu.style.display =
-                                    "";
-
-                            }
-
-                        });
 
                 }
 
             }
         );
 
-    }
-
-}
-
-
-/* =====================================================
-   FOOTER FETCH
-===================================================== */
-
-async function loadFooter(){
-
-    const footer =
-        document.getElementById("footer");
-
-    if(!footer) return;
-
-
-    try{
-
-        const response =
-            await fetch(
-                "footer.html?v=" +
-                Date.now(),
-                {
-                    method:"GET",
-                    cache:"no-store"
-                }
-            );
-
-
-        if(!response.ok){
-
-            throw new Error(
-                "footer.html not found"
-            );
-
-        }
-
-
-        footer.innerHTML =
-            await response.text();
-
-
-        console.log(
-            "Footer loaded successfully"
-        );
 
     }
     catch(error){
@@ -1861,7 +1982,78 @@ async function loadFooter(){
 
 
 /* =====================================================
-   LOAD ADMIT CARD
+   ADMITCARD SCRIPT LOADER
+===================================================== */
+
+async function executeAdmitScripts(
+    doc
+){
+
+    const scripts =
+        doc.querySelectorAll(
+            "script"
+        );
+
+
+    for(
+        const oldScript
+        of scripts
+    ){
+
+        const src =
+            oldScript.getAttribute(
+                "src"
+            );
+
+
+        if(src){
+
+            /*
+             * Relative script URL
+             * should be resolved against
+             * admitcard.html
+             */
+
+            let absoluteSrc;
+
+            try{
+
+                absoluteSrc =
+                    new URL(
+                        src,
+                        new URL(
+                            "admitcard.html",
+                            window.location.href
+                        )
+                    ).href;
+
+            }
+            catch(error){
+
+                continue;
+            }
+
+
+            await loadExternalScript(
+                absoluteSrc
+            );
+
+        }
+        else{
+
+            executeInlineScript(
+                oldScript.textContent
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   LOAD ADMITCARD.HTML
 ===================================================== */
 
 async function loadAdmitCard(){
@@ -1871,15 +2063,18 @@ async function loadAdmitCard(){
             "portalLoader"
         );
 
+
     const content =
         document.getElementById(
             "admitCardContent"
         );
 
-    const portalError =
+
+    const error =
         document.getElementById(
             "portalError"
         );
+
 
     const errorText =
         document.getElementById(
@@ -1887,42 +2082,38 @@ async function loadAdmitCard(){
         );
 
 
-    if(
-        !loader ||
-        !content ||
-        !portalError
-    ){
-
-        return;
-
-    }
-
+    /*
+     * Reset
+     */
 
     loader.style.display =
         "flex";
 
+
     content.style.display =
         "none";
 
-    portalError.style.display =
+
+    error.style.display =
         "none";
+
+
+    content.innerHTML =
+        "";
 
 
     try{
 
         /*
-         * ==========================================
-         * FETCH EXISTING ADMITCARD.HTML
-         * ==========================================
+         * Fetch existing admitcard.html
          */
 
         const response =
             await fetch(
-                "admitcard.html?v=" +
-                Date.now(),
+                "admitcard.html",
                 {
                     method:"GET",
-                    cache:"no-store"
+                    cache:"no-cache"
                 }
             );
 
@@ -1941,9 +2132,7 @@ async function loadAdmitCard(){
 
 
         /*
-         * ==========================================
-         * PARSE HTML
-         * ==========================================
+         * Parse existing HTML
          */
 
         const parser =
@@ -1958,106 +2147,124 @@ async function loadAdmitCard(){
 
 
         /*
-         * ==========================================
-         * LOAD INTERNAL CSS
-         * ==========================================
+         * =================================================
+         * LOAD INLINE CSS
+         * =================================================
          */
 
         doc.querySelectorAll(
             "style"
-        ).forEach(style => {
+        ).forEach(
+            style=>{
 
-            const newStyle =
-                document.createElement(
-                    "style"
+                const newStyle =
+                    document.createElement(
+                        "style"
+                    );
+
+
+                newStyle.textContent =
+                    style.textContent;
+
+
+                newStyle.dataset.admitStyle =
+                    "true";
+
+
+                document.head.appendChild(
+                    newStyle
                 );
 
-
-            newStyle.textContent =
-                style.textContent;
-
-
-            newStyle.dataset.admitStyle =
-                "true";
-
-
-            document.head.appendChild(
-                newStyle
-            );
-
-        });
+            }
+        );
 
 
         /*
-         * ==========================================
+         * =================================================
          * LOAD EXTERNAL CSS
-         * ==========================================
+         * =================================================
          */
 
         doc.querySelectorAll(
             'link[rel="stylesheet"]'
-        ).forEach(link => {
+        ).forEach(
+            link=>{
 
-            const href =
-                link.getAttribute(
-                    "href"
-                );
-
-
-            if(!href) return;
+                const href =
+                    link.getAttribute(
+                        "href"
+                    );
 
 
-            const absoluteHref =
-                new URL(
-                    href,
-                    window.location.href
-                ).href;
+                if(!href) return;
 
 
-            const alreadyLoaded =
-                document.querySelector(
-                    `link[data-admit-css="${absoluteHref}"]`
-                );
+                let absoluteHref;
+
+                try{
+
+                    absoluteHref =
+                        new URL(
+                            href,
+                            new URL(
+                                "admitcard.html",
+                                window.location.href
+                            )
+                        ).href;
+
+                }
+                catch(error){
+
+                    return;
+                }
 
 
-            if(alreadyLoaded) return;
+                const exists =
+                    document.querySelector(
+                        `link[data-admit-css="${CSS.escape(absoluteHref)}"]`
+                    );
 
 
-            const newLink =
-                document.createElement(
-                    "link"
-                );
+                if(!exists){
+
+                    const newLink =
+                        document.createElement(
+                            "link"
+                        );
 
 
-            newLink.rel =
-                "stylesheet";
+                    newLink.rel =
+                        "stylesheet";
 
 
-            newLink.href =
-                absoluteHref;
+                    newLink.href =
+                        absoluteHref;
 
 
-            newLink.dataset.admitCss =
-                absoluteHref;
+                    newLink.dataset.admitCss =
+                        absoluteHref;
 
 
-            document.head.appendChild(
-                newLink
-            );
+                    document.head.appendChild(
+                        newLink
+                    );
 
-        });
+                }
+
+            }
+        );
 
 
         /*
-         * ==========================================
-         * INSERT BODY
-         * ==========================================
+         * =================================================
+         * EXISTING BODY
+         * =================================================
          */
 
         const bodyHTML =
             doc.body
-                ? doc.body.innerHTML
-                : html;
+               ? doc.body.innerHTML
+               : html;
 
 
         content.innerHTML =
@@ -2065,128 +2272,73 @@ async function loadAdmitCard(){
 
 
         /*
-         * Remove document tags if any
+         * Remove document-level tags
          */
 
         content
             .querySelectorAll(
-                "html,body,head,title,meta,link,style"
+                "html,body,head,title,meta"
             )
-            .forEach(element => {
+            .forEach(
+                element=>{
 
-                element.remove();
+                    element.remove();
 
-            });
+                }
+            );
 
 
         /*
-         * ==========================================
-         * SHOW CONTENT
-         * ==========================================
+         * Show content
          */
 
         loader.style.display =
             "none";
 
-        portalError.style.display =
+
+        error.style.display =
             "none";
+
 
         content.style.display =
             "block";
 
 
         /*
-         * ==========================================
+         * =================================================
          * EXECUTE ADMITCARD SCRIPTS
-         * ==========================================
+         * =================================================
          */
 
-        const admitScripts =
-            doc.querySelectorAll(
-                "script"
-            );
-
-
-        for(
-            const oldScript
-            of admitScripts
-        ){
-
-            const newScript =
-                document.createElement(
-                    "script"
-                );
-
-
-            if(oldScript.src){
-
-                newScript.src =
-                    new URL(
-                        oldScript.src,
-                        window.location.href
-                    ).href;
-
-            }
-            else{
-
-                newScript.textContent =
-                    oldScript.textContent;
-
-            }
-
-
-            for(
-                const attribute
-                of oldScript.attributes
-            ){
-
-                if(
-                    attribute.name !== "src"
-                ){
-
-                    newScript.setAttribute(
-                        attribute.name,
-                        attribute.value
-                    );
-
-                }
-
-            }
-
-
-            document.body.appendChild(
-                newScript
-            );
-
-        }
-
-
-        console.log(
-            "Admit Card Portal loaded successfully"
+        await executeAdmitScripts(
+            doc
         );
 
+
     }
-    catch(err){
+    catch(errorObject){
 
         console.error(
             "Admit Card Error:",
-            err
+            errorObject
         );
 
 
         loader.style.display =
             "none";
 
+
         content.style.display =
             "none";
 
-        portalError.style.display =
+
+        error.style.display =
             "block";
 
 
         errorText.innerHTML =
             `
-            ${err.message}
+            ${errorObject.message}
             <br><br>
             Please check that
             <b>admitcard.html</b>
@@ -2199,7 +2351,69 @@ async function loadAdmitCard(){
 
 
 /* =====================================================
-   START APPLICATION
+   CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+===================================================== */
+
+document.addEventListener(
+    "click",
+    function(event){
+
+        const header =
+            document.getElementById(
+                "header"
+            );
+
+
+        if(!header) return;
+
+
+        if(
+            header.contains(event.target)
+        ){
+
+            return;
+        }
+
+
+        /*
+         * Close custom dropdowns
+         */
+
+        header
+            .querySelectorAll(
+                ".dropdown.show"
+            )
+            .forEach(
+                dropdown=>{
+
+                    dropdown.classList.remove(
+                        "show"
+                    );
+
+
+                    const menu =
+                        dropdown.querySelector(
+                            ".dropdown-menu"
+                        );
+
+
+                    if(menu){
+
+                        menu.classList.remove(
+                            "show"
+                        );
+
+                    }
+
+                }
+            );
+
+    }
+);
+
+
+/* =====================================================
+   INITIALIZE
 ===================================================== */
 
 document.addEventListener(
@@ -2208,31 +2422,41 @@ document.addEventListener(
 
         /*
          * Header first
+         *
+         * This is important because menu JS
+         * must be loaded before user interacts.
          */
+
         await loadHeader();
 
 
         /*
          * Footer
          */
+
         await loadFooter();
 
 
         /*
-         * Admit Card
+         * Admit Card Portal
          */
+
         await loadAdmitCard();
 
 
         /*
-         * Final menu initialization
+         * Final Bootstrap initialization
          */
-        initializeHeaderMenu();
+
+        initializeBootstrapHeader();
+
+        initializeHeaderMenus();
 
     }
 );
 
 </script>
+
 
 </body>
 </html>

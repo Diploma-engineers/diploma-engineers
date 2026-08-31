@@ -6638,6 +6638,68 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     color:#9a3412;
   }
 
+  /* App-style top header */
+  .de-app-topbar{
+    height:50px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:0 18px;
+    border-bottom:1px solid #e5e7eb;
+    background:#fff;
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  .de-app-brand{display:flex;align-items:center;gap:11px;min-width:0;}
+  .de-app-back{
+    width:32px;height:32px;border:1px solid #e1e7ef;border-radius:50%;
+    background:#f8fafc;color:#172033;display:grid;place-items:center;cursor:pointer;
+    font-size:14px;flex:none;
+  }
+  .de-app-brand-name{font-size:18px;font-weight:800;white-space:nowrap;color:#172033;}
+  .de-app-brand-name span{color:#2563eb;}
+  .de-app-right{display:flex;align-items:center;gap:8px;}
+  .de-coins{
+    height:31px;padding:0 12px;border-radius:18px;background:#fff5cf;border:1px solid #ffd35c;
+    display:flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#6b4b00;
+    box-shadow:0 2px 5px rgba(245,158,11,.15);
+  }
+  .de-streak{
+    height:31px;min-width:43px;padding:0 10px;border-radius:18px;background:#fff5ef;border:1px solid #ffd2b8;
+    display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:800;color:#9a3412;
+  }
+  .de-profile{
+    width:27px;height:27px;border-radius:50%;background:#172033;color:#fff;display:grid;place-items:center;font-size:13px;
+  }
+  .de-preview-wrap{
+    position:relative;border:1px solid #e5e7eb;border-radius:9px;overflow:hidden;background:#f8fafc;
+    min-height:520px;
+  }
+  .de-preview-frame{
+    width:100%;height:620px;border:0;display:block;background:#fff;
+  }
+  .de-preview-lock{
+    position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.12);cursor:pointer;
+  }
+  .de-preview-lock-card{
+    max-width:330px;margin:20px;padding:18px 20px;text-align:center;border-radius:12px;
+    background:rgba(255,255,255,.96);border:1px solid #e5e7eb;box-shadow:0 8px 30px rgba(0,0,0,.12);
+  }
+  .de-preview-lock-card i{font-size:25px;color:#f51f2b;margin-bottom:9px;}
+  .de-preview-lock-card strong{display:block;font-size:14px;color:#172033;margin-bottom:5px;}
+  .de-preview-lock-card span{display:block;font-size:12px;color:#64748b;line-height:1.5;}
+  .de-content-loading{min-height:300px;display:grid;place-items:center;color:#64748b;font-size:13px;}
+  .de-paid-message{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:1000020;
+    width:min(420px,calc(100% - 28px));padding:13px 16px;border-radius:10px;background:#172033;color:#fff;
+    font-size:13px;font-weight:700;text-align:center;box-shadow:0 10px 35px rgba(0,0,0,.25);
+    opacity:0;pointer-events:none;transition:.22s ease;
+  }
+  .de-paid-message.show{opacity:1;transform:translate(-50%,0);}
+
   @media(max-width:900px){
     .de-course-detail-page{padding:14px 12px 40px;}
     .de-course-detail-grid{grid-template-columns:1fr;gap:25px;}
@@ -6666,10 +6728,21 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   <div class="de-course-detail-page">
     <div class="de-course-detail-wrap">
 
+      <div class="de-app-topbar">
+        <div class="de-app-brand">
+          <button class="de-app-back" id="deCourseDetailBack" type="button" aria-label="Back">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="de-app-brand-name">Diploma <span>Engineers</span></div>
+        </div>
+        <div class="de-app-right">
+          <div class="de-coins">🪙 <span id="deHeaderCoins">6 Coins</span></div>
+          <div class="de-streak">🔥 <span id="deHeaderStreak">1</span></div>
+          <div class="de-profile"><i class="fa-solid fa-user"></i></div>
+        </div>
+      </div>
+
       <div class="de-course-detail-topbar">
-        <button class="de-course-back" id="deCourseDetailBack" type="button" aria-label="Back">
-          <i class="fa-solid fa-arrow-left"></i>
-        </button>
         <div class="de-course-detail-label">COURSE DETAILS</div>
       </div>
 
@@ -6726,38 +6799,15 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
           </section>
 
           <section id="deDetailContent" class="de-course-panel">
-            <div class="de-content-list">
-              <div class="de-content-row">
-                <div class="de-content-folder">📁</div>
-                <div class="de-content-info">
-                  <div class="de-content-name">Live Course</div>
-                  <div class="de-content-count">Video lectures and course files</div>
+            <div class="de-preview-wrap" id="deCoursePreviewWrap">
+              <div class="de-content-loading" id="deCourseContentLoading">Loading course content…</div>
+              <iframe class="de-preview-frame" id="deCoursePreviewFrame" title="Course Content" src="about:blank" loading="eager" style="display:none"></iframe>
+              <div class="de-preview-lock" id="deCoursePreviewLock" style="display:none" role="button" tabindex="0" aria-label="Buy course to open content">
+                <div class="de-preview-lock-card">
+                  <i class="fa-solid fa-lock"></i>
+                  <strong>This is Paid Content</strong>
+                  <span>Firstly buy this course. After admin approval, click again to open the complete course content.</span>
                 </div>
-                <div class="de-content-lock"><i class="fa-solid fa-lock"></i></div>
-              </div>
-              <div class="de-content-row">
-                <div class="de-content-folder">📁</div>
-                <div class="de-content-info">
-                  <div class="de-content-name">Syllabus</div>
-                  <div class="de-content-count">Course syllabus and structure</div>
-                </div>
-                <div class="de-content-lock"><i class="fa-solid fa-lock"></i></div>
-              </div>
-              <div class="de-content-row">
-                <div class="de-content-folder">📁</div>
-                <div class="de-content-info">
-                  <div class="de-content-name">E-BOOKS / NOTES</div>
-                  <div class="de-content-count">PDF notes and study material</div>
-                </div>
-                <div class="de-content-lock"><i class="fa-solid fa-lock"></i></div>
-              </div>
-              <div class="de-content-row">
-                <div class="de-content-folder">📝</div>
-                <div class="de-content-info">
-                  <div class="de-content-name">Tests</div>
-                  <div class="de-content-count">Practice tests and assessments</div>
-                </div>
-                <div class="de-content-lock"><i class="fa-solid fa-lock"></i></div>
               </div>
             </div>
           </section>
@@ -6784,6 +6834,8 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   </div>
 </div>
 
+<div id="dePaidMessage" class="de-paid-message" role="status">This is Paid Content. Firstly buy this course, then it will open.</div>
+
 <script type="module">
 (function(){
   const detailOverlay = document.getElementById('deCourseDetailOverlay');
@@ -6795,6 +6847,10 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   const detailState = document.getElementById('deAccessState');
   const detailGet = document.getElementById('deGetThisCourse');
   const detailBack = document.getElementById('deCourseDetailBack');
+  const previewFrame = document.getElementById('deCoursePreviewFrame');
+  const previewLock = document.getElementById('deCoursePreviewLock');
+  const previewLoading = document.getElementById('deCourseContentLoading');
+  const paidMessage = document.getElementById('dePaidMessage');
 
   if(!detailOverlay) return;
 
@@ -6826,6 +6882,27 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     "dairy-year-2-course":"Dairy Technology Year 2",
     "agriculture-year-3-course":"Agriculture Engineering Year 3",
     "chemical-year-3-course":"Chemical Engineering Year 3"
+  };
+
+  const courseFiles = {
+    "civil-year-2-course":"civil-year-2-course.html",
+    "mechanical-year-2-course":"mechanical-year-2-course.html",
+    "cs-year-2-course":"cs-year-2-course.html",
+    "it-year-2-course":"it-year-2-course.html",
+    "electrical-year-2-course":"electrical-year-2-course.html",
+    "electronics-year-2-course":"electronics-year-2-course.html",
+    "agriculture-year-2-course":"agriculture-year-2-course.html",
+    "chemical-year-2-course":"chemical-year-2-course.html",
+    "civil-year-3-course":"civil-year-3-course.html",
+    "mechanical-year-3-course":"mechanical-year-3-course.html",
+    "electrical-year-3-course":"electrical-year-3-course.html",
+    "electronics-year-3-course":"electronics-year-3-course.html",
+    "cs-year-3-course":"cs-year-3-course.html",
+    "it-year-3-course":"it-year-3-course.html",
+    "dairy-year-3-course":"dairy-year-3-course.html",
+    "dairy-year-2-course":"dairy-year-2-course.html",
+    "agriculture-year-3-course":"agriculture-year-3-course.html",
+    "chemical-year-3-course":"chemical-year-3-course.html"
   };
 
   const subtitle = {
@@ -6942,6 +7019,45 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     detailGet.innerHTML = '<i class="fa-solid fa-lock"></i> Get This Course ₹99';
   }
 
+  let messageTimer = null;
+  function showPaidMessage(){
+    if(!paidMessage) return;
+    paidMessage.classList.add('show');
+    clearTimeout(messageTimer);
+    messageTimer = setTimeout(()=>paidMessage.classList.remove('show'),2600);
+  }
+
+  function setPreviewLocked(locked){
+    if(!previewLock || !previewFrame) return;
+    previewLock.style.display = locked ? 'flex' : 'none';
+    previewFrame.style.pointerEvents = locked ? 'none' : 'auto';
+  }
+
+  function loadCoursePreview(courseId){
+    if(!previewFrame || !previewLoading) return;
+    const file = courseFiles[courseId] || (courseId + '.html');
+    previewLoading.style.display='grid';
+    previewFrame.style.display='none';
+    previewFrame.src = file;
+    previewFrame.onload = ()=>{
+      previewLoading.style.display='none';
+      previewFrame.style.display='block';
+    };
+    previewFrame.onerror = ()=>{
+      previewLoading.innerHTML='<div style="text-align:center;padding:30px"><b>Course content could not be loaded.</b><br><span style="font-size:12px">Please keep the course HTML file in the same folder as this app.</span></div>';
+    };
+  }
+
+  async function refreshPreviewAccess(){
+    if(!currentCourseId) return;
+    const ok = await approved(currentCourseId);
+    setPreviewLocked(!ok);
+    if(ok){
+      detailGet.innerHTML = '<i class="fa-solid fa-unlock"></i> Access Course';
+      setState('Purchase verified. Full course access is available.','approved');
+    }
+  }
+
   window.openPaidCourseDetail = async function(courseId){
     if(!paidIds.has(courseId)) return;
 
@@ -6960,7 +7076,10 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     document.body.classList.add("de-course-detail-open");
     window.scrollTo({top:0,left:0,behavior:"instant"});
 
+    loadCoursePreview(courseId);
+    setPreviewLocked(true);
     await updateState(courseId);
+    await refreshPreviewAccess();
   };
 
   function closeDetail(){
@@ -6998,6 +7117,21 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
       window.navigateTo(id);
     }
   });
+
+  async function previewLockedClick(){
+    if(!currentCourseId) return;
+    if(await approved(currentCourseId)){
+      setPreviewLocked(false);
+      if(previewFrame && previewFrame.contentWindow) previewFrame.contentWindow.focus();
+      return;
+    }
+    showPaidMessage();
+    if(detailGet) detailGet.focus();
+  }
+  if(previewLock){
+    previewLock.addEventListener('click',previewLockedClick);
+    previewLock.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();previewLockedClick();}});
+  }
 
   document.querySelectorAll(".de-course-tab").forEach(btn=>{
     btn.addEventListener("click",()=>{
@@ -7064,7 +7198,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     firebaseReady().then(()=>{
       if(auth){
         auth.onAuthStateChanged(()=>{
-          if(currentCourseId) updateState(currentCourseId);
+          if(currentCourseId){ updateState(currentCourseId); refreshPreviewAccess(); }
         });
       }
     });

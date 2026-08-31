@@ -7206,5 +7206,217 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 })();
 </script>
 
+
+<!-- =========================================================
+     PREMIUM CONTENT MEDIA LOCK
+     Folders/pages remain clickable before purchase.
+     PDF/video resources show a purchase card instead.
+========================================================= -->
+<style id="de-media-lock-style">
+  .de-media-lock-overlay{
+    position:fixed;inset:0;z-index:1000015;display:none;
+    align-items:center;justify-content:center;
+    background:rgba(0,0,0,.58);padding:24px;
+  }
+  .de-media-lock-overlay.show{display:flex;}
+  .de-media-lock-card{
+    width:min(675px,100%);min-height:640px;background:#fff;border-radius:7px;
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:52px 40px 48px;box-shadow:0 18px 55px rgba(0,0,0,.30);
+    text-align:center;
+  }
+  .de-media-lock-close{
+    position:absolute;right:22px;top:22px;border:0;background:transparent;
+    color:#334155;font-size:31px;line-height:1;cursor:pointer;font-weight:300;
+  }
+  .de-media-lock-icon{
+    width:104px;height:116px;margin-bottom:47px;display:grid;place-items:center;
+    color:#ff4058;font-size:94px;line-height:1;
+  }
+  .de-media-lock-title{font-size:19px;font-weight:800;color:#334e68;margin-bottom:21px;}
+  .de-media-lock-text{
+    max-width:520px;font-size:15px;line-height:1.55;color:#718096;margin-bottom:20px;
+  }
+  .de-media-lock-buy{
+    width:min(440px,100%);height:55px;border:0;border-radius:9px;
+    background:#f7192b;color:#fff;font-size:17px;font-weight:800;cursor:pointer;
+    box-shadow:0 3px 0 rgba(190,0,20,.08);
+  }
+  .de-media-lock-buy:hover{background:#dc1020;}
+  .de-media-lock-hint{font-size:11px;color:#94a3b8;margin-top:12px;}
+  @media(max-width:560px){
+    .de-media-lock-overlay{padding:13px;}
+    .de-media-lock-card{min-height:calc(100vh - 26px);padding:45px 20px 30px;}
+    .de-media-lock-icon{margin-bottom:38px;font-size:78px;}
+    .de-media-lock-title{font-size:17px;}
+    .de-media-lock-text{font-size:14px;}
+    .de-media-lock-buy{height:52px;font-size:15px;}
+  }
+</style>
+
+<div id="deMediaLockOverlay" class="de-media-lock-overlay" aria-hidden="true">
+  <div class="de-media-lock-card" role="dialog" aria-modal="true" aria-label="Paid content">
+    <button type="button" class="de-media-lock-close" id="deMediaLockClose" aria-label="Close">×</button>
+    <div class="de-media-lock-icon" aria-hidden="true">🔒</div>
+    <div class="de-media-lock-title">Buy now to start learning!</div>
+    <div class="de-media-lock-text">Get access to course contents and learn from the comfort<br class="de-media-desktop-break">of any of your devices</div>
+    <button type="button" class="de-media-lock-buy" id="deMediaLockBuy">▣ Buy Course Now</button>
+    <div class="de-media-lock-hint">₹99 one-time course access · Admin verification required</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const overlay=document.getElementById('deMediaLockOverlay');
+  const closeBtn=document.getElementById('deMediaLockClose');
+  const buyBtn=document.getElementById('deMediaLockBuy');
+  const detailOverlay=document.getElementById('deCourseDetailOverlay');
+  const frame=document.getElementById('deCoursePreviewFrame');
+  const lock=document.getElementById('deCoursePreviewLock');
+  let activeMediaName='content';
+
+  function currentApproved(){
+    const state=document.getElementById('deAccessState');
+    return !!(state && state.classList.contains('approved'));
+  }
+  function showMediaLock(name){
+    activeMediaName=name||'content';
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  }
+  function closeMediaLock(){
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    if(!document.body.classList.contains('de-course-detail-open')) document.body.style.overflow='';
+  }
+
+  function isProtectedLink(el){
+    if(!el) return false;
+    const href=(el.getAttribute('href')||'').trim();
+    const onclick=(el.getAttribute('onclick')||'').toLowerCase();
+    const dataType=(el.getAttribute('data-type')||el.getAttribute('data-file-type')||'').toLowerCase();
+    const txt=(el.textContent||'').trim().toLowerCase();
+    if(/\.(pdf|mp4|webm|mkv|mov|m4v|avi)(?:[?#].*)?$/i.test(href)) return true;
+    if(/(youtube\.com|youtu\.be|vimeo\.com|drive\.google\.com).*?(video|preview|view)/i.test(href)) return true;
+    if(/\b(pdf|video|lecture|watch)\b/.test(dataType)) return true;
+    if(/(open|view|watch|download).{0,25}\b(pdf|video)\b/.test(onclick)) return true;
+    if(/^(pdf|video|watch video|play video|download pdf)$/.test(txt) && href) return true;
+    return false;
+  }
+
+  function mediaLabel(el){
+    const txt=(el?.textContent||'').trim();
+    const href=(el?.getAttribute?.('href')||'').toLowerCase();
+    if(/\.pdf(?:[?#]|$)/i.test(href) || /pdf/i.test(txt)) return 'PDF';
+    return 'Video';
+  }
+
+  function injectMediaProtection(doc){
+    if(!doc || !doc.body) return;
+    if(doc.documentElement) doc.documentElement.style.background='#fff';
+    doc.querySelectorAll('a').forEach(a=>{
+      if(!isProtectedLink(a)) return;
+      a.dataset.dePaidMedia='1';
+      a.dataset.dePaidMediaLabel=mediaLabel(a);
+      if(!currentApproved()) a.style.cursor='pointer';
+    });
+
+    // Direct HTML5 video/audio is protected before approval.
+    doc.querySelectorAll('video, audio').forEach(v=>{
+      v.dataset.dePaidMedia='1';
+      v.dataset.dePaidMediaLabel=v.tagName.toLowerCase()==='audio'?'Audio':'Video';
+      if(!currentApproved()){
+        try{v.pause();}catch(e){}
+      }
+    });
+
+    if(doc.__deMediaLockHandler) doc.removeEventListener('click',doc.__deMediaLockHandler,true);
+    doc.__deMediaLockHandler=function(e){
+      if(currentApproved()) return;
+      let target=e.target;
+      const media=target?.closest?.('[data-de-paid-media="1"]');
+      const video=target?.closest?.('video,audio');
+      if(media || video){
+        e.preventDefault(); e.stopPropagation();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+        showMediaLock(media?.dataset.dePaidMediaLabel || video?.dataset.dePaidMediaLabel || 'Content');
+        return false;
+      }
+    };
+    doc.addEventListener('click',doc.__deMediaLockHandler,true);
+
+    // Some course pages use buttons/divs whose onclick opens a PDF/video.
+    doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick]').forEach(el=>{
+      if(!el.getAttribute('onclick')) return;
+      const oc=(el.getAttribute('onclick')||'').toLowerCase();
+      if(/\.pdf|\.mp4|\.webm|\.mkv|youtube|youtu\.be|vimeo/.test(oc)){
+        el.dataset.dePaidMedia='1';
+        el.dataset.dePaidMediaLabel=oc.includes('pdf')?'PDF':'Video';
+      }
+    });
+  }
+
+  function bindFrame(){
+    if(!frame) return;
+    try{
+      const doc=frame.contentDocument;
+      if(doc) injectMediaProtection(doc);
+    }catch(err){
+      // Cross-origin content cannot be modified; same-origin local course files are expected.
+      console.warn('[Course] Content protection could not access iframe document:',err);
+    }
+  }
+
+  if(frame){
+    frame.addEventListener('load',()=>{
+      bindFrame();
+      setTimeout(bindFrame,150);
+      setTimeout(bindFrame,600);
+    });
+  }
+
+  // The old detail overlay used a full-page lock before approval. Keep the
+  // fetched course page visible; only individual PDF/video resources are locked.
+  setInterval(()=>{
+    if(lock) lock.style.display='none';
+    if(frame && frame.src && frame.src!=='about:blank') bindFrame();
+  },700);
+
+  closeBtn?.addEventListener('click',closeMediaLock);
+  overlay?.addEventListener('click',e=>{if(e.target===overlay)closeMediaLock();});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && overlay?.classList.contains('show')) closeMediaLock();
+  });
+
+  buyBtn?.addEventListener('click',async()=>{
+    closeMediaLock();
+    const id=window.__deCurrentCourseId || document.getElementById('deCourseDetailOverlay')?.dataset?.courseId;
+    // The existing detail button is the single source of truth for QR + UTR.
+    const get=document.getElementById('deGetThisCourse');
+    if(get){get.click();return;}
+    if(id && typeof window.navigateTo==='function') window.navigateTo(id);
+  });
+
+  // Keep current course id available to the lock card.
+  const originalOpen=window.openPaidCourseDetail;
+  if(typeof originalOpen==='function'){
+    window.openPaidCourseDetail=async function(id){
+      window.__deCurrentCourseId=id;
+      const result=await originalOpen.apply(this,arguments);
+      const root=document.getElementById('deCourseDetailOverlay');
+      if(root) root.dataset.courseId=id;
+      setTimeout(bindFrame,250);
+      return result;
+    };
+  }
+
+  // Re-enable media immediately when Firebase/admin approval changes the state.
+  setInterval(()=>{
+    if(currentApproved()) bindFrame();
+  },1200);
+})();
+</script>
+
 </body>
 </html>

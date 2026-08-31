@@ -6639,19 +6639,24 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   }
 
   /* App-style top header */
+  /* FULL-WIDTH APP HEADER: breaks out of the 1320px course wrapper */
   .de-app-topbar{
     height:50px;
+    width:100vw;
+    margin-left:50%;
+    transform:translateX(-50%);
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    padding:0 18px;
+    padding:0 22px;
     border-bottom:1px solid #e5e7eb;
     background:#fff;
     position:sticky;
     top:0;
     z-index:20;
   }
+  .de-app-topbar > *{min-width:0;}
   .de-app-brand{display:flex;align-items:center;gap:11px;min-width:0;}
   .de-app-back{
     width:32px;height:32px;border:1px solid #e1e7ef;border-radius:50%;
@@ -6674,7 +6679,12 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     width:27px;height:27px;border-radius:50%;background:#172033;color:#fff;display:grid;place-items:center;font-size:13px;
   }
   .de-preview-wrap{
-    position:relative;border:1px solid #e5e7eb;border-radius:9px;overflow:hidden;background:#f8fafc;
+    position:relative;
+    width:100%;
+    border:1px solid #e5e7eb;
+    border-radius:9px;
+    overflow:hidden;
+    background:#f8fafc;
     min-height:520px;
   }
   .de-preview-frame{
@@ -6701,6 +6711,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   .de-paid-message.show{opacity:1;transform:translate(-50%,0);}
 
   @media(max-width:900px){
+    .de-app-topbar{padding:0 14px;}
     .de-course-detail-page{padding:14px 12px 40px;}
     .de-course-detail-grid{grid-template-columns:1fr;gap:25px;}
     .de-side-card{position:static;order:-1;}
@@ -7383,14 +7394,16 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     };
     doc.addEventListener('contextmenu',doc.__deMediaContextHandler,true);
 
-    // Some course pages use buttons/divs whose onclick opens a PDF/video.
+    // Protect only controls that clearly point to a PDF/video.
+    // Do NOT use generic words such as "lecture", "video" or "open" on
+    // ordinary folder buttons, otherwise folder navigation would be blocked.
     doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick],li[onclick]').forEach(el=>{
       const oc=(el.getAttribute('onclick')||'').toLowerCase();
       const href=(el.getAttribute('href')||'').toLowerCase();
-      const text=(el.textContent||'').trim().toLowerCase();
-      if(!oc && !href && !text) return;
-      const looksPdf=/\.pdf(?:[?#]|$)|\b(pdf|download pdf)\b/.test(oc+' '+href+' '+text);
-      const looksVideo=/\.(mp4|webm|mkv|mov|m4v|avi)(?:[?#]|$)|youtube|youtu\.be|vimeo|\b(video|watch video|play video|lecture)\b/.test(oc+' '+href+' '+text);
+      const explicit=(el.getAttribute('data-type')||el.getAttribute('data-file-type')||el.getAttribute('data-media-type')||'').toLowerCase();
+      const source=oc+' '+href+' '+explicit;
+      const looksPdf=/\.pdf(?:[?#]|$)|\b(pdf|download[_ -]?pdf|pdf[_ -]?file)\b/.test(source);
+      const looksVideo=/\.(mp4|webm|mkv|mov|m4v|avi)(?:[?#]|$)|youtube\.com|youtu\.be|vimeo\.com|\b(video[_ -]?file|video[_ -]?url|watch[_ -]?video|play[_ -]?video)\b/.test(source);
       if(looksPdf || looksVideo){
         el.dataset.dePaidMedia='1';
         el.dataset.dePaidMediaLabel=looksPdf?'PDF':'Video';

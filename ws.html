@@ -5803,7 +5803,7 @@ window.addEventListener('DOMContentLoaded', () => {
 .approved-home-empty i{color:var(--primary);font-size:13px}
 @media(min-width:700px){.approved-home-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.approved-home-course{align-items:flex-start;padding:11px}.approved-home-course-open{padding:9px 9px;white-space:nowrap}.approved-home-course-name{font-size:11.5px}.approved-home-status{font-size:9.5px}}
-.payment-overlay{position:fixed;inset:0;z-index:2147482000;background:rgba(15,23,42,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px}.payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.payment-overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(5px);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px}.payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
 .payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
 
 /* ===== FINAL COMPACT HOME BANNER FIX ===== */
@@ -6015,7 +6015,6 @@ function openCourse(courseId){closePayment();if(typeof window.navigateTo==='func
 async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
 function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>{if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);}},err=>console.warn('Course access listener:',err));}
 async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
-window.openCoursePayment = openPayment;
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();}
 function getCourseCard(courseId){
   return document.querySelector(`.course-card[data-paid-course="${CSS.escape(courseId)}"]`) ||
@@ -6644,9 +6643,8 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   .de-app-topbar{
     height:50px;
     width:100vw;
-    max-width:none;
-    margin-left:calc(50% - 50vw);
-    transform:none;
+    margin-left:50%;
+    transform:translateX(-50%);
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -6690,10 +6688,11 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     min-height:520px;
   }
   .de-preview-frame{
-    width:100%;height:760px;border:0;display:block;background:#fff;
+    width:100%;height:620px;border:0;display:block;background:#fff;
   }
   .de-preview-lock{
-    display:none !important;
+    position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.12);cursor:pointer;
   }
   .de-preview-lock-card{
     max-width:330px;margin:20px;padding:18px 20px;text-align:center;border-radius:12px;
@@ -6703,25 +6702,8 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   .de-preview-lock-card strong{display:block;font-size:14px;color:#172033;margin-bottom:5px;}
   .de-preview-lock-card span{display:block;font-size:12px;color:#64748b;line-height:1.5;}
   .de-content-loading{min-height:300px;display:grid;place-items:center;color:#64748b;font-size:13px;}
-
-  /* Media lock indicators injected into the fetched course page */
-  .de-media-lock-badge{
-    display:inline-flex!important;align-items:center;justify-content:center;gap:4px;
-    margin-left:7px;padding:3px 7px;border-radius:999px;
-    background:#fee2e2!important;color:#dc2626!important;
-    border:1px solid #fecaca!important;font-size:10px!important;font-weight:800!important;
-    line-height:1!important;vertical-align:middle;pointer-events:none;
-  }
-  .de-video-lock-wrap{position:relative!important;display:block!important;}
-  .de-video-lock-overlay{position:absolute!important;inset:0!important;z-index:99999!important;
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    pointer-events:auto!important;background:rgba(15,23,42,.18)!important;}
-  .de-video-lock-overlay span{display:flex!important;align-items:center;gap:7px;padding:10px 14px;
-    border-radius:12px;background:rgba(255,255,255,.96);color:#dc2626;font-weight:800;font-size:12px;
-    box-shadow:0 6px 20px rgba(0,0,0,.18);}
-
   .de-paid-message{
-    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:2147481000;
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:1000020;
     width:min(420px,calc(100% - 28px));padding:13px 16px;border-radius:10px;background:#172033;color:#fff;
     font-size:13px;font-weight:700;text-align:center;box-shadow:0 10px 35px rgba(0,0,0,.25);
     opacity:0;pointer-events:none;transition:.22s ease;
@@ -6729,7 +6711,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   .de-paid-message.show{opacity:1;transform:translate(-50%,0);}
 
   @media(max-width:900px){
-    .de-app-topbar{width:100vw;margin-left:calc(50% - 50vw);transform:none;padding:0 14px;}
+    .de-app-topbar{padding:0 14px;}
     .de-course-detail-page{padding:14px 12px 40px;}
     .de-course-detail-grid{grid-template-columns:1fr;gap:25px;}
     .de-side-card{position:static;order:-1;}
@@ -7080,7 +7062,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   async function refreshPreviewAccess(){
     if(!currentCourseId) return;
     const ok = await approved(currentCourseId);
-    setPreviewLocked(false);
+    setPreviewLocked(!ok);
     if(ok){
       detailGet.innerHTML = '<i class="fa-solid fa-unlock"></i> Access Course';
       setState('Purchase verified. Full course access is available.','approved');
@@ -7106,10 +7088,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     window.scrollTo({top:0,left:0,behavior:"instant"});
 
     loadCoursePreview(courseId);
-    // The complete course page is visible so folders/semester tabs can be
-    // opened. Individual PDF/video resources are protected by the media-lock
-    // layer below until Firebase courseAccess is approved.
-    setPreviewLocked(false);
+    setPreviewLocked(true);
     await updateState(courseId);
     await refreshPreviewAccess();
   };
@@ -7137,20 +7116,16 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     }
 
     if(await approved(id)){
-      // Keep the detail page open; approved users can continue into the
-      // fetched course content without navigating away from this screen.
-      setPreviewLocked(false);
-      document.querySelector('[data-detail-tab="content"]')?.click();
+      closeDetail();
+      if(typeof window.navigateTo === "function") window.navigateTo(id);
       return;
     }
 
-    // IMPORTANT: open the existing QR/UTR modal directly. Do NOT call
-    // navigateTo(id) and do NOT close the course-detail page.
-    if(typeof window.openCoursePayment === "function"){
-      await window.openCoursePayment(id);
-    }else{
-      // Fallback only if the payment module has not finished initialising.
-      alert("Payment system is loading. Please try again in a moment.");
+    // Existing payment system in the app handles:
+    // QR -> UTR -> pending -> admin approval -> course access.
+    closeDetail();
+    if(typeof window.navigateTo === "function"){
+      window.navigateTo(id);
     }
   });
 
@@ -7351,27 +7326,11 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
   function injectMediaProtection(doc){
     if(!doc || !doc.body) return;
     if(doc.documentElement) doc.documentElement.style.background='#fff';
-    if(!doc.getElementById('deInjectedMediaLockStyles')){
-      const st=doc.createElement('style');
-      st.id='deInjectedMediaLockStyles';
-      st.textContent=`
-        .de-media-lock-badge{display:inline-flex!important;align-items:center;gap:4px;margin-left:7px;padding:3px 7px;border-radius:999px;background:#fee2e2!important;color:#dc2626!important;border:1px solid #fecaca!important;font-size:10px!important;font-weight:800!important;line-height:1!important;vertical-align:middle;pointer-events:none;}
-        .de-video-lock-wrap{position:relative!important;display:block!important;}
-        .de-video-lock-overlay{position:absolute!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(15,23,42,.18)!important;}
-        .de-video-lock-overlay span{display:flex!important;align-items:center;gap:7px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.96);color:#dc2626;font-weight:800;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);}`;
-      doc.head?.appendChild(st);
-    }
     doc.querySelectorAll('a').forEach(a=>{
       if(!isProtectedLink(a)) return;
       a.dataset.dePaidMedia='1';
       a.dataset.dePaidMediaLabel=mediaLabel(a);
       if(!currentApproved()) a.style.cursor='pointer';
-      if(!currentApproved() && !a.querySelector('.de-media-lock-badge')){
-        const badge=doc.createElement('span');
-        badge.className='de-media-lock-badge';
-        badge.textContent='🔒 '+mediaLabel(a);
-        a.appendChild(badge);
-      }
     });
 
     // Direct HTML5 video/audio is protected before approval.
@@ -7381,16 +7340,6 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
       v.dataset.dePaidMediaLabel=v.tagName.toLowerCase()==='audio'?'Audio':'Video';
       if(!currentApproved()){
         try{ v.pause(); v.currentTime=0; }catch(e){}
-        if(v.tagName.toLowerCase()==='video' && !v.parentElement?.classList.contains('de-video-lock-wrap')){
-          const wrap=doc.createElement('div');
-          wrap.className='de-video-lock-wrap';
-          v.parentNode.insertBefore(wrap,v);
-          wrap.appendChild(v);
-          const ov=doc.createElement('div');
-          ov.className='de-video-lock-overlay';
-          ov.innerHTML='<span>🔒 Video Locked · Buy Course</span>';
-          wrap.appendChild(ov);
-        }
         // Stop autoplay/play() calls before the media can start.
         if(v.__dePlayBlock) v.removeEventListener('play',v.__dePlayBlock,true);
         v.__dePlayBlock=function(e){
@@ -7518,18 +7467,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 
   // Re-enable media immediately when Firebase/admin approval changes the state.
   setInterval(()=>{
-    if(currentApproved()){
-      try{
-        const doc=frame?.contentDocument;
-        doc?.querySelectorAll('.de-media-lock-badge').forEach(x=>x.remove());
-        doc?.querySelectorAll('.de-video-lock-overlay').forEach(x=>x.remove());
-        doc?.querySelectorAll('.de-video-lock-wrap').forEach(w=>{
-          const v=w.querySelector('video');
-          if(v && w.parentNode){w.parentNode.insertBefore(v,w);w.remove();}
-        });
-      }catch(e){}
-      bindFrame();
-    }
+    if(currentApproved()) bindFrame();
   },1200);
 })();
 </script>

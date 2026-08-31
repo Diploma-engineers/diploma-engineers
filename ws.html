@@ -6065,8 +6065,11 @@ window.addEventListener('DOMContentLoaded', () => {
    <div class="payment-price">₹99 INR</div>
    <img class="payment-qr" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png" alt="UPI Payment QR">
    <div class="payment-note"><strong>Step 1:</strong> Pay ₹99 using the QR below.<br><strong>Step 2:</strong> Enter the UTR / Transaction ID after payment.<br>Your request will then be sent to admin verification.</div>
-   <input id="paymentUTR" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="Enter UTR / Transaction ID">
-   <button id="paymentSubmit" class="payment-submit" type="button">Submit for Verification</button>
+   <button id="paymentDoneBtn" class="payment-submit payment-paid-confirm" type="button" style="margin-bottom:10px;background:#16a34a;">
+     <i class="fa-solid fa-circle-check"></i> I Have Completed ₹99 Payment
+   </button>
+   <input id="paymentUTR" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="First complete payment above" disabled>
+   <button id="paymentSubmit" class="payment-submit" type="button" disabled>Submit UTR for Verification</button>
    <div id="paymentStatus" class="payment-status"></div>
   </div>
  </div>
@@ -6203,12 +6206,16 @@ function courseDetailShellHtml(courseId,tab='overview',unlocked=false){
     ${!unlocked?`<div style="margin-top:12px;"><button type="button" class="course-detail-cta" onclick="openCoursePaymentFromDetail('${esc(courseId)}')"><i class="fa-solid fa-lock-open"></i> Get This Course • ₹99</button></div>`:''}
   </div>`;
 }
-window.renderCourseDetail=function(courseId,tab='overview'){
+window.renderCourseDetail=async function(courseId,tab='overview'){
   if(!paidCourseIds.includes(courseId))return;
   currentDetailCourse=courseId;
   const root=document.getElementById('courseDetailRoot');
   if(!root)return;
-  const unlocked=!!document.querySelector(`.course-card[data-paid-course="${CSS.escape(courseId)}"]`)?.dataset.paidState && document.querySelector(`.course-card[data-paid-course="${CSS.escape(courseId)}"]`)?.dataset.paidState==='approved';
+  let unlocked=false;
+  if(currentUid){
+    const access=await accessValue(courseId).catch(()=>null);
+    unlocked=isApproved(access);
+  }
   root.innerHTML=courseDetailShellHtml(courseId,tab,unlocked);
   navigateTo('courseDetailPage');
 };
@@ -6220,16 +6227,30 @@ window.openCoursePaymentFromDetail=async function(courseId){
   if(latest&&String(latest.status||'').toLowerCase()==='pending'){showTrackingOnCard(courseId);watchAccess(courseId);return;}
   currentCourse=courseId;
   courseEl.textContent=courseNames[courseId]||courseId;
-  utrEl.value='';
+  resetPaymentForm();
   showStatus('');
-  submitEl.disabled=false;
   overlay.style.display='flex';
   overlay.setAttribute('aria-hidden','false');
   watchAccess(courseId);
-  setTimeout(()=>utrEl.focus(),80);
+  setTimeout(()=>paymentDoneEl?.focus(),80);
 };
 
-const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus');
+const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus'),paymentDoneEl=document.getElementById('paymentDoneBtn');
+let paymentConfirmed=false;
+function resetPaymentForm(){
+  paymentConfirmed=false;
+  if(utrEl){utrEl.value='';utrEl.disabled=true;utrEl.placeholder='First complete payment above';}
+  if(submitEl){submitEl.disabled=true;submitEl.innerHTML='<i class="fa-solid fa-paper-plane"></i> Submit UTR for Verification';}
+  if(paymentDoneEl){paymentDoneEl.disabled=false;paymentDoneEl.innerHTML='<i class="fa-solid fa-circle-check"></i> I Have Completed ₹99 Payment';paymentDoneEl.style.opacity='1';}
+}
+function confirmPaymentDone(){
+  paymentConfirmed=true;
+  if(utrEl){utrEl.disabled=false;utrEl.placeholder='Enter UTR / Transaction ID';utrEl.focus();}
+  if(submitEl){submitEl.disabled=false;}
+  if(paymentDoneEl){paymentDoneEl.disabled=true;paymentDoneEl.innerHTML='<i class="fa-solid fa-check"></i> Payment Marked as Completed';paymentDoneEl.style.opacity='.75';}
+  showStatus('Now enter the UTR / Transaction ID and submit it for admin verification.','ok');
+}
+if(paymentDoneEl)paymentDoneEl.addEventListener('click',confirmPaymentDone);
 let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null,homeAccessUnsub=null;
 const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const isApproved=v=>{
@@ -6257,11 +6278,21 @@ return false;
 function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;statusEl.style.display=t?'block':'none';}
 function closeTracking(){const o=document.getElementById('trackingOverlay');if(o){o.style.display='none';o.setAttribute('aria-hidden','true');}}
 function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');closeTracking();if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
-function openCourse(courseId){closePayment();if(typeof window.navigateTo==='function')window.navigateTo(courseId);}
+async function openCourse(courseId){
+  if(!currentUid){alert('Please login first.');return;}
+  const access=await accessValue(courseId).catch(()=>null);
+  if(isApproved(access)){
+    closePayment();
+    if(typeof window.navigateTo==='function')window.navigateTo(courseId);
+    return;
+  }
+  // Never expose the real course HTML before admin verification.
+  renderCourseDetail(courseId,'overview');
+}
 window.openCourse=openCourse;
 async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
 function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>{if(currentDetailCourse===courseId && document.getElementById('courseDetailPage')?.classList.contains('active-page')){renderCourseDetail(courseId,'content');}else if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);}},err=>console.warn('Course access listener:',err));}
-async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
+async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;resetPaymentForm();showStatus('');overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>paymentDoneEl?.focus(),80);}
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();}
 function getCourseCard(courseId){
   return document.querySelector(`.course-card[data-paid-course="${CSS.escape(courseId)}"]`) ||
@@ -6294,13 +6325,15 @@ function setPaidCardState(courseId,state){
     btn.onclick=e=>{e.preventDefault();e.stopPropagation();openCourse(courseId);};
     card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;openCourse(courseId);};
   }else if(state==='pending'){
-    btn.innerHTML='<i class="fa-solid fa-route"></i> Access Your Course';
-    btn.onclick=e=>{e.preventDefault();e.stopPropagation();showTrackingOnCard(courseId);};
-    card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;showTrackingOnCard(courseId);};
+    btn.innerHTML='<i class="fa-solid fa-clock"></i> Payment Under Review';
+    btn.onclick=e=>{e.preventDefault();e.stopPropagation();renderCourseDetail(courseId,'overview');};
+    card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;renderCourseDetail(courseId,'overview');};
   }else{
-    btn.innerHTML='<i class="fa-solid fa-lock"></i> Pay ₹99 & Access';
-    btn.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(courseId);};
-    card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;openPayment(courseId);};
+    // IMPORTANT: clicking a course card opens the Overview first.
+    // Payment is opened only from the course detail page.
+    btn.innerHTML='<i class="fa-solid fa-arrow-right"></i> View Course';
+    btn.onclick=e=>{e.preventDefault();e.stopPropagation();renderCourseDetail(courseId,'overview');};
+    card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;renderCourseDetail(courseId,'overview');};
   }
 }
 async function syncPaidCardState(courseId){
@@ -6445,6 +6478,7 @@ async function refreshAllCourseTracking(){
 }
 
 async function submitPurchase(){
+  if(!paymentConfirmed){showStatus('Please complete the ₹99 payment first, then enter your UTR.','err');return;}
   const utr=utrEl.value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
@@ -6512,6 +6546,11 @@ const courseCardsObserver=new MutationObserver(mutations=>{
 });
 const coursePageRoot=document.getElementById('coursePage');
 if(coursePageRoot)courseCardsObserver.observe(coursePageRoot,{childList:true,subtree:true});
+
+// Install the paid-course click guard immediately, even before login.
+// This prevents the original inline navigateTo(...) handlers from opening
+// the protected HTML directly. Authenticated users then get their Firebase state applied.
+applyPaidCards();
 
 </script>
 

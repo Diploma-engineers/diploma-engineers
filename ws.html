@@ -6075,7 +6075,7 @@ function pauseLockedFrame(frame){try{const doc=frame.contentDocument;if(!doc)ret
 function bindCourseFrame(frame){if(!frame)return;frame.addEventListener('load',()=>{try{const doc=frame.contentDocument;const firstImg=doc?.querySelector('img[src]');const thumb=document.getElementById('courseDetailThumb');if(firstImg&&thumb){const src=firstImg.getAttribute('src');if(src){const img=document.createElement('img');img.src=new URL(src,frame.src).href;img.alt='Course thumbnail';thumb.innerHTML='';thumb.appendChild(img);}}pauseLockedFrame(frame);const timer=setInterval(()=>pauseLockedFrame(frame),1200);setTimeout(()=>clearInterval(timer),15000);if(doc?.body)doc.body.style.margin=doc.body.style.margin||'0';}catch(e){}},{once:true});}
 function setCourseDetailTab(tab){document.querySelectorAll('#courseDetailPage .course-detail-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('#courseDetailPage .course-detail-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===tab));}
 
-async function renderCourseDetail(courseId){
+async async function renderCourseDetail(courseId){
   const page=document.getElementById('courseDetailPage');if(!page)return;
   const name=courseNames[courseId]||courseId;const info=courseAbout(courseId);const icon=courseIcon(courseId);const color=courseColorClass(courseId);
   const access=await accessValue(courseId).catch(()=>null);if(isApproved(access)){openApprovedCourse(courseId);return;}
@@ -6092,7 +6092,38 @@ async function renderCourseDetail(courseId){
   </div>`;
   const frame=document.getElementById('courseDetailFrame');const loading=document.getElementById('courseContentLoading');if(frame){frame.addEventListener('load',()=>{if(loading)loading.style.display='none';},{once:true});bindCourseFrame(frame);}
 }
-async function openCourseDetail(courseId){if(!currentUid){alert('Please login first.');return;}const access=await accessValue(courseId).catch(()=>null);if(isApproved(access)){openApprovedCourse(courseId);return;}currentCourse=courseId;await renderCourseDetail(courseId);if(window.__deBaseNavigate)window.__deBaseNavigate('courseDetailPage');else window.navigateTo('courseDetailPage');}
+async function openCourseDetail(courseId){
+  try{
+    if(!currentUid){
+      alert('Please login first.');
+      return;
+    }
+
+    currentCourse=courseId;
+
+    /* Navigate immediately. Do not wait for Firebase before showing the detail page. */
+    const goDetail = window.__deBaseNavigate || window.navigateTo;
+    if(typeof goDetail==='function') goDetail('courseDetailPage');
+
+    const access=await accessValue(courseId).catch(()=>null);
+
+    if(isApproved(access)){
+      openApprovedCourse(courseId);
+      return;
+    }
+
+    await renderCourseDetail(courseId);
+    if(window.renderPageUI) window.renderPageUI('courseDetailPage');
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+  }catch(e){
+    console.error('[Diploma Engineers] Course detail error:',e);
+    const page=document.getElementById('courseDetailPage');
+    if(page){
+      page.innerHTML='<div class="course-detail-page"><div class="course-detail-error"><i class="fa-solid fa-triangle-exclamation"></i><h3>Course could not be opened</h3><p>Please refresh the app and try again.</p><button type="button" onclick="openCourseDetail(\''+esc(courseId)+'\')">Retry</button></div></div>';
+      if(window.renderPageUI) window.renderPageUI('courseDetailPage');
+    }
+  }
+}
 
 function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>openApprovedCourse(courseId),650);}},err=>console.warn('Course access listener:',err));}
 async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openApprovedCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}

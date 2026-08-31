@@ -7418,5 +7418,102 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 })();
 </script>
 
+<script>
+/* =========================================================
+   QR PAYMENT MODAL: KEEP USER ON CURRENT COURSE PAGE
+   Opening QR adds a temporary history state. Browser/Android
+   Back closes only the QR card; it does NOT leave the course page.
+========================================================= */
+(function(){
+  const overlay = document.getElementById('paymentOverlay');
+  if(!overlay) return;
+
+  let paymentHistoryState = false;
+  let previousHistoryState = null;
+  let previousUrl = window.location.href;
+  let closingByBack = false;
+
+  function isOpen(){
+    return overlay.getAttribute('aria-hidden') === 'false' ||
+           getComputedStyle(overlay).display !== 'none';
+  }
+
+  function addPaymentHistory(){
+    if(paymentHistoryState || !isOpen()) return;
+    previousHistoryState = history.state;
+    previousUrl = window.location.href;
+    history.pushState({
+      ...(history.state || {}),
+      __coursePaymentModal: true
+    }, '', window.location.href);
+    paymentHistoryState = true;
+  }
+
+  function removePaymentHistory(){
+    if(!paymentHistoryState) return;
+    paymentHistoryState = false;
+    try{
+      history.replaceState(previousHistoryState, '', previousUrl);
+    }catch(e){}
+    previousHistoryState = null;
+  }
+
+  function closePaymentOnly(){
+    const btn = document.getElementById('paymentClose');
+    if(btn) btn.click();
+    else {
+      overlay.style.display='none';
+      overlay.setAttribute('aria-hidden','true');
+    }
+  }
+
+  /* App's own Back button: QR open = close QR, stay on this page. */
+  const oldGoBack = window.goBack;
+  window.goBack = function(){
+    if(isOpen()){
+      closePaymentOnly();
+      removePaymentHistory();
+      return;
+    }
+    if(typeof oldGoBack === 'function') return oldGoBack.apply(this, arguments);
+  };
+
+  /* Detect the existing payment modal opening without changing the
+     existing Firebase/payment code. */
+  const observer = new MutationObserver(function(){
+    if(isOpen()) addPaymentHistory();
+  });
+  observer.observe(overlay, {attributes:true, attributeFilter:['aria-hidden','style','class']});
+
+  /* Browser / Android system Back while QR is open. */
+  window.addEventListener('popstate', function(e){
+    if(paymentHistoryState){
+      paymentHistoryState = false;
+      closingByBack = true;
+      previousHistoryState = null;
+      if(isOpen()) closePaymentOnly();
+      setTimeout(()=>{ closingByBack=false; },0);
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  /* X button / normal close removes only the temporary modal history entry. */
+  const closeBtn = document.getElementById('paymentClose');
+  if(closeBtn){
+    closeBtn.addEventListener('click', function(){
+      if(!closingByBack) removePaymentHistory();
+    }, true);
+  }
+
+  /* If payment is submitted/approved and the app closes the modal itself,
+     remove the temporary history state so Back goes to the real previous page. */
+  const closeObserver = new MutationObserver(function(){
+    if(!isOpen() && paymentHistoryState && !closingByBack){
+      removePaymentHistory();
+    }
+  });
+  closeObserver.observe(overlay, {attributes:true, attributeFilter:['aria-hidden','style','class']});
+})();
+</script>
 </body>
 </html>

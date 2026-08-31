@@ -7323,36 +7323,77 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     });
 
     // Direct HTML5 video/audio is protected before approval.
+    // Folder/page navigation is NOT touched, only actual media is locked.
     doc.querySelectorAll('video, audio').forEach(v=>{
       v.dataset.dePaidMedia='1';
       v.dataset.dePaidMediaLabel=v.tagName.toLowerCase()==='audio'?'Audio':'Video';
       if(!currentApproved()){
-        try{v.pause();}catch(e){}
+        try{ v.pause(); v.currentTime=0; }catch(e){}
+        // Stop autoplay/play() calls before the media can start.
+        if(v.__dePlayBlock) v.removeEventListener('play',v.__dePlayBlock,true);
+        v.__dePlayBlock=function(e){
+          if(currentApproved()) return;
+          e.preventDefault();
+          try{v.pause();}catch(err){}
+          showMediaLock(v.dataset.dePaidMediaLabel || 'Video');
+        };
+        v.addEventListener('play',v.__dePlayBlock,true);
       }
     });
 
     if(doc.__deMediaLockHandler) doc.removeEventListener('click',doc.__deMediaLockHandler,true);
-    doc.__deMediaLockHandler=function(e){
-      if(currentApproved()) return;
-      let target=e.target;
+    if(doc.__deMediaPointerHandler) doc.removeEventListener('pointerdown',doc.__deMediaPointerHandler,true);
+    if(doc.__deMediaContextHandler) doc.removeEventListener('contextmenu',doc.__deMediaContextHandler,true);
+
+    function getProtectedTarget(target){
       const media=target?.closest?.('[data-de-paid-media="1"]');
       const video=target?.closest?.('video,audio');
-      if(media || video){
-        e.preventDefault(); e.stopPropagation();
-        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-        showMediaLock(media?.dataset.dePaidMediaLabel || video?.dataset.dePaidMediaLabel || 'Content');
-        return false;
-      }
+      return media || video;
+    }
+
+    doc.__deMediaLockHandler=function(e){
+      if(currentApproved()) return;
+      const target=getProtectedTarget(e.target);
+      if(!target) return;
+      e.preventDefault(); e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      showMediaLock(target.dataset?.dePaidMediaLabel || 'Content');
+      return false;
     };
     doc.addEventListener('click',doc.__deMediaLockHandler,true);
 
+    // Prevent video controls/touch interaction from starting playback.
+    doc.__deMediaPointerHandler=function(e){
+      if(currentApproved()) return;
+      const target=getProtectedTarget(e.target);
+      if(!target) return;
+      e.preventDefault(); e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      showMediaLock(target.dataset?.dePaidMediaLabel || 'Video');
+    };
+    doc.addEventListener('pointerdown',doc.__deMediaPointerHandler,true);
+
+    // Prevent right-click/opening/downloading protected media.
+    doc.__deMediaContextHandler=function(e){
+      if(currentApproved()) return;
+      const target=getProtectedTarget(e.target);
+      if(!target) return;
+      e.preventDefault(); e.stopPropagation();
+      showMediaLock(target.dataset?.dePaidMediaLabel || 'Content');
+    };
+    doc.addEventListener('contextmenu',doc.__deMediaContextHandler,true);
+
     // Some course pages use buttons/divs whose onclick opens a PDF/video.
-    doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick]').forEach(el=>{
-      if(!el.getAttribute('onclick')) return;
+    doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick],li[onclick]').forEach(el=>{
       const oc=(el.getAttribute('onclick')||'').toLowerCase();
-      if(/\.pdf|\.mp4|\.webm|\.mkv|youtube|youtu\.be|vimeo/.test(oc)){
+      const href=(el.getAttribute('href')||'').toLowerCase();
+      const text=(el.textContent||'').trim().toLowerCase();
+      if(!oc && !href && !text) return;
+      const looksPdf=/\.pdf(?:[?#]|$)|\b(pdf|download pdf)\b/.test(oc+' '+href+' '+text);
+      const looksVideo=/\.(mp4|webm|mkv|mov|m4v|avi)(?:[?#]|$)|youtube|youtu\.be|vimeo|\b(video|watch video|play video|lecture)\b/.test(oc+' '+href+' '+text);
+      if(looksPdf || looksVideo){
         el.dataset.dePaidMedia='1';
-        el.dataset.dePaidMediaLabel=oc.includes('pdf')?'PDF':'Video';
+        el.dataset.dePaidMediaLabel=looksPdf?'PDF':'Video';
       }
     });
   }

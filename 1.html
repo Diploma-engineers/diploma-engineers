@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Detail | Diploma Engineers</title>
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --red:#f51f2b;
+    --red-dark:#d91622;
+    --text:#172033;
+    --muted:#687587;
+    --line:#e7e9ed;
+    --soft:#f7f8fa;
+    --green:#39a85a;
+  }
+
+  body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#fff;
+    color:var(--text);
+    line-height:1.55;
+  }
+
+  /* =========================
+     COURSE DETAIL ONLY
+     NO HEADER / NO FOOTER
+  ========================== */
+
+  .course-page{
+    width:100%;
+    min-height:100vh;
+    padding:32px 22px 70px;
+  }
+
+  .course-wrap{
+    width:min(1320px,100%);
+    margin:0 auto;
+  }
+
+  .course-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 340px;
+    gap:46px;
+    align-items:start;
+  }
+
+  /* LEFT */
+  .course-main{
+    min-width:0;
+  }
+
+  .course-title{
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:5px;
+    color:#111827;
+  }
+
+  .course-subtitle{
+    color:#60758a;
+    font-size:13px;
+    margin-bottom:16px;
+  }
+
+  .course-tags{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 12px;
+    background:#fafafa;
+    border:1px solid #eee;
+    font-size:12px;
+    color:#222;
+    border-radius:3px;
+  }
+
+  .tag-icon{
+    font-size:15px;
+  }
+
+  /* TABS */
+  .tabs{
+    display:flex;
+    gap:0;
+    border-bottom:1px solid var(--line);
+    margin-bottom:16px;
+  }
+
+  .tab-btn{
+    appearance:none;
+    border:0;
+    background:transparent;
+    cursor:pointer;
+    padding:0 14px 13px;
+    font-size:15px;
+    color:#111;
+    position:relative;
+  }
+
+  .tab-btn:first-child{padding-left:12px}
+
+  .tab-btn.active{
+    color:var(--red);
+  }
+
+  .tab-btn.active::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-1px;
+    height:2px;
+    background:var(--red);
+  }
+
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* OVERVIEW */
+  .overview-card{
+    border:1px solid #e0e3e7;
+    border-radius:8px;
+    padding:26px 24px 0;
+    background:#fff;
+  }
+
+  .section-title{
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+
+  .description{
+    font-size:14px;
+    color:#2f3a49;
+    line-height:1.75;
+  }
+
+  .course-info{
+    border-top:1px dashed #ddd;
+    margin-top:26px;
+    padding:20px 0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .info-box{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding-right:20px;
+  }
+
+  .info-box + .info-box{
+    border-left:1px solid #e2e5e8;
+    padding-left:25px;
+  }
+
+  .info-icon{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#edf2f5;
+    display:grid;
+    place-items:center;
+    font-size:19px;
+    flex:none;
+  }
+
+  .info-name{
+    font-weight:700;
+    font-size:14px;
+  }
+
+  .info-text{
+    color:#718096;
+    font-size:12px;
+  }
+
+  .benefit-card{
+    margin-top:30px;
+    padding:25px;
+    border:1px solid #e1e6bd;
+    border-radius:8px;
+    background:#fbffe9;
+  }
+
+  .benefit-title{
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+  }
+
+  .benefit{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .benefit-icon{
+    font-size:22px;
+  }
+
+  .benefit-name{
+    font-weight:700;
+    font-size:13px;
+  }
+
+  .benefit-text{
+    color:#82909f;
+    font-size:12px;
+  }
+
+  /* CONTENT */
+  .content-list{
+    border:1px solid #eceef1;
+    border-radius:7px;
+    overflow:hidden;
+    background:#fff;
+  }
+
+  .content-row{
+    min-height:91px;
+    display:flex;
+    align-items:center;
+    padding:16px 18px;
+    border-bottom:1px solid #eee;
+    cursor:pointer;
+    transition:.2s ease;
+  }
+
+  .content-row:last-child{border-bottom:0}
+
+  .content-row:hover{
+    background:#fafafa;
+  }
+
+  .folder{
+    width:78px;
+    height:58px;
+    border-radius:4px;
+    background:#f7fafc;
+    display:grid;
+    place-items:center;
+    margin-right:16px;
+    flex:none;
+    font-size:31px;
+  }
+
+  .content-info{
+    min-width:0;
+    flex:1;
+  }
+
+  .content-name{
+    font-size:14px;
+    color:#26364a;
+    margin-bottom:4px;
+  }
+
+  .content-count{
+    font-size:12px;
+    color:#111;
+  }
+
+  .arrow{
+    color:#81909b;
+    font-size:27px;
+    margin-left:15px;
+  }
+
+  .lock{
+    color:#7b8b94;
+    font-size:19px;
+    margin-left:15px;
+  }
+
+  .free-badge{
+    display:inline-block;
+    margin-top:6px;
+    padding:2px 6px;
+    background:#ff3d58;
+    color:#fff;
+    border-radius:2px;
+    font-size:9px;
+    font-weight:700;
+  }
+
+  /* RIGHT COURSE CARD */
+  .side-card{
+    border-radius:12px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 5px 22px rgba(0,0,0,.13);
+    border:1px solid #eee;
+    position:sticky;
+    top:22px;
+  }
+
+  .thumbnail{
+    width:100%;
+    aspect-ratio:1.52/1;
+    object-fit:cover;
+    display:block;
+    background:#111;
+  }
+
+  .side-body{
+    padding:20px 16px 0;
+  }
+
+  .side-title{
+    font-size:17px;
+    line-height:1.45;
+    font-weight:700;
+    color:#26384e;
+  }
+
+  .price-label{
+    font-family:Georgia,serif;
+    font-size:22px;
+    font-weight:700;
+    color:var(--green);
+    margin-top:18px;
+    margin-bottom:20px;
+  }
+
+  .buy-wrap{
+    border-top:1px solid #e6e6e6;
+    padding:16px;
+    margin:0 -16px;
+  }
+
+  .buy-btn{
+    width:100%;
+    height:48px;
+    border:0;
+    border-radius:8px;
+    background:var(--red);
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+  }
+
+  .buy-btn:hover{
+    background:var(--red-dark);
+    transform:translateY(-1px);
+  }
+
+  /* PAYMENT MESSAGE */
+  .payment-note{
+    display:none;
+    margin-top:14px;
+    padding:11px 12px;
+    border-radius:7px;
+    background:#fff4f4;
+    color:#b5141f;
+    font-size:12px;
+  }
+
+  .payment-note.show{display:block}
+
+  /* MOBILE */
+  @media(max-width:900px){
+    .course-page{
+      padding:20px 14px 45px;
+    }
+
+    .course-grid{
+      grid-template-columns:1fr;
+      gap:28px;
+    }
+
+    .side-card{
+      position:static;
+      order:-1;
+    }
+
+    .course-title{
+      font-size:18px;
+    }
+
+    .course-subtitle{
+      font-size:12px;
+    }
+  }
+
+  @media(max-width:560px){
+    .course-page{
+      padding:14px 10px 35px;
+    }
+
+    .side-body{
+      padding:17px 14px 0;
+    }
+
+    .buy-wrap{
+      margin:0 -14px;
+      padding:14px;
+    }
+
+    .tabs{
+      margin-top:8px;
+    }
+
+    .tab-btn{
+      font-size:14px;
+      padding:0 13px 11px;
+    }
+
+    .overview-card{
+      padding:20px 17px 0;
+    }
+
+    .course-info{
+      grid-template-columns:1fr;
+      gap:18px;
+    }
+
+    .info-box{
+      padding-right:0;
+    }
+
+    .info-box + .info-box{
+      border-left:0;
+      border-top:1px solid #eee;
+      padding-left:0;
+      padding-top:18px;
+    }
+
+    .content-row{
+      min-height:78px;
+      padding:12px 10px;
+    }
+
+    .folder{
+      width:58px;
+      height:50px;
+      margin-right:11px;
+      font-size:25px;
+    }
+
+    .content-name{
+      font-size:13px;
+    }
+
+    .arrow{
+      font-size:22px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="course-page">
+  <div class="course-wrap">
+
+    <div class="course-grid">
+
+      <!-- =========================
+           LEFT: COURSE DETAILS
+      ========================== -->
+      <main class="course-main">
+
+        <h1 class="course-title">1st Semester All Branches Mission 2.0</h1>
+
+        <div class="course-subtitle">
+          Semester 1 · Civil Engineering Sem 1 · Mechanical Engineering Sem 1 ·
+          Electrical Engineering Sem 1 · Computer Science Sem 1 ·
+          Electronic Engineering Sem 1 · Electrical &amp; Electronics Engineering Sem 1
+        </div>
+
+        <div class="course-tags">
+          <span class="tag"><span class="tag-icon">📝</span> TEST</span>
+          <span class="tag"><span class="tag-icon">📄</span> PDFs</span>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="overview">OVERVIEW</button>
+          <button class="tab-btn" data-tab="content">CONTENT</button>
+        </div>
+
+        <!-- OVERVIEW -->
+        <section id="overview" class="tab-panel active">
+
+          <div class="overview-card">
+
+            <h2 class="section-title">About This Course</h2>
+
+            <div class="description">
+              1st Semester All Branches Mission 2.0 By Gaurav Sir &amp; Team.<br>
+              Free Course<br>
+              All Classes PDF Notes
+            </div>
+
+            <div class="course-info">
+
+              <div class="info-box">
+                <div class="info-icon">◷</div>
+                <div>
+                  <div class="info-name">365 Day Validity</div>
+                  <div class="info-text">You will get this course for 365 full Day(s)</div>
+                </div>
+              </div>
+
+              <div class="info-box">
+                <div class="info-icon">▶</div>
+                <div>
+                  <div class="info-name">9 Learning Material</div>
+                  <div class="info-text">7 Files, 2 Tests</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="benefit-card">
+            <div class="benefit-title">What else you will get?</div>
+
+            <div class="benefit">
+              <div class="benefit-icon">🖥️</div>
+              <div>
+                <div class="benefit-name">Available on PC</div>
+                <div class="benefit-text">Bigger screen, better clarity</div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- CONTENT -->
+        <section id="content" class="tab-panel">
+
+          <div class="content-list">
+
+            <div class="content-row">
+              <div class="folder">📁</div>
+              <div class="content-info">
+                <div class="content-name">Live Course</div>
+                <div class="content-count">74 video(s), 117 file(s)</div>
+              </div>
+              <div class="arrow">›</div>
+            </div>
+
+            <div class="content-row">
+              <div class="folder">📁</div>
+              <div class="content-info">
+                <div class="content-name">Syllabus</div>
+                <div class="content-count">1 file(s)</div>
+              </div>
+              <div class="arrow">›</div>
+            </div>
+
+            <div class="content-row">
+              <div class="folder">📁</div>
+              <div class="content-info">
+                <div class="content-name">E-BOOKS</div>
+                <div class="content-count">5 file(s)</div>
+              </div>
+              <div class="arrow">›</div>
+            </div>
+
+            <div class="content-row">
+              <div class="folder">🖼️</div>
+              <div class="content-info">
+                <div class="content-name">Time table 2026 Odd Sem.png</div>
+              </div>
+              <div class="lock">🔒</div>
+            </div>
+
+            <div class="content-row">
+              <div class="folder">📁</div>
+              <div class="content-info">
+                <div class="content-name">Test</div>
+                <div class="content-count">2 test(s)</div>
+                <span class="free-badge">1 FREE CONTENT</span>
+              </div>
+              <div class="arrow">›</div>
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+      <!-- =========================
+           RIGHT: THUMBNAIL + BUY
+      ========================== -->
+      <aside class="side-card">
+
+        <img
+          class="thumbnail"
+          src="course-thumbnail.jpg"
+          alt="Course Thumbnail"
+        >
+
+        <div class="side-body">
+
+          <div class="side-title">
+            1st Semester All Branches<br>
+            Mission 2.0
+          </div>
+
+          <div class="price-label">Buy Course ₹99</div>
+
+          <div class="buy-wrap">
+            <button class="buy-btn" id="buyCourse">
+              Buy Course ₹99
+            </button>
+            <div class="payment-note" id="paymentNote">
+              Payment link is not configured yet. Set your payment URL in the
+              <b>PAYMENT_URL</b> variable inside this HTML.
+            </div>
+          </div>
+
+        </div>
+
+      </aside>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ==========================================
+     PAYMENT SETUP
+     Replace this with your Cashfree/payment
+     link when ready.
+  ========================================== */
+
+  const PAYMENT_URL = "";
+
+  const buyButton = document.getElementById("buyCourse");
+  const paymentNote = document.getElementById("paymentNote");
+
+  buyButton.addEventListener("click", function () {
+    if (PAYMENT_URL.trim() !== "") {
+      window.location.href = PAYMENT_URL;
+    } else {
+      paymentNote.classList.toggle("show");
+    }
+  });
+
+  /* ==========================================
+     OVERVIEW / CONTENT TABS
+  ========================================== */
+
+  const tabButtons = document.querySelectorAll(".tab-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+
+  tabButtons.forEach(button => {
+    button.addEventListener("click", () => {
+
+      tabButtons.forEach(btn => btn.classList.remove("active"));
+      panels.forEach(panel => panel.classList.remove("active"));
+
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -6140,100 +6140,179 @@ const courseDetailMeta={
 };
 
 let currentDetailCourse=null;
+
+/* =========================================================
+   COURSE DETAIL / PURCHASE GATE
+   Flow:
+   Course card -> Overview + Content Preview -> Buy Course ->
+   QR payment -> UTR -> Admin approval -> direct course HTML.
+   ========================================================= */
+const courseDetailMeta={
+  "civil-year-2-course":{icon:"fa-hard-hat",color:"green",subtitle:"Core Civil Engineering subjects, practical concepts and exam-focused learning.",desc:"A structured Civil Engineering Year 2 course with lectures, short notes and syllabus-based learning resources for diploma students."},
+  "mechanical-year-2-course":{icon:"fa-gears",color:"orange",subtitle:"Thermal, production and core Mechanical Engineering learning.",desc:"A structured Mechanical Engineering Year 2 course designed around core subjects, revision resources and practical understanding."},
+  "cs-year-2-course":{icon:"fa-laptop-code",color:"blue",subtitle:"Programming, computer science concepts and exam preparation.",desc:"A focused Computer Science Engineering Year 2 learning course with structured digital resources for diploma students."},
+  "it-year-2-course":{icon:"fa-network-wired",color:"cyan",subtitle:"Information Technology concepts, lectures and revision material.",desc:"A structured Information Technology Year 2 course with syllabus-based learning resources and exam preparation support."},
+  "electrical-year-2-course":{icon:"fa-bolt",color:"red",subtitle:"Core Electrical Engineering subjects and practical concepts.",desc:"A structured Electrical Engineering Year 2 course built for concept learning, revision and diploma exam preparation."},
+  "electronics-year-2-course":{icon:"fa-microchip",color:"pink",subtitle:"Electronics concepts, devices, circuits and practical learning.",desc:"A structured Electronics Engineering Year 2 course with digital study resources for concept clarity and revision."},
+  "agriculture-year-2-course":{icon:"fa-seedling",color:"green",subtitle:"Agriculture Engineering subjects with practical learning.",desc:"A structured Agriculture Engineering Year 2 course with syllabus-focused learning and revision resources."},
+  "chemical-year-2-course":{icon:"fa-flask",color:"teal",subtitle:"Core Chemical Engineering concepts and exam preparation.",desc:"A structured Chemical Engineering Year 2 course with digital learning resources for diploma students."},
+  "civil-year-3-course":{icon:"fa-hard-hat",color:"green",subtitle:"Advanced Civil Engineering subjects and exam-focused preparation.",desc:"A structured Civil Engineering Year 3 course with advanced subjects, revision resources and practical learning."},
+  "mechanical-year-3-course":{icon:"fa-gears",color:"orange",subtitle:"Advanced Mechanical & Production Studies.",desc:"A structured Mechanical Engineering Year 3 course with advanced concepts and exam-oriented digital resources."},
+  "electrical-year-3-course":{icon:"fa-bolt",color:"red",subtitle:"Advanced Electrical Machines & Systems.",desc:"A structured Electrical Engineering Year 3 course with advanced learning resources and practical concepts."},
+  "electronics-year-3-course":{icon:"fa-microchip",color:"pink",subtitle:"Advanced Electronics Engineering concepts and systems.",desc:"A structured Electronics Engineering Year 3 course with focused digital resources for diploma students."},
+  "cs-year-3-course":{icon:"fa-laptop-code",color:"blue",subtitle:"Advanced Computer Science Engineering learning.",desc:"A structured Computer Science Engineering Year 3 course with advanced concepts and exam preparation resources."},
+  "it-year-3-course":{icon:"fa-network-wired",color:"cyan",subtitle:"Advanced Information Technology concepts and preparation.",desc:"A structured Information Technology Year 3 course with advanced syllabus-based digital resources."},
+  "dairy-year-3-course":{icon:"fa-cow",color:"teal",subtitle:"Advanced Dairy Technology subjects and practical learning.",desc:"A structured Dairy Technology Year 3 course with focused digital learning resources."},
+  "dairy-year-2-course":{icon:"fa-cow",color:"teal",subtitle:"Dairy Technology Year 2 learning resources.",desc:"A structured Dairy Technology Year 2 course with syllabus-based resources and exam preparation."},
+  "agriculture-year-3-course":{icon:"fa-seedling",color:"green",subtitle:"Advanced Agriculture Engineering learning.",desc:"A structured Agriculture Engineering Year 3 course with advanced subjects and revision resources."},
+  "chemical-year-3-course":{icon:"fa-flask",color:"teal",subtitle:"Advanced Chemical Engineering concepts and preparation.",desc:"A structured Chemical Engineering Year 3 course with advanced syllabus-based digital resources."}
+};
+
 function getDetailCard(courseId){
-  return getCourseCard(courseId);
+  return typeof getCourseCard==='function' ? getCourseCard(courseId) : null;
 }
 function getDetailData(courseId){
-  const card=getDetailCard(courseId);
-  const meta=courseDetailMeta[courseId]||{};
+  const card=getDetailCard(courseId), meta=courseDetailMeta[courseId]||{};
   const title=courseNames[courseId]||courseId;
   const subtitle=meta.subtitle || card?.querySelector('.card-header-banner > p')?.textContent?.trim() || 'Structured course learning resources.';
   const desc=meta.desc || `A structured ${title} course with digital learning resources for diploma students.`;
-  const features=card ? Array.from(card.querySelectorAll('.feature-list li')).map(x=>x.textContent.trim()).filter(Boolean) : [
-    "YouTube's best lectures provided here","AI Short Notes (Unit wise)","New syllabus based"
-  ];
-  const fileName=EXTERNAL_FILE_MAP[courseId] || `${courseId}.html`;
-  return {title,subtitle,desc,features,fileName,icon:meta.icon||"fa-graduation-cap",color:meta.color||"blue"};
+  const features=card ? Array.from(card.querySelectorAll('.feature-list li')).map(x=>x.textContent.trim()).filter(Boolean) : ["YouTube's best lectures provided here","AI Short Notes (Unit wise)","New syllabus based"];
+  return {title,subtitle,desc,features,fileName:EXTERNAL_FILE_MAP[courseId]||`${courseId}.html`,icon:meta.icon||'fa-graduation-cap',color:meta.color||'blue'};
 }
+
+function showCourseDetailPage(push=true){
+  const pages=document.querySelectorAll('.page');
+  pages.forEach(p=>{p.classList.remove('active-page');p.classList.remove('external-page');});
+  const el=document.getElementById('courseDetailPage');
+  if(!el)return;
+  el.classList.add('active-page');
+  if(push) history.pushState({pageId:'courseDetailPage'},'',window.location.pathname+window.location.search);
+  window.scrollTo({top:0,left:0,behavior:'instant'});
+}
+
+function courseThumbnailSvg(d){
+  const title=String(d.title).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const icon=d.icon.replace(/^fa-/,'');
+  const bg={green:'#16a34a',orange:'#ea580c',blue:'#2563eb',cyan:'#0891b2',red:'#dc2626',pink:'#db2777',teal:'#0f766e'}[d.color]||'#2563eb';
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560">
+    <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>
+    <rect width="1200" height="560" rx="34" fill="url(#g)"/>
+    <circle cx="1030" cy="80" r="190" fill="white" opacity=".08"/><circle cx="1120" cy="470" r="220" fill="white" opacity=".06"/>
+    <text x="70" y="105" fill="white" opacity=".85" font-family="Arial" font-size="28" font-weight="700">DIPLOMA ENGINEERS</text>
+    <text x="70" y="255" fill="white" font-family="Arial" font-size="64" font-weight="900">${title}</text>
+    <text x="70" y="310" fill="white" opacity=".86" font-family="Arial" font-size="28">Premium Course • ₹99</text>
+    <rect x="70" y="370" width="260" height="68" rx="20" fill="white" opacity=".16"/><text x="100" y="414" fill="white" font-family="Arial" font-size="27" font-weight="800">FULL COURSE ACCESS</text>
+    <text x="1035" y="430" text-anchor="middle" fill="white" font-family="Arial" font-size="110" font-weight="900">▣</text>
+  </svg>`;
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
+
 function courseDetailShellHtml(courseId,tab='overview',unlocked=false){
   const d=getDetailData(courseId);
-  const safeTitle=esc(d.title),safeSubtitle=esc(d.subtitle),safeDesc=esc(d.desc),safeFile=esc(d.fileName);
   const featureHtml=d.features.map(f=>`<div class="course-detail-feature"><i class="fa-solid fa-circle-check"></i><span>${esc(f)}</span></div>`).join('');
-  const overview=`<div class="course-detail-panel">
-    <h3>About This Course</h3>
-    <p>${safeDesc}</p>
-    <div class="course-detail-feature-grid">${featureHtml}</div>
-    <div class="course-detail-note"><i class="fa-solid fa-circle-info"></i> Course access is protected. Payment + UTR submission + admin verification are required before the actual course file can be opened.</div>
-  </div>`;
-  const content=unlocked
-    ? `<div class="course-detail-panel">
-        <h3>Course Content</h3>
-        <p style="margin-bottom:14px;">Your purchase is verified. Open the course content below.</p>
-        <div class="course-detail-file">
-          <div class="course-detail-file-icon"><i class="fa-brands fa-html5"></i></div>
-          <div class="course-detail-file-info"><strong>${safeFile}</strong><span>Course HTML • Full course content</span></div>
-          <span class="course-detail-access"><i class="fa-solid fa-unlock"></i> Unlocked</span>
-        </div>
-        <button type="button" class="course-detail-cta green" onclick="window.openCourse('${esc(courseId)}')"><i class="fa-solid fa-play"></i> Open Course</button>
-      </div>`
-    : `<div class="course-detail-panel">
-        <div class="course-detail-content-lock">
-          <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
-          <h3>Course Content Locked</h3>
-          <p>Pay ₹99 first, then submit your UTR / Transaction ID. After admin verification, this course will unlock automatically.</p>
-          <button type="button" class="course-detail-cta" onclick="openCoursePaymentFromDetail('${esc(courseId)}')"><i class="fa-solid fa-credit-card"></i> Pay ₹99 & Unlock Course</button>
-        </div>
-      </div>`;
+  const thumb=courseThumbnailSvg(d);
+  const buyCard=unlocked
+    ? `<div class="course-buy-card approved"><div class="buy-status"><i class="fa-solid fa-circle-check"></i> PURCHASE VERIFIED</div><h3>Full Course Access</h3><p>Your payment has been approved. Open the complete course directly.</p><button class="course-detail-cta green" type="button" onclick="window.openApprovedCourse('${esc(courseId)}')"><i class="fa-solid fa-unlock"></i> Open Course</button></div>`
+    : `<div class="course-buy-card"><div class="buy-status"><i class="fa-solid fa-lock"></i> PREMIUM COURSE</div><h3>Buy This Course</h3><div class="buy-price">₹99 <small>INR</small></div><p>Pay ₹99, submit your UTR and wait for admin approval.</p><button class="course-detail-cta" type="button" onclick="openCoursePaymentFromDetail('${esc(courseId)}')"><i class="fa-solid fa-bag-shopping"></i> Buy Course ₹99</button></div>`;
+  const overview=`<div class="course-detail-panel"><h3>About This Course</h3><p>${esc(d.desc)}</p><div class="course-detail-feature-grid">${featureHtml}</div><div class="course-detail-note"><i class="fa-solid fa-shield-halved"></i> Payment + UTR + admin approval are required before full course access.</div></div>`;
+  const content=`<div class="course-detail-panel"><div class="content-head-row"><div><h3>Course Content</h3><p>Course file preview is shown below. Videos and PDFs are intentionally locked before approval.</p></div><span class="preview-badge"><i class="fa-solid fa-eye"></i> Preview</span></div><div id="courseContentPreview" class="course-content-preview"><div class="preview-loading"><i class="fa-solid fa-spinner fa-spin"></i> Fetching course file...</div></div></div>`;
   return `<div class="course-detail-shell">
     <button type="button" class="course-detail-back" onclick="navigateTo('coursePage')"><i class="fa-solid fa-arrow-left"></i> Back to Courses</button>
-    <section class="course-detail-hero ${d.color}">
-      <div class="course-detail-hero-inner">
-        <div class="course-detail-badge"><i class="fa-solid ${d.icon}"></i> ${unlocked?'PURCHASE VERIFIED':'PREMIUM COURSE • ₹99'}</div>
-        <h1 class="course-detail-title">${safeTitle}</h1>
-        <p class="course-detail-subtitle">${safeSubtitle}</p>
+    <div class="course-detail-layout">
+      <div class="course-detail-main">
+        <section class="course-thumbnail-card"><img src="${thumb}" alt="${esc(d.title)} course thumbnail"><div class="thumbnail-overlay"><span><i class="fa-solid fa-graduation-cap"></i> ${unlocked?'FULL ACCESS':'PREMIUM COURSE'}</span><strong>${unlocked?'PURCHASE VERIFIED':'₹99'}</strong></div></section>
+        <section class="course-detail-hero ${d.color}"><div class="course-detail-hero-inner"><div class="course-detail-badge"><i class="fa-solid ${d.icon}"></i> ${unlocked?'PURCHASE VERIFIED':'PREMIUM COURSE • ₹99'}</div><h1 class="course-detail-title">${esc(d.title)}</h1><p class="course-detail-subtitle">${esc(d.subtitle)}</p></div></section>
+        <div class="course-detail-tabs"><button type="button" class="course-detail-tab ${tab==='overview'?'active':''}" onclick="renderCourseDetail('${esc(courseId)}','overview')"><i class="fa-solid fa-circle-info"></i> Overview</button><button type="button" class="course-detail-tab ${tab==='content'?'active':''}" onclick="renderCourseDetail('${esc(courseId)}','content')"><i class="fa-solid fa-folder-open"></i> Content</button></div>
+        ${tab==='content'?content:overview}
       </div>
-    </section>
-    <div class="course-detail-quick">
-      <div class="course-detail-stat"><i class="fa-solid fa-indian-rupee-sign"></i><strong>₹99</strong><span>Course Price</span></div>
-      <div class="course-detail-stat"><i class="fa-solid fa-shield-halved"></i><strong>${unlocked?'Verified':'Protected'}</strong><span>Access Status</span></div>
-      <div class="course-detail-stat"><i class="fa-solid fa-file-code"></i><strong>HTML</strong><span>Course Content</span></div>
+      <aside class="course-detail-side">${buyCard}<div class="course-side-info"><div><i class="fa-solid fa-file-code"></i><span>Course File</span><strong>${esc(d.fileName)}</strong></div><div><i class="fa-solid fa-shield-halved"></i><span>Access</span><strong>${unlocked?'Approved':'Admin Approval Required'}</strong></div></div></aside>
     </div>
-    <div class="course-detail-tabs">
-      <button type="button" class="course-detail-tab ${tab==='overview'?'active':''}" onclick="renderCourseDetail('${esc(courseId)}','overview')"><i class="fa-solid fa-circle-info"></i> Overview</button>
-      <button type="button" class="course-detail-tab ${tab==='content'?'active':''}" onclick="renderCourseDetail('${esc(courseId)}','content')"><i class="fa-solid fa-folder-open"></i> Content</button>
-    </div>
-    ${tab==='content'?content:overview}
-    ${!unlocked?`<div style="margin-top:12px;"><button type="button" class="course-detail-cta" onclick="openCoursePaymentFromDetail('${esc(courseId)}')"><i class="fa-solid fa-lock-open"></i> Get This Course • ₹99</button></div>`:''}
   </div>`;
 }
+
 window.renderCourseDetail=async function(courseId,tab='overview'){
   if(!paidCourseIds.includes(courseId))return;
   currentDetailCourse=courseId;
   const root=document.getElementById('courseDetailRoot');
   if(!root)return;
-  let unlocked=false;
-  if(currentUid){
-    const access=await accessValue(courseId).catch(()=>null);
-    unlocked=isApproved(access);
-  }
-  root.innerHTML=courseDetailShellHtml(courseId,tab,unlocked);
-  navigateTo('courseDetailPage');
+  const access=currentUid ? await accessValue(courseId).catch(()=>null) : null;
+  const unlocked=isApproved(access);
+  if(unlocked){ window.openApprovedCourse(courseId); return; }
+  root.innerHTML=courseDetailShellHtml(courseId,tab,false);
+  showCourseDetailPage(true);
+  if(tab==='content') setTimeout(()=>loadLockedCoursePreview(courseId),0);
 };
+
+window.openApprovedCourse=async function(courseId){
+  if(!currentUid){alert('Please login first.');return;}
+  const access=await accessValue(courseId).catch(()=>null);
+  if(!isApproved(access)){renderCourseDetail(courseId,'overview');return;}
+  closePayment();
+  setPaidCardState(courseId,'approved');
+  if(typeof window.loadPortalFromFile==='function')window.loadPortalFromFile(courseId,true);
+  if(typeof window.renderPageUI==='function')window.renderPageUI(courseId);
+  history.pushState({pageId:courseId},'',window.location.pathname+window.location.search);
+  window.scrollTo({top:0,left:0,behavior:'instant'});
+};
+
 window.openCoursePaymentFromDetail=async function(courseId){
   if(!currentUid){alert('Please login first.');return;}
   const access=await accessValue(courseId).catch(()=>null);
-  if(isApproved(access)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
+  if(isApproved(access)){window.openApprovedCourse(courseId);return;}
   const latest=await getLatestPurchase(courseId);
-  if(latest&&String(latest.status||'').toLowerCase()==='pending'){showTrackingOnCard(courseId);watchAccess(courseId);return;}
+  if(latest&&String(latest.status||'').toLowerCase()==='pending'){
+    setPaidCardState(courseId,'pending');
+    showTrackingOnCard(courseId);
+    return;
+  }
   currentCourse=courseId;
   courseEl.textContent=courseNames[courseId]||courseId;
-  resetPaymentForm();
-  showStatus('');
-  overlay.style.display='flex';
-  overlay.setAttribute('aria-hidden','false');
+  resetPaymentForm();showStatus('');
+  overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');
   watchAccess(courseId);
-  setTimeout(()=>paymentDoneEl?.focus(),80);
 };
+
+async function loadLockedCoursePreview(courseId){
+  const box=document.getElementById('courseContentPreview');
+  if(!box)return;
+  const d=getDetailData(courseId);
+  try{
+    const response=await fetch(d.fileName,{cache:'no-store'});
+    if(!response.ok)throw new Error('Course file could not be fetched');
+    const html=await response.text();
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    doc.querySelectorAll('script,style,link,meta,base,noscript').forEach(x=>x.remove());
+    doc.querySelectorAll('video,audio,iframe,object,embed,source,track,canvas').forEach(el=>{
+      const lock=document.createElement('div');
+      lock.className='locked-media-item';
+      lock.innerHTML='<i class="fa-solid fa-lock"></i><strong>Premium Content Locked</strong><span>Buy the course to play/open this content.</span><button type="button">Buy Course ₹99</button>';
+      lock.addEventListener('click',()=>openCoursePaymentFromDetail(courseId));
+      el.replaceWith(lock);
+    });
+    doc.querySelectorAll('*').forEach(el=>{
+      [...el.attributes].forEach(a=>{if(/^on/i.test(a.name))el.removeAttribute(a.name);});
+    });
+    doc.querySelectorAll('a').forEach(a=>{
+      const href=a.getAttribute('href')||'';
+      const text=(a.textContent||'').trim()||'Open Content';
+      const lock=document.createElement('button');
+      lock.type='button';lock.className='locked-link-item';
+      lock.innerHTML='<i class="fa-solid fa-lock"></i><span>'+esc(text)+'</span><small>Unlock after payment</small>';
+      lock.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openCoursePaymentFromDetail(courseId);});
+      a.replaceWith(lock);
+    });
+    const body=doc.body;
+    body.querySelectorAll('form,button,input,select,textarea').forEach(el=>el.remove());
+    box.innerHTML='';
+    const wrap=document.createElement('div');wrap.className='fetched-course-preview';
+    while(body.firstChild)wrap.appendChild(body.firstChild);
+    box.appendChild(wrap);
+    const note=document.createElement('div');note.className='preview-bottom-lock';note.innerHTML='<i class="fa-solid fa-lock"></i> This is a locked preview. Click any video, PDF or course link to open the ₹99 payment & UTR card.';box.appendChild(note);
+  }catch(err){
+    console.warn('Course preview fetch failed:',err);
+    box.innerHTML=`<div class="preview-error"><i class="fa-solid fa-file-circle-xmark"></i><h4>Course Content Preview</h4><p>${esc(d.fileName)} is ready after purchase. Full content will open automatically after admin approval.</p><button type="button" class="course-detail-cta" onclick="openCoursePaymentFromDetail('${esc(courseId)}')"><i class="fa-solid fa-credit-card"></i> Buy Course ₹99</button></div>`;
+  }
+}
 
 const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus'),paymentDoneEl=document.getElementById('paymentDoneBtn');
 let paymentConfirmed=false;
@@ -6264,17 +6343,8 @@ const yes=x=>x===true||['true','approved','verified','active','granted','success
 return yes(v.verified)||yes(v.approved)||yes(v.isApproved)||yes(v.access)||yes(v.hasAccess)||yes(v.accessGranted)||yes(v.paid)||['verified','approved','active','granted','success'].includes(status);
 };
 
-/* courseAccess is an ADMIN-GRANTED access node. If an entry exists and is not explicitly rejected, treat it as unlocked. */
-const hasCourseAccess=v=>{
-if(v===null||v===undefined)return false;
-if(isApproved(v))return true;
-if(typeof v==='object'){
-const status=String(v.status??v.purchaseStatus??v.accessStatus??'').toLowerCase();
-if(['rejected','denied','revoked','blocked','failed','cancelled','canceled'].includes(status))return false;
-return Object.keys(v).length>0;
-}
-return false;
-};
+/* courseAccess is an ADMIN-GRANTED access node. Only an explicit approved/verified value unlocks a course. */
+const hasCourseAccess=v=>isApproved(v);
 function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;statusEl.style.display=t?'block':'none';}
 function closeTracking(){const o=document.getElementById('trackingOverlay');if(o){o.style.display='none';o.setAttribute('aria-hidden','true');}}
 function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');closeTracking();if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
@@ -6662,5 +6732,35 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 })();
 </script>
 
+
+<style id="course-detail-final-layout-style">
+.course-detail-shell{width:100%;max-width:1180px;margin:0 auto;padding:6px 0 40px}
+.course-detail-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.course-detail-main{min-width:0}
+.course-thumbnail-card{position:relative;width:100%;aspect-ratio:1200/560;border-radius:20px;overflow:hidden;background:#0f172a;box-shadow:0 12px 30px rgba(15,23,42,.14);margin-bottom:14px}
+.course-thumbnail-card img{display:block;width:100%;height:100%;object-fit:cover}
+.thumbnail-overlay{position:absolute;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.thumbnail-overlay span,.thumbnail-overlay strong{display:inline-flex;align-items:center;gap:7px;color:#fff;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 11px;font-size:10px;font-weight:900}
+.thumbnail-overlay strong{font-size:14px}
+.course-detail-side{position:sticky;top:14px}
+.course-buy-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+.course-buy-card.approved{border-color:#bbf7d0;background:linear-gradient(180deg,#fff,#f0fdf4)}
+.buy-status{display:flex;align-items:center;gap:7px;color:#2563eb;font-size:10px;font-weight:900;margin-bottom:9px}
+.course-buy-card.approved .buy-status{color:#16a34a}
+.course-buy-card h3{margin:0 0 5px;color:#0f172a;font-size:17px;font-weight:900}
+.course-buy-card p{margin:0 0 13px;color:#64748b;font-size:11px;line-height:1.55}
+.buy-price{font-size:30px;font-weight:950;color:#166534;margin:4px 0 8px}.buy-price small{font-size:11px;color:#64748b;font-weight:800}
+.course-side-info{margin-top:10px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:13px;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+.course-side-info>div{padding:9px 0;border-bottom:1px solid #f1f5f9}.course-side-info>div:last-child{border-bottom:0;padding-bottom:0}.course-side-info i{width:20px;color:#2563eb}.course-side-info span{font-size:9px;color:#64748b;margin-left:4px}.course-side-info strong{display:block;margin:3px 0 0 24px;font-size:10px;color:#0f172a;word-break:break-word}
+.content-head-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.preview-badge{flex:none;background:#eff6ff;color:#2563eb;border:1px solid #dbeafe;border-radius:999px;padding:6px 9px;font-size:9px;font-weight:900}
+.course-content-preview{margin-top:14px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;overflow:hidden;max-height:720px;overflow-y:auto}
+.preview-loading,.preview-error{padding:35px 18px;text-align:center;color:#64748b;font-size:12px}.preview-loading i{color:#2563eb;margin-right:6px}.preview-error i{font-size:30px;color:#94a3b8;margin-bottom:10px}.preview-error h4{margin:0 0 6px;color:#0f172a;font-size:14px}.preview-error p{margin:0 auto 14px;max-width:550px}
+.fetched-course-preview{padding:15px;background:#fff;color:#334155;font-size:12px;line-height:1.6;pointer-events:none}
+.fetched-course-preview img{max-width:100%;height:auto;border-radius:10px;pointer-events:none}.fetched-course-preview h1,.fetched-course-preview h2,.fetched-course-preview h3,.fetched-course-preview h4{color:#0f172a;margin:10px 0 6px}.fetched-course-preview p{margin:5px 0}.fetched-course-preview ul,.fetched-course-preview ol{padding-left:20px}.fetched-course-preview table{width:100%;border-collapse:collapse;display:block;overflow:auto}.fetched-course-preview th,.fetched-course-preview td{border:1px solid #e2e8f0;padding:7px;text-align:left}
+.locked-media-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:125px;margin:10px 0;padding:20px;border:1px dashed #93c5fd;border-radius:13px;background:#eff6ff;color:#2563eb;text-align:center;pointer-events:auto}.locked-media-item i{font-size:22px}.locked-media-item strong{font-size:12px;color:#0f172a}.locked-media-item span{font-size:10px;color:#64748b}.locked-media-item button,.locked-link-item{border:0;border-radius:9px;background:#2563eb;color:#fff;padding:8px 11px;font-size:10px;font-weight:900;cursor:pointer}
+.locked-link-item{display:flex;align-items:center;gap:7px;width:100%;margin:7px 0;text-align:left;pointer-events:auto}.locked-link-item small{margin-left:auto;opacity:.85;font-size:8px}.preview-bottom-lock{margin:12px;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:10px;font-weight:700;text-align:center}.preview-bottom-lock i{margin-right:5px}
+@media(max-width:850px){.course-detail-layout{grid-template-columns:1fr}.course-detail-side{position:static}.course-buy-card{margin-top:0}.course-detail-side .course-side-info{display:none}}
+@media(max-width:600px){.course-detail-shell{padding:3px 0 28px}.course-thumbnail-card{border-radius:15px}.thumbnail-overlay{left:9px;right:9px;bottom:9px}.thumbnail-overlay span{font-size:8px;padding:6px 8px}.thumbnail-overlay strong{font-size:12px;padding:6px 9px}.course-detail-hero{border-radius:16px!important;min-height:175px!important;padding:18px!important}.course-detail-tabs{margin-top:10px}.course-detail-panel{border-radius:15px}.course-buy-card{border-radius:15px;padding:15px}}
+</style>
 </body>
 </html>

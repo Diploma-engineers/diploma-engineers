@@ -7445,55 +7445,21 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     };
     doc.addEventListener('contextmenu',doc.__deMediaContextHandler,true);
 
-    // Protect controls that clearly point to a PDF/video.
-    // IMPORTANT: generic folder/subject buttons are deliberately NOT locked.
-    doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick],li[onclick],a').forEach(el=>{
+    // Protect only controls that clearly point to a PDF/video.
+    // Do NOT use generic words such as "lecture", "video" or "open" on
+    // ordinary folder buttons, otherwise folder navigation would be blocked.
+    doc.querySelectorAll('button,[role="button"],div[onclick],span[onclick],li[onclick]').forEach(el=>{
       const oc=(el.getAttribute('onclick')||'').toLowerCase();
       const href=(el.getAttribute('href')||'').toLowerCase();
-      const src=(el.getAttribute('src')||'').toLowerCase();
       const explicit=(el.getAttribute('data-type')||el.getAttribute('data-file-type')||el.getAttribute('data-media-type')||'').toLowerCase();
-      const cls=(el.className && typeof el.className==='string' ? el.className : '').toLowerCase();
-      const source=oc+' '+href+' '+src+' '+explicit+' '+cls;
-      const looksPdf=/\.pdf(?:[?#]|$)|\b(pdf|download[_ -]?pdf|pdf[_ -]?file|pdfurl|pdf_url)\b/.test(source);
-      const looksVideo=/\.(mp4|webm|mkv|mov|m4v|avi|m3u8)(?:[?#]|$)|youtube\.com|youtu\.be|vimeo\.com|\b(video[_ -]?file|video[_ -]?url|watch[_ -]?video|play[_ -]?video|videourl|video_url)\b/.test(source);
+      const source=oc+' '+href+' '+explicit;
+      const looksPdf=/\.pdf(?:[?#]|$)|\b(pdf|download[_ -]?pdf|pdf[_ -]?file)\b/.test(source);
+      const looksVideo=/\.(mp4|webm|mkv|mov|m4v|avi)(?:[?#]|$)|youtube\.com|youtu\.be|vimeo\.com|\b(video[_ -]?file|video[_ -]?url|watch[_ -]?video|play[_ -]?video)\b/.test(source);
       if(looksPdf || looksVideo){
         el.dataset.dePaidMedia='1';
         el.dataset.dePaidMediaLabel=looksPdf?'PDF':'Video';
-        if(!currentApproved() && el.tagName.toLowerCase()==='a' && !el.querySelector('.de-media-lock-badge')){
-          const badge=doc.createElement('span');
-          badge.className='de-media-lock-badge';
-          badge.textContent='🔒 '+(looksPdf?'PDF':'Video');
-          el.appendChild(badge);
-        }
       }
     });
-
-    // PDF viewers can also be rendered as embed/object/iframe instead of an
-    // ordinary <a>. Mark those exact media elements only.
-    doc.querySelectorAll('iframe[src],embed[src],object[data]').forEach(el=>{
-      const mediaUrl=(el.getAttribute('src')||el.getAttribute('data')||'').toLowerCase();
-      if(/\.pdf(?:[?#]|$)/i.test(mediaUrl)){
-        el.dataset.dePaidMedia='1';
-        el.dataset.dePaidMediaLabel='PDF';
-        if(!currentApproved()){
-          el.style.pointerEvents='none';
-          el.style.filter='blur(2px)';
-        }
-      }
-    });
-
-    // Course folders/semester tabs often replace their contents dynamically.
-    // Re-scan after every DOM change so newly opened PDF/video items receive
-    // the same lock, while folder navigation remains completely usable.
-    if(doc.__deMediaObserver) doc.__deMediaObserver.disconnect();
-    if(doc.defaultView && doc.body){
-      let scanTimer=null;
-      doc.__deMediaObserver=new MutationObserver(()=>{
-        clearTimeout(scanTimer);
-        scanTimer=setTimeout(()=>injectMediaProtection(doc),80);
-      });
-      doc.__deMediaObserver.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['href','src','onclick','data-type','data-file-type','data-media-type']});
-    }
   }
 
   function bindFrame(){

@@ -1,0 +1,1503 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Semester Courses | Diploma Engineers</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* =========================================
+           RESET
+        ========================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f6f8fc;
+            color: #1d2433;
+            overflow-x: hidden;
+        }
+
+
+        /* =========================================
+           SCROLL PROGRESS BAR
+        ========================================== */
+
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(
+                90deg,
+                #2563eb,
+                #7c3aed,
+                #06b6d4
+            );
+            z-index: 999999;
+            transition: width 0.1s linear;
+        }
+
+
+        /* =========================================
+           MAIN PAGE
+        ========================================== */
+
+        .courses-page {
+            min-height: 100vh;
+            padding: 45px 20px 70px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1250px;
+            margin: auto;
+        }
+
+
+        /* =========================================
+           HERO SECTION
+        ========================================== */
+
+        .page-heading {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .page-heading .badge {
+            display: inline-block;
+            padding: 8px 18px;
+            background: #e8efff;
+            color: #2563eb;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .page-heading h1 {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #172033;
+        }
+
+        .page-heading h1 span {
+            color: #2563eb;
+        }
+
+        .page-heading p {
+            max-width: 650px;
+            margin: auto;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+
+        /* =========================================
+           SEARCH + FILTER
+        ========================================== */
+
+        .course-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: #ffffff;
+            padding: 16px 20px 16px 50px;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            border: 1px solid #edf0f5;
+            transition: 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 8px 30px rgba(37,99,235,0.12);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #64748b;
+            z-index: 2;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #555;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #e9edf3;
+            transition: 0.3s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+
+        /* =========================================
+           SEMESTER SECTION
+        ========================================== */
+
+        .semester-section {
+            margin-bottom: 60px;
+        }
+
+        .semester-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .semester-title-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .semester-number {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+        }
+
+        .semester-title h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #172033;
+        }
+
+        .semester-title p {
+            color: #7b8494;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .course-count {
+            background: #eef3ff;
+            color: #2563eb;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+
+        /* =========================================
+           COURSE GRID
+        ========================================== */
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 22px;
+        }
+
+
+        /* =========================================
+           COURSE CARD
+        ========================================== */
+
+        .course-card {
+            position: relative;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #edf0f5;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.05);
+            overflow: hidden;
+
+            /* Scroll Animation Initial State */
+            opacity: 0;
+            transform: translateY(45px) scale(0.97);
+
+            transition:
+                opacity 0.65s ease,
+                transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.3s ease;
+        }
+
+        .course-card.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .course-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(
+                90deg,
+                #2563eb,
+                #7c3aed
+            );
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: 0.35s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 45px rgba(15,23,42,0.12);
+        }
+
+        .course-card:hover::before {
+            transform: scaleX(1);
+        }
+
+
+        /* =========================================
+           COURSE CARD CONTENT
+        ========================================== */
+
+        .course-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .course-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: #eef4ff;
+            transition: 0.3s ease;
+        }
+
+        .course-card:hover .course-icon {
+            transform: rotate(8deg) scale(1.08);
+        }
+
+        .semester-tag {
+            background: #f4f6f9;
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 10px;
+            border-radius: 8px;
+        }
+
+        .course-card h3 {
+            font-size: 17px;
+            line-height: 1.5;
+            font-weight: 700;
+            color: #1d2433;
+            min-height: 52px;
+            margin-bottom: 8px;
+        }
+
+        .course-card p {
+            color: #7a8393;
+            font-size: 12px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+
+
+        /* =========================================
+           OPEN COURSE BUTTON
+        ========================================== */
+
+        .open-course-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            background: #172033;
+            color: #ffffff;
+            padding: 13px 15px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.3s ease;
+        }
+
+        .open-course-btn:hover {
+            background: #2563eb;
+            transform: scale(1.02);
+        }
+
+
+        /* =========================================
+           SCROLL REVEAL ANIMATION
+        ========================================== */
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .scroll-reveal.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        /* =========================================
+           LEFT REVEAL
+        ========================================== */
+
+        .scroll-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .scroll-left.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+
+        /* =========================================
+           NO RESULT
+        ========================================== */
+
+        .no-result {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+            color: #777;
+        }
+
+        .no-result h3 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================== */
+
+        @media (max-width: 768px) {
+
+            .courses-page {
+                padding: 30px 15px 50px;
+            }
+
+            .course-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .filter-btn {
+                padding: 11px 8px;
+            }
+
+            .semester-title {
+                align-items: flex-start;
+            }
+
+            .semester-title h2 {
+                font-size: 20px;
+            }
+
+            .course-count {
+                display: none;
+            }
+
+            .courses-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .course-card {
+                padding: 20px;
+            }
+
+        }
+
+
+        @media (max-width: 400px) {
+
+            .page-heading h1 {
+                font-size: 26px;
+            }
+
+            .filter-buttons {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <!-- SCROLL PROGRESS -->
+    <div id="scroll-progress"></div>
+
+
+    <!-- HEADER -->
+    <div id="header-placeholder"></div>
+
+
+    <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
+
+    <main class="courses-page">
+
+        <div class="container">
+
+
+            <!-- PAGE HEADING -->
+
+            <div class="page-heading scroll-reveal">
+
+                <div class="badge">
+                    Diploma Engineers Learning Platform
+                </div>
+
+                <h1>
+                    Explore Your <span>Semester Courses</span>
+                </h1>
+
+                <p>
+                    Access all first and second semester diploma engineering
+                    subjects in one place. Select your subject and start learning.
+                </p>
+
+            </div>
+
+
+            <!-- SEARCH + FILTER -->
+
+            <div class="course-controls scroll-reveal">
+
+                <div class="search-box">
+
+                    <span class="search-icon">⌕</span>
+
+                    <input
+                        type="text"
+                        id="courseSearch"
+                        placeholder="Search course or subject..."
+                    >
+
+                </div>
+
+
+                <div class="filter-buttons">
+
+                    <button class="filter-btn active" data-filter="all">
+                        All Courses
+                    </button>
+
+                    <button class="filter-btn" data-filter="first">
+                        1st Semester
+                    </button>
+
+                    <button class="filter-btn" data-filter="second">
+                        2nd Semester
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================================
+                 FIRST SEMESTER
+            ========================================== -->
+
+            <section class="semester-section first-semester"
+                     data-semester="first">
+
+
+                <div class="semester-title scroll-left">
+
+                    <div class="semester-title-left">
+
+                        <div class="semester-number">
+                            01
+                        </div>
+
+                        <div>
+                            <h2>First Semester</h2>
+
+                            <p>
+                                Foundation Engineering Subjects
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="course-count">
+                        7 Courses
+                    </div>
+
+                </div>
+
+
+                <div class="courses-grid">
+
+
+                    <!-- Mathematics I -->
+
+                    <div class="course-card"
+                         data-name="mathematics 1 maths engineering mathematics">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">∑</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Mathematics - I</h3>
+
+                        <p>
+                            Engineering mathematics fundamentals and
+                            problem solving.
+                        </p>
+
+                        <a href="mathematics-1.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Applied Physics I -->
+
+                    <div class="course-card"
+                         data-name="applied physics 1 physics">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⚛</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Applied Physics - I</h3>
+
+                        <p>
+                            Basic physics concepts and engineering
+                            applications.
+                        </p>
+
+                        <a href="applied-physics-1.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Applied Chemistry -->
+
+                    <div class="course-card"
+                         data-name="applied chemistry chemistry">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⚗</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Applied Chemistry</h3>
+
+                        <p>
+                            Chemical principles and their engineering
+                            applications.
+                        </p>
+
+                        <a href="applied-chemistry.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Communication Skills -->
+
+                    <div class="course-card"
+                         data-name="communication skills english communication">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">A</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Communication Skills in English</h3>
+
+                        <p>
+                            Improve communication, writing and
+                            professional English skills.
+                        </p>
+
+                        <a href="communication-skills-in-english.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Engineering Graphics -->
+
+                    <div class="course-card"
+                         data-name="engineering graphics drawing">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">✎</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Engineering Graphics</h3>
+
+                        <p>
+                            Technical drawing and graphical
+                            representation concepts.
+                        </p>
+
+                        <a href="engineering-graphics.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Engineering Workshop Practice -->
+
+                    <div class="course-card"
+                         data-name="engineering workshop practice">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⚙</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Engineering Workshop Practice</h3>
+
+                        <p>
+                            Practical workshop skills and basic
+                            engineering operations.
+                        </p>
+
+                        <a href="engineering-workshop-practice.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Sports Yoga -->
+
+                    <div class="course-card"
+                         data-name="sports yoga health fitness">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">♧</div>
+
+                            <span class="semester-tag">
+                                Semester 1
+                            </span>
+
+                        </div>
+
+                        <h3>Sports & Yoga</h3>
+
+                        <p>
+                            Physical fitness, sports activities
+                            and yoga practices.
+                        </p>
+
+                        <a href="sports-yoga.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================================
+                 SECOND SEMESTER
+            ========================================== -->
+
+            <section class="semester-section second-semester"
+                     data-semester="second">
+
+
+                <div class="semester-title scroll-left">
+
+                    <div class="semester-title-left">
+
+                        <div class="semester-number">
+                            02
+                        </div>
+
+                        <div>
+
+                            <h2>Second Semester</h2>
+
+                            <p>
+                                Core Engineering Foundation Subjects
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="course-count">
+                        6 Courses
+                    </div>
+
+                </div>
+
+
+                <div class="courses-grid">
+
+
+                    <!-- Mathematics II -->
+
+                    <div class="course-card"
+                         data-name="mathematics 2 maths engineering mathematics">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">∫</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>Mathematics - II</h3>
+
+                        <p>
+                            Advanced mathematical concepts for
+                            engineering students.
+                        </p>
+
+                        <a href="mathematics-2.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Applied Physics II -->
+
+                    <div class="course-card"
+                         data-name="applied physics 2 physics">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⚛</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>Applied Physics - II</h3>
+
+                        <p>
+                            Applied physics principles and practical
+                            engineering concepts.
+                        </p>
+
+                        <a href="applied-physics-2.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- IT Systems -->
+
+                    <div class="course-card"
+                         data-name="introduction it systems information technology computer">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⌘</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>Introduction to IT Systems</h3>
+
+                        <p>
+                            Fundamentals of computers, information
+                            technology and digital systems.
+                        </p>
+
+                        <a href="introduction-to-it-systems.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Electrical Electronics -->
+
+                    <div class="course-card"
+                         data-name="electrical electronics engineering fundamentals">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">ϟ</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            Fundamentals of Electrical &
+                            Electronics Engineering
+                        </h3>
+
+                        <p>
+                            Basic electrical circuits and electronics
+                            engineering concepts.
+                        </p>
+
+                        <a href="fundamentals-of-electrical-electronics-engineering.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Engineering Mechanics -->
+
+                    <div class="course-card"
+                         data-name="engineering mechanics force motion">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">⚖</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>Engineering Mechanics</h3>
+
+                        <p>
+                            Study of forces, motion, equilibrium
+                            and mechanical systems.
+                        </p>
+
+                        <a href="engineering-mechanics.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Environmental Sciences -->
+
+                    <div class="course-card"
+                         data-name="environmental sciences environment ecology">
+
+                        <div class="course-top">
+
+                            <div class="course-icon">♻</div>
+
+                            <span class="semester-tag">
+                                Semester 2
+                            </span>
+
+                        </div>
+
+                        <h3>Environmental Sciences</h3>
+
+                        <p>
+                            Environment, sustainability and pollution
+                            control fundamentals.
+                        </p>
+
+                        <a href="environmental-sciences.html"
+                           class="open-course-btn">
+
+                            Open Course →
+
+                        </a>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            <!-- NO RESULT -->
+
+            <div class="no-result"
+                 id="noResult">
+
+                <h3>No Course Found</h3>
+
+                <p>
+                    Try searching with another course name.
+                </p>
+
+            </div>
+
+
+        </div>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <div id="footer-placeholder"></div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script>
+
+
+        /* =========================================
+           LOAD HEADER
+        ========================================== */
+
+        fetch("header.html")
+
+            .then(response => response.text())
+
+            .then(data => {
+
+                document
+                    .getElementById("header-placeholder")
+                    .innerHTML = data;
+
+            })
+
+            .catch(error => {
+
+                console.log(
+                    "Header loading error:",
+                    error
+                );
+
+            });
+
+
+
+        /* =========================================
+           LOAD FOOTER
+        ========================================== */
+
+        fetch("footer.html")
+
+            .then(response => response.text())
+
+            .then(data => {
+
+                document
+                    .getElementById("footer-placeholder")
+                    .innerHTML = data;
+
+            })
+
+            .catch(error => {
+
+                console.log(
+                    "Footer loading error:",
+                    error
+                );
+
+            });
+
+
+
+        /* =========================================
+           SEARCH SYSTEM
+        ========================================== */
+
+        const searchInput =
+            document.getElementById("courseSearch");
+
+        const courseCards =
+            document.querySelectorAll(".course-card");
+
+        const semesterSections =
+            document.querySelectorAll(".semester-section");
+
+        const noResult =
+            document.getElementById("noResult");
+
+
+        let activeFilter = "all";
+
+
+        function filterCourses() {
+
+            const searchValue =
+                searchInput.value
+                .toLowerCase()
+                .trim();
+
+
+            let visibleCards = 0;
+
+
+            semesterSections.forEach(section => {
+
+
+                const semester =
+                    section.dataset.semester;
+
+
+                let sectionHasVisibleCard = false;
+
+
+                courseCards.forEach(card => {
+
+
+                    if (!section.contains(card)) return;
+
+
+                    const courseName =
+                        card.dataset.name
+                        .toLowerCase();
+
+
+                    const matchesSearch =
+                        courseName.includes(searchValue);
+
+
+                    const matchesSemester =
+
+                        activeFilter === "all"
+
+                        ||
+
+                        semester === activeFilter;
+
+
+
+                    if (
+                        matchesSearch &&
+                        matchesSemester
+                    ) {
+
+                        card.style.display = "block";
+
+                        sectionHasVisibleCard = true;
+
+                        visibleCards++;
+
+                    }
+
+                    else {
+
+                        card.style.display = "none";
+
+                    }
+
+
+                });
+
+
+                section.style.display =
+
+                    sectionHasVisibleCard
+
+                    ? "block"
+
+                    : "none";
+
+
+            });
+
+
+            noResult.style.display =
+
+                visibleCards === 0
+
+                ? "block"
+
+                : "none";
+
+
+        }
+
+
+        searchInput.addEventListener(
+
+            "input",
+
+            filterCourses
+
+        );
+
+
+
+        /* =========================================
+           FILTER BUTTON SYSTEM
+        ========================================== */
+
+        const filterButtons =
+            document.querySelectorAll(".filter-btn");
+
+
+        filterButtons.forEach(button => {
+
+
+            button.addEventListener(
+
+                "click",
+
+                function() {
+
+
+                    filterButtons.forEach(btn => {
+
+                        btn.classList.remove("active");
+
+                    });
+
+
+                    this.classList.add("active");
+
+
+                    activeFilter =
+                        this.dataset.filter;
+
+
+                    filterCourses();
+
+
+                }
+
+            );
+
+
+        });
+
+
+
+        /* =========================================
+           SCROLL REVEAL SYSTEM
+        ========================================== */
+
+        const animatedElements =
+            document.querySelectorAll(
+
+                ".scroll-reveal, .scroll-left, .course-card"
+
+            );
+
+
+        const observerOptions = {
+
+            threshold: 0.12,
+
+            rootMargin:
+                "0px 0px -40px 0px"
+
+        };
+
+
+        const scrollObserver =
+            new IntersectionObserver(
+
+                function(entries) {
+
+
+                    entries.forEach(entry => {
+
+
+                        if (entry.isIntersecting) {
+
+
+                            entry.target.classList.add("show");
+
+
+                            scrollObserver.unobserve(
+                                entry.target
+                            );
+
+
+                        }
+
+
+                    });
+
+
+                },
+
+
+                observerOptions
+
+            );
+
+
+
+        animatedElements.forEach(
+
+            (element, index) => {
+
+
+                /* Card Stagger Animation */
+
+                if (
+                    element.classList.contains(
+                        "course-card"
+                    )
+                ) {
+
+
+                    const delay =
+                        (index % 4) * 80;
+
+
+                    element.style.transitionDelay =
+                        delay + "ms";
+
+
+                }
+
+
+                scrollObserver.observe(element);
+
+
+            }
+
+        );
+
+
+
+        /* =========================================
+           SCROLL PROGRESS BAR
+        ========================================== */
+
+        window.addEventListener(
+
+            "scroll",
+
+            function() {
+
+
+                const scrollTop =
+
+                    document.documentElement.scrollTop
+
+                    ||
+
+                    document.body.scrollTop;
+
+
+                const scrollHeight =
+
+                    document.documentElement.scrollHeight
+
+                    -
+
+                    document.documentElement.clientHeight;
+
+
+                const progress =
+
+                    scrollHeight > 0
+
+                    ?
+
+                    (scrollTop / scrollHeight) * 100
+
+                    :
+
+                    0;
+
+
+                document
+                    .getElementById("scroll-progress")
+                    .style.width =
+
+                        progress + "%";
+
+
+            },
+
+
+            {
+                passive: true
+            }
+
+        );
+
+
+    </script>
+
+
+</body>
+</html>
+```

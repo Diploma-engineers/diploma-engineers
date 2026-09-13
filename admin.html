@@ -1000,7 +1000,7 @@ button:disabled{
                 <h2 style="margin-bottom:14px;color:#2563eb;font-size:19px;">Books List</h2>
                 <div class="table">
                     <table>
-                        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Link</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Uploaded By</th><th>Link</th><th>Action</th></tr></thead>
                         <tbody id="bookRows"></tbody>
                     </table>
                 </div>
@@ -1069,6 +1069,10 @@ button:disabled{
                     <div class="profile-field"><label>Full Name</label><input id="profileName" maxlength="80" placeholder="Enter your name"></div>
                     <div class="profile-field"><label>Designation</label><input id="profileDesignation" value="ADMIN" maxlength="50" placeholder="ADMIN"></div>
                     <div class="profile-field"><label>Branch</label><input id="profileBranch" maxlength="100" placeholder="Civil / Electrical / Electronics etc."></div>
+                    <div class="profile-field"><label>College Name</label><input id="profileCollegeName" maxlength="150" placeholder="Enter college name"></div>
+                    <div class="profile-field"><label>Experience</label><input id="profileExperience" maxlength="80" placeholder="e.g. 4+ Years"></div>
+                    <div class="profile-field"><label>Education</label><input id="profileEducation" maxlength="150" placeholder="e.g. Diploma / B.Tech / M.Tech"></div>
+                    <div class="profile-field"><label>College Degree</label><input id="profileCollegeDegree" maxlength="150" placeholder="e.g. Diploma in Civil Engineering"></div>
                     <div class="profile-field"><label>Mobile</label><input id="profileMobile" type="tel" maxlength="20" placeholder="Enter mobile number"></div>
                     <div class="profile-field full"><label>Email</label><input id="profileEmail" type="email" readonly></div>
                     <div class="profile-field full"><label>Address</label><textarea id="profileAddress" maxlength="300" placeholder="Enter address"></textarea></div>
@@ -1198,7 +1202,7 @@ const profilePreviewDesignation = document.getElementById("profilePreviewDesigna
 let adminProfile = {};
 
 const profileFields = [
-  "profileName","profileDesignation","profileBranch","profileMobile","profileEmail","profileAddress","profileAbout",
+  "profileName","profileDesignation","profileBranch","profileCollegeName","profileExperience","profileEducation","profileCollegeDegree","profileMobile","profileEmail","profileAddress","profileAbout",
   "profileFacebook","profileYoutube","profileTelegram","profileEmailLink","profileWhatsapp"
 ];
 
@@ -1208,6 +1212,10 @@ function getProfileForm(){
   o.name = document.getElementById("profileName").value.trim();
   o.designation = document.getElementById("profileDesignation").value.trim() || "ADMIN";
   o.branch = document.getElementById("profileBranch").value.trim();
+  o.collegeName = document.getElementById("profileCollegeName").value.trim();
+  o.experience = document.getElementById("profileExperience").value.trim();
+  o.education = document.getElementById("profileEducation").value.trim();
+  o.collegeDegree = document.getElementById("profileCollegeDegree").value.trim();
   o.mobile = document.getElementById("profileMobile").value.trim();
   o.email = document.getElementById("profileEmail").value.trim();
   o.address = document.getElementById("profileAddress").value.trim();
@@ -1242,6 +1250,7 @@ function fillProfile(data){
   adminProfile = data || {};
   const map = {
     profileName: data?.name || "", profileDesignation: data?.designation || "ADMIN", profileBranch: data?.branch || "",
+    profileCollegeName: data?.collegeName || data?.college || "", profileExperience: data?.experience || data?.exp || "", profileEducation: data?.education || data?.qualification || "", profileCollegeDegree: data?.collegeDegree || data?.degree || "",
     profileMobile: data?.mobile || "", profileEmail: auth.currentUser?.email || data?.email || "", profileAddress: data?.address || "",
     profileAbout: data?.about || "", profileFacebook: data?.facebook || "", profileYoutube: data?.youtube || "",
     profileTelegram: data?.telegram || "", profileEmailLink: data?.emailLink || data?.email || "", profileWhatsapp: data?.whatsapp || ""
@@ -1318,6 +1327,12 @@ const teamProfile = {
   name: data.name || "Team Member",
   designation: data.designation || "ADMIN",
   branch: data.branch || "",
+  collegeName: data.collegeName || "",
+  experience: data.experience || "",
+  education: data.education || "",
+  collegeDegree: data.collegeDegree || "",
+  mobile: data.mobile || "",
+  address: data.address || "",
   about: data.about || "",
   photo: data.photo || DEFAULT_PROFILE_IMAGE,
   facebook: data.facebook || "",
@@ -1807,7 +1822,7 @@ function loadBooksTab() {
 
 function renderBookRows(){
     const rowsEl = document.getElementById("bookRows");
-    rowsEl.innerHTML = bookItems.length ? bookItems.map(b=>`<tr><td><img src="${escapeHTML(b.image)}" alt=""></td><td><b>${escapeHTML(b.title)}</b></td><td>${escapeHTML(b.category||"Book PDF")}</td><td><a href="${escapeHTML(b.pdf)}" target="_blank">Open</a></td><td><button class="secondary" data-book-edit="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:pointer;">Edit</button> <button class="danger" data-book-del="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#fee2e2;color:#b91c1c;cursor:pointer;">Delete</button></td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;padding:30px">No books found</td></tr>`;
+    rowsEl.innerHTML = bookItems.length ? bookItems.map(b=>`<tr><td><img src="${escapeHTML(b.image)}" alt=""></td><td><b>${escapeHTML(b.title||b.name||"Untitled")}</b></td><td>${escapeHTML(b.category||"Book PDF")}</td><td>${escapeHTML(b.ownerName||"Legacy / Unknown")}</td><td><a href="${escapeHTML(b.pdf||b.link||"#")}" target="_blank">Open</a></td><td><button class="secondary" data-book-edit="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:pointer;">Edit</button> <button class="danger" data-book-del="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#fee2e2;color:#b91c1c;cursor:pointer;">Delete</button></td></tr>`).join("") : `<tr><td colspan="6" style="text-align:center;padding:30px">No books found</td></tr>`;
     
     document.querySelectorAll("[data-book-edit]").forEach(b=>b.onclick = () => editBookEntry(b.dataset.bookEdit));
     document.querySelectorAll("[data-book-del]").forEach(b=>b.onclick = () => deleteBookEntry(b.dataset.bookDel));
@@ -1842,7 +1857,17 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
                 let res = await uploadToCloudinary(compressed);
                 image = res.secure_url;
             }
-            const data = {title, category, pdf, image, timestamp: Date.now()};
+            const user = auth.currentUser;
+            const ownerUid = user?.uid || bookItems.find(x => x.id === bookEditId)?.ownerUid || "";
+            const ownerProfile = adminProfile || {};
+            const data = {
+                title, category, pdf, image,
+                ownerUid,
+                ownerName: ownerProfile.name || user?.displayName || "Admin",
+                ownerPhoto: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,
+                ownerDesignation: ownerProfile.designation || "ADMIN",
+                timestamp: Date.now()
+            };
             await update(ref(db, "books/" + bookEditId), data);
             bookMsg("Book updated successfully.");
         } else {
@@ -1853,7 +1878,16 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
                 let imageUrl = res.secure_url;
                 
                 let bookTitle = files.length > 1 ? `${title} (${i+1})` : title;
-                const data = {title: bookTitle, category, pdf, image: imageUrl, timestamp: Date.now() + i};
+                const user = auth.currentUser;
+                const ownerProfile = adminProfile || {};
+                const data = {
+                    title: bookTitle, category, pdf, image: imageUrl,
+                    ownerUid: user?.uid || "",
+                    ownerName: ownerProfile.name || user?.displayName || "Admin",
+                    ownerPhoto: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,
+                    ownerDesignation: ownerProfile.designation || "ADMIN",
+                    timestamp: Date.now() + i
+                };
                 await set(push(ref(db, "books")), data);
             }
             bookMsg("Book(s) added successfully.");
@@ -1925,11 +1959,20 @@ document.getElementById("bookBtn").addEventListener("click", async () => {
     const bookRef = push(ref(db, "books"));
 
     try {
+        const user = auth.currentUser;
+        const ownerProfile = adminProfile || {};
         await set(bookRef, {
             name: name,
+            title: name,
             semester: semester,
             branch: branch,
             link: link,
+            pdf: link,
+            image: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,
+            ownerUid: user?.uid || "",
+            ownerName: ownerProfile.name || user?.displayName || "Admin",
+            ownerPhoto: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,
+            ownerDesignation: ownerProfile.designation || "ADMIN",
             date: new Date().toLocaleString("en-IN"),
             timestamp: Date.now()
         });

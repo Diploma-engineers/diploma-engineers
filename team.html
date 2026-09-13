@@ -1480,6 +1480,104 @@
 
     </style>
 
+
+<style id="team-card-final-style">
+/* FINAL TEAM GRID — screenshot-style cards */
+.team-grid{
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:24px;
+  align-items:start;
+}
+.team-card.firebase-team-card{
+  width:100%;
+  max-width:360px;
+  min-width:0;
+  margin:0 auto;
+  background:#fff;
+  border:1px solid #dfe7f2;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 8px 24px rgba(15,23,42,.07);
+  cursor:pointer;
+  opacity:0;
+  transform:translateY(22px);
+  transition:opacity .5s ease,transform .3s ease,box-shadow .3s ease,border-color .3s ease;
+}
+.team-card.firebase-team-card.visible{opacity:1;transform:translateY(0);}
+.team-card.firebase-team-card:hover{
+  transform:translateY(-7px);
+  border-color:#b8cdf4;
+  box-shadow:0 18px 38px rgba(15,23,42,.13);
+}
+.team-card.firebase-team-card:focus-visible{
+  outline:3px solid rgba(37,99,235,.25);
+  outline-offset:5px;
+}
+.team-card.firebase-team-card .team-image{
+  width:100%;
+  height:315px;
+  background:#f8fafc;
+}
+.team-card.firebase-team-card .team-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center top;
+}
+.team-card.firebase-team-card .team-info{
+  padding:20px 12px 25px;
+  text-align:center;
+}
+.team-card.firebase-team-card .team-name{
+  margin:0;
+  color:#101827;
+  font-size:24px;
+  line-height:1.2;
+  font-weight:900;
+}
+.team-card.firebase-team-card .team-role{
+  display:block;
+  margin-top:7px;
+  color:#64748b;
+  font-size:16px;
+  line-height:1.35;
+  font-weight:600;
+}
+.team-card.firebase-team-card .team-exp{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:13px;
+  padding:7px 14px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#2563eb;
+  font-size:12px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+.team-card.firebase-team-card .team-view-profile{display:none!important;}
+@media(max-width:991px){
+  .team-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}
+  .team-card.firebase-team-card .team-image{height:270px;}
+  .team-card.firebase-team-card .team-name{font-size:21px;}
+  .team-card.firebase-team-card .team-role{font-size:14px;}
+}
+@media(max-width:600px){
+  .team-grid{grid-template-columns:1fr;gap:18px;padding:0 8px;}
+  .team-card.firebase-team-card{max-width:430px;}
+  .team-card.firebase-team-card .team-image{height:300px;}
+  .team-card.firebase-team-card .team-info{padding:18px 10px 23px;}
+  .team-card.firebase-team-card .team-name{font-size:22px;}
+}
+</style>
+
 </head>
 
 
@@ -3240,8 +3338,10 @@ function loadTeamProfiles(){
                 card.setAttribute("aria-label",`View ${name} profile`);
                 window.firebaseTeamProfiles = window.firebaseTeamProfiles || {};
                 window.firebaseTeamProfiles[uid] = data;
-                card.addEventListener("click", event => { if(!event.target.closest("a")) window.openFacultyModal(uid); });
-                card.addEventListener("keydown", event => { if((event.key === "Enter" || event.key === " ") && !event.target.closest("a")){ event.preventDefault(); window.openFacultyModal(uid); } });
+                card.addEventListener("click", () => window.openFacultyModal(uid));
+                card.addEventListener("keydown", event => { if(event.key === "Enter" || event.key === " "){ event.preventDefault(); window.openFacultyModal(uid); } });
+
+                const experience=(data.experience||data.exp||"Experience not specified").trim();
 
                 card.innerHTML=`
                     <div class="team-image">
@@ -3250,16 +3350,10 @@ function loadTeamProfiles(){
                              loading="lazy"
                              onerror="this.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg'">
                     </div>
-
                     <div class="team-info">
                         <h2 class="team-name">${escapeHtml(name)}</h2>
                         <span class="team-role">${escapeHtml(role)}</span>
-                        <span class="team-exp">${escapeHtml(branch)}</span>
-
-                        <a class="team-view-profile" href="#profile-${encodeURIComponent(uid)}" onclick="event.stopPropagation(); openDetailedProfile('${uid}'); return false;">
-                            <i class="fas fa-user"></i>
-                            View Profile
-                        </a>
+                        <span class="team-exp">${escapeHtml(experience)}${/year|years|yr|yrs/i.test(experience) ? '' : ' EXP'}</span>
                     </div>
                 `;
 

@@ -1311,6 +1311,29 @@ profileSave.addEventListener("click",async()=>{
     const data=getProfileForm();
     data.uid=user.uid;
     await set(ref(db,"adminProfiles/"+user.uid),data);
+
+// Publish Team-safe copy for the public Team page.
+const teamProfile = {
+  uid: user.uid,
+  name: data.name || "Team Member",
+  designation: data.designation || "ADMIN",
+  branch: data.branch || "",
+  about: data.about || "",
+  photo: data.photo || DEFAULT_PROFILE_IMAGE,
+  facebook: data.facebook || "",
+  youtube: data.youtube || "",
+  telegram: data.telegram || "",
+  emailLink: data.emailLink || "",
+  whatsapp: data.whatsapp || "",
+  email: data.email || "",
+  updatedAt: Date.now()
+};
+try {
+  await set(ref(db,"teamProfiles/"+user.uid),teamProfile);
+} catch(teamErr) {
+  console.error("Team profile publish error:", teamErr);
+  throw new Error("Profile saved, but Team profile could not be published. Check Firebase Rules for teamProfiles write access.");
+}
     adminProfile=data;
     updateProfilePreview();
     setProfileStatus("Profile saved successfully.",true);

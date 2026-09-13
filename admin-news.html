@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Manage News | Diploma Engineers</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:"Poppins",sans-serif;
+  background:#f6f8fc;
+  color:#172033;
+}
+
+button,input,textarea,select{
+  font-family:"Poppins",sans-serif;
+}
+
+.topbar{
+  height:68px;
+  background:#fff;
+  border-bottom:1px solid #e8ebf0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 25px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.brand img{
+  width:41px;
+  height:41px;
+  border-radius:11px;
+  object-fit:cover;
+}
+
+.brand h1{
+  font-size:16px;
+  font-weight:800;
+}
+
+.brand span{
+  display:block;
+  font-size:8px;
+  color:#8b93a1;
+  margin-top:2px;
+}
+
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.back-btn,
+.logout-btn{
+  height:37px;
+  border:1px solid #e5e8ed;
+  background:#fff;
+  border-radius:10px;
+  padding:0 12px;
+  cursor:pointer;
+  color:#626b79;
+  font-size:10px;
+  font-weight:600;
+}
+
+.back-btn:hover{
+  color:#ff6b00;
+  border-color:#ffd0b2;
+}
+
+.logout-btn{
+  width:38px;
+  padding:0;
+}
+
+.logout-btn:hover{
+  color:#e53935;
+  background:#fff6f6;
+}
+
+.page{
+  max-width:1150px;
+  margin:auto;
+  padding:25px 20px 50px;
+}
+
+.page-heading{
+  margin-bottom:20px;
+}
+
+.page-heading h2{
+  font-size:23px;
+  font-weight:800;
+}
+
+.page-heading p{
+  font-size:11px;
+  color:#858d9b;
+  margin-top:4px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e6e9ef;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 8px 25px rgba(20,30,50,.04);
+}
+
+.card-title{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  margin-bottom:20px;
+}
+
+.card-icon{
+  width:43px;
+  height:43px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff1e8;
+  color:#ff6b00;
+}
+
+.card-title h3{
+  font-size:15px;
+}
+
+.card-title p{
+  font-size:9px;
+  color:#8b93a1;
+  margin-top:2px;
+}
+
+.form-group{
+  margin-bottom:15px;
+}
+
+.form-group label{
+  display:block;
+  font-size:11px;
+  font-weight:600;
+  margin-bottom:6px;
+  color:#394252;
+}
+
+.required{
+  color:#ff4d4d;
+}
+
+.input,
+textarea,
+select{
+  width:100%;
+  border:1px solid #dfe3e9;
+  background:#fbfcfe;
+  outline:none;
+  border-radius:11px;
+  padding:11px 12px;
+  font-size:11px;
+  color:#283242;
+  transition:.2s;
+}
+
+.input{
+  height:44px;
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+.input:focus,
+textarea:focus,
+select:focus{
+  border-color:#ff6b00;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(255,107,0,.08);
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.image-preview{
+  width:100%;
+  height:170px;
+  border-radius:13px;
+  border:1px dashed #d9dde4;
+  background:#f8f9fb;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+  margin-top:8px;
+}
+
+.image-preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:none;
+}
+
+.image-placeholder{
+  text-align:center;
+  color:#a1a8b4;
+  font-size:10px;
+}
+
+.image-placeholder i{
+  display:block;
+  font-size:25px;
+  margin-bottom:7px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.primary-btn,
+.secondary-btn{
+  height:45px;
+  border-radius:11px;
+  padding:0 17px;
+  border:none;
+  cursor:pointer;
+  font-size:11px;
+  font-weight:700;
+}
+
+.primary-btn{
+  flex:1;
+  background:linear-gradient(135deg,#ff6b00,#ff9145);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(255,107,0,.18);
+}
+
+.secondary-btn{
+  background:#f1f3f6;
+  color:#69717e;
+}
+
+.primary-btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.preview-box{
+  border:1px solid #e6e9ef;
+  border-radius:14px;
+  padding:15px;
+  background:#fafbfd;
+  margin-bottom:18px;
+}
+
+.preview-label{
+  font-size:9px;
+  color:#8a92a0;
+  margin-bottom:8px;
+  text-transform:uppercase;
+  font-weight:700;
+}
+
+.preview-title{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:5px;
+}
+
+.preview-category{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:20px;
+  background:#fff0e5;
+  color:#ff6b00;
+  font-size:8px;
+  font-weight:600;
+  margin-bottom:9px;
+}
+
+.preview-description{
+  font-size:10px;
+  color:#737c8b;
+  line-height:1.6;
+}
+
+.news-list-card{
+  margin-top:20px;
+}
+
+.news-list{
+  display:grid;
+  gap:11px;
+}
+
+.news-item{
+  display:flex;
+  gap:12px;
+  padding:13px;
+  border:1px solid #e8ebf0;
+  border-radius:13px;
+  background:#fff;
+}
+
+.news-thumb{
+  width:70px;
+  height:60px;
+  flex-shrink:0;
+  border-radius:9px;
+  object-fit:cover;
+  background:#f0f2f5;
+}
+
+.news-info{
+  min-width:0;
+  flex:1;
+}
+
+.news-info h4{
+  font-size:11px;
+  margin-bottom:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.news-info p{
+  font-size:8px;
+  color:#89919e;
+  line-height:1.5;
+}
+
+.news-meta{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-top:5px;
+  flex-wrap:wrap;
+}
+
+.badge{
+  padding:3px 6px;
+  border-radius:15px;
+  font-size:7px;
+  font-weight:600;
+}
+
+.badge-published{
+  background:#eafff3;
+  color:#16804c;
+}
+
+.badge-draft{
+  background:#fff7df;
+  color:#9b7000;
+}
+
+.my-badge{
+  background:#edf5ff;
+  color:#287be5;
+}
+
+.news-actions{
+  display:flex;
+  gap:5px;
+  align-items:center;
+}
+
+.icon-btn{
+  width:31px;
+  height:31px;
+  border-radius:8px;
+  border:1px solid #e5e8ed;
+  background:#fff;
+  cursor:pointer;
+  color:#7c8491;
+}
+
+.icon-btn:hover{
+  color:#ff6b00;
+  border-color:#ffd0b2;
+}
+
+.delete-btn:hover{
+  color:#e53935;
+  border-color:#ffcaca;
+  background:#fff7f7;
+}
+
+.empty{
+  text-align:center;
+  padding:35px 10px;
+  color:#9aa1ad;
+  font-size:10px;
+}
+
+.empty i{
+  display:block;
+  font-size:30px;
+  margin-bottom:9px;
+}
+
+.message{
+  display:none;
+  padding:11px 13px;
+  border-radius:10px;
+  font-size:10px;
+  line-height:1.5;
+  margin-bottom:15px;
+}
+
+.message.show{
+  display:block;
+}
+
+.message.success{
+  background:#eafff3;
+  border:1px solid #c8f0da;
+  color:#137847;
+}
+
+.message.error{
+  background:#fff0f0;
+  border:1px solid #ffd0d0;
+  color:#c62828;
+}
+
+.message.warning{
+  background:#fff8e7;
+  border:1px solid #ffe3a3;
+  color:#936800;
+}
+
+.loading{
+  text-align:center;
+  padding:30px;
+  color:#8c94a1;
+  font-size:10px;
+}
+
+.loading i{
+  margin-right:6px;
+}
+
+#loadingScreen{
+  position:fixed;
+  inset:0;
+  background:#f6f8fc;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+}
+
+.loader{
+  width:43px;
+  height:43px;
+  border:4px solid #ffe0cc;
+  border-top-color:#ff6b00;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+#loadingScreen p{
+  margin-top:12px;
+  font-size:10px;
+  color:#858d9b;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,22,35,.55);
+  z-index:3000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-card{
+  width:100%;
+  max-width:420px;
+  background:#fff;
+  border-radius:19px;
+  padding:22px;
+}
+
+.modal-card h3{
+  font-size:16px;
+  margin-bottom:7px;
+}
+
+.modal-card p{
+  font-size:10px;
+  color:#7f8794;
+  line-height:1.6;
+}
+
+.modal-actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:18px;
+}
+
+.modal-actions button{
+  border:none;
+  padding:9px 13px;
+  border-radius:9px;
+  font-family:"Poppins";
+  font-size:10px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.cancel-btn{
+  background:#f0f2f5;
+  color:#69717e;
+}
+
+.confirm-delete{
+  background:#e53935;
+  color:#fff;
+}
+
+.footer{
+  text-align:center;
+  font-size:9px;
+  color:#9ba2ae;
+  margin-top:30px;
+}
+
+@media(max-width:800px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:550px){
+  .topbar{
+    padding:0 13px;
+  }
+
+  .back-btn{
+    display:none;
+  }
+
+  .page{
+    padding:19px 12px 35px;
+  }
+
+  .card{
+    padding:17px;
+    border-radius:17px;
+  }
+
+  .row{
+    grid-template-columns:1fr;
+    gap:0;
+  }
+
+  .page-heading h2{
+    font-size:20px;
+  }
+
+  .news-item{
+    align-items:flex-start;
+  }
+
+  .news-thumb{
+    width:55px;
+    height:52px;
+  }
+
+  .news-actions{
+    flex-direction:column;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOADING -->
+<div id="loadingScreen">
+  <div class="loader"></div>
+  <p>Checking admin account...</p>
+</div>
+
+
+<!-- HEADER -->
+<header class="topbar">
+
+  <div class="brand">
+
+    <img
+      src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg"
+      alt="Diploma Engineers">
+
+    <div>
+      <h1>Diploma Engineers</h1>
+      <span>NEWS MANAGEMENT</span>
+    </div>
+
+  </div>
+
+  <div class="header-actions">
+
+    <button class="back-btn" id="backBtn">
+      <i class="fa-solid fa-arrow-left"></i>
+      Admin Panel
+    </button>
+
+    <button class="logout-btn" id="logoutBtn" title="Logout">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+
+  </div>
+
+</header>
+
+
+<main class="page">
+
+  <div class="page-heading">
+    <h2>News Management</h2>
+    <p>Create and manage news for Diploma Engineers.</p>
+  </div>
+
+
+  <div id="message" class="message"></div>
+
+
+  <div class="layout">
+
+    <!-- ==================================
+         CREATE NEWS
+    =================================== -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <div class="card-icon">
+          <i class="fa-solid fa-newspaper"></i>
+        </div>
+
+        <div>
+          <h3 id="formTitle">Create News</h3>
+          <p>Publish an educational update</p>
+        </div>
+
+      </div>
+
+
+      <form id="newsForm">
+
+        <div class="form-group">
+
+          <label>
+            News Title <span class="required">*</span>
+          </label>
+
+          <input
+            class="input"
+            id="newsTitle"
+            type="text"
+            placeholder="Enter news title"
+            maxlength="200"
+            required>
+
+        </div>
+
+
+        <div class="row">
+
+          <div class="form-group">
+
+            <label>
+              Category <span class="required">*</span>
+            </label>
+
+            <select id="newsCategory" required>
+
+              <option value="">Select Category</option>
+
+              <option value="Education">
+                Education
+              </option>
+
+              <option value="JEECUP">
+                JEECUP
+              </option>
+
+              <option value="BTEUP">
+                BTEUP
+              </option>
+
+              <option value="Jobs">
+                Jobs
+              </option>
+
+              <option value="Scholarship">
+                Scholarship
+              </option>
+
+              <option value="Results">
+                Results
+              </option>
+
+              <option value="Admit Card">
+                Admit Card
+              </option>
+
+              <option value="Exam">
+                Exam
+              </option>
+
+              <option value="Other">
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Status
+            </label>
+
+            <select id="newsStatus">
+
+              <option value="published">
+                Published
+              </option>
+
+              <option value="draft">
+                Draft
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Short Description
+          </label>
+
+          <textarea
+            id="shortDescription"
+            placeholder="Write a short description..."
+            maxlength="500"></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Full News <span class="required">*</span>
+          </label>
+
+          <textarea
+            id="newsContent"
+            placeholder="Write complete news details..."
+            style="min-height:150px"
+            required></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            News Image URL
+          </label>
+
+          <input
+            class="input"
+            id="imageUrl"
+            type="url"
+            placeholder="https://example.com/news-image.jpg">
+
+          <div class="image-preview" id="imagePreview">
+
+            <div class="image-placeholder" id="imagePlaceholder">
+              <i class="fa-regular fa-image"></i>
+              Image preview
+            </div>
+
+            <img id="previewImage" alt="News Image">
+
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Source / Official Link
+          </label>
+
+          <input
+            class="input"
+            id="sourceUrl"
+            type="url"
+            placeholder="https://official-website.com">
+
+        </div>
+
+
+        <div class="actions">
+
+          <button
+            type="button"
+            class="secondary-btn"
+            id="resetBtn">
+
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+
+          </button>
+
+          <button
+            type="submit"
+            class="primary-btn"
+            id="saveBtn">
+
+            <i class="fa-solid fa-paper-plane"></i>
+            Publish News
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </section>
+
+
+    <!-- ==================================
+         PREVIEW
+    =================================== -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <div class="card-icon">
+          <i class="fa-solid fa-eye"></i>
+        </div>
+
+        <div>
+          <h3>Live Preview</h3>
+          <p>See how your news information looks</p>
+        </div>
+
+      </div>
+
+
+      <div class="preview-box">
+
+        <div class="preview-label">
+          Preview
+        </div>
+
+        <div
+          class="preview-title"
+          id="previewTitle">
+          Your news title
+        </div>
+
+        <div
+          class="preview-category"
+          id="previewCategory">
+          Category
+        </div>
+
+        <div
+          class="preview-description"
+          id="previewShort">
+          Your short description will appear here.
+        </div>
+
+      </div>
+
+
+      <div class="preview-box">
+
+        <div class="preview-label">
+          Content
+        </div>
+
+        <div
+          class="preview-description"
+          id="previewContent">
+          Your full news content will appear here.
+        </div>
+
+      </div>
+
+
+      <div class="info-card"
+           style="padding:14px;background:#f7f9fc;border-radius:12px;">
+
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+
+          <i
+            class="fa-solid fa-circle-info"
+            style="color:#287be5;margin-top:2px;">
+          </i>
+
+          <p style="font-size:9px;color:#818997;line-height:1.6;">
+            News published here will be saved with your
+            Firebase UID and admin profile information.
+            This allows the system to identify which admin
+            created the news.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+
+  <!-- ==================================
+       MY NEWS
+  =================================== -->
+
+  <section class="card news-list-card">
+
+    <div class="card-title">
+
+      <div class="card-icon">
+        <i class="fa-solid fa-list"></i>
+      </div>
+
+      <div>
+        <h3>My News</h3>
+        <p>News created by your admin account</p>
+      </div>
+
+    </div>
+
+
+    <div id="newsList" class="news-list">
+
+      <div class="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Loading news...
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <div class="footer">
+    Diploma Engineers • News Management • 2026
+  </div>
+
+</main>
+
+
+<!-- ==================================
+     DELETE MODAL
+=================================== -->
+
+<div class="modal" id="deleteModal">
+
+  <div class="modal-card">
+
+    <h3>Delete News?</h3>
+
+    <p>
+      This news will be permanently removed from the
+      Firebase news database. This action cannot be undone.
+    </p>
+
+    <div class="modal-actions">
+
+      <button
+        class="cancel-btn"
+        id="cancelDelete">
+        Cancel
+      </button>
+
+      <button
+        class="confirm-delete"
+        id="confirmDelete">
+        Delete
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ==================================
+     FIREBASE
+=================================== -->
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  push,
+  update,
+  remove
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+/* ==================================
+   FIREBASE CONFIG
+=================================== */
+
+const firebaseConfig = {
+
+  apiKey:
+    "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+
+  authDomain:
+    "diplomaengineers-869df.firebaseapp.com",
+
+  databaseURL:
+    "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+
+  projectId:
+    "diplomaengineers-869df",
+
+  storageBucket:
+    "diplomaengineers-869df.appspot.com",
+
+  messagingSenderId:
+    "356779436080",
+
+  appId:
+    "1:356779436080:web:4b28da380e547420d0e5f5"
+};
+
+
+/* ==================================
+   INITIALIZE
+=================================== */
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getDatabase(app);
+
+
+/* ==================================
+   ELEMENTS
+=================================== */
+
+const loadingScreen =
+  document.getElementById("loadingScreen");
+
+const newsForm =
+  document.getElementById("newsForm");
+
+const newsTitle =
+  document.getElementById("newsTitle");
+
+const newsCategory =
+  document.getElementById("newsCategory");
+
+const newsStatus =
+  document.getElementById("newsStatus");
+
+const shortDescription =
+  document.getElementById("shortDescription");
+
+const newsContent =
+  document.getElementById("newsContent");
+
+const imageUrl =
+  document.getElementById("imageUrl");
+
+const sourceUrl =
+  document.getElementById("sourceUrl");
+
+const saveBtn =
+  document.getElementById("saveBtn");
+
+const resetBtn =
+  document.getElementById("resetBtn");
+
+const newsList =
+  document.getElementById("newsList");
+
+const message =
+  document.getElementById("message");
+
+const deleteModal =
+  document.getElementById("deleteModal");
+
+let currentUser = null;
+let currentProfile = null;
+let editingNewsId = null;
+let deletingNewsId = null;
+
+
+/* ==================================
+   MESSAGE
+=================================== */
+
+function showMessage(text,type="success"){
+
+  message.className =
+    "message show " + type;
+
+  message.textContent = text;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+  setTimeout(()=>{
+    message.className = "message";
+  },5000);
+}
+
+
+/* ==================================
+   AUTH CHECK
+=================================== */
+
+onAuthStateChanged(
+  auth,
+  async (user)=>{
+
+    if(!user){
+
+      window.location.href =
+        "admin-login.html";
+
+      return;
+    }
+
+    try{
+
+      currentUser = user;
+
+      const profileRef =
+        ref(
+          db,
+          "adminProfiles/" + user.uid
+        );
+
+      const snapshot =
+        await get(profileRef);
+
+      if(!snapshot.exists()){
+
+        await signOut(auth);
+
+        window.location.href =
+          "admin-login.html";
+
+        return;
+      }
+
+      currentProfile =
+        snapshot.val();
+
+      const status =
+        String(
+          currentProfile.status || ""
+        ).toLowerCase();
+
+      if(status !== "approved"){
+
+        await signOut(auth);
+
+        window.location.href =
+          "admin-login.html";
+
+        return;
+      }
+
+      loadingScreen.style.display =
+        "none";
+
+      loadMyNews();
+
+    }
+
+    catch(error){
+
+      console.error(error);
+
+      showMessage(
+        "Unable to verify admin account.",
+        "error"
+      );
+
+    }
+
+  }
+);
+
+
+/* ==================================
+   SAVE NEWS
+=================================== */
+
+newsForm.addEventListener(
+  "submit",
+  async(event)=>{
+
+    event.preventDefault();
+
+    if(!currentUser || !currentProfile){
+
+      showMessage(
+        "Admin account not verified.",
+        "error"
+      );
+
+      return;
+    }
+
+    const title =
+      newsTitle.value.trim();
+
+    const category =
+      newsCategory.value;
+
+    const description =
+      shortDescription.value.trim();
+
+    const content =
+      newsContent.value.trim();
+
+    const image =
+      imageUrl.value.trim();
+
+    const source =
+      sourceUrl.value.trim();
+
+    const status =
+      newsStatus.value;
+
+
+    if(!title){
+
+      showMessage(
+        "Please enter news title.",
+        "warning"
+      );
+
+      newsTitle.focus();
+
+      return;
+    }
+
+    if(!category){
+
+      showMessage(
+        "Please select a category.",
+        "warning"
+      );
+
+      return;
+    }
+
+    if(!content){
+
+      showMessage(
+        "Please enter full news content.",
+        "warning"
+      );
+
+      newsContent.focus();
+
+      return;
+    }
+
+
+    saveBtn.disabled = true;
+
+    saveBtn.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+
+    try{
+
+      const now =
+        Date.now();
+
+
+      /* ==================================
+         CREATE
+      =================================== */
+
+      if(!editingNewsId){
+
+        const newsRef =
+          push(ref(db,"news"));
+
+        const newsData = {
+
+          id:newsRef.key,
+
+          title:title,
+
+          category:category,
+
+          shortDescription:description,
+
+          description:description,
+
+          content:content,
+
+          image:image,
+
+          imageUrl:image,
+
+          sourceUrl:source,
+
+          status:status,
+
+          published:
+            status === "published",
+
+          authorUid:
+            currentUser.uid,
+
+          adminUid:
+            currentUser.uid,
+
+          authorName:
+            currentProfile.name ||
+            currentUser.displayName ||
+            "Admin",
+
+          authorUsername:
+            currentProfile.username ||
+            "",
+
+          authorDesignation:
+            currentProfile.designation ||
+            "Admin",
+
+          authorPhoto:
+            currentProfile.photo ||
+            "",
+
+          createdAt:now,
+
+          updatedAt:now
+
+        };
+
+
+        await set(
+          newsRef,
+          newsData
+        );
+
+
+        showMessage(
+          status === "published"
+            ? "News published successfully."
+            : "News saved as draft.",
+          "success"
+        );
+
+      }
+
+
+      /* ==================================
+         UPDATE
+      =================================== */
+
+      else{
+
+        const newsRef =
+          ref(
+            db,
+            "news/" + editingNewsId
+          );
+
+        const updateData = {
+
+          title:title,
+
+          category:category,
+
+          shortDescription:description,
+
+          description:description,
+
+          content:content,
+
+          image:image,
+
+          imageUrl:image,
+
+          sourceUrl:source,
+
+          status:status,
+
+          published:
+            status === "published",
+
+          updatedAt:now
+
+        };
+
+
+        await update(
+          newsRef,
+          updateData
+        );
+
+
+        showMessage(
+          "News updated successfully.",
+          "success"
+        );
+
+      }
+
+
+      resetForm();
+
+      loadMyNews();
+
+    }
+
+    catch(error){
+
+      console.error(
+        "Save News Error:",
+        error
+      );
+
+      showMessage(
+        "Unable to save news. Please try again.",
+        "error"
+      );
+
+    }
+
+    finally{
+
+      saveBtn.disabled = false;
+
+      updateButtonText();
+
+    }
+
+  }
+);
+
+
+/* ==================================
+   LOAD MY NEWS
+=================================== */
+
+async function loadMyNews(){
+
+  newsList.innerHTML =
+    `<div class="loading">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      Loading news...
+    </div>`;
+
+
+  try{
+
+    const newsRef =
+      ref(db,"news");
+
+    const snapshot =
+      await get(newsRef);
+
+
+    if(!snapshot.exists()){
+
+      newsList.innerHTML =
+        `<div class="empty">
+          <i class="fa-regular fa-newspaper"></i>
+          No news available yet.
+        </div>`;
+
+      return;
+    }
+
+
+    const allNews =
+      snapshot.val();
+
+    const myNews = [];
+
+
+    Object.entries(allNews)
+      .forEach(([id,item])=>{
+
+        if(
+          item &&
+          (
+            item.authorUid === currentUser.uid ||
+            item.adminUid === currentUser.uid
+          )
+        ){
+
+          myNews.push({
+            id,
+            ...item
+          });
+
+        }
+
+      });
+
+
+    myNews.sort(
+      (a,b)=>
+        (b.updatedAt || b.createdAt || 0) -
+        (a.updatedAt || a.createdAt || 0)
+    );
+
+
+    if(myNews.length === 0){
+
+      newsList.innerHTML =
+        `<div class="empty">
+          <i class="fa-regular fa-newspaper"></i>
+          You have not created any news yet.
+        </div>`;
+
+      return;
+    }
+
+
+    newsList.innerHTML =
+      myNews
+        .map(createNewsItem)
+        .join("");
+
+  }
+
+  catch(error){
+
+    console.error(
+      "Load News Error:",
+      error
+    );
+
+    newsList.innerHTML =
+      `<div class="empty">
+        Unable to load news.
+      </div>`;
+
+  }
+
+}
+
+
+/* ==================================
+   CREATE NEWS ITEM
+=================================== */
+
+function createNewsItem(item){
+
+  const title =
+    escapeHtml(
+      item.title || "Untitled News"
+    );
+
+  const category =
+    escapeHtml(
+      item.category || "Other"
+    );
+
+  const description =
+    escapeHtml(
+      item.shortDescription ||
+      item.description ||
+      ""
+    );
+
+  const image =
+    escapeAttribute(
+      item.imageUrl ||
+      item.image ||
+      "https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg"
+    );
+
+  const status =
+    item.status === "draft"
+      ? "draft"
+      : "published";
+
+
+  return `
+    <div class="news-item">
+
+      <img
+        class="news-thumb"
+        src="${image}"
+        alt="News"
+        onerror="this.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg'">
+
+      <div class="news-info">
+
+        <h4>${title}</h4>
+
+        <p>
+          ${category}
+          ${description ? " • " + description : ""}
+        </p>
+
+        <div class="news-meta">
+
+          <span class="badge ${status === "published"
+            ? "badge-published"
+            : "badge-draft"}">
+
+            ${status === "published"
+              ? "Published"
+              : "Draft"}
+
+          </span>
+
+          <span class="badge my-badge">
+            My News
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="news-actions">
+
+        <button
+          class="icon-btn"
+          title="Edit"
+          onclick="editNews('${item.id}')">
+
+          <i class="fa-solid fa-pen"></i>
+
+        </button>
+
+        <button
+          class="icon-btn delete-btn"
+          title="Delete"
+          onclick="openDeleteModal('${item.id}')">
+
+          <i class="fa-solid fa-trash"></i>
+
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
+
+/* ==================================
+   EDIT NEWS
+=================================== */
+
+window.editNews =
+  async function(id){
+
+    try{
+
+      const newsRef =
+        ref(
+          db,
+          "news/" + id
+        );
+
+      const snapshot =
+        await get(newsRef);
+
+      if(!snapshot.exists()){
+
+        showMessage(
+          "News not found.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const item =
+        snapshot.val();
+
+
+      /* Security:
+         Only creator can edit */
+
+      if(
+        item.authorUid !== currentUser.uid &&
+        item.adminUid !== currentUser.uid
+      ){
+
+        showMessage(
+          "You can only edit your own news.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      editingNewsId = id;
+
+      newsTitle.value =
+        item.title || "";
+
+      newsCategory.value =
+        item.category || "";
+
+      newsStatus.value =
+        item.status || "published";
+
+      shortDescription.value =
+        item.shortDescription ||
+        item.description ||
+        "";
+
+      newsContent.value =
+        item.content ||
+        "";
+
+      imageUrl.value =
+        item.imageUrl ||
+        item.image ||
+        "";
+
+      sourceUrl.value =
+        item.sourceUrl ||
+        "";
+
+
+      document.getElementById(
+        "formTitle"
+      ).textContent =
+        "Edit News";
+
+
+      updateButtonText();
+
+      updatePreview();
+
+      updateImagePreview();
+
+      window.scrollTo({
+        top:0,
+        behavior:"smooth"
+      });
+
+
+      showMessage(
+        "News loaded for editing.",
+        "success"
+      );
+
+    }
+
+    catch(error){
+
+      console.error(error);
+
+      showMessage(
+        "Unable to load news.",
+        "error"
+      );
+
+    }
+
+  };
+
+
+/* ==================================
+   DELETE MODAL
+=================================== */
+
+window.openDeleteModal =
+  function(id){
+
+    deletingNewsId = id;
+
+    deleteModal.classList.add("show");
+
+  };
+
+
+document.getElementById(
+  "cancelDelete"
+).addEventListener(
+  "click",
+  ()=>{
+    deletingNewsId = null;
+    deleteModal.classList.remove("show");
+  }
+);
+
+
+document.getElementById(
+  "confirmDelete"
+).addEventListener(
+  "click",
+  async()=>{
+
+    if(!deletingNewsId)
+      return;
+
+    const id =
+      deletingNewsId;
+
+    try{
+
+      const newsRef =
+        ref(
+          db,
+          "news/" + id
+        );
+
+      const snapshot =
+        await get(newsRef);
+
+      if(!snapshot.exists()){
+
+        showMessage(
+          "News not found.",
+          "error"
+        );
+
+        deleteModal.classList.remove("show");
+
+        return;
+      }
+
+
+      const item =
+        snapshot.val();
+
+
+      if(
+        item.authorUid !== currentUser.uid &&
+        item.adminUid !== currentUser.uid
+      ){
+
+        showMessage(
+          "You can only delete your own news.",
+          "error"
+        );
+
+        deleteModal.classList.remove("show");
+
+        return;
+      }
+
+
+      await remove(newsRef);
+
+
+      deleteModal.classList.remove("show");
+
+      deletingNewsId = null;
+
+      showMessage(
+        "News deleted successfully.",
+        "success"
+      );
+
+      if(editingNewsId === id){
+
+        resetForm();
+
+      }
+
+      loadMyNews();
+
+    }
+
+    catch(error){
+
+      console.error(
+        "Delete Error:",
+        error
+      );
+
+      showMessage(
+        "Unable to delete news.",
+        "error"
+      );
+
+      deleteModal.classList.remove("show");
+
+    }
+
+  }
+);
+
+
+/* ==================================
+   RESET FORM
+=================================== */
+
+function resetForm(){
+
+  newsForm.reset();
+
+  editingNewsId = null;
+
+  document.getElementById(
+    "formTitle"
+  ).textContent =
+    "Create News";
+
+  updateButtonText();
+
+  updatePreview();
+
+  updateImagePreview();
+
+}
+
+
+resetBtn.addEventListener(
+  "click",
+  resetForm
+);
+
+
+/* ==================================
+   BUTTON TEXT
+=================================== */
+
+function updateButtonText(){
+
+  saveBtn.innerHTML =
+    editingNewsId
+
+      ? '<i class="fa-solid fa-floppy-disk"></i> Update News'
+
+      : (
+          newsStatus.value === "draft"
+            ? '<i class="fa-solid fa-file"></i> Save Draft'
+            : '<i class="fa-solid fa-paper-plane"></i> Publish News'
+        );
+
+}
+
+
+newsStatus.addEventListener(
+  "change",
+  updateButtonText
+);
+
+
+/* ==================================
+   LIVE PREVIEW
+=================================== */
+
+function updatePreview(){
+
+  document.getElementById(
+    "previewTitle"
+  ).textContent =
+    newsTitle.value.trim() ||
+    "Your news title";
+
+
+  document.getElementById(
+    "previewCategory"
+  ).textContent =
+    newsCategory.value ||
+    "Category";
+
+
+  document.getElementById(
+    "previewShort"
+  ).textContent =
+    shortDescription.value.trim() ||
+    "Your short description will appear here.";
+
+
+  document.getElementById(
+    "previewContent"
+  ).textContent =
+    newsContent.value.trim() ||
+    "Your full news content will appear here.";
+
+}
+
+
+[
+  newsTitle,
+  newsCategory,
+  shortDescription,
+  newsContent
+].forEach(element=>{
+
+  element.addEventListener(
+    "input",
+    updatePreview
+  );
+
+  element.addEventListener(
+    "change",
+    updatePreview
+  );
+
+});
+
+
+/* ==================================
+   IMAGE PREVIEW
+=================================== */
+
+function updateImagePreview(){
+
+  const img =
+    document.getElementById(
+      "previewImage"
+    );
+
+  const placeholder =
+    document.getElementById(
+      "imagePlaceholder"
+    );
+
+  const url =
+    imageUrl.value.trim();
+
+
+  if(!url){
+
+    img.style.display =
+      "none";
+
+    placeholder.style.display =
+      "block";
+
+    return;
+  }
+
+
+  img.src = url;
+
+  img.onload = ()=>{
+
+    img.style.display =
+      "block";
+
+    placeholder.style.display =
+      "none";
+
+  };
+
+  img.onerror = ()=>{
+
+    img.style.display =
+      "none";
+
+    placeholder.style.display =
+      "block";
+
+  };
+
+}
+
+
+imageUrl.addEventListener(
+  "input",
+  updateImagePreview
+);
+
+
+/* ==================================
+   NAVIGATION
+=================================== */
+
+document.getElementById(
+  "backBtn"
+).addEventListener(
+  "click",
+  ()=>{
+    window.location.href =
+      "admin-panel.html";
+  }
+);
+
+
+/* ==================================
+   LOGOUT
+=================================== */
+
+document.getElementById(
+  "logoutBtn"
+).addEventListener(
+  "click",
+  async()=>{
+
+    try{
+
+      await signOut(auth);
+
+      window.location.href =
+        "admin-login.html";
+
+    }
+
+    catch(error){
+
+      console.error(error);
+
+      showMessage(
+        "Unable to logout.",
+        "error"
+      );
+
+    }
+
+  }
+);
+
+
+/* ==================================
+   ESCAPE HTML
+=================================== */
+
+function escapeHtml(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+function escapeAttribute(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+
+}
+
+
+/* ==================================
+   INITIAL PREVIEW
+=================================== */
+
+updatePreview();
+updateButtonText();
+
+</script>
+
+</body>
+</html>

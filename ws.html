@@ -2,7 +2,23 @@
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";import{getDatabase,ref,onValue,push,set,update,remove,get}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 const cfg={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"},app=initializeApp(cfg),auth=getAuth(app),db=getDatabase(app);let me=null;const fallback="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/02/cropped-1000261069-1.png";const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 loginBtn.onclick=async()=>{try{await signInWithEmailAndPassword(auth,email.value.trim(),pass.value)}catch(e){ls.style.display="block";ls.textContent=e.message}};logout.onclick=()=>signOut(auth);
-onAuthStateChanged(auth,async u=>{if(!u){login.style.display="block";app.style.display="none";return}const s=await get(ref(db,"admins/"+u.uid));if(!s.exists()||s.val().approved!==true){await signOut(auth);ls.style.display="block";ls.textContent="This account is waiting for master-admin approval.";return}me={id:u.uid,...s.val()};login.style.display="none";app.style.display="block";loadUsers();loadMyBooks();loadCourses()});
+onAuthStateChanged(auth,async u=>{if(!u){login.style.display="block";app.style.display="none";return}const s=await get(ref(db,"admins/"+u.uid));if(!s.exists()||s.val().approved!==true){await signOut(auth);ls.style.display="block";ls.textContent="This account is waiting for master-admin approval.";return}const current=s.val();
+const all=await get(ref(db,"admins"));
+let hasMaster=false;
+if(all.exists()) all.forEach(x=>{if(x.val().masterAdmin===true) hasMaster=true});
+if(!hasMaster){
+  await update(ref(db,"admins/"+u.uid),{approved:true,masterAdmin:true,masterAdminSetup:true});
+  me={id:u.uid,...current,approved:true,masterAdmin:true};
+}else{
+  if(current.approved!==true){
+    await signOut(auth);
+    ls.style.display="block";
+    ls.textContent="This account is waiting for master-admin approval.";
+    return;
+  }
+  me={id:u.uid,...current};
+}
+login.style.display="none";app.style.display="block";loadUsers();loadMyBooks();loadCourses()});
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.tab).classList.add("active")});
 function msg(t){msgBox=document.getElementById("msg");msgBox.textContent=t;msgBox.style.display="block";setTimeout(()=>msgBox.style.display="none",2200)}
 async function loadUsers(){onValue(ref(db,"admins"),s=>{let a=[];if(s.exists())s.forEach(x=>a.push({id:x.key,...x.val()}));a.sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));users.innerHTML=a.map(x=>`<div class="row"><img src="${esc(x.photo||fallback)}"><div><b>${esc(x.name)}</b><div class="small">${esc(x.email)} · ${esc(x.role||"Admin")}</div><span class="tag ${x.approved?"":"pending"}">${x.approved?"Approved":"Pending"}</span></div><div class="actions">${x.id!==me.id?`<button class="${x.approved?"muted":"blue"}" data-ap="${x.id}" data-val="${!x.approved}">${x.approved?"Unapprove":"Approve"}</button>`:""}<button class="danger" data-rm="${x.id}">Delete Record</button></div></div>`).join("");document.querySelectorAll("[data-ap]").forEach(b=>b.onclick=async()=>{await update(ref(db,"admins/"+b.dataset.ap),{approved:b.dataset.val==="true"});msg("Approval updated")});document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{if(confirm("Delete profile record? Firebase Auth account is not deleted by this action.")){await remove(ref(db,"admins/"+b.dataset.rm));msg("Profile record deleted")}})})}

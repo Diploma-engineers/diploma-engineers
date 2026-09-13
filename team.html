@@ -3192,9 +3192,15 @@ document.addEventListener(
 
 
 
+<style>
+.team-view-profile{display:inline-flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;padding:9px 15px;border-radius:10px;background:#ff6500;color:#fff;text-decoration:none;font-size:13px;font-weight:700;transition:.25s ease;}
+.team-view-profile:hover{background:#e85b00;color:#fff;transform:translateY(-2px);}
+.firebase-team-card .team-info{padding-bottom:20px;}
+</style>
+
 <!-- =========================================================
      FIREBASE AUTO TEAM PROFILES
-     Reads every saved admin profile from adminProfiles
+     Reads every published Team-safe profile from teamProfiles
 ========================================================= -->
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -3267,12 +3273,7 @@ function createTeamCard(uid, data) {
 
     const card = document.createElement("div");
     card.className = "team-card reveal-card firebase-team-card";
-    card.setAttribute("role", "button");
-    card.setAttribute("tabindex", "0");
     card.dataset.uid = uid;
-    card.dataset.teamKey = key;
-    card.addEventListener("click", () => openFacultyModal(key));
-    card.addEventListener("keydown", event => cardKey(event, key));
 
     card.innerHTML = `
         <div class="team-image">
@@ -3282,6 +3283,9 @@ function createTeamCard(uid, data) {
             <h2 class="team-name">${teamEscape(profile.name)}</h2>
             <span class="team-role">${teamEscape(profile.role)}</span>
             <span class="team-exp">${teamEscape(profile.exp)}</span>
+            <a class="team-view-profile" href="profile-details.html?uid=${encodeURIComponent(uid)}" onclick="event.stopPropagation()">
+                <i class="fas fa-user"></i> View Profile
+            </a>
         </div>
     `;
 
@@ -3292,7 +3296,7 @@ function loadFirebaseTeamProfiles() {
     const grid = document.querySelector(".team-grid");
     if (!grid) return;
 
-    onValue(ref(teamDb, "adminProfiles"), snapshot => {
+    onValue(ref(teamDb, "teamProfiles"), snapshot => {
         const saved = snapshot.val() || {};
 
         // Remove previously generated Firebase cards so updates stay live.
@@ -3302,9 +3306,6 @@ function loadFirebaseTeamProfiles() {
             .sort((a, b) => (Number(b[1]?.updatedAt) || 0) - (Number(a[1]?.updatedAt) || 0))
             .forEach(([uid, data]) => {
                 const profile = normalizeProfile(uid, data);
-
-                // Existing fixed team cards remain unchanged; do not duplicate them.
-                if (TEAM_STATIC_NAMES.has(profile.name.toLowerCase())) return;
 
                 grid.appendChild(createTeamCard(uid, data));
             });
@@ -3317,6 +3318,7 @@ function loadFirebaseTeamProfiles() {
         }
     }, error => {
         console.error("Firebase Team Profiles error:", error);
+        console.error("Check Firebase Rules: /teamProfiles must allow public read.");
     });
 }
 

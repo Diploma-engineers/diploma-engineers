@@ -1883,6 +1883,19 @@
       </div>
       <h2 class="profile-section-title">Social Media &amp; Contact</h2>
       <div id="detailContacts" class="profile-contact-grid"></div>
+
+      <div class="profile-books-section">
+        <div class="profile-books-heading">
+          <div>
+            <h2 class="profile-section-title" style="margin-bottom:5px;">Books &amp; Study Material</h2>
+            <p class="profile-books-subtitle">Books uploaded by this team member</p>
+          </div>
+          <a href="books.html" class="profile-books-all" target="_self"><i class="fas fa-book-open"></i> View All</a>
+        </div>
+        <div id="profileBooksSlider" class="profile-books-slider">
+          <div class="profile-books-loading">Loading books...</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -3254,7 +3267,18 @@ document.addEventListener(
 .profile-contact-link:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(15,23,42,.08);color:#1d4ed8;}
 .profile-back{display:inline-flex;align-items:center;gap:8px;border:0;background:#2563eb;color:#fff;border-radius:12px;padding:11px 17px;font-weight:800;cursor:pointer;margin-bottom:18px;}
 .profile-back:hover{background:#1d4ed8;}
-@media(max-width:700px){.profile-detail-top{padding:24px 20px;flex-direction:column;text-align:center}.profile-detail-photo{width:125px;height:125px}.profile-detail-name{font-size:27px}.profile-detail-content{padding:24px 18px 30px}.profile-info-grid,.profile-contact-grid{grid-template-columns:1fr}}
+.profile-books-section{margin-top:34px;padding-top:26px;border-top:1px solid #edf0f5;}
+.profile-books-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px;}
+.profile-books-subtitle{margin:0;color:#94a3b8;font-size:13px;}
+.profile-books-all{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:11px;background:#eff6ff;color:#2563eb;text-decoration:none;font-weight:800;font-size:13px;white-space:nowrap;}
+.profile-books-slider{display:flex;gap:15px;overflow-x:auto;padding:5px 2px 14px;scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.profile-books-slider::-webkit-scrollbar{height:6px}.profile-books-slider::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px}
+.profile-book-card{flex:0 0 185px;scroll-snap-align:start;background:#fff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 7px 22px rgba(15,23,42,.07);transition:.22s;text-decoration:none;color:#172033;}
+.profile-book-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(15,23,42,.11);}
+.profile-book-cover{width:100%;height:205px;object-fit:cover;background:#f1f5f9;display:block;}
+.profile-book-info{padding:11px 12px 13px}.profile-book-title{font-size:14px;font-weight:800;line-height:1.35;margin:0 0 5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}.profile-book-category{font-size:11px;color:#64748b;font-weight:700;margin-bottom:9px;}.profile-book-open{display:inline-flex;align-items:center;gap:5px;color:#2563eb;font-size:12px;font-weight:800;}
+.profile-books-empty,.profile-books-loading{min-width:100%;padding:24px;text-align:center;color:#94a3b8;background:#f8fafc;border:1px dashed #dbe3ee;border-radius:14px;font-size:13px;}
+@media(max-width:700px){.profile-detail-top{padding:24px 20px;flex-direction:column;text-align:center}.profile-detail-photo{width:125px;height:125px}.profile-detail-name{font-size:27px}.profile-detail-content{padding:24px 18px 30px}.profile-info-grid,.profile-contact-grid{grid-template-columns:1fr}.profile-books-heading{align-items:flex-start}.profile-book-card{flex-basis:165px}.profile-book-cover{height:185px}}
 </style>
 
 <!-- =========================================================
@@ -3280,6 +3304,7 @@ const teamApp = getApps().find(a => a.name === "teamProfilesApp")
     || initializeApp(teamFirebaseConfig, "teamProfilesApp");
 
 const teamDb = getDatabase(teamApp);
+let firebaseBooks = {};
 
 function escapeHtml(value){
     return String(value ?? "")
@@ -3384,7 +3409,44 @@ function loadTeamProfiles(){
     );
 }
 
-document.addEventListener("DOMContentLoaded",loadTeamProfiles);
+function loadFirebaseBooks(){
+    onValue(ref(teamDb,"books"), snapshot => {
+        firebaseBooks = snapshot.val() || {};
+        window.firebaseBooks = firebaseBooks;
+        if(window.currentFirebaseProfileUid) renderProfileBooks(window.currentFirebaseProfileUid);
+    }, error => {
+        console.error("Firebase Books error:", error);
+        firebaseBooks = {};
+        if(window.currentFirebaseProfileUid) renderProfileBooks(window.currentFirebaseProfileUid);
+    });
+}
+
+function renderProfileBooks(uid){
+    const slider=document.getElementById("profileBooksSlider");
+    if(!slider) return;
+    const items=Object.entries(firebaseBooks||{})
+      .filter(([id,b]) => b && typeof b === "object" && String(b.ownerUid||"") === String(uid))
+      .sort((a,b)=>(Number(b[1].timestamp)||0)-(Number(a[1].timestamp)||0));
+    if(!items.length){
+      slider.innerHTML='<div class="profile-books-empty"><i class="fas fa-book-open" style="font-size:25px;margin-bottom:7px;"></i><br>No books uploaded by this team member yet.</div>';
+      return;
+    }
+    slider.innerHTML="";
+    items.forEach(([id,b])=>{
+      const title=String(b.title||b.name||"Untitled Book");
+      const image=String(b.image||b.ownerPhoto||"https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg");
+      const category=String(b.category||b.semester||"Book PDF");
+      const pdf=String(b.pdf||b.link||"#");
+      const card=document.createElement("a");
+      card.className="profile-book-card";
+      card.href=pdf; card.target="_blank"; card.rel="noopener noreferrer";
+      card.innerHTML=`<img class="profile-book-cover" src="${escapeHtml(image)}" alt="${escapeHtml(title)}" loading="lazy"><div class="profile-book-info"><p class="profile-book-title">${escapeHtml(title)}</p><div class="profile-book-category">${escapeHtml(category)}</div><span class="profile-book-open"><i class="fas fa-book-open"></i> Open Book</span></div>`;
+      slider.appendChild(card);
+    });
+}
+window.renderProfileBooks = renderProfileBooks;
+
+document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebaseBooks();});
 </script>
 <script>
 (function(){
@@ -3396,6 +3458,7 @@ document.addEventListener("DOMContentLoaded",loadTeamProfiles);
  window.openFacultyModal=function(uid){
    const d=(window.firebaseTeamProfiles||{})[uid]; if(!d)return;
    window.currentFirebaseProfileUid=uid;
+   if(typeof window.renderProfileBooks === "function") window.renderProfileBooks(uid);
    const img=val(d,["photo","img"],FALLBACK_PHOTO),name=val(d,["name","fullName"],"Team Member"),role=val(d,["designation","role"],"Team Member");
    const im=document.getElementById("modalImg"); if(im){im.src=img;im.alt=name;im.onerror=()=>im.src=FALLBACK_PHOTO;}
    txt("modalName",name);txt("modalRole",role);txt("modalBio",val(d,["about","bio"],"Profile information is not available."));txt("modalExp",val(d,["experience","exp"],"Not specified"));txt("modalRoleType",val(d,["roleType","designation","role"],"Team Member"));

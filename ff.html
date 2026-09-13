@@ -1,12 +1,1385 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Join Team | Diploma Engineers</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#101828;font-family:Inter}.wrap{width:min(700px,calc(100% - 26px));margin:auto;padding:28px 0 50px}.panel{background:#fff;border:1px solid #e4e9f0;border-radius:18px;padding:21px;box-shadow:0 7px 22px #10182808}h1{margin:0;font-size:25px}p{color:#667085;font-size:11px;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}label{display:block;font-size:10px;font-weight:800;margin:12px 0 5px}input,textarea{width:100%;border:1px solid #dce2ea;border-radius:10px;padding:11px;font:inherit;font-size:11px}textarea{min-height:90px}.full{grid-column:1/-1}button{margin-top:15px;width:100%;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:800;font-size:11px;cursor:pointer}.status{display:none;margin-top:10px;padding:10px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:10px}.note{background:#fff8e6;color:#8a5a00;border:1px solid #f5dfaa;padding:10px;border-radius:9px;font-size:10px;margin-top:12px}@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}</style></head><body><main class="wrap"><div class="panel"><h1>Join Diploma Engineers Team</h1><p>Create your own team account and submit your public profile. A master admin must approve it before it appears on the Team page.</p><form id="form"><div class="grid"><div><label>Full Name *</label><input id="name" required></div><div><label>Role *</label><input id="role" required placeholder="Admin / Contributor"></div><div class="full"><label>About Profile *</label><textarea id="about" required></textarea></div><div><label>Email *</label><input id="email" type="email" required></div><div><label>Password *</label><input id="pass" type="password" minlength="6" required></div><div><label>Profile Image URL</label><input id="photo" type="url"></div><div><label>Cover Image URL</label><input id="cover" type="url"></div><div><label>WhatsApp Link</label><input id="whatsapp" type="url"></div><div><label>Telegram Link</label><input id="telegram" type="url"></div></div><button id="submit">Create Account & Submit Profile</button><div id="status" class="status"></div><div class="note">Password is handled by Firebase Authentication. Never share it with another admin.</div></form></div></main><script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";import{getAuth,createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";import{getDatabase,ref,set,get}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-const cfg={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"},app=initializeApp(cfg),auth=getAuth(app),db=getDatabase(app),$=x=>document.getElementById(x);
-form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;status.style.display="block";status.textContent="Creating account...";try{const c=await createUserWithEmailAndPassword(auth,email.value.trim(),pass.value.trim());
-const existing=await get(ref(db,"admins"));
-let hasMaster=false, hasAny=false;
-if(existing.exists()) existing.forEach(x=>{hasAny=true;if(x.val().masterAdmin===true) hasMaster=true});
-const first=!hasAny;
-await set(ref(db,"admins/"+c.user.uid),{name:name.value.trim(),role:role.value.trim(),about:about.value.trim(),email:c.user.email,photo:photo.value.trim(),coverImage:cover.value.trim(),whatsapp:whatsapp.value.trim(),telegram:telegram.value.trim(),approved:first,masterAdmin:first,createdAt:Date.now()});
-status.textContent=first?"Master admin account created successfully. You can now login to Admin Panel.":"Account created. Profile submitted for approval.";
-form.reset()}catch(e){status.style.background="#fee2e2";status.style.color="#b42318";status.textContent=e.message}finally{submit.disabled=false}};
-</script></body></html>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Team Profile | Diploma Engineers</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+
+*{
+ box-sizing:border-box;
+ margin:0;
+ padding:0;
+ font-family:Poppins,Arial,sans-serif
+}
+
+body{
+ background:#f7f9fc;
+ color:#172033
+}
+
+/* HEADER */
+
+.header{
+ background:#fff;
+ border-bottom:1px solid #e7ebf0;
+ position:sticky;
+ top:0;
+ z-index:50
+}
+
+.header-inner{
+ width:min(1200px,94%);
+ min-height:68px;
+ margin:auto;
+ display:flex;
+ align-items:center;
+ justify-content:space-between
+}
+
+.brand{
+ display:flex;
+ align-items:center;
+ gap:10px
+}
+
+.brand img{
+ width:42px;
+ height:42px;
+ border-radius:50%;
+ object-fit:cover
+}
+
+.brand h1{
+ font-size:17px;
+ font-weight:800
+}
+
+.orange{color:#ff6500}
+.blue{color:#2563eb}
+
+.brand p{
+ font-size:9px;
+ color:#94a3b8
+}
+
+.back{
+ border:1px solid #e2e8f0;
+ background:#fff;
+ color:#334155;
+ padding:9px 13px;
+ border-radius:9px;
+ font-size:11px;
+ font-weight:700;
+ cursor:pointer
+}
+
+/* PAGE */
+
+.container{
+ width:min(1100px,94%);
+ margin:25px auto 50px
+}
+
+/* PROFILE HERO */
+
+.profile{
+ background:#fff;
+ border:1px solid #e5eaf1;
+ border-radius:24px;
+ padding:30px;
+ display:flex;
+ align-items:center;
+ gap:25px;
+ box-shadow:0 15px 45px rgba(15,23,42,.06);
+ margin-bottom:20px
+}
+
+.profile-photo{
+ width:125px;
+ height:125px;
+ border-radius:50%;
+ object-fit:cover;
+ border:5px solid #fff;
+ box-shadow:0 7px 25px rgba(15,23,42,.15)
+}
+
+.profile-info{
+ flex:1
+}
+
+.badge{
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ background:#ecfdf3;
+ color:#15803d;
+ padding:5px 9px;
+ border-radius:30px;
+ font-size:9px;
+ font-weight:700;
+ margin-bottom:8px
+}
+
+.profile-info h2{
+ font-size:27px;
+ font-weight:800
+}
+
+.designation{
+ color:#2563eb;
+ font-size:12px;
+ font-weight:700;
+ margin-top:3px
+}
+
+.location{
+ color:#64748b;
+ font-size:11px;
+ margin-top:8px
+}
+
+.socials{
+ display:flex;
+ gap:7px;
+ margin-top:13px;
+ flex-wrap:wrap
+}
+
+.socials a{
+ text-decoration:none;
+ border:1px solid #e2e8f0;
+ border-radius:8px;
+ padding:7px 10px;
+ color:#475569;
+ font-size:10px;
+ font-weight:600;
+ background:#fff
+}
+
+.socials a:hover{
+ border-color:#2563eb;
+ color:#2563eb
+}
+
+/* GRID */
+
+.grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:18px
+}
+
+.card{
+ background:#fff;
+ border:1px solid #e5eaf1;
+ border-radius:18px;
+ padding:20px;
+ box-shadow:0 7px 25px rgba(15,23,42,.035)
+}
+
+.card.full{
+ grid-column:1/-1
+}
+
+.card h3{
+ font-size:15px;
+ margin-bottom:12px;
+ display:flex;
+ align-items:center;
+ gap:8px
+}
+
+.card h3 i{
+ color:#2563eb
+}
+
+.about{
+ font-size:12px;
+ line-height:1.8;
+ color:#526176;
+ white-space:pre-line
+}
+
+/* STATS */
+
+.stats{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:9px
+}
+
+.stat{
+ background:#f8fafc;
+ border-radius:11px;
+ padding:13px;
+ text-align:center
+}
+
+.stat strong{
+ display:block;
+ font-size:20px;
+ color:#2563eb
+}
+
+.stat span{
+ font-size:9px;
+ color:#64748b
+}
+
+/* BOOKS */
+
+.books{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:12px
+}
+
+.book{
+ border:1px solid #e5eaf1;
+ border-radius:13px;
+ overflow:hidden;
+ background:#fff
+}
+
+.book-image{
+ width:100%;
+ height:145px;
+ object-fit:cover;
+ background:#f1f5f9
+}
+
+.book-body{
+ padding:12px
+}
+
+.book-title{
+ font-size:12px;
+ font-weight:700;
+ line-height:1.4
+}
+
+.book-meta{
+ font-size:9px;
+ color:#64748b;
+ margin-top:4px
+}
+
+.book-desc{
+ font-size:10px;
+ color:#64748b;
+ margin-top:7px;
+ line-height:1.5
+}
+
+.book-btn{
+ display:block;
+ text-align:center;
+ margin-top:10px;
+ padding:8px;
+ background:#2563eb;
+ color:#fff;
+ text-decoration:none;
+ border-radius:8px;
+ font-size:10px;
+ font-weight:700
+}
+
+/* NEWS */
+
+.news-item{
+ border-bottom:1px solid #edf1f5;
+ padding:13px 0
+}
+
+.news-item:last-child{
+ border-bottom:0
+}
+
+.news-title{
+ font-size:12px;
+ font-weight:700
+}
+
+.news-meta{
+ color:#94a3b8;
+ font-size:9px;
+ margin-top:4px
+}
+
+.news-text{
+ font-size:10px;
+ color:#64748b;
+ line-height:1.6;
+ margin-top:5px
+}
+
+.news-link{
+ display:inline-block;
+ margin-top:7px;
+ color:#2563eb;
+ font-size:10px;
+ font-weight:700;
+ text-decoration:none
+}
+
+/* EMPTY / LOADING */
+
+.loading,
+.empty{
+ text-align:center;
+ padding:30px;
+ color:#94a3b8;
+ font-size:11px
+}
+
+.loading i{
+ margin-right:5px
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+ .profile{
+  flex-direction:column;
+  text-align:center;
+  padding:25px 18px
+ }
+
+ .socials{
+  justify-content:center
+ }
+
+ .grid{
+  grid-template-columns:1fr
+ }
+
+ .card.full{
+  grid-column:auto
+ }
+
+ .books{
+  grid-template-columns:1fr
+ }
+
+ .stats{
+  grid-template-columns:repeat(3,1fr)
+ }
+
+ .profile-info h2{
+  font-size:23px
+ }
+
+ .brand p{
+  display:none
+ }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- HEADER -->
+
+<header class="header">
+
+<div class="header-inner">
+
+<div class="brand">
+
+<img
+src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/02/cropped-1000261069-1.png"
+id="brandLogo">
+
+<div>
+
+<h1>
+<span class="orange">DIPLOMA</span>
+<span class="blue">ENGINEERS</span>
+</h1>
+
+<p>The Students' Trusted Learning Platform</p>
+
+</div>
+
+</div>
+
+<button class="back" onclick="history.back()">
+<i class="fa-solid fa-arrow-left"></i>
+ Back
+</button>
+
+</div>
+
+</header>
+
+
+<main class="container">
+
+<!-- PROFILE -->
+
+<section class="profile">
+
+<img
+id="profilePhoto"
+class="profile-photo"
+src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/02/cropped-1000261069-1.png"
+alt="Team Member">
+
+<div class="profile-info">
+
+<div class="badge">
+<i class="fa-solid fa-circle-check"></i>
+Verified Team Member
+</div>
+
+<h2 id="profileName">
+Loading...
+</h2>
+
+<div class="designation" id="profileDesignation">
+Admin
+</div>
+
+<div class="location" id="profileLocation">
+</div>
+
+<div class="socials" id="socialLinks"></div>
+
+</div>
+
+</section>
+
+
+<!-- CONTENT -->
+
+<div class="grid">
+
+
+<!-- ABOUT -->
+
+<section class="card full">
+
+<h3>
+<i class="fa-solid fa-user"></i>
+About
+</h3>
+
+<div id="about"
+class="about">
+
+Loading profile...
+
+</div>
+
+</section>
+
+
+<!-- STATS -->
+
+<section class="card">
+
+<h3>
+<i class="fa-solid fa-chart-simple"></i>
+Profile Activity
+</h3>
+
+<div class="stats">
+
+<div class="stat">
+<strong id="bookCount">0</strong>
+<span>Books</span>
+</div>
+
+<div class="stat">
+<strong id="newsCount">0</strong>
+<span>News</span>
+</div>
+
+<div class="stat">
+<strong id="courseCount">0</strong>
+<span>Courses</span>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- CONTACT -->
+
+<section class="card">
+
+<h3>
+<i class="fa-solid fa-envelope"></i>
+Contact
+</h3>
+
+<div id="contact"
+class="about">
+
+No public contact information.
+
+</div>
+
+</section>
+
+
+<!-- BOOKS -->
+
+<section class="card full">
+
+<h3>
+<i class="fa-solid fa-book-open"></i>
+Books & Notes
+</h3>
+
+<div id="books"
+class="books">
+
+<div class="loading">
+<i class="fa-solid fa-spinner fa-spin"></i>
+Loading books...
+</div>
+
+</div>
+
+</section>
+
+
+<!-- NEWS -->
+
+<section class="card full">
+
+<h3>
+<i class="fa-solid fa-newspaper"></i>
+Published News
+</h3>
+
+<div id="news">
+
+<div class="loading">
+<i class="fa-solid fa-spinner fa-spin"></i>
+Loading news...
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+</main>
+
+
+<script type="module">
+
+import {
+ initializeApp
+}
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+import {
+ getDatabase,
+ ref,
+ get
+}
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+
+/* =====================================================
+ FIREBASE
+===================================================== */
+
+const firebaseConfig={
+
+ apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+
+ authDomain:
+ "diplomaengineers-869df.firebaseapp.com",
+
+ databaseURL:
+ "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+
+ projectId:
+ "diplomaengineers-869df",
+
+ storageBucket:
+ "diplomaengineers-869df.appspot.com",
+
+ messagingSenderId:
+ "356779436080",
+
+ appId:
+ "1:356779436080:web:4b28da380e547420d0e5f5"
+
+};
+
+const app=
+initializeApp(firebaseConfig);
+
+const db=
+getDatabase(app);
+
+
+/* =====================================================
+ UID FROM URL
+===================================================== */
+
+const params=
+new URLSearchParams(location.search);
+
+const uid=
+params.get("id");
+
+
+const fallback=
+"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/02/cropped-1000261069-1.png";
+
+
+/* =====================================================
+ ESCAPE HTML
+===================================================== */
+
+function esc(value){
+
+ return String(value??"")
+ .replace(/&/g,"&amp;")
+ .replace(/</g,"&lt;")
+ .replace(/>/g,"&gt;")
+ .replace(/"/g,"&quot;")
+ .replace(/'/g,"&#039;");
+
+}
+
+
+/* =====================================================
+ INVALID UID
+===================================================== */
+
+if(!uid){
+
+ document.body.innerHTML=`
+
+ <div style="
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ font-family:Poppins,Arial;
+ background:#f8fafc;
+ ">
+
+ <div style="
+ background:white;
+ border:1px solid #e5e7eb;
+ border-radius:20px;
+ padding:35px;
+ text-align:center;
+ max-width:400px;
+ ">
+
+ <h2>Profile Not Found</h2>
+
+ <p style="
+ color:#64748b;
+ font-size:12px;
+ margin-top:8px
+ ">
+ No team member UID was provided.
+ </p>
+
+ <button
+ onclick="history.back()"
+ style="
+ margin-top:18px;
+ border:0;
+ background:#2563eb;
+ color:white;
+ padding:10px 16px;
+ border-radius:9px;
+ font-weight:700;
+ cursor:pointer
+ ">
+ Go Back
+ </button>
+
+ </div>
+
+ </div>
+
+ `;
+
+ throw new Error("Missing UID");
+
+}
+
+
+/* =====================================================
+ LOAD PROFILE
+===================================================== */
+
+async function loadProfile(){
+
+ try{
+
+  const snap=
+  await get(
+   ref(db,"adminProfiles/"+uid)
+  );
+
+
+  if(!snap.exists()){
+
+   showError(
+    "This team profile does not exist."
+   );
+
+   return;
+
+  }
+
+
+  const p=snap.val();
+
+
+  /* PROFILE */
+
+  const name=
+  p.name ||
+  p.displayName ||
+  "Diploma Engineers Admin";
+
+
+  const photo=
+  p.photo ||
+  p.photoURL ||
+  fallback;
+
+
+  const designation=
+  p.designation ||
+  p.role ||
+  "Admin";
+
+
+  $("profileName").textContent=name;
+
+  $("profileDesignation").textContent=
+  designation;
+
+  $("profilePhoto").src=photo;
+
+
+  /* LOCATION */
+
+  const locationParts=[
+   p.city,
+   p.state,
+   p.country
+  ].filter(Boolean);
+
+
+  $("profileLocation").textContent=
+  locationParts.length
+  ? "📍 "+locationParts.join(", ")
+  : "";
+
+
+  /* ABOUT */
+
+  $("about").textContent=
+  p.about ||
+  p.bio ||
+  "This team member is part of Diploma Engineers.";
+
+
+  /* CONTACT */
+
+  const contact=[];
+
+  if(p.email){
+   contact.push(
+    "Email: "+p.email
+   );
+  }
+
+  if(p.phone){
+   contact.push(
+    "Phone: "+p.phone
+   );
+  }
+
+  $("contact").textContent=
+  contact.length
+  ? contact.join("\n")
+  : "No public contact information.";
+
+
+  /* SOCIAL */
+
+  const social=[];
+
+  if(p.linkedin){
+   social.push(`
+    <a href="${esc(p.linkedin)}"
+       target="_blank"
+       rel="noopener">
+     <i class="fa-brands fa-linkedin"></i>
+     LinkedIn
+    </a>
+   `);
+  }
+
+  if(p.github){
+   social.push(`
+    <a href="${esc(p.github)}"
+       target="_blank"
+       rel="noopener">
+     <i class="fa-brands fa-github"></i>
+     GitHub
+    </a>
+   `);
+  }
+
+  if(p.instagram){
+   social.push(`
+    <a href="${esc(p.instagram)}"
+       target="_blank"
+       rel="noopener">
+     <i class="fa-brands fa-instagram"></i>
+     Instagram
+    </a>
+   `);
+  }
+
+  if(p.youtube){
+   social.push(`
+    <a href="${esc(p.youtube)}"
+       target="_blank"
+       rel="noopener">
+     <i class="fa-brands fa-youtube"></i>
+     YouTube
+    </a>
+   `);
+  }
+
+  $("socialLinks").innerHTML=
+  social.join("");
+
+
+ }catch(error){
+
+ console.error(error);
+
+ showError(
+  "Unable to load this profile."
+ );
+
+ }
+
+}
+
+
+/* =====================================================
+ LOAD BOOKS
+===================================================== */
+
+async function loadBooks(){
+
+ try{
+
+  const snap=
+  await get(
+   ref(db,"books")
+  );
+
+
+  const books=[];
+
+
+  if(snap.exists()){
+
+   snap.forEach(child=>{
+
+    const book={
+     id:child.key,
+     ...child.val()
+    };
+
+
+    /*
+     * IMPORTANT:
+     * Only show books uploaded by
+     * this profile's UID.
+     */
+
+    if(book.createdBy===uid){
+
+     books.push(book);
+
+    }
+
+   });
+
+  }
+
+
+  books.sort(
+   (a,b)=>
+   (b.timestamp||0)-
+   (a.timestamp||0)
+  );
+
+
+  $("bookCount").textContent=
+  books.length;
+
+
+  const container=
+  $("books");
+
+
+  if(!books.length){
+
+   container.innerHTML=
+   `<div class="empty">
+    No books or notes published by this member yet.
+   </div>`;
+
+   return;
+
+  }
+
+
+  container.innerHTML="";
+
+
+  books.forEach(book=>{
+
+   const image=
+   book.thumbnail ||
+   book.image ||
+   fallback;
+
+
+   const pdf=
+   book.pdf ||
+   book.documentUrl ||
+   "#";
+
+
+   const div=
+   document.createElement("article");
+
+   div.className="book";
+
+
+   div.innerHTML=`
+
+    <img
+     class="book-image"
+     src="${esc(image)}"
+     alt="${esc(book.title||book.name)}">
+
+
+    <div class="book-body">
+
+     <div class="book-title">
+      ${esc(book.title||book.name||"Untitled Book")}
+     </div>
+
+     <div class="book-meta">
+
+      ${esc(book.category||"Book")}
+
+      ${book.branch
+       ? " • "+esc(book.branch)
+       : ""}
+
+      ${book.semester
+       ? " • "+esc(book.semester)
+       : ""}
+
+     </div>
+
+
+     ${
+      book.description
+
+      ?
+
+      `<div class="book-desc">
+       ${esc(book.description)}
+       </div>`
+
+      :
+
+      ""
+     }
+
+
+     ${
+      pdf!=="#"
+
+      ?
+
+      `<a
+       class="book-btn"
+       href="${esc(pdf)}"
+       target="_blank"
+       rel="noopener">
+
+       <i class="fa-solid fa-file-pdf"></i>
+       Open PDF
+
+       </a>`
+
+      :
+
+      ""
+     }
+
+    </div>
+
+   `;
+
+
+   container.appendChild(div);
+
+  });
+
+
+ }catch(error){
+
+ console.error(error);
+
+ $("books").innerHTML=
+ `<div class="empty">
+ Unable to load books.
+ </div>`;
+
+ }
+
+}
+
+
+/* =====================================================
+ LOAD NEWS
+===================================================== */
+
+async function loadNews(){
+
+ try{
+
+  const snap=
+  await get(
+   ref(db,"news")
+  );
+
+
+  const news=[];
+
+
+  if(snap.exists()){
+
+   snap.forEach(child=>{
+
+    const item={
+     id:child.key,
+     ...child.val()
+    };
+
+
+    /*
+     * Only news created by this admin.
+     */
+
+    if(item.createdBy===uid){
+
+     news.push(item);
+
+    }
+
+   });
+
+  }
+
+
+  news.sort(
+   (a,b)=>
+   (b.timestamp||0)-
+   (a.timestamp||0)
+  );
+
+
+  $("newsCount").textContent=
+  news.length;
+
+
+  const container=
+  $("news");
+
+
+  if(!news.length){
+
+   container.innerHTML=
+   `<div class="empty">
+    No news published by this member yet.
+   </div>`;
+
+   return;
+
+  }
+
+
+  container.innerHTML="";
+
+
+  news.forEach(item=>{
+
+   const div=
+   document.createElement("article");
+
+   div.className="news-item";
+
+
+   const date=
+   item.timestamp
+   ? new Date(item.timestamp)
+      .toLocaleDateString()
+   : "";
+
+
+   div.innerHTML=`
+
+    <div class="news-title">
+
+     ${esc(
+      item.title ||
+      "Untitled News"
+     )}
+
+    </div>
+
+
+    <div class="news-meta">
+
+     ${esc(
+      item.category ||
+      "Update"
+     )}
+
+     ${date
+      ? " • "+date
+      : ""}
+
+    </div>
+
+
+    <div class="news-text">
+
+     ${esc(
+      item.text ||
+      item.description ||
+      ""
+     )}
+
+    </div>
+
+
+    ${
+     item.link
+
+     ?
+
+     `<a
+      class="news-link"
+      href="${esc(item.link)}"
+      target="_blank"
+      rel="noopener">
+
+      Read More →
+      </a>`
+
+     :
+
+     ""
+    }
+
+   `;
+
+
+   container.appendChild(div);
+
+  });
+
+
+ }catch(error){
+
+ console.error(error);
+
+ $("news").innerHTML=
+ `<div class="empty">
+ Unable to load news.
+ </div>`;
+
+ }
+
+}
+
+
+/* =====================================================
+ COURSE COUNT
+=====================================================
+
+ Course data is maintained in the separate
+ course Firebase project used by the existing
+ course system.
+
+ We attempt to count courses by common
+ creator UID fields.
+===================================================== */
+
+async function loadCourseCount(){
+
+ try{
+
+  const courseConfig={
+
+   apiKey:
+   "AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+
+   authDomain:
+   "diploma-app-9a378.firebaseapp.com",
+
+   databaseURL:
+   "https://diploma-app-9a378-default-rtdb.firebaseio.com",
+
+   projectId:
+   "diploma-app-9a378",
+
+   storageBucket:
+   "diploma-app-9a378.firebasestorage.app",
+
+   messagingSenderId:
+   "160233059797",
+
+   appId:
+   "1:160233059797:web:be38130ed64f8bd0afb95c"
+
+  };
+
+
+  const courseApp=
+  initializeApp(
+   courseConfig,
+   "profileCourseApp"
+  );
+
+
+  const courseDb=
+  getDatabase(courseApp);
+
+
+  const snap=
+  await get(
+   ref(courseDb,"courses")
+  );
+
+
+  let count=0;
+
+
+  if(snap.exists()){
+
+   snap.forEach(child=>{
+
+    const course=child.val();
+
+
+    if(
+     course.createdBy===uid ||
+     course.creatorUid===uid ||
+     course.authorUid===uid
+    ){
+
+     count++;
+
+    }
+
+   });
+
+  }
+
+
+  $("courseCount").textContent=count;
+
+
+ }catch(error){
+
+ console.log(
+  "Course count unavailable:",
+  error.message
+ );
+
+ $("courseCount").textContent="0";
+
+ }
+
+}
+
+
+/* =====================================================
+ ERROR
+===================================================== */
+
+function showError(message){
+
+ $("profileName").textContent=
+ "Profile Not Found";
+
+ $("profileDesignation").textContent=
+ "";
+
+ $("about").textContent=
+ message;
+
+ $("books").innerHTML=
+ `<div class="empty">${esc(message)}</div>`;
+
+ $("news").innerHTML=
+ `<div class="empty">${esc(message)}</div>`;
+
+}
+
+
+/* =====================================================
+ START
+===================================================== */
+
+loadProfile();
+loadBooks();
+loadNews();
+loadCourseCount();
+
+</script>
+
+</body>
+</html>
+```

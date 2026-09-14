@@ -1571,6 +1571,14 @@
 </style>
 
 
+<style id="rating-style">
+.rating-modal{position:fixed;inset:0;z-index:300000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.48);backdrop-filter:blur(5px)}
+.rating-modal.show{display:flex}.rating-card{width:min(330px,calc(100vw - 28px));background:#fff;border:1px solid #e7ebf1;border-radius:18px;padding:20px 16px 16px;text-align:center;box-shadow:0 25px 70px rgba(15,23,42,.22);position:relative}
+.rating-close{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:8px;background:#f3f5f8;color:#64748b;cursor:pointer}.rating-icon{width:38px;height:38px;margin:0 auto 8px;border-radius:11px;display:grid;place-items:center;background:#fff7ed;color:#f59e0b;font-size:17px}
+.rating-card h3{margin:0;color:#111827;font-size:16px;font-weight:800}.rating-card>p{margin:5px 0 12px;color:#98a2b3;font-size:9px}.rating-stars{display:flex;justify-content:center;gap:7px;margin:6px 0}.rating-stars button{width:35px;height:35px;border:0;border-radius:9px;background:#f1f4f8;color:#cbd5e1;cursor:pointer;font-size:17px;transition:.18s}.rating-stars button:hover,.rating-stars button.selected{background:#fff7ed;color:#f59e0b;transform:translateY(-2px)}
+.rating-value{min-height:17px;color:#475569;font-size:9px;font-weight:800;margin:5px 0 10px}.submit-rating{width:100%;border:0;border-radius:9px;background:#111827;color:#fff;padding:9px 12px;font-size:9px;font-weight:800;cursor:pointer}.submit-rating:disabled{opacity:.45;cursor:not-allowed}.rating-status{min-height:15px;margin-top:8px;font-size:8px;font-weight:700}.rating-status.success{color:#15803d}.rating-status.error{color:#dc2626}
+@media(max-width:480px){.rating-card{width:calc(100vw - 24px);padding:18px 13px 14px;border-radius:16px}.rating-stars{gap:5px}.rating-stars button{width:33px;height:33px;font-size:15px}}
+</style>
 <style id="team-card-final-style">
 /* FINAL TEAM GRID — screenshot-style cards */
 .team-grid{
@@ -2117,6 +2125,26 @@
 <!-- =========================================================
      FOOTER
 ========================================================== -->
+
+<!-- RATING MODAL -->
+<div id="ratingModal" class="rating-modal" aria-hidden="true">
+  <div class="rating-card" role="dialog" aria-modal="true" aria-labelledby="ratingTitle">
+    <button class="rating-close" type="button" onclick="closeRatingModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    <div class="rating-icon"><i class="fas fa-star"></i></div>
+    <h3 id="ratingTitle">Rate Profile</h3>
+    <p id="ratingSubtitle">How would you rate this team member?</p>
+    <div id="ratingStars" class="rating-stars" aria-label="Choose rating">
+      <button type="button" data-star="1" aria-label="1 star"><i class="fas fa-star"></i></button>
+      <button type="button" data-star="2" aria-label="2 stars"><i class="fas fa-star"></i></button>
+      <button type="button" data-star="3" aria-label="3 stars"><i class="fas fa-star"></i></button>
+      <button type="button" data-star="4" aria-label="4 stars"><i class="fas fa-star"></i></button>
+      <button type="button" data-star="5" aria-label="5 stars"><i class="fas fa-star"></i></button>
+    </div>
+    <div id="ratingValue" class="rating-value">Select a star</div>
+    <button id="submitRatingBtn" class="submit-rating" type="button" disabled><i class="fas fa-star"></i> Submit Rating</button>
+    <div id="ratingStatus" class="rating-status"></div>
+  </div>
+</div>
 
 <section id="profileDetailPage" aria-hidden="true">
   <div class="profile-full-page">
@@ -3999,7 +4027,7 @@ document.addEventListener(
 ========================================================= -->
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const teamFirebaseConfig = {
     apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
@@ -4226,10 +4254,58 @@ document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebas
    const scroller=detail.querySelector(".profile-full-page");if(scroller)scroller.scrollTop=0;
    if(updateHash)history.pushState({profile:uid},"",`#profile-${encodeURIComponent(uid)}`);
  };
+
+ let selectedRating=0;
+ let ratingProfileUid="";
+ function getVoterKey(){
+   try{
+     let key=localStorage.getItem("de_voter_key");
+     if(!key){ key=(crypto?.randomUUID ? crypto.randomUUID() : "v_"+Date.now()+"_"+Math.random().toString(36).slice(2)); localStorage.setItem("de_voter_key",key); }
+     return key;
+   }catch(e){ return "session_"+Math.random().toString(36).slice(2); }
+ }
+ function paintRatingStars(value){
+   document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.star)<=value));
+   const valueEl=document.getElementById("ratingValue"), submit=document.getElementById("submitRatingBtn");
+   if(valueEl) valueEl.textContent=value ? `${value}/5 — ${["","Poor","Fair","Good","Very Good","Excellent"][value]}` : "Select a star";
+   if(submit) submit.disabled=!value;
+ }
  window.rateProfile=function(){
-   const name=document.getElementById("detailName")?.textContent||"this profile";
-   alert("Thank you! Rating for "+name+" will be available soon.");
+   const uid=window.currentFirebaseProfileUid, d=(window.firebaseTeamProfiles||{})[uid];
+   if(!uid||!d)return;
+   ratingProfileUid=uid; selectedRating=0; paintRatingStars(0);
+   const name=val(d,["name","fullName"],"Team Member");
+   document.getElementById("ratingTitle").textContent="Rate "+name;
+   document.getElementById("ratingSubtitle").textContent="Choose your rating for this team member.";
+   const st=document.getElementById("ratingStatus"); if(st){st.textContent="";st.className="rating-status";}
+   const modal=document.getElementById("ratingModal"); if(modal){modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";}
  };
+ window.closeRatingModal=function(){
+   const modal=document.getElementById("ratingModal"); if(modal){modal.classList.remove("show");modal.setAttribute("aria-hidden","true");}
+   document.body.style.overflow=document.getElementById("profileDetailPage")?.style.display==="block"?"hidden":"";
+ };
+ document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>{
+   btn.addEventListener("mouseenter",()=>paintRatingStars(Number(btn.dataset.star)));
+   btn.addEventListener("click",()=>{selectedRating=Number(btn.dataset.star);paintRatingStars(selectedRating);});
+ });
+ document.getElementById("ratingStars")?.addEventListener("mouseleave",()=>paintRatingStars(selectedRating));
+ document.getElementById("submitRatingBtn")?.addEventListener("click",async()=>{
+   const uid=ratingProfileUid,rating=selectedRating;if(!uid||!rating)return;
+   const button=document.getElementById("submitRatingBtn"),status=document.getElementById("ratingStatus");
+   button.disabled=true;button.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+   try{
+     const voterId=getVoterKey(), ratingRef=ref(teamDb,`profileRatings/${uid}/${voterId}`), existing=await get(ratingRef);
+     if(existing.exists()){if(status){status.textContent="You have already rated this profile from this device.";status.className="rating-status error";}button.innerHTML='<i class="fas fa-star"></i> Already Rated';return;}
+     await set(ratingRef,{rating,voterId,createdAt:Date.now()});
+     if(status){status.textContent="Rating submitted successfully.";status.className="rating-status success";}
+     button.innerHTML='<i class="fas fa-check"></i> Rated';setTimeout(closeRatingModal,900);
+   }catch(err){
+     console.error("Rating save error:",err);if(status){status.textContent="Unable to submit rating. Please try again.";status.className="rating-status error";}
+     button.disabled=false;button.innerHTML='<i class="fas fa-star"></i> Submit Rating';
+   }
+ });
+ window.addEventListener("click",e=>{const modal=document.getElementById("ratingModal");if(e.target===modal)closeRatingModal();});
+ window.addEventListener("keydown",e=>{if(e.key==="Escape")closeRatingModal();});
 
  window.closeDetailedProfile=function(){const main=document.querySelector("main"),header=document.getElementById("header"),footer=document.getElementById("footer"),detail=document.getElementById("profileDetailPage");if(detail){detail.style.display="none";detail.setAttribute("aria-hidden","true");}if(main)main.style.display="";if(header)header.style.display="";if(footer)footer.style.display="";document.body.style.overflow="";if(location.hash.startsWith("#profile-"))history.replaceState(null,"",location.pathname+location.search);};
  window.shareDetailedProfile=function(){

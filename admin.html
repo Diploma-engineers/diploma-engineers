@@ -2288,6 +2288,8 @@ function uploadToCloudinary(file, onProgress) {
     });
 }
 
+let newsEditId = null;
+
 /* =====================================================
    PUBLISH NEWS
 ===================================================== */
@@ -2337,34 +2339,36 @@ publishBtn.addEventListener("click", async () => {
             if (results[1]) finalPdfUrl = results[1].secure_url;
         }
 
-        statusText.innerText = "Saving news to Firebase...";
-        const newsRef = push(ref(db, "news"));
-
-        await set(newsRef, {
-            title: title,
-            text: text,
-            desc: text,
+        statusText.innerText = newsEditId ? "Updating news..." : "Saving news to Firebase...";
+        const currentUser = auth.currentUser;
+        const existing = newsEditId ? window.__adminNewsCache?.find(x=>x.id===newsEditId) : null;
+        const payload = {
+            title: title, text: text, desc: text,
             html: document.getElementById("newsEditor")?.innerHTML || "",
-            thumb: finalImageUrl,
-            image: finalImageUrl,
-            pdf: finalPdfUrl,
-            link: externalLink,
-            cat: category,
-            category: category,
-            authorUid: auth.currentUser?.uid || "",
-            ownerUid: auth.currentUser?.uid || "",
-            authorName: adminProfile?.name || auth.currentUser?.displayName || "Admin",
-            ownerName: adminProfile?.name || auth.currentUser?.displayName || "Admin",
-            authorPhoto: adminProfile?.photo || DEFAULT_PROFILE_IMAGE,
-            ownerPhoto: adminProfile?.photo || DEFAULT_PROFILE_IMAGE,
-            designation: auth.currentUser?.uid === COURSE_ONLY_ADMIN_UID ? "FOUNDER" : "ADMIN",
-            date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
-            timestamp: Date.now()
-        });
-
-        statusText.innerText = "Published successfully.";
+            thumb: finalImageUrl || existing?.thumb || existing?.image || "",
+            image: finalImageUrl || existing?.image || existing?.thumb || "",
+            pdf: finalPdfUrl || existing?.pdf || "", link: externalLink,
+            cat: category, category: category,
+            authorUid: existing?.authorUid || currentUser?.uid || "",
+            ownerUid: existing?.ownerUid || existing?.authorUid || currentUser?.uid || "",
+            authorName: existing?.authorName || adminProfile?.name || currentUser?.displayName || "Admin",
+            ownerName: existing?.ownerName || adminProfile?.name || currentUser?.displayName || "Admin",
+            authorPhoto: existing?.authorPhoto || adminProfile?.photo || DEFAULT_PROFILE_IMAGE,
+            ownerPhoto: existing?.ownerPhoto || adminProfile?.photo || DEFAULT_PROFILE_IMAGE,
+            designation: existing?.designation || (currentUser?.uid === COURSE_ONLY_ADMIN_UID ? "FOUNDER" : "ADMIN"),
+            date: existing?.date || new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+            timestamp: Date.now(), updatedBy: currentUser?.uid || ""
+        };
+        if(newsEditId){
+            await update(ref(db, "news/" + newsEditId), payload);
+            statusText.innerText = "News updated successfully.";
+            alert("News Updated Successfully!");
+        } else {
+            await set(push(ref(db, "news")), payload);
+            statusText.innerText = "Published successfully.";
+            alert("News Published Successfully!");
+        }
         progressBar.style.width = "100%";
-        alert("News Published Successfully!");
         clearForm();
 
     } catch (error) {
@@ -2378,6 +2382,8 @@ publishBtn.addEventListener("click", async () => {
 });
 
 function clearForm() {
+    newsEditId = null;
+    if(typeof window.setNewsEditMode === "function") window.setNewsEditMode(false);
     document.getElementById("newsTitle").value = "";
     document.getElementById("newsText").value = "";
     document.getElementById("externalLink").value = "";
@@ -2406,6 +2412,7 @@ const blogEditor = document.getElementById("blogEditor");
 const blogWriterCount = document.getElementById("blogWriterCount");
 const blogStatus = document.getElementById("blogStatus");
 let blogListenerStarted = false;
+let blogEditId = null;
 
 function blogAuthorInfo(){
     const user = auth.currentUser;
@@ -2445,6 +2452,8 @@ function initBlogWriter(){
 }
 
 function clearBlogForm(){
+    blogEditId=null;
+    if(typeof window.setBlogEditMode === "function") window.setBlogEditMode(false);
     ["blogTitle","blogImageUrl","blogExternalLink","blogHtmlCode"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});
     const cat=document.getElementById("blogCategory"); if(cat)cat.value="Education";
     const file=document.getElementById("blogImageFile"); if(file)file.value="";
@@ -2489,20 +2498,19 @@ publishBlogBtn?.addEventListener("click",async()=>{
             imageUrl=res.secure_url;
         }
         const author=blogAuthorInfo();
-        const blogRef=push(ref(db,"blogs"));
-        await set(blogRef,{
-            title, html, text, desc:text, image:imageUrl, thumb:imageUrl,
+        const existing = blogEditId ? window.__adminBlogCache?.find(x=>x.id===blogEditId) : null;
+        const payload={
+            title, html, text, desc:text, image:imageUrl || existing?.image || existing?.thumb || "", thumb:imageUrl || existing?.thumb || existing?.image || "",
             category, cat:category, link:externalLink,
-            authorUid:author.uid, ownerUid:author.uid,
-            authorName:author.name, ownerName:author.name,
-            authorPhoto:author.photo, ownerPhoto:author.photo,
-            designation:author.designation, ownerDesignation:author.designation,
-            email:author.email,
-            date:new Date().toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}),
-            timestamp:Date.now()
-        });
-        if(blogStatus)blogStatus.textContent="Blog published successfully.";
-        alert("Blog Published Successfully!");
+            authorUid:existing?.authorUid || author.uid, ownerUid:existing?.ownerUid || existing?.authorUid || author.uid,
+            authorName:existing?.authorName || author.name, ownerName:existing?.ownerName || author.name,
+            authorPhoto:existing?.authorPhoto || author.photo, ownerPhoto:existing?.ownerPhoto || author.photo,
+            designation:existing?.designation || author.designation, ownerDesignation:existing?.ownerDesignation || author.designation,
+            email:existing?.email || author.email, date:existing?.date || new Date().toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}),
+            timestamp:Date.now(), updatedBy:author.uid
+        };
+        if(blogEditId){ await update(ref(db,"blogs/"+blogEditId),payload); if(blogStatus)blogStatus.textContent="Blog updated successfully."; alert("Blog Updated Successfully!"); }
+        else { await set(push(ref(db,"blogs")),payload); if(blogStatus)blogStatus.textContent="Blog published successfully."; alert("Blog Published Successfully!"); }
         clearBlogForm();
     }catch(err){
         console.error("Blog publish error",err);
@@ -2512,6 +2520,22 @@ publishBlogBtn?.addEventListener("click",async()=>{
         publishBlogBtn.disabled=false;
     }
 });
+
+function editBlog(id){
+    const item=(window.__adminBlogCache||[]).find(x=>x.id===id); if(!item)return;
+    const owner=item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"";
+    if(!isMasterAdmin() && owner!==auth.currentUser?.uid){alert("You can edit only your own blog.");return;}
+    blogEditId=id;
+    document.getElementById("blogTitle").value=item.title||"";
+    document.getElementById("blogCategory").value=item.category||item.cat||"Education";
+    document.getElementById("blogExternalLink").value=item.link||"";
+    document.getElementById("blogImageUrl").value=item.image||item.thumb||"";
+    document.getElementById("blogHtmlCode").value=item.html||"";
+    if(blogEditor)blogEditor.innerHTML=item.html||item.text||"";
+    document.getElementById("blogImageFile").value="";
+    if(typeof window.setBlogEditMode === "function") window.setBlogEditMode(true);
+    const form=document.querySelector("#blogAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed");form.scrollIntoView({behavior:"smooth",block:"start"});}
+}
 
 function deleteBlog(id){
     if(!confirm("Delete this blog?"))return;
@@ -2533,7 +2557,8 @@ function loadBlogs(){
         const uid=auth.currentUser?.uid||"";
         const allItems=[];
         snapshot.forEach(child=>allItems.push({id:child.key,...child.val()}));
-        const items=allItems.filter(item=>(item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"")===uid);
+        window.__adminBlogCache=allItems;
+        const items=isMasterAdmin() ? allItems : allItems.filter(item=>(item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"")===uid);
         items.sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
         if(blogCountEl)blogCountEl.textContent=items.length;
         items.forEach(item=>{
@@ -2547,6 +2572,7 @@ function loadBlogs(){
             const excerpt=document.createElement("p");excerpt.className="blog-admin-excerpt";excerpt.textContent=item.text||item.desc||"";
             const actions=document.createElement("div");actions.className="blog-actions";
             if(item.link){const a=document.createElement("a");a.className="blog-open";a.href=item.link;a.target="_blank";a.rel="noopener";a.innerHTML='<i class="fa-solid fa-arrow-up-right-from-square"></i> Link';actions.appendChild(a)}
+            const edit=document.createElement("button");edit.className="blog-delete";edit.style.background="#dbeafe";edit.style.color="#1d4ed8";edit.innerHTML='<i class="fa-solid fa-pen"></i> Edit';edit.onclick=()=>editBlog(item.id);actions.appendChild(edit);
             const del=document.createElement("button");del.className="blog-delete";del.innerHTML='<i class="fa-solid fa-trash"></i> Delete';del.onclick=()=>deleteBlog(item.id);actions.appendChild(del);
             content.append(title,meta,excerpt,actions);card.append(thumb,content);blogListEl.appendChild(card);
         });
@@ -2576,7 +2602,8 @@ function loadNews() {
         snapshot.forEach((child) => {
             allItems.push({ id: child.key, ...child.val() });
         });
-        const items = allItems.filter(item => (item.authorUid || item.ownerUid || item.uploaderUid || item.createdBy || "") === uid);
+        window.__adminNewsCache = allItems;
+        const items = isMasterAdmin() ? allItems : allItems.filter(item => (item.authorUid || item.ownerUid || item.uploaderUid || item.createdBy || "") === uid);
 
         items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         newsCount.innerText = items.length;
@@ -2643,6 +2670,12 @@ function loadNews() {
                 links.appendChild(a);
             }
 
+            const editBtn = document.createElement("button");
+            editBtn.className = "secondary edit-news-btn";
+            editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+            editBtn.onclick = () => editNews(item.id);
+            links.appendChild(editBtn);
+
             const deleteBtn = document.createElement("button");
             deleteBtn.className = "delete-btn";
             deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
@@ -2663,6 +2696,23 @@ function loadNews() {
         console.error("News Load Error:", error);
         newsList.innerHTML = `<p style="color:#dc2626">Unable to Load News</p>`;
     });
+}
+
+function editNews(id){
+    const item=(window.__adminNewsCache||[]).find(x=>x.id===id);
+    if(!item) return;
+    const owner=item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"";
+    if(!isMasterAdmin() && owner !== auth.currentUser?.uid){ alert("You can edit only your own news."); return; }
+    newsEditId=id;
+    document.getElementById("newsTitle").value=item.title||"";
+    document.getElementById("newsText").value=item.text||item.desc||"";
+    document.getElementById("newsCategory").value=item.cat||item.category||"News";
+    document.getElementById("externalLink").value=item.link||"";
+    document.getElementById("imageUrlInput").value=item.thumb||item.image||"";
+    document.getElementById("pdfFile").value=""; document.getElementById("imageFile").value="";
+    const ed=document.getElementById("newsEditor"); if(ed) ed.innerHTML=item.html||item.text||"";
+    if(typeof window.setNewsEditMode === "function") window.setNewsEditMode(true);
+    const form=document.querySelector("#newsAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); form.scrollIntoView({behavior:"smooth",block:"start"});}
 }
 
 async function deleteNews(id) {
@@ -2766,9 +2816,9 @@ function renderBookRows(){
     if (!rowsEl) return;
 
     const uid = auth.currentUser?.uid || "";
-    const visibleBooks = bookItems.filter(b => (b.ownerUid || b.authorUid || b.uploaderUid || b.createdBy || "") === uid);
+    const visibleBooks = isMasterBookAdmin() ? bookItems : bookItems.filter(b => (b.ownerUid || b.authorUid || b.uploaderUid || b.createdBy || "") === uid);
     if (!visibleBooks.length) {
-        rowsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px">No books uploaded by your account yet.</td></tr>`;
+        rowsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px">${isMasterBookAdmin() ? "No books uploaded yet." : "No books uploaded by your account yet."}</td></tr>`;
         return;
     }
 
@@ -4113,6 +4163,18 @@ html,body{margin:0!important;padding:0!important;overflow-x:hidden!important}
   const designation=document.getElementById('profileDesignation');
   if(designation){designation.readOnly=true;}
   window.addEventListener('adminProfileUpdated',()=>{ if(typeof loadAllAdminProfiles==='function' && isMasterAdmin()) loadAllAdminProfiles(); });
+})();
+</script>
+
+<script>
+/* Founder-wide content management UI */
+(function(){
+  window.setNewsEditMode=function(edit){
+    const btn=document.getElementById("publishBtn"); if(btn) btn.innerHTML=edit?'<i class="fa-solid fa-rotate"></i> Update News':'<i class="fa-solid fa-cloud-arrow-up"></i> Publish News';
+  };
+  window.setBlogEditMode=function(edit){
+    const btn=document.getElementById("publishBlogBtn"); if(btn) btn.innerHTML=edit?'<i class="fa-solid fa-rotate"></i> Update Blog':'<i class="fa-solid fa-cloud-arrow-up"></i> Publish Blog';
+  };
 })();
 </script>
 </body>

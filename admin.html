@@ -1573,6 +1573,11 @@ body{overflow-x:hidden!important;}
                     <div class="profile-field full"><label class="profile-social-label"><i class="fa-brands fa-whatsapp" style="color:#25d366"></i> WhatsApp</label><input id="profileWhatsapp" type="tel" placeholder="Mobile number with country code, e.g. 919876543210"></div>
                 </div>
 
+                <div class="admin-profiles-section" id="allAdminProfilesSection" hidden>
+                    <div class="admin-profiles-head"><div><h3><i class="fa-solid fa-users-gear"></i> All Admin Profiles</h3><p>Founder can view, edit and delete Content Admin profiles.</p></div></div>
+                    <div id="allAdminProfilesList" class="admin-profiles-list"></div>
+                </div>
+
                 <div class="saved-profile-box" id="savedProfileBox">
                     <div class="saved-profile-head">
                         <div><h3><i class="fa-solid fa-id-card"></i> Your Saved Profile</h3><p>See how your saved admin profile looks.</p></div>
@@ -1706,6 +1711,9 @@ const navProfileName = document.getElementById("navProfileName");
 const profilePreviewName = document.getElementById("profilePreviewName");
 const profilePreviewDesignation = document.getElementById("profilePreviewDesignation");
 let adminProfile = {};
+let profileEditUid = null;
+const MASTER_ADMIN_UID = "KirLkZUGXoZf0cXHkuCZ4Mfnxam2";
+function isMasterAdmin(){ return auth.currentUser?.uid === MASTER_ADMIN_UID; }
 
 const profileFields = [
   "profileName","profileDesignation","profileBranch","profileCollegeName","profileExperience","profileEducation","profileCollegeDegree","profileMobile","profileEmail","profileAddress","profileAbout",
@@ -1716,7 +1724,7 @@ function getProfileForm(){
   const o = {};
   profileFields.forEach(id => { const el=document.getElementById(id); if(el) o[id.replace("profile","").toLowerCase()] = el.value.trim(); });
   o.name = document.getElementById("profileName").value.trim();
-  o.designation = auth.currentUser?.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2" ? "FOUNDER" : "ADMIN";
+  o.designation = auth.currentUser?.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2" ? "FOUNDER" : "CONTENT ADMIN";
   o.branch = document.getElementById("profileBranch").value.trim();
   o.collegeName = document.getElementById("profileCollegeName").value.trim();
   o.experience = document.getElementById("profileExperience").value.trim();
@@ -1755,9 +1763,10 @@ function updateProfilePreview(){
 function fillProfile(data){
   const masterUid = "KirLkZUGXoZf0cXHkuCZ4Mfnxam2";
   const currentUid = auth.currentUser?.uid || "";
+  const recordUid = profileEditUid || currentUid;
   data = Object.assign({}, data || {});
-  if(currentUid === masterUid){ data.designation = "FOUNDER"; if(!data.name) data.name = "Anubhav Gangwar"; }
-  else { data.designation = "ADMIN"; if(!data.name) data.name = "Admin"; }
+  if(recordUid === masterUid){ data.designation = "FOUNDER"; if(!data.name) data.name = "Anubhav Gangwar"; }
+  else { data.designation = "CONTENT ADMIN"; if(!data.name) data.name = "Admin"; }
   adminProfile = data || {};
   const map = {
     profileName: data?.name || "", profileDesignation: data?.designation || "ADMIN", profileBranch: data?.branch || "",
@@ -1781,15 +1790,93 @@ function fillProfile(data){
   if(dashUid) dashUid.textContent = auth.currentUser?.uid ? "UID: " + auth.currentUser.uid : "";
 }
 
-async function loadAdminProfile(){
-  const user = auth.currentUser;
+async function loadAdminProfile(targetUid=null){
+  const user=auth.currentUser;
   if(!user) return;
+  const uid=targetUid || user.uid;
   try{
-    const snap = await get(ref(db, "adminProfiles/" + user.uid));
-    fillProfile(snap.exists() ? snap.val() : {name:"Admin",designation:"ADMIN",email:user.email,photo:DEFAULT_PROFILE_IMAGE});
+    profileEditUid=uid;
+    const snap=await get(ref(db,"adminProfiles/"+uid));
+    const fallback = uid===MASTER_ADMIN_UID
+      ? {name:"Anubhav Gangwar",designation:"FOUNDER",email:user.email,photo:DEFAULT_PROFILE_IMAGE}
+      : {name:"Admin",designation:"CONTENT ADMIN",email:uid===user.uid?user.email:"",photo:DEFAULT_PROFILE_IMAGE};
+    fillProfile(snap.exists()?snap.val():fallback);
+    const editLabel=document.getElementById("profileEditTargetLabel");
+    if(editLabel) editLabel.textContent=uid===MASTER_ADMIN_UID?"Founder Profile":"Content Admin Profile";
+    const des=document.getElementById("profileDesignation");
+    if(des){
+      des.value=uid===MASTER_ADMIN_UID?"FOUNDER":"CONTENT ADMIN";
+      des.readOnly=true;
+    }
   }catch(err){
     console.error("Profile load error:",err);
-    fillProfile({name:"Admin",designation:"ADMIN",email:user.email,photo:DEFAULT_PROFILE_IMAGE});
+    fillProfile({name:uid===MASTER_ADMIN_UID?"Anubhav Gangwar":"Admin",designation:uid===MASTER_ADMIN_UID?"FOUNDER":"CONTENT ADMIN",email:uid===user.uid?user.email:"",photo:DEFAULT_PROFILE_IMAGE});
+    profileEditUid=uid;
+  }
+}
+
+async function loadAllAdminProfiles(){
+  const box=document.getElementById("allAdminProfilesList");
+  const section=document.getElementById("allAdminProfilesSection");
+  if(!box||!section) return;
+  if(!isMasterAdmin()){ section.hidden=true; return; }
+  section.hidden=false;
+  box.innerHTML='<div class="admin-profiles-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading admin profiles...</div>';
+  try{
+    const snap=await get(ref(db,"adminProfiles"));
+    const data=snap.val()||{};
+    const entries=Object.entries(data);
+    if(!entries.length){ box.innerHTML='<div class="admin-profiles-empty">No admin profiles found yet.</div>'; return; }
+    entries.sort((a,b)=> (a[0]===MASTER_ADMIN_UID?-1:b[0]===MASTER_ADMIN_UID?1:(a[1]?.name||"").localeCompare(b[1]?.name||"")));
+    box.innerHTML=entries.map(([uid,p])=>{
+      const master=uid===MASTER_ADMIN_UID;
+      const name=p?.name|| (master?"Anubhav Gangwar":"Admin");
+      const role=master?"FOUNDER":"CONTENT ADMIN";
+      const photo=p?.photo||DEFAULT_PROFILE_IMAGE;
+      const branch=p?.branch||"—";
+      return `<article class="admin-profile-row">
+        <img src="${escapeHTML(photo)}" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'" alt="">
+        <div class="admin-profile-row-main"><strong>${escapeHTML(name)}</strong><span>${escapeHTML(role)}</span><small>${escapeHTML(branch)} • ${escapeHTML(uid)}</small></div>
+        <div class="admin-profile-row-actions">
+          <button type="button" class="admin-profile-edit" data-admin-edit="${escapeHTML(uid)}"><i class="fa-solid fa-pen"></i> Edit</button>
+          ${master?'<span class="admin-master-badge">MASTER</span>':`<button type="button" class="admin-profile-delete" data-admin-delete="${escapeHTML(uid)}"><i class="fa-solid fa-trash"></i> Delete</button>`}
+        </div>
+      </article>`;
+    }).join('');
+    box.querySelectorAll('[data-admin-edit]').forEach(btn=>btn.addEventListener('click',async()=>{
+      const uid=btn.dataset.adminEdit;
+      await loadAdminProfile(uid);
+      setProfileEditMode(true);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }));
+    box.querySelectorAll('[data-admin-delete]').forEach(btn=>btn.addEventListener('click',async()=>{
+      const uid=btn.dataset.adminDelete;
+      if(!isMasterAdmin() || uid===MASTER_ADMIN_UID) return;
+      if(!confirm('Delete this admin profile from Admin Profiles and Team Profile?')) return;
+      try{
+        await remove(ref(db,"adminProfiles/"+uid));
+        await remove(ref(db,"teamProfiles/"+uid));
+        await loadAllAdminProfiles();
+        setProfileStatus("Admin profile deleted successfully.",true);
+      }catch(err){
+        console.error(err);
+        setProfileStatus("Unable to delete profile: "+err.message,false);
+      }
+    }));
+  }catch(err){
+    console.error("Admin profiles load error:",err);
+    box.innerHTML='<div class="admin-profiles-empty">Unable to load admin profiles. Check Firebase Rules.</div>';
+  }
+}
+
+function setProfileEditMode(edit=true){
+  if(!profileModal)return;
+  profileModal.classList.toggle("profile-view-mode",!edit);
+  profileModal.classList.toggle("profile-edit-mode",edit);
+  profileModal.setAttribute("aria-hidden","false");
+  if(edit){
+    const h=document.getElementById("profileTitle");
+    if(h) h.innerHTML='<i class="fa-solid fa-user-gear"></i> Admin Profile';
   }
 }
 
@@ -1798,7 +1885,9 @@ function openProfile(){
   showAdminMode("profile");
   syncAppNav("profile");
   profileStatus.className="profile-status";
+  profileEditUid = auth.currentUser.uid;
   loadAdminProfile();
+  loadAllAdminProfiles();
   window.scrollTo({top:0,behavior:"auto"});
 }
 function closeProfile(){
@@ -1819,7 +1908,7 @@ function setProfileViewMode(view=true){
 function updateProfileDisplay(){
   const u=auth.currentUser, p=adminProfile||{};
   const name=p.name || u?.displayName || "Admin";
-  const role=(u?.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2") ? "FOUNDER" : (p.designation || "ADMIN");
+  const role=(u?.uid === MASTER_ADMIN_UID) ? "FOUNDER" : "CONTENT ADMIN";
   const photo=p.photo || DEFAULT_PROFILE_IMAGE;
   const vals={
     profileDisplayName:name, profileDisplayRole:role, profileDisplayFullName:name,
@@ -1910,15 +1999,19 @@ profileSave.addEventListener("click",async()=>{
   profileSave.disabled=true;
   profileSave.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   try{
+    const targetUid = (isMasterAdmin() && profileEditUid) ? profileEditUid : user.uid;
+    const targetIsMaster = targetUid === MASTER_ADMIN_UID;
     const data=getProfileForm();
-    data.uid=user.uid;
-    await set(ref(db,"adminProfiles/"+user.uid),data);
+    data.uid=targetUid;
+    data.designation=targetIsMaster?"FOUNDER":"CONTENT ADMIN";
+    if(targetIsMaster && !data.name) data.name="Anubhav Gangwar";
+    await set(ref(db,"adminProfiles/"+targetUid),data);
 
 // Publish Team-safe copy for the public Team page.
 const teamProfile = {
-  uid: user.uid,
+  uid: targetUid,
   name: data.name || "Team Member",
-  designation: data.designation || "ADMIN",
+  designation: targetIsMaster ? "FOUNDER" : "CONTENT ADMIN",
   branch: data.branch || "",
   collegeName: data.collegeName || "",
   experience: data.experience || "",
@@ -1937,18 +2030,19 @@ const teamProfile = {
   updatedAt: Date.now()
 };
 try {
-  await set(ref(db,"teamProfiles/"+user.uid),teamProfile);
+  await set(ref(db,"teamProfiles/"+targetUid),teamProfile);
 } catch(teamErr) {
   console.error("Team profile publish error:", teamErr);
   throw new Error("Profile saved, but Team profile could not be published. Check Firebase Rules for teamProfiles write access.");
 }
-    adminProfile=data;
+    if(targetUid===user.uid) adminProfile=data;
     updateProfilePreview();
     syncProfilePage();
     updateProfileDisplay();
-    setProfileStatus("Profile saved successfully. Your profile is now updated.",true);
+    setProfileStatus(targetUid===user.uid ? "Profile saved successfully. Your profile is now updated." : "Admin profile updated successfully.",true);
     setProfileViewMode(true);
     const saved=document.getElementById("savedProfilePreview"); if(saved){saved.hidden=false;}
+    if(isMasterAdmin()) await loadAllAdminProfiles();
   }catch(err){
     console.error("Profile save error:",err);
     setProfileStatus("Unable to save profile: "+err.message,false);
@@ -4006,6 +4100,21 @@ html,body{margin:0!important;padding:0!important;overflow-x:hidden!important}
 }
 </style>
 
+
+<style id="admin-profile-management-final">
+.admin-profiles-section{margin-top:22px;padding:18px;border:1px solid #dbe7f5;border-radius:18px;background:#f8fbff}
+.admin-profiles-head h3{margin:0;color:#0f172a;font-size:17px}.admin-profiles-head p{margin:5px 0 14px;color:#64748b;font-size:11px}
+.admin-profiles-list{display:grid;gap:10px}.admin-profile-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e3eaf3;border-radius:14px;background:#fff}
+.admin-profile-row>img{width:52px;height:52px;border-radius:14px;object-fit:cover;border:1px solid #dbeafe;flex:0 0 auto}.admin-profile-row-main{min-width:0;flex:1}.admin-profile-row-main strong{display:block;font-size:14px;color:#0f172a}.admin-profile-row-main span{display:inline-block;margin-top:3px;font-size:10px;font-weight:800;color:#2563eb}.admin-profile-row-main small{display:block;margin-top:4px;color:#64748b;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admin-profile-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.admin-profile-row-actions button{border:0;border-radius:9px;padding:8px 10px;font-size:10px;font-weight:800;cursor:pointer}.admin-profile-edit{background:#eff6ff;color:#2563eb}.admin-profile-delete{background:#fee2e2;color:#b91c1c}.admin-master-badge{padding:7px 9px;border-radius:9px;background:#ecfdf5;color:#047857;font-size:9px;font-weight:900}.admin-profiles-loading,.admin-profiles-empty{padding:18px;text-align:center;color:#64748b;font-size:11px;background:#fff;border-radius:12px;border:1px dashed #cbd5e1}
+@media(max-width:700px){.admin-profile-row{align-items:flex-start;flex-wrap:wrap}.admin-profile-row-main{min-width:calc(100% - 68px)}.admin-profile-row-actions{width:100%;justify-content:flex-start}.admin-profile-row-actions button{flex:1}.admin-profiles-section{padding:13px}.admin-profile-row>img{width:48px;height:48px}}
+</style>
+<script>
+(function(){
+  const designation=document.getElementById('profileDesignation');
+  if(designation){designation.readOnly=true;}
+  window.addEventListener('adminProfileUpdated',()=>{ if(typeof loadAllAdminProfiles==='function' && isMasterAdmin()) loadAllAdminProfiles(); });
+})();
+</script>
 </body>
 
 <style id="profile-full-width-final">

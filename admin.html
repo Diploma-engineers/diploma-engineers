@@ -1117,16 +1117,10 @@ body{overflow-x:hidden!important;}
 <!-- ========================= APP HOME ========================= -->
 <section id="homeAdminSection" class="admin-mode-section active">
   <div class="home-shell">
-    <div class="pro-app-header reveal">
-      <div class="pro-user">
-        <img id="proHomeAvatar" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile">
-        <div><span>Hello 👋</span><strong id="proHomeName">Admin</strong><small id="proHomeRole">ADMIN</small></div>
-      </div>
-      <button class="pro-notify" type="button" title="Notifications"><i class="fa-regular fa-bell"></i><em>2</em></button>
-    </div>
-    <div class="pro-search-row reveal">
-      <div class="pro-search"><i class="fa-solid fa-magnifying-glass"></i><input id="homeSearch" type="search" placeholder="Search your content..."></div>
-      <button class="pro-filter" type="button" title="Quick actions"><i class="fa-solid fa-sliders"></i></button>
+    <div class="home-top-actions">
+      <button class="home-logout-btn" id="homeLogoutBtn" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
     </div>
     <div class="home-hero reveal">
       <div class="home-welcome">
@@ -3832,6 +3826,8 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
   }
   function setupBooks(){
     const sec=$('#booksAdminSection'); if(!sec)return;
+    if(sec.dataset.booksSetup==='1') return;
+    sec.dataset.booksSetup='1';
     const form=$('#bookAdminForm')?.closest('.panel');
     const list=$$('#booksAdminSection .panel')[1];
     if(form)form.classList.add('admin-upload-form','is-collapsed');
@@ -4180,3 +4176,211 @@ html,body{margin:0!important;padding:0!important;}
   #profileModal.profile-edit-mode .profile-body{padding:12px 10px 95px!important}
 }
 </style>
+
+
+
+<style id="profile-vertical-layout-and-books-cleanup">
+/* PROFILE EDIT: one clean vertical layout. Heading first, form underneath. */
+#profileModal.profile-edit-mode,
+#profileModal.profile-edit-mode.active,
+.profile-page-section.profile-edit-mode {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  position:relative !important;
+  inset:auto !important;
+  background:#f8fafc !important;
+  overflow:visible !important;
+}
+#profileModal.profile-edit-mode .profile-card {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+#profileModal.profile-edit-mode .profile-head {
+  display:flex !important;
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  width:100% !important;
+  min-height:60px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  padding:15px clamp(14px,3vw,38px) !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  background:#fff !important;
+  color:#0f172a !important;
+  border:0 !important;
+  border-bottom:1px solid #e5eaf1 !important;
+  border-radius:0 !important;
+}
+#profileModal.profile-edit-mode .profile-head h2 {
+  display:block !important;
+  margin:0 !important;
+  color:#0f172a !important;
+  font-size:20px !important;
+  line-height:1.3 !important;
+}
+#profileModal.profile-edit-mode .profile-head h2 i { color:#2563eb !important; }
+#profileModal.profile-edit-mode .profile-close {
+  display:flex !important;
+  width:38px !important;
+  height:38px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#eff6ff !important;
+  color:#2563eb !important;
+  border-radius:10px !important;
+}
+#profileModal.profile-edit-mode .profile-body {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:20px clamp(14px,3vw,42px) 105px !important;
+  box-sizing:border-box !important;
+  background:#f8fafc !important;
+}
+#profileModal.profile-edit-mode .profile-preview,
+#profileModal.profile-edit-mode .profile-grid,
+#profileModal.profile-edit-mode .profile-social-grid,
+#profileModal.profile-edit-mode .saved-profile-box,
+#profileModal.profile-edit-mode .profile-actions {
+  width:100% !important;
+  max-width:none !important;
+  box-sizing:border-box !important;
+}
+#profileModal.profile-edit-mode .profile-preview {
+  display:flex !important;
+  margin:0 0 18px !important;
+}
+/* Fields are vertical instead of leaving a narrow right-hand column. */
+#profileModal.profile-edit-mode .profile-grid,
+#profileModal.profile-edit-mode .profile-social-grid {
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:13px !important;
+}
+#profileModal.profile-edit-mode .profile-field,
+#profileModal.profile-edit-mode .profile-field.full {
+  grid-column:1 !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+#profileModal.profile-edit-mode .profile-field input,
+#profileModal.profile-edit-mode .profile-field textarea {
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+#profileModal.profile-edit-mode .profile-body > h3 {
+  width:100% !important;
+  margin-top:22px !important;
+}
+#profileModal.profile-edit-mode .saved-profile-box { margin-top:20px !important; }
+#profileModal.profile-edit-mode .profile-actions {
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:10px !important;
+  position:static !important;
+  margin-top:18px !important;
+  padding:14px 0 0 !important;
+  background:transparent !important;
+}
+
+/* BOOKS: only one Create New button, even if initialization runs repeatedly. */
+#booksAdminSection .admin-create-wrap .admin-create-btn + .admin-create-btn,
+#booksAdminSection .admin-create-wrap .admin-create-btn ~ .admin-create-btn {
+  display:none !important;
+}
+@media(max-width:600px){
+  #profileModal.profile-edit-mode .profile-body { padding:12px 10px 95px !important; }
+  #profileModal.profile-edit-mode .profile-head { padding:12px 10px !important; }
+  #profileModal.profile-edit-mode .profile-head h2 { font-size:17px !important; }
+  #profileModal.profile-edit-mode .profile-preview { padding:14px !important; }
+  #profileModal.profile-edit-mode .profile-actions { display:grid !important; grid-template-columns:1fr 1fr !important; }
+  #profileModal.profile-edit-mode .profile-actions > button { width:100% !important; min-width:0 !important; }
+  #profileModal.profile-edit-mode .profile-actions > div { grid-column:1/-1 !important; }
+}
+</style>
+<script>
+/* Remove duplicate Books Create buttons left by older initialization code. */
+(function(){
+  function cleanBookCreateButtons(){
+    const sec=document.getElementById('booksAdminSection');
+    if(!sec) return;
+    const buttons=sec.querySelectorAll('.admin-create-btn');
+    buttons.forEach((btn,i)=>{ if(i>0) btn.remove(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',cleanBookCreateButtons);
+  else cleanBookCreateButtons();
+  setTimeout(cleanBookCreateButtons,300);
+  setTimeout(cleanBookCreateButtons,1200);
+})();
+</script>
+
+<style id="home-final-layout-fix">
+/* FINAL HOME LAYOUT */
+.home-top-actions{
+  width:100%;
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  margin:0 0 12px!important;
+  padding:0!important;
+}
+.home-logout-btn{
+  border:1px solid #fecaca!important;
+  background:#fff!important;
+  color:#dc2626!important;
+  border-radius:12px!important;
+  padding:10px 16px!important;
+  font:700 12px Poppins,Arial,sans-serif!important;
+  cursor:pointer!important;
+  box-shadow:0 5px 16px rgba(15,23,42,.06)!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+}
+.home-logout-btn:hover{background:#fff5f5!important;transform:translateY(-1px);}
+/* The old profile greeting/search/filter row is intentionally removed. */
+.home-shell>.pro-app-header,.home-shell>.pro-search-row{display:none!important;}
+/* Manage Content grid is always visible on Home. */
+.home-shell .manage-content-grid{
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.home-shell .manage-content-grid .home-module{display:block!important;visibility:visible!important;}
+@media(max-width:850px){
+  .home-shell .manage-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media(max-width:600px){
+  .home-top-actions{margin-bottom:9px!important;}
+  .home-logout-btn{width:100%!important;justify-content:center!important;padding:10px 14px!important;}
+  .home-shell .manage-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;}
+}
+</style>
+<script>
+(function(){
+  const b=document.getElementById('homeLogoutBtn');
+  if(b && !b.dataset.bound){
+    b.dataset.bound='1';
+    b.addEventListener('click',function(){
+      const old=document.getElementById('logoutBtn');
+      if(old) old.click();
+    });
+  }
+})();
+</script>

@@ -963,6 +963,18 @@ body { padding-top: 0 !important; }
 #homeAdminSection, #newsSection, #blogSection, #booksSection, #courseSection, #profileSection { margin-top: 0 !important; }
 .app-shell-nav { margin-top: 0 !important; top: 0 !important; }
 .mobile-bottom-nav { margin-top: 0 !important; }
+<style id="final-home-manage-grid">
+html,body{margin:0!important;padding:0!important;}
+body{padding-top:0!important;}
+#adminPanel,#appShell,.admin-panel,.app-shell,.admin-mode-section{margin-top:0!important;padding-top:0!important;}
+#homeAdminSection{margin-top:0!important;padding-top:0!important;}
+.manage-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;}
+.manage-content-grid .home-module{min-height:145px!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;}
+.manage-content-grid .home-module small{display:block!important;margin-top:auto!important;padding-top:12px!important;font-size:10px!important;font-weight:700!important;color:#2563eb!important;}
+@media(max-width:600px){
+  .manage-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
+  .manage-content-grid .home-module{min-height:140px!important;padding:13px!important;}
+}
 </style>
 </head>
 
@@ -1092,12 +1104,11 @@ body { padding-top: 0 !important; }
     <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading your uploads...</div></div>
 
     <div class="home-section-head"><h2>Manage Content</h2><span>Quick access</span></div>
-    <div class="home-grid">
-      <div class="home-module reveal" data-home-nav="news"><div class="module-icon"><i class="fa-solid fa-newspaper"></i></div><h3>News</h3><p>Publish and manage latest updates, notices and announcements.</p></div>
-      <div class="home-module reveal" data-home-nav="blog"><div class="module-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>Blogs</h3><p>Write WordPress-style articles and publish them to blogs.html.</p></div>
-      <div class="home-module reveal" data-home-nav="books"><div class="module-icon"><i class="fa-solid fa-book-open"></i></div><h3>Books</h3><p>Upload, view and manage the complete Books collection.</p></div>
-      <div class="home-module reveal" data-home-nav="course"><div class="module-icon"><i class="fa-solid fa-graduation-cap"></i></div><h3>Course</h3><p>Open course management and purchase verification.</p></div>
-      <div class="home-module reveal" data-home-nav="ranking"><div class="module-icon"><i class="fa-solid fa-ranking-star"></i></div><h3>Ranking</h3><p>View admin team ranking, ratings and your current position.</p></div>
+    <div class="home-grid manage-content-grid">
+      <div class="home-module reveal" data-home-url="news.html"><div class="module-icon"><i class="fa-solid fa-newspaper"></i></div><h3>News</h3><p>Open News page and manage latest updates.</p><small>news.html</small></div>
+      <div class="home-module reveal" data-home-url="blogs.html"><div class="module-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>Blogs</h3><p>Open public Blogs page and view published articles.</p><small>blogs.html</small></div>
+      <div class="home-module reveal" data-home-url="books.html"><div class="module-icon"><i class="fa-solid fa-book-open"></i></div><h3>Books</h3><p>Open Books page and view the complete collection.</p><small>books.html</small></div>
+      <div class="home-module reveal" data-home-nav="ranking"><div class="module-icon"><i class="fa-solid fa-ranking-star"></i></div><h3>Admin Rank</h3><p>View admin team ranking, ratings and your current position.</p><small>Admin Ranking</small></div>
     </div>
   </div>
 </section>
@@ -3592,8 +3603,14 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
   }
   function setupHome(){
     $$('#homeAdminSection .home-module').forEach(card=>{
-      if(card.dataset.homeBound)return;card.dataset.homeBound='1';
-      card.addEventListener('click',()=>{const m=card.dataset.homeNav;if(window.appGo)window.appGo(m);});
+      if(card.dataset.homeBound)return;
+      card.dataset.homeBound='1';
+      card.addEventListener('click',()=>{
+        const url=card.dataset.homeUrl;
+        const m=card.dataset.homeNav;
+        if(url){ window.location.href=url; return; }
+        if(m && window.appGo) window.appGo(m);
+      });
     });
   }
   function filterNews(){

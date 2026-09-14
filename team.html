@@ -4296,16 +4296,32 @@ document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebas
    try{
      const voterId=getVoterKey();
      const ratingRef=ref(teamDb,`profileRatings/${uid}/${voterId}`);
-     await set(ratingRef,{rating:Number(rating),voterId:String(voterId),createdAt:Date.now()});
+
+     // Direct write. Firebase Rules prevent an existing voter ID from being overwritten.
+     await set(ratingRef,{
+       rating:Number(rating),
+       voterId:String(voterId),
+       createdAt:Date.now()
+     });
+
      if(status){status.textContent="Rating submitted successfully.";status.className="rating-status success";}
-     button.innerHTML='<i class="fas fa-check"></i> Rated';setTimeout(closeRatingModal,900);
+     button.innerHTML='<i class="fas fa-check"></i> Rated';
+     setTimeout(closeRatingModal,900);
    }catch(err){
      console.error("Rating save error:",err);
      let message="Unable to submit rating. Please try again.";
-     if(err?.code === "PERMISSION_DENIED" || err?.message?.toLowerCase().includes("permission")) message="Rating permission denied. Publish the Firebase Rules for /profileRatings.";
-     else if(err?.code === "NETWORK_ERROR" || err?.message?.toLowerCase().includes("network")) message="Network/Firebase connection error. Check Firebase Database URL.";
+     const code=String(err?.code||"").toLowerCase();
+     const detail=String(err?.message||"").toLowerCase();
+     if(code.includes("permission") || detail.includes("permission_denied")){
+       message="Rating permission denied. Check/publish the profileRatings Firebase Rules.";
+     }else if(code.includes("network") || detail.includes("network")){
+       message="Network/Firebase connection error. Please check your internet connection.";
+     }else if(detail.includes("database")){
+       message="Firebase Database error. Check the Database URL and Rules.";
+     }
      if(status){status.textContent=message;status.className="rating-status error";}
-     button.disabled=false;button.innerHTML='<i class="fas fa-star"></i> Submit Rating';
+     button.disabled=false;
+     button.innerHTML='<i class="fas fa-star"></i> Submit Rating';
    }
  });
  window.addEventListener("click",e=>{const modal=document.getElementById("ratingModal");if(e.target===modal)closeRatingModal();});

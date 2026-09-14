@@ -4094,6 +4094,13 @@ const teamApp = getApps().find(a => a.name === "teamProfilesApp")
     || initializeApp(teamFirebaseConfig, "teamProfilesApp");
 
 const teamDb = getDatabase(teamApp);
+
+// Firebase module-scope bridge: rating UI runs in a separate normal script.
+// Expose only the required database instance/functions safely.
+window.teamDb = teamDb;
+window.teamDbRef = ref;
+window.teamDbSet = set;
+
 let firebaseBooks = {};
 
 function escapeHtml(value){
@@ -4415,9 +4422,13 @@ document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebas
 
      try{
        const voterId=getVoterKey();
-       const ratingRef=ref(teamDb,"profileRatings/"+uid+"/"+voterId);
+       if(typeof window.teamDbRef !== "function" || !window.teamDb || typeof window.teamDbSet !== "function") {
+         throw new Error("Firebase database bridge is not ready. Please refresh the page.");
+       }
 
-       await set(ratingRef,{
+       const ratingRef=window.teamDbRef(window.teamDb,"profileRatings/"+uid+"/"+voterId);
+
+       await window.teamDbSet(ratingRef,{
          rating:rating,
          voterId:voterId,
          createdAt:Date.now()

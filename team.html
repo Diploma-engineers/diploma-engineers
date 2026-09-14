@@ -4257,73 +4257,161 @@ document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebas
 
  let selectedRating=0;
  let ratingProfileUid="";
+
  function getVoterKey(){
+   const storageKey="de_team_rating_voter";
    try{
-     let key=localStorage.getItem("de_voter_key");
-     if(!key){ key=(crypto?.randomUUID ? crypto.randomUUID() : "v_"+Date.now()+"_"+Math.random().toString(36).slice(2)); localStorage.setItem("de_voter_key",key); }
+     let key=localStorage.getItem(storageKey);
+     if(!key){
+       if(window.crypto && typeof window.crypto.randomUUID==="function"){
+         key=window.crypto.randomUUID();
+       }else{
+         key="v_"+Date.now()+"_"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+       }
+       localStorage.setItem(storageKey,key);
+     }
      return key;
-   }catch(e){ return "session_"+Math.random().toString(36).slice(2); }
+   }catch(e){
+     return "v_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+   }
  }
+
  function paintRatingStars(value){
-   document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.star)<=value));
-   const valueEl=document.getElementById("ratingValue"), submit=document.getElementById("submitRatingBtn");
-   if(valueEl) valueEl.textContent=value ? `${value}/5 — ${["","Poor","Fair","Good","Very Good","Excellent"][value]}` : "Select a star";
+   document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>{
+     btn.classList.toggle("selected",Number(btn.dataset.star)<=Number(value));
+   });
+   const valueEl=document.getElementById("ratingValue");
+   const submit=document.getElementById("submitRatingBtn");
+   const labels=["","Poor","Fair","Good","Very Good","Excellent"];
+   if(valueEl) valueEl.textContent=value ? `${value}/5 — ${labels[value]}` : "Select a star";
    if(submit) submit.disabled=!value;
  }
+
  window.rateProfile=function(){
-   const uid=window.currentFirebaseProfileUid, d=(window.firebaseTeamProfiles||{})[uid];
-   if(!uid||!d)return;
-   ratingProfileUid=uid; selectedRating=0; paintRatingStars(0);
-   const name=val(d,["name","fullName"],"Team Member");
-   document.getElementById("ratingTitle").textContent="Rate "+name;
-   document.getElementById("ratingSubtitle").textContent="Choose your rating for this team member.";
-   const st=document.getElementById("ratingStatus"); if(st){st.textContent="";st.className="rating-status";}
-   const modal=document.getElementById("ratingModal"); if(modal){modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";}
- };
- window.closeRatingModal=function(){
-   const modal=document.getElementById("ratingModal"); if(modal){modal.classList.remove("show");modal.setAttribute("aria-hidden","true");}
-   document.body.style.overflow=document.getElementById("profileDetailPage")?.style.display==="block"?"hidden":"";
- };
- document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>{
-   btn.addEventListener("mouseenter",()=>paintRatingStars(Number(btn.dataset.star)));
-   btn.addEventListener("click",()=>{selectedRating=Number(btn.dataset.star);paintRatingStars(selectedRating);});
- });
- document.getElementById("ratingStars")?.addEventListener("mouseleave",()=>paintRatingStars(selectedRating));
- document.getElementById("submitRatingBtn")?.addEventListener("click",async()=>{
-   const uid=ratingProfileUid,rating=selectedRating;if(!uid||!rating)return;
-   const button=document.getElementById("submitRatingBtn"),status=document.getElementById("ratingStatus");
-   button.disabled=true;button.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
-   try{
-     const voterId=getVoterKey();
-     const ratingRef=ref(teamDb,`profileRatings/${uid}/${voterId}`);
-
-     // Direct write. Firebase Rules prevent an existing voter ID from being overwritten.
-     await set(ratingRef,{
-       rating:Number(rating),
-       voterId:String(voterId),
-       createdAt:Date.now()
-     });
-
-     if(status){status.textContent="Rating submitted successfully.";status.className="rating-status success";}
-     button.innerHTML='<i class="fas fa-check"></i> Rated';
-     setTimeout(closeRatingModal,900);
-   }catch(err){
-     console.error("Rating save error:",err);
-     let message="Unable to submit rating. Please try again.";
-     const code=String(err?.code||"").toLowerCase();
-     const detail=String(err?.message||"").toLowerCase();
-     if(code.includes("permission") || detail.includes("permission_denied")){
-       message="Rating permission denied. Check/publish the profileRatings Firebase Rules.";
-     }else if(code.includes("network") || detail.includes("network")){
-       message="Network/Firebase connection error. Please check your internet connection.";
-     }else if(detail.includes("database")){
-       message="Firebase Database error. Check the Database URL and Rules.";
-     }
-     if(status){status.textContent=message;status.className="rating-status error";}
-     button.disabled=false;
-     button.innerHTML='<i class="fas fa-star"></i> Submit Rating';
+   const uid=window.currentFirebaseProfileUid;
+   const d=(window.firebaseTeamProfiles||{})[uid];
+   if(!uid || !d){
+     console.error("Rating: profile UID not found",uid);
+     return;
    }
- });
+
+   ratingProfileUid=String(uid);
+   selectedRating=0;
+   paintRatingStars(0);
+
+   const name=val(d,["name","fullName"],"Team Member");
+   const title=document.getElementById("ratingTitle");
+   const subtitle=document.getElementById("ratingSubtitle");
+   const status=document.getElementById("ratingStatus");
+   const modal=document.getElementById("ratingModal");
+
+   if(title) title.textContent="Rate "+name;
+   if(subtitle) subtitle.textContent="Choose your rating for this team member.";
+   if(status){
+     status.textContent="";
+     status.className="rating-status";
+   }
+   if(modal){
+     modal.classList.add("show");
+     modal.setAttribute("aria-hidden","false");
+     document.body.style.overflow="hidden";
+   }
+ };
+
+ window.closeRatingModal=function(){
+   const modal=document.getElementById("ratingModal");
+   if(modal){
+     modal.classList.remove("show");
+     modal.setAttribute("aria-hidden","true");
+   }
+   document.body.style.overflow=
+     document.getElementById("profileDetailPage")?.style.display==="block" ? "hidden" : "";
+ };
+
+ function setupRatingUI(){
+   document.querySelectorAll("#ratingStars [data-star]").forEach(btn=>{
+     btn.addEventListener("mouseenter",()=>{
+       paintRatingStars(Number(btn.dataset.star));
+     });
+     btn.addEventListener("click",()=>{
+       selectedRating=Number(btn.dataset.star);
+       paintRatingStars(selectedRating);
+     });
+   });
+
+   document.getElementById("ratingStars")?.addEventListener("mouseleave",()=>{
+     paintRatingStars(selectedRating);
+   });
+
+   const submit=document.getElementById("submitRatingBtn");
+   if(!submit)return;
+
+   submit.addEventListener("click",async()=>{
+     const uid=String(ratingProfileUid||"");
+     const rating=Number(selectedRating);
+     const status=document.getElementById("ratingStatus");
+
+     if(!uid || rating<1 || rating>5){
+       if(status){
+         status.textContent="Please select a rating first.";
+         status.className="rating-status error";
+       }
+       return;
+     }
+
+     submit.disabled=true;
+     submit.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+     try{
+       const voterId=getVoterKey();
+       const ratingRef=ref(teamDb,"profileRatings/"+uid+"/"+voterId);
+
+       await set(ratingRef,{
+         rating:rating,
+         voterId:voterId,
+         createdAt:Date.now()
+       });
+
+       if(status){
+         status.textContent="Rating submitted successfully.";
+         status.className="rating-status success";
+       }
+
+       submit.innerHTML='<i class="fas fa-check"></i> Rated';
+       setTimeout(()=>window.closeRatingModal(),800);
+
+     }catch(err){
+       console.error("TEAM RATING FIREBASE ERROR:",err);
+
+       const raw=String(err?.message||err||"");
+       const code=String(err?.code||"");
+       let message="Unable to submit rating.";
+
+       if(/PERMISSION_DENIED|permission_denied|permission denied/i.test(raw+" "+code)){
+         message="Rating permission denied — Firebase Rules में /profileRatings का write rule check करें.";
+       }else if(/network|offline|failed to fetch|internet/i.test(raw)){
+         message="Firebase network error — internet connection या Firebase URL check करें.";
+       }else{
+         message="Firebase error: "+raw;
+       }
+
+       if(status){
+         status.textContent=message;
+         status.className="rating-status error";
+       }
+
+       submit.disabled=false;
+       submit.innerHTML='<i class="fas fa-star"></i> Submit Rating';
+     }
+   });
+ }
+
+ if(document.readyState==="loading"){
+   document.addEventListener("DOMContentLoaded",setupRatingUI,{once:true});
+ }else{
+   setupRatingUI();
+ }
+
  window.addEventListener("click",e=>{const modal=document.getElementById("ratingModal");if(e.target===modal)closeRatingModal();});
  window.addEventListener("keydown",e=>{if(e.key==="Escape")closeRatingModal();});
 

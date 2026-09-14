@@ -163,7 +163,7 @@ button,input{font:inherit}
   overflow:hidden;
   min-height:38px;
 }
-.category{
+.category{display:none; 
   margin-top:6px;
   font-size:10px;
   color:#8a929d;
@@ -171,7 +171,7 @@ button,input{font:inherit}
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.open{
+.open{display:none; 
   margin-top:10px;
   width:100%;
   display:flex;
@@ -220,8 +220,8 @@ button,input{font:inherit}
   .book{border-radius:14px}
   .info{padding:9px 9px 10px}
   .title{font-size:11px;min-height:32px}
-  .category{font-size:8px;margin-top:4px}
-  .open{font-size:9px;padding:6px 5px;margin-top:7px;border-radius:8px}
+  .category{display:none; font-size:8px;margin-top:4px}
+  .open{display:none; font-size:9px;padding:6px 5px;margin-top:7px;border-radius:8px}
   .state{min-height:200px;border-radius:14px;font-size:11px}
 }
 </style>
@@ -231,16 +231,12 @@ button,input{font:inherit}
 <main class="page">
   <div class="shell">
     <div class="top">
-      <div class="heading">
-        <h1>📚 Books</h1>
-        <p>Books uploaded by Diploma Engineers admins & founders</p>
-      </div>
-      <div class="count" id="bookCount">Loading...</div>
+
+      
     </div>
 
     <div class="tools">
       <input id="search" class="search" type="search" placeholder="Search books..." autocomplete="off">
-      <button id="refresh" class="refresh" type="button">Refresh</button>
     </div>
 
     <section id="booksGrid" class="books-grid">
@@ -332,25 +328,45 @@ function renderBooks(){
   }
 
   grid.innerHTML = filtered.map((book, index) => {
-    const title = book.title || book.name || `Book ${index + 1}`;
-    const category = book.category || book.branch || "Book PDF";
-    const image = normalizeUrl(book.image || book.thumbnail || book.thumb || "");
-    const file = normalizeUrl(book.pdf || book.link || book.file || book.url || "");
+    const title = String(book.title || book.name || `Book ${index + 1}`).trim();
 
+    // Support the fields used by the Admin Panel and common older records.
+    const image = normalizeUrl(
+      book.image || book.thumbnail || book.thumb || book.cover || book.imageUrl || ""
+    );
+
+    const file = normalizeUrl(
+      book.pdf || book.link || book.file || book.url ||
+      book.pdfUrl || book.fileUrl || book.downloadUrl || ""
+    );
+
+    // A book without an attached file cannot be opened.
     if(!file) return "";
 
+    const safeTitle = escapeHTML(title);
+    const safeImage = escapeHTML(image);
+    const safeFile = escapeHTML(file);
+
     return `
-      <a class="book" href="${escapeHTML(file)}" target="_blank" rel="noopener noreferrer">
+      <a class="book" href="${safeFile}" target="_blank" rel="noopener noreferrer"
+         aria-label="Open ${safeTitle}">
         <div class="cover">
-          ${image
-            ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(title)}" loading="lazy"
-                onerror="this.style.display='none';this.parentElement.innerHTML=${JSON.stringify(fallbackCover(title))};">`
-            : fallbackCover(title)}
+          ${
+            safeImage
+              ? `<img src="${safeImage}" alt="${safeTitle}" loading="lazy"
+                   onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+                     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 533">
+                        <rect width="400" height="533" fill="#f5f6f8"/>
+                        <text x="200" y="260" text-anchor="middle" font-size="72">📖</text>
+                        <text x="200" y="330" text-anchor="middle" font-family="Arial" font-size="22" fill="#555">Book</text>
+                      </svg>`
+                   )}';">`
+              : fallbackCover(title)
+          }
         </div>
+
         <div class="info">
-          <div class="title" title="${escapeHTML(title)}">${escapeHTML(title)}</div>
-          <div class="category">${escapeHTML(category)}</div>
-          <div class="open">Open Book ↗</div>
+          <div class="title" title="${safeTitle}">${safeTitle}</div>
         </div>
       </a>`;
   }).join("");

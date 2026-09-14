@@ -1406,24 +1406,31 @@ loginBtn.addEventListener("click", async () => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
 
     try {
-        // 1) Authenticate admin in the News/Admin Firebase project.
+        // MAIN Firebase is the only required authentication.
         await withTimeout(
             signInWithEmailAndPassword(auth, email, password),
             12000,
-            "News Firebase login timed out. Check your internet connection and Firebase Authentication."
+            "Main Firebase login timed out. Check your internet connection and Firebase Authentication."
         );
 
-        // 2) Authenticate the same admin in the Course Firebase project.
-        // Course approval is protected by Course Firebase RTDB rules.
-        await withTimeout(
-            signInWithEmailAndPassword(courseAuth, email, password),
-            12000,
-            "Course Firebase login timed out. Make sure the same admin Email/Password user exists in diploma-app-9a378."
-        );
+        // COURSE Firebase is optional. If this account is not present there,
+        // it must NOT prevent the user from entering the Admin Panel.
+        try {
+            await withTimeout(
+                signInWithEmailAndPassword(courseAuth, email, password),
+                8000,
+                "Course Firebase unavailable"
+            );
+        } catch (courseError) {
+            console.warn("Course Firebase login skipped:", courseError?.code || courseError?.message);
+            try { await signOut(courseAuth); } catch (_) {}
+        }
 
-        // Give Firebase auth state listeners a moment to update, then open panel.
-        if (!courseAuth.currentUser) {
-            throw new Error("Course Firebase login did not create an authenticated session.");
+        // Any valid account created in the MAIN Firebase Authentication
+        // can enter this panel. Database write permissions are still
+        // controlled separately by Realtime Database Rules.
+        if (!auth.currentUser) {
+            throw new Error("Main Firebase login did not create an authenticated session.");
         }
 
         loginPage.style.display = "none";
@@ -1432,7 +1439,7 @@ loginBtn.addEventListener("click", async () => {
         loadDatabase();
         loadBooksTab();
         loadAdminProfile();
-        if (typeof connectCourseAdmin === "function") connectCourseAdmin();
+        if (courseAuth.currentUser && typeof connectCourseAdmin === "function") connectCourseAdmin();
 
     } catch (error) {
         console.error("Admin login error:", error);
@@ -1464,18 +1471,19 @@ onAuthStateChanged(auth, (user) => {
         document.body.style.overflow = "";
     }
 
-    if (user && courseAuth.currentUser) {
+    // MAIN Firebase account is enough to open the Admin Panel.
+    // The second Course Firebase account is optional.
+    if (user) {
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
         loadNews();
         loadDatabase();
         loadBooksTab();
         loadAdminProfile();
-        if (typeof connectCourseAdmin === "function") connectCourseAdmin();
-    } else if (user && !courseAuth.currentUser) {
-        loginPage.style.display = "flex";
-        adminPanel.style.display = "none";
-        errorBox.innerText = "Course Admin session is missing. Please login again.";
+
+        if (courseAuth.currentUser && typeof connectCourseAdmin === "function") {
+            connectCourseAdmin();
+        }
     } else {
         loginPage.style.display = "flex";
         adminPanel.style.display = "none";
@@ -1986,6 +1994,7 @@ document.getElementById("bookBtn").addEventListener("click", async () => {
             link: link,
             pdf: link,
             image: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,
+            authorUid: user?.uid || "",
             ownerUid: user?.uid || "",
             ownerName: ownerProfile.name || user?.displayName || "Admin",
             ownerPhoto: ownerProfile.photo || DEFAULT_PROFILE_IMAGE,

@@ -4294,13 +4294,17 @@ document.addEventListener("DOMContentLoaded",()=>{loadTeamProfiles();loadFirebas
    const button=document.getElementById("submitRatingBtn"),status=document.getElementById("ratingStatus");
    button.disabled=true;button.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
    try{
-     const voterId=getVoterKey(), ratingRef=ref(teamDb,`profileRatings/${uid}/${voterId}`), existing=await get(ratingRef);
-     if(existing.exists()){if(status){status.textContent="You have already rated this profile from this device.";status.className="rating-status error";}button.innerHTML='<i class="fas fa-star"></i> Already Rated';return;}
-     await set(ratingRef,{rating,voterId,createdAt:Date.now()});
+     const voterId=getVoterKey();
+     const ratingRef=ref(teamDb,`profileRatings/${uid}/${voterId}`);
+     await set(ratingRef,{rating:Number(rating),voterId:String(voterId),createdAt:Date.now()});
      if(status){status.textContent="Rating submitted successfully.";status.className="rating-status success";}
      button.innerHTML='<i class="fas fa-check"></i> Rated';setTimeout(closeRatingModal,900);
    }catch(err){
-     console.error("Rating save error:",err);if(status){status.textContent="Unable to submit rating. Please try again.";status.className="rating-status error";}
+     console.error("Rating save error:",err);
+     let message="Unable to submit rating. Please try again.";
+     if(err?.code === "PERMISSION_DENIED" || err?.message?.toLowerCase().includes("permission")) message="Rating permission denied. Publish the Firebase Rules for /profileRatings.";
+     else if(err?.code === "NETWORK_ERROR" || err?.message?.toLowerCase().includes("network")) message="Network/Firebase connection error. Check Firebase Database URL.";
+     if(status){status.textContent=message;status.className="rating-status error";}
      button.disabled=false;button.innerHTML='<i class="fas fa-star"></i> Submit Rating';
    }
  });

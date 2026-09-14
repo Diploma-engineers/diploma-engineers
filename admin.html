@@ -1029,6 +1029,7 @@ publishBtn.addEventListener("click", async () => {
     const text = document.getElementById("newsText").value.trim();
     const category = document.getElementById("newsCategory").value;
     const externalLink = document.getElementById("externalLink").value.trim();
+    const externalFileLink = document.getElementById("externalFileLink")?.value.trim() || "";
 
     if (!title || !text) {
         alert("Please enter News Title and Description.");
@@ -1043,7 +1044,7 @@ publishBtn.addEventListener("click", async () => {
 
     try {
         let finalImageUrl = imageUrlInput.value.trim();
-        let finalPdfUrl = "";
+        let finalPdfUrl = externalFileLink;
 
         let imagePromise = null;
         let pdfPromise = null;
@@ -1182,6 +1183,7 @@ function clearBlogForm(){
     const cat=document.getElementById("blogCategory"); if(cat)cat.value="Education";
     const file=document.getElementById("blogImageFile"); if(file)file.value="";
     if(blogEditor) blogEditor.innerHTML="";
+    const code=document.getElementById("blogHtmlCode"); if(code) code.value="";
     const preview=document.getElementById("blogCoverPreview"); if(preview)preview.style.display="none";
     syncBlogWriter();
     if(blogStatus)blogStatus.textContent="";
@@ -1200,8 +1202,10 @@ document.getElementById("blogImageUrl")?.addEventListener("input",e=>{
 
 publishBlogBtn?.addEventListener("click",async()=>{
     const title=document.getElementById("blogTitle")?.value.trim();
-    const html=blogEditor?.innerHTML.trim()||"";
-    const text=blogEditor?.innerText.trim()||"";
+    const htmlCode=document.getElementById("blogHtmlCode")?.value.trim()||"";
+    const html=htmlCode || blogEditor?.innerHTML.trim()||"";
+    const tmp=document.createElement("div"); tmp.innerHTML=html;
+    const text=(tmp.innerText||blogEditor?.innerText||"").trim();
     const category=document.getElementById("blogCategory")?.value||"Education";
     const externalLink=document.getElementById("blogExternalLink")?.value.trim()||"";
     if(!title || !text){alert("Please enter Blog Title and Content.");return;}
@@ -1548,8 +1552,12 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
     e.preventDefault();
     const title = document.getElementById("bookAdminTitle").value.trim();
     const category = document.getElementById("bookAdminCategory").value.trim() || "Book PDF";
-    const pdf = document.getElementById("bookAdminPdf").value.trim();
+    const pdfInput = document.getElementById("bookAdminPdf").value.trim();
+    const pdfFileEl = document.getElementById("bookPdfFile");
+    const pdfUpload = pdfFileEl?.files?.[0] || null;
+    const thumbUrlInput = document.getElementById("bookImageUrl")?.value.trim() || "";
     const files = document.getElementById("bookImageFile").files;
+    let pdf = pdfInput;
 
     const user = auth.currentUser;
     if(!user) return bookMsg("Please login again.", true);
@@ -1561,13 +1569,14 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
         }
     }
 
-    if(!title ||!pdf) return bookMsg("Book title and link are required.", true);
-    if(bookEditId === null && files.length === 0) return bookMsg("Please upload thumbnail image(s).", true);
+    if(!title ||(!pdf && !pdfUpload)) return bookMsg("Book title and PDF link/file are required.", true);
+    if(bookEditId === null && files.length === 0 && !thumbUrlInput) return bookMsg("Please upload a thumbnail or provide thumbnail image URL.", true);
 
     document.getElementById("bookSaveBtn").disabled = true;
     try {
+        if(pdfUpload){ bookMsg("Uploading PDF / file..."); const pdfRes=await uploadToCloudinary(pdfUpload); pdf=pdfRes.secure_url; }
         if(bookEditId){
-            let image = bookItems.find(x => x.id === bookEditId)?.image;
+            let image = thumbUrlInput || bookItems.find(x => x.id === bookEditId)?.image || "";
             if(files.length > 0){
                 bookMsg("Preparing thumbnail...");
                 let compressed = await compressImage(files[0]);
@@ -1588,11 +1597,11 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
             await update(ref(db, "books/" + bookEditId), data);
             bookMsg("Book updated successfully.");
         } else {
-            for(let i = 0; i < files.length; i++){
-                bookMsg(`Uploading thumbnail ${i+1} of ${files.length}...`);
-                let compressedFile = await compressImage(files[i]);
-                let res = await uploadToCloudinary(compressedFile);
-                let imageUrl = res.secure_url;
+            const totalBooks = Math.max(files.length, 1);
+            for(let i = 0; i < totalBooks; i++){
+                bookMsg(files[i] ? `Uploading thumbnail ${i+1} of ${files.length}...` : "Saving book...");
+                let imageUrl = thumbUrlInput;
+                if(files[i]){ let compressedFile=await compressImage(files[i]); let res=await uploadToCloudinary(compressedFile); imageUrl=res.secure_url; }
                 
                 let bookTitle = files.length > 1 ? `${title} (${i+1})` : title;
                 const user = auth.currentUser;
@@ -1663,7 +1672,9 @@ function resetBookForm(){
     document.getElementById("bookSaveBtn").textContent = "Add Book(s)";
     document.getElementById("bookCancel").style.display = "none";
     document.getElementById("bookPreview").style.display = "none";
-    document.getElementById("bookImageFile").required = true;
+    document.getElementById("bookImageFile").required = false;
+    const biu=document.getElementById("bookImageUrl"); if(biu) biu.value="";
+    const bpf=document.getElementById("bookPdfFile"); if(bpf) bpf.value="";
 }
 
 document.getElementById("bookCancel").onclick = resetBookForm;
@@ -2380,7 +2391,7 @@ window.appGo=function(mode){
 
 
 
-<nav id="mobileBottomNav"><button data-app-target="home" type="button"><i class="fa-solid fa-house"></i>Home</button><button data-app-target="news" type="button"><i class="fa-solid fa-newspaper"></i>News</button><button data-app-target="blog" type="button"><i class="fa-solid fa-pen-nib"></i>Blog</button><button data-app-target="books" type="button"><i class="fa-solid fa-book"></i>Books</button><button data-app-target="course" type="button"><i class="fa-solid fa-graduation-cap"></i>Course</button><button data-app-target="profile" type="button"><i class="fa-solid fa-user"></i>Profile</button></nav><script id="new-app-controller">
+<script id="new-app-controller">
 (function(){
  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
  const nav=$('#mobileBottomNav');
@@ -2431,5 +2442,112 @@ window.appGo=function(mode){
  const observer=new MutationObserver(()=>{const active=$$('.admin-mode-section').find(x=>x.classList.contains('active'));if(!active)return;const m={home:'home',news:'news',blog:'blog',books:'books',course:'course',rank:'ranking',profile:'profile'};const mode=Object.keys(m).find(k=>active.id.toLowerCase().includes(k));nav?.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.appTarget===m[mode]));topFix();});
  observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
 })();
-</script></body>
+</script>
+<style id="final-create-workflow">
+html,body{margin:0!important;padding:0!important;scroll-behavior:auto!important}
+#adminPanel{margin:0!important;padding:0!important}
+#newsAdminSection,#blogAdminSection,#booksAdminSection{margin:0!important;padding:0!important;min-height:100vh}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{margin:0 auto!important;padding-top:8px!important}
+.create-only-page{position:relative!important;display:block!important;background:#f6f8fc!important;min-height:100vh!important;padding:0 0 100px!important}
+.create-only-page>.create-top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-bottom:1px solid #e6ebf2;padding:13px 16px;display:flex;align-items:center;gap:11px}
+.create-top .back{width:40px;height:40px;border:0;border-radius:12px;background:#eef4ff;color:#2563eb;cursor:pointer}.create-top h1{margin:0;font-size:19px}.create-top p{margin:2px 0 0;color:#64748b;font-size:10px}
+.create-only-page>.create-inner{width:min(900px,100%);margin:auto;padding:14px}.create-only-page .box,.create-only-page .blog-editor-card,.create-only-page .panel{border-radius:20px!important;margin:0!important;padding:20px!important;background:#fff!important;border:1px solid #e5eaf1!important;box-shadow:0 10px 30px rgba(15,23,42,.06)!important}
+.create-field-label{display:block;font-size:11px;font-weight:800;color:#334155;margin:10px 0 6px}.create-field-input{width:100%;border:1px solid #dbe3ed;border-radius:12px;padding:12px 13px;background:#fff;outline:0;font:500 13px Poppins,Arial}.create-field-input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.08)}.create-field-help{font-size:10px;color:#94a3b8;margin-top:4px}.create-file-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.create-file-row>div{min-width:0}.html-code-input{width:100%;min-height:300px;border:1px solid #1e293b;border-radius:12px;padding:13px;background:#0f172a;color:#e2e8f0;font:12px Consolas,monospace;outline:0;resize:vertical}
+#newsAdminSection .news-list,#blogAdminSection .blog-list{padding-bottom:20px}
+@media(max-width:650px){#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding:5px 9px 90px!important}.create-only-page>.create-inner{padding:9px}.create-file-row{grid-template-columns:1fr}.create-only-page>.create-top{padding:11px}.create-top h1{font-size:17px}}
+
+/* ===== FINAL CONTENT CREATE-PAGE UX ===== */
+.admin-mode-section{padding-top:0!important;margin-top:0!important}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding-top:0!important;margin-top:0!important}
+.content-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 12px}
+.content-page-head h1{font-size:21px;margin:0;color:#0f172a}
+.content-page-head p{margin:4px 0 0;color:#64748b;font-size:11px}
+.create-new-btn{border:0;background:#2563eb;color:#fff;border-radius:12px;padding:11px 15px;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.18);white-space:nowrap}
+.create-new-btn i{margin-right:5px}
+.create-page{display:none!important}
+.create-page.open{display:block!important}
+.create-page-head{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.back-btn{border:1px solid #dbe4ef;background:#fff;color:#334155;width:40px;height:40px;border-radius:12px;cursor:pointer}
+.create-page-head h2{margin:0!important;font-size:18px!important}
+.form-note{font-size:10px;color:#64748b;margin:5px 0 12px}
+.html-code-box{font-family:Consolas,monospace!important;min-height:240px!important;line-height:1.55!important;font-size:12px!important}
+.upload-list-card{background:#fff;border:1px solid var(--app-line);border-radius:18px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:center}
+.upload-list-card .mini-thumb{width:72px;height:58px;border-radius:11px;overflow:hidden;background:#f1f5f9;flex:none;display:grid;place-items:center}
+.upload-list-card .mini-thumb img{width:100%;height:100%;object-fit:cover}
+.upload-list-card .mini-body{min-width:0;flex:1}.upload-list-card .mini-body h3{font-size:13px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upload-list-card .mini-body p{font-size:10px;color:#64748b;margin:0 0 7px}.mini-actions{display:flex;gap:6px;flex-wrap:wrap}.mini-actions a,.mini-actions button{border:0;border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;text-decoration:none;cursor:pointer}.mini-open{background:#eff6ff;color:#2563eb}.mini-delete{background:#fee2e2;color:#dc2626}
+@media(max-width:600px){.content-page-head{padding:8px 0 10px}.content-page-head h1{font-size:18px}.create-new-btn{padding:10px 11px}.create-page-head h2{font-size:16px!important}.upload-list-card{align-items:flex-start}.mini-thumb{width:62px!important;height:54px!important}}
+
+/* ===== FINAL CREATE PAGES / ZERO TOP GAP / APP UX ===== */
+html,body{margin:0!important;padding:0!important;scroll-behavior:auto!important}
+#adminPanel{margin:0!important;padding:0!important}
+.admin-mode-section{margin:0!important;padding-top:0!important}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{margin-top:0!important;padding-top:0!important}
+.create-only-page{display:none!important;margin:0!important;padding:0 0 100px!important;min-height:100vh!important}
+.create-only-page.open{display:block!important}
+.create-only-page>.create-top{margin-top:0!important}
+.create-inner{padding-top:12px!important}
+.admin-create-wrap{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:12px!important}
+.admin-create-btn{border:0!important;background:#2563eb!important;color:#fff!important;border-radius:12px!important;padding:10px 14px!important;font:800 11px Poppins,Arial,sans-serif!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:0 7px 18px rgba(37,99,235,.18)!important}
+.admin-user-only-note{font-size:10px;color:#64748b;margin-top:3px}
+.create-file-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;margin:12px 0!important}
+.html-code-input{width:100%!important;min-height:260px!important;resize:vertical!important;border:1px solid #dbe3ed!important;border-radius:12px!important;padding:13px!important;background:#fff!important;outline:0!important;font:12px Consolas,monospace!important;line-height:1.55!important}
+@media(max-width:600px){.create-file-row{grid-template-columns:1fr!important}.create-only-page>.create-top{padding:11px!important}.create-inner{padding:9px!important}.admin-create-wrap{align-items:flex-start!important}.admin-create-btn{padding:9px 11px!important}}
+</style>
+<script id="final-create-workflow-js">
+(function(){
+ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+ function wrapForm(form,title,subtitle,back){
+   if(!form||form.dataset.createWrapped)return; form.dataset.createWrapped='1';
+   const parent=form.parentElement; const page=document.createElement('section'); page.className='create-only-page'; page.id=form.id+'CreatePage';
+   page.innerHTML='<div class="create-top"><button class="back" type="button"><i class="fa-solid fa-arrow-left"></i></button><div><h1>'+title+'</h1><p>'+subtitle+'</p></div></div><div class="create-inner"></div>';
+   const inner=page.querySelector('.create-inner'); inner.appendChild(form);
+   parent.appendChild(page); page.style.display='none';
+   page.querySelector('.back').onclick=back;
+   return page;
+ }
+ function setup(){
+   const newsSec=$('#newsAdminSection'), blogSec=$('#blogAdminSection'), booksSec=$('#booksAdminSection');
+   if(!newsSec||!blogSec||!booksSec)return;
+   const newsForm=$$('#newsAdminSection .box').find(x=>(x.innerText||'').includes('Publish News'));
+   const newsList=$$('#newsAdminSection .box').find(x=>(x.innerText||'').includes('Published News'));
+   const blogForm=$$('#blogAdminSection .blog-editor-card').find(x=>(x.innerText||'').includes('Write New Blog'));
+   const blogList=$$('#blogAdminSection .blog-editor-card').find(x=>x!==blogForm);
+   const bookForm=$('#bookAdminForm')?.closest('.panel'), bookList=$$('#booksAdminSection .panel').find(x=>x!==bookForm);
+   function show(page,list){ if(list)list.style.display='none'; page.style.display='block'; window.scrollTo(0,0); }
+   function hide(page,list){ page.style.display='none'; if(list)list.style.display='block'; window.scrollTo(0,0); }
+   if(newsForm&&!newsForm.dataset.createPage){
+     const page=wrapForm(newsForm,'Create News','Add title, category, text, thumbnail and PDF/file.',()=>hide(page,newsList));
+     if(page){
+       page.style.display='none';
+       const ext=document.createElement('div'); ext.className='create-field-label';
+       const link=document.createElement('input'); link.id='externalFileLink'; link.className='create-field-input'; link.type='url'; link.placeholder='https://.../file.pdf';
+       const host=document.createElement('div'); host.innerHTML='<label class="create-field-label">PDF / File Link</label>'; host.appendChild(link); host.innerHTML=host.innerHTML; // preserve
+       // insert after pdfFile block
+       const pf=$('#pdfFile',page)?.closest('.file-box'); if(pf){pf.parentElement.insertBefore(host,pf.nextSibling)}
+       // expose text textarea; editor is retained for compatibility but text is the source field
+       const ed=$('#newsEditor',page); if(ed){ed.style.display='none'; ed.parentElement.style.display='none';}
+       const ta=$('#newsText',page); if(ta){ta.classList.remove('writer-hidden'); ta.style.display='block'; ta.className='create-field-input'; ta.style.minHeight='180px';}
+       if(newsList&&!newsList.querySelector('.admin-create-btn')){const head=newsList.querySelector('h2');if(head){const row=document.createElement('div');row.className='admin-create-wrap';row.innerHTML='<div><h2 style="margin:0"><i class="fa-solid fa-newspaper"></i> Your Uploaded News</h2><div class="admin-user-only-note">Only your uploaded news is shown here.</div></div>';const b=document.createElement('button');b.className='admin-create-btn';b.innerHTML='<i class="fa-solid fa-plus"></i> Create New';b.onclick=()=>show(page,newsList);row.appendChild(b);head.replaceWith(row)}}
+     }
+   }
+   if(blogForm&&!blogForm.dataset.createPage){
+     const page=wrapForm(blogForm,'Create Blog','Add title, thumbnail and your HTML code.',()=>hide(page,blogList));
+     if(page){page.style.display='none'; const editor=$('#blogEditor',page); if(editor){editor.style.display='none';editor.parentElement.style.display='none';}
+       const code=document.createElement('div');code.innerHTML='<label class="create-field-label">HTML Code *</label><textarea id="blogHtmlCode" class="html-code-input" placeholder="Paste HTML article code here..."></textarea><div class="create-field-help">Saved as html and rendered on blogs.html.</div>'; const ref=$('#blogTitle',page); ref?.parentElement?.insertAdjacentElement('afterend',code);
+       if(blogList&&!blogList.querySelector('.admin-create-btn')){const header=blogList.querySelector('div');const b=document.createElement('button');b.className='admin-create-btn';b.innerHTML='<i class="fa-solid fa-plus"></i> Create New';b.onclick=()=>show(page,blogList);header?.appendChild(b)}
+     }
+   }
+   if(bookForm&&!bookForm.dataset.createPage){
+     const page=wrapForm(bookForm,'Create Book','Add title, thumbnail and PDF/file link or upload.',()=>hide(page,bookList));
+     if(page){page.style.display='none';
+       const row=document.createElement('div');row.className='create-file-row';row.innerHTML='<div><label class="create-field-label">Thumbnail Image URL</label><input id="bookImageUrl" class="create-field-input" type="url" placeholder="https://example.com/book.jpg"></div><div><label class="create-field-label">PDF / File Upload</label><input id="bookPdfFile" class="create-field-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"></div>'; const input=$('#bookImageFile',page); input?.closest('div')?.parentElement?.insertAdjacentElement('afterend',row);
+       if(bookList&&!bookList.querySelector('.admin-create-btn')){const h=bookList.querySelector('h2');if(h){const rowh=document.createElement('div');rowh.className='admin-create-wrap';rowh.innerHTML='<div><h2 style="margin:0;color:#2563eb"><i class="fa-solid fa-book"></i> Your Uploaded Books</h2><div class="admin-user-only-note">Only your uploaded books are shown here.</div></div>';const b=document.createElement('button');b.className='admin-create-btn';b.innerHTML='<i class="fa-solid fa-plus"></i> Create New';b.onclick=()=>show(page,bookList);rowh.appendChild(b);h.replaceWith(rowh)}}
+     }
+   }
+ }
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,350));
+ setTimeout(setup,1200);
+})();
+</script>
+</body>
 </html>

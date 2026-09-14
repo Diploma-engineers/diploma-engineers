@@ -99,10 +99,60 @@ document.getElementById('shareBtn').addEventListener('click',async()=>{
   const url=location.href,title=currentItem?.title||'Diploma Engineers News';
   try{if(navigator.share)await navigator.share({title,text:title+' • Diploma Engineers',url});else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert('News link copied successfully.')}else prompt('Copy news link:',url)}catch(e){if(e.name!=='AbortError')console.warn(e)}
 });
-async function fetchPart(id,file){const el=document.getElementById(id);if(!el)return;try{const r=await fetch(file,{cache:'no-store'});el.innerHTML=r.ok?await r.text():''}catch(e){console.warn('Could not fetch '+file,e)}}
-fetchPart('header-placeholder','header.html');
-fetchPart('footer-placeholder','footer.html');
-load();
+async function fetchPart(id,file){
+  const host=document.getElementById(id);
+  if(!host)return;
+  try{
+    const r=await fetch(file,{cache:'no-store'});
+    if(!r.ok) throw new Error(file+' returned '+r.status);
+    const html=await r.text();
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(html,'text/html');
+
+    // header.html / footer.html may be complete HTML documents. Do not put
+    // their <html>/<head> inside a <div>. Move their stylesheets/styles to
+    // this page and inject only the body content.
+    doc.querySelectorAll('link[rel="stylesheet"],style').forEach(node=>{
+      const copy=node.cloneNode(true);
+      if(node.tagName.toLowerCase()==='link'){
+        const href=node.getAttribute('href');
+        if(href){
+          try{copy.href=new URL(href,new URL(file,location.href)).href}catch(_){ }
+        }
+      }
+      document.head.appendChild(copy);
+    });
+
+    host.innerHTML=doc.body ? doc.body.innerHTML : html;
+
+    // Re-run scripts from the fetched fragment because innerHTML does not
+    // execute scripts. This keeps menu/dropdown/header behaviour working.
+    const scripts=doc.body ? [...doc.body.querySelectorAll('script')] : [];
+    for(const oldScript of scripts){
+      const script=document.createElement('script');
+      [...oldScript.attributes].forEach(a=>script.setAttribute(a.name,a.value));
+      if(oldScript.src){
+        script.src=new URL(oldScript.getAttribute('src'),new URL(file,location.href)).href;
+      }else{
+        script.textContent=oldScript.textContent;
+      }
+      host.appendChild(script);
+    }
+  }catch(e){
+    console.warn('Could not fetch '+file,e);
+    // Keep the page usable even if a shared header/footer file is missing.
+    host.innerHTML='';
+  }
+}
+
+(async()=>{
+  // Load shared site chrome first, then render the Firebase news.
+  await Promise.all([
+    fetchPart('header-placeholder','header.html'),
+    fetchPart('footer-placeholder','footer.html')
+  ]);
+  await load();
+})();
 </script>
 </body>
 </html>

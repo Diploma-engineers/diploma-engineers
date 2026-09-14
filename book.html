@@ -4,291 +4,434 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Books | Diploma Engineers</title>
+<meta name="description" content="Books collection of Diploma Engineers">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;background:#f7f9fc;color:#111827}
-#booksPage{width:100%;min-height:100vh;background:#f7f9fc}
-.books-container{width:100%;max-width:1400px;margin:auto;padding:20px}
-.books-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}
-.books-header h1{margin:0;font-size:28px;font-weight:800;color:#0f172a}
-.books-header p{margin:5px 0 0;color:#64748b;font-size:13px}
-.book-count{padding:8px 13px;border-radius:10px;background:#f1f5f9;color:#334155;font-size:13px;font-weight:800;white-space:nowrap}
-.books-search{width:100%;height:50px;display:flex;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:13px;padding:0 15px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.035)}
-.search-icon{font-size:23px;color:#64748b;margin-right:9px}
-.books-search input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:#111827}
-.books-search input::placeholder{color:#94a3b8}
-.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;width:100%}
-.book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:15px;overflow:hidden;cursor:pointer;user-select:none;box-shadow:0 5px 18px rgba(15,23,42,.05);transition:transform .16s ease,box-shadow .16s ease}
-.book-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(15,23,42,.09)}
-.book-card:active{transform:scale(.98)}
-.book-cover{width:100%;aspect-ratio:3/4;background:#eef2f7;overflow:hidden;position:relative}
-.book-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.book-info{padding:11px}
-.book-title{font-size:14px;font-weight:800;color:#111827;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.no-books{text-align:center;padding:70px 20px;color:#64748b}
-.no-books-icon{font-size:48px;margin-bottom:12px}
-.no-books h3{margin:0 0 8px;color:#1e293b;font-size:20px}
-.no-books p{margin:0;font-size:14px}
-@media(max-width:600px){
-  .books-container{padding:12px}
-  .books-header{align-items:flex-start;flex-direction:column}
-  .books-header h1{font-size:23px}
-  .books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .book-card{border-radius:12px}
-  .book-info{padding:9px}
-  .book-title{font-size:12.5px}
-  .books-search{height:47px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:Poppins,Arial,sans-serif;
+  background:#f7f8fa;
+  color:#18202a;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+button,input{font:inherit}
+
+.page{
+  width:100%;
+  min-height:100vh;
+  padding:18px 16px 42px;
+}
+
+.shell{
+  width:min(1180px,100%);
+  margin:0 auto;
+}
+
+.top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.heading h1{
+  font-size:27px;
+  line-height:1.2;
+  font-weight:700;
+  color:#171c24;
+}
+.heading p{
+  margin-top:5px;
+  font-size:12px;
+  color:#7b8491;
+}
+
+.count{
+  white-space:nowrap;
+  background:#fff;
+  border:1px solid #e6e9ee;
+  border-radius:12px;
+  padding:9px 12px;
+  font-size:11px;
+  color:#66707c;
+}
+
+.tools{
+  display:flex;
+  gap:9px;
+  margin-bottom:18px;
+}
+.search{
+  flex:1;
+  min-width:0;
+  border:1px solid #e0e4e9;
+  background:#fff;
+  border-radius:13px;
+  padding:12px 14px;
+  outline:none;
+  color:#202731;
+  font-size:12px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.search:focus{
+  border-color:#cbd1d8;
+  box-shadow:0 0 0 3px rgba(20,30,40,.035);
+}
+.refresh{
+  border:1px solid #e0e4e9;
+  background:#fff;
+  color:#4d5661;
+  border-radius:13px;
+  padding:0 14px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+}
+.refresh:active{transform:scale(.98)}
+
+.books-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:15px;
+}
+
+.book{
+  display:block;
+  background:#fff;
+  border:1px solid #e5e8ed;
+  border-radius:17px;
+  overflow:hidden;
+  text-decoration:none;
+  color:inherit;
+  box-shadow:0 5px 18px rgba(20,28,38,.045);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.book:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 24px rgba(20,28,38,.08);
+  border-color:#d8dde4;
+}
+.book:active{transform:translateY(-1px)}
+
+.cover{
+  width:100%;
+  aspect-ratio:3/4;
+  background:#eef1f4;
+  overflow:hidden;
+  position:relative;
+}
+.cover img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .3s ease;
+}
+.book:hover .cover img{transform:scale(1.025)}
+
+.no-cover{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:8px;
+  color:#8a939e;
+}
+.no-cover .icon{font-size:34px}
+.no-cover span{font-size:10px}
+
+.info{
+  padding:12px 12px 14px;
+}
+.title{
+  font-size:13px;
+  line-height:1.45;
+  font-weight:600;
+  color:#202630;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:38px;
+}
+.category{display:none; 
+  margin-top:6px;
+  font-size:10px;
+  color:#8a929d;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.open{display:none; 
+  margin-top:10px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid #e3e6eb;
+  border-radius:9px;
+  padding:7px 8px;
+  color:#4d5661;
+  background:#fafbfc;
+  font-size:10px;
+  font-weight:600;
+}
+
+.state{
+  min-height:240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  border:1px dashed #d7dce2;
+  border-radius:17px;
+  background:#fff;
+  color:#7b8490;
+  font-size:12px;
+  padding:30px 16px;
+}
+.state strong{display:block;color:#444c56;font-size:13px;margin-bottom:5px}
+.state small{font-size:10px}
+
+@media(max-width:950px){
+  .books-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .page{padding:11px 9px 30px}
+  .top{margin-bottom:13px}
+  .heading h1{font-size:21px}
+  .heading p{font-size:10px}
+  .count{padding:7px 9px;font-size:9px}
+  .tools{margin-bottom:13px}
+  .search{padding:10px 11px;font-size:11px;border-radius:11px}
+  .refresh{padding:0 11px;border-radius:11px;font-size:10px}
+  /* Mobile: exactly 2 books in one row */
+  .books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .book{border-radius:14px}
+  .info{padding:9px 9px 10px}
+  .title{font-size:11px;min-height:32px}
+  .category{display:none; font-size:8px;margin-top:4px}
+  .open{display:none; font-size:9px;padding:6px 5px;margin-top:7px;border-radius:8px}
+  .state{min-height:200px;border-radius:14px;font-size:11px}
 }
 </style>
 </head>
+
 <body>
-
-<div id="booksPage">
-  <div class="books-container">
-    <div class="books-header">
-      <div>
-        <h1>Books</h1>
-        <p>Diploma Engineers — Books & E-Notes</p>
+<main class="page">
+  <div class="shell">
+    <div class="top">
+      <div class="heading">
+        <h1>📚 Books</h1>
+        <p>Books uploaded by Diploma Engineers admins & founders</p>
       </div>
-      <div class="book-count" id="bookCount">0 Books</div>
+      <div class="count" id="bookCount">Loading...</div>
     </div>
 
-    <div class="books-search">
-      <span class="search-icon">⌕</span>
-      <input type="search" id="bookSearch" placeholder="Search books..." autocomplete="off" spellcheck="false">
+    <div class="tools">
+      <input id="search" class="search" type="search" placeholder="Search books..." autocomplete="off">
+      <button id="refresh" class="refresh" type="button">Refresh</button>
     </div>
 
-    <div class="books-grid" id="booksGrid" aria-live="polite"></div>
-
-    <div class="no-books" id="noBooks" style="display:none">
-      <div class="no-books-icon">📚</div>
-      <h3>No Books Found</h3>
-      <p>Search करके दूसरी book try करें।</p>
-    </div>
+    <section id="booksGrid" class="books-grid">
+      <div class="state" style="grid-column:1/-1">
+        <div>
+          <strong>Loading books...</strong>
+          <small>Please wait</small>
+        </div>
+      </div>
+    </section>
   </div>
-</div>
+</main>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  get
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-(() => {
-"use strict";
-
-const firebaseConfig={
-  apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
-  authDomain:"diplomaengineers-869df.firebaseapp.com",
-  databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",
-  projectId:"diplomaengineers-869df",
-  storageBucket:"diplomaengineers-869df.appspot.com",
-  messagingSenderId:"356779436080",
-  appId:"1:356779436080:web:4b28da380e547420d0e5f5"
+const firebaseConfig = {
+  apiKey: "AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
+  authDomain: "diplomaengineers-869df.firebaseapp.com",
+  databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+  projectId: "diplomaengineers-869df",
+  storageBucket: "diplomaengineers-869df.appspot.com",
+  messagingSenderId: "356779436080",
+  appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-const grid=document.getElementById("booksGrid");
-const search=document.getElementById("bookSearch");
-const count=document.getElementById("bookCount");
-const noBooks=document.getElementById("noBooks");
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-const defaultBooks=[
-{title:"Applied Mathematics I",category:"Common",pdf:"https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk"},
-{title:"Applied Physics I",category:"Common",pdf:"https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk"},
-{title:"Applied Chemistry",category:"Common",pdf:"https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk"},
-{title:"Communication Skills",category:"Common",pdf:"https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk"},
-{title:"Engineering Drawing",category:"Common",pdf:"https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk"},
-{title:"Applied Mathematics II",category:"Common",pdf:"https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk"},
-{title:"Applied Physics II",category:"Common",pdf:"https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk"},
-{title:"Fundamentals of Electrical & Electronics Engineering",category:"Common",pdf:"https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk"},
-{title:"Engineering Mechanics",category:"Common",pdf:"https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk"},
-{title:"Environmental Studies",category:"Common",pdf:"https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk"},
-{title:"Introduction to IT Systems",category:"Common",pdf:"https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk"},
+const grid = document.getElementById("booksGrid");
+const count = document.getElementById("bookCount");
+const search = document.getElementById("search");
+const refresh = document.getElementById("refresh");
 
-{title:"Digital Electronics",category:"Electronics",pdf:"https://drive.google.com/file/d/1nzCjC4pH2GtN8xdyZNhfB7hngvVAmzIP/view?usp=drivesdk"},
-{title:"Electronic Devices & Circuits",category:"Electronics",pdf:"https://drive.google.com/file/d/1V5kX7tZbbRaWHjiwWXqK6ozHf1bRuMTX/view?usp=drivesdk"},
-{title:"Linear Integrated Circuits",category:"Electronics",pdf:"https://drive.google.com/file/d/1-l1df23wWuXiMPdNgw7QRfuSNWkCpFsV/view?usp=drivesdk"},
-{title:"Principles of Electronic Communication",category:"Electronics",pdf:"https://drive.google.com/file/d/1O3UphaKLM00J5oMKAGXaR3Q93N0hhZ3E/view?usp=drivesdk"},
-{title:"Microprocessor & Applications",category:"Electronics",pdf:"https://drive.google.com/file/d/1O3UphaKLM00J5oMKAGXaR3Q93N0hhZ3E/view?usp=drivesdk"},
-{title:"Electronic Instrumentation & Measurements",category:"Electronics",pdf:"https://drive.google.com/file/d/17bOb-Xzv6c9FIt9UCRdl74eFPqB4vZMX/view?usp=drivesdk"},
-
-{title:"Operating Systems",category:"Computer Science",pdf:"https://drive.google.com/file/d/1Rddlh6aYREcWXwkTOKpY-wzNkRnudhh5/view?usp=drivesdk"},
-{title:"Database Management System",category:"Computer Science",pdf:"https://drive.google.com/file/d/1do0dIKwq52cTyVzS1MB7d37eU97GfKdH/view?usp=drivesdk"},
-{title:"Computer Network",category:"Computer Science",pdf:"https://drive.google.com/file/d/17yNX5t_oZD9enkGVJi1sVmJOzbOp7lOe/view?usp=drivesdk"},
-{title:"Data Structures using C",category:"Computer Science",pdf:"https://drive.google.com/file/d/1gOTadjGjfQ0xqUf2ea0LOj2ryDYx4zcC/view?usp=drivesdk"},
-
-{title:"Construction Materials",category:"Civil",pdf:"https://drive.google.com/file/d/1_QmtCq45r8oN_Y5Fz6wu8yYc3BETVs3F/view?usp=drivesdk"},
-{title:"Basic Surveying",category:"Civil",pdf:"https://drive.google.com/file/d/11pha_oswnd1cq2f6viKmnN-YqsaeRgmf/view?usp=drivesdk"},
-{title:"Mechanics of Material",category:"Civil",pdf:"https://drive.google.com/file/d/1-SROcpofwqptR9pkko5kp9asU6TvGw5p/view?usp=drivesdk"},
-{title:"Building Construction",category:"Civil",pdf:"https://drive.google.com/file/d/16B3Uyw_i0ez4lxTqzW_SXQT3rz8sq_m0/view?usp=drivesdk"},
-{title:"Building Planning and Drawings",category:"Civil",pdf:"https://drive.google.com/file/d/15DbXrl9M1yi_hBwR_izB9282Lu7W07iK/view?usp=drivesdk"},
-{title:"Concrete Technology",category:"Civil",pdf:"https://drive.google.com/file/d/1Qytl1kijygjD9nd_k29EY_K7vFE6MEZ4/view?usp=drivesdk"},
-
-{title:"Hydraulics",category:"Civil",pdf:"https://drive.google.com/file/d/1uBFhBlfJFNAhOpHapipZ34C1NYe9bV6i/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png"},
-{title:"Advance Surveying",category:"Civil",pdf:"https://drive.google.com/file/d/1UKdZaIyHhU9G8vhfYGwCNluV5ysFZbke/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png"},
-{title:"Reinforced Cement Concrete Structures",category:"Civil",pdf:"https://drive.google.com/file/d/1Ia428egQcln55wixF0bXBSsn0_CmZiBp/view?usp=drivesdk"},
-{title:"RCC Drawing",category:"Civil",pdf:"https://drive.google.com/file/d/1_W8l5L3xMObDurzUTnzHDMLV_AFw47sx/view?usp=drivesdk"},
-{title:"Theory of Structure",category:"Civil",pdf:"https://drive.google.com/file/d/1LC2KoSZgXQwmOFtjnfsZ82xv9ei2Bau6/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png"},
-{title:"Water Resource Engineering",category:"Civil",pdf:"https://drive.google.com/file/d/1CKiaKHfk4Odd4RhVe1IRzNYbHoZZXFQp/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000b09c71faa3990755017401f45126630317016264298.png"},
-{title:"Public Health Engineering",category:"Civil",pdf:"https://drive.google.com/file/d/1GS0gG57cS337Kqhg_fop5ozKkaGBBQtY/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f45c72079311416363f02c394789402397388481580.png"},
-
-{title:"Electric Power Transmission and Distribution",category:"Electrical",pdf:"https://drive.google.com/file/d/1VKIyK_QNRuEw-AD64bBcMWv5U30PuEeR/view?usp=drivesdk"},
-{title:"Electric Machine – II",category:"Electrical",pdf:"https://drive.google.com/file/d/1BRE8Z6g6XdchlXmFF1L3XOcSB3FBdp7f/view?usp=drivesdk"},
-
-{title:"Applied Physics 2nd",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"},
-{title:"Applied Mathematics 2nd",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"},
-{title:"FEEE",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785266369195650990413638221471.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/feeee-bookbydiplomaengineers28329.pdf"},
-{title:"IT System",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/itsysteme-bookbydiplomaengineers.pdf"},
-{title:"Engineering Mechanics E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"},
-{title:"Environmental Science E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/environmentalsciencee-bookbydiplomaengineers.pdf"},
-{title:"Advanced Surveying E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/advancedsurveyinge-bookbydiplomaengineers-1.pdf"},
-{title:"Hydraulics E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/hydraulicse-bookbydiplomaengineers-3.pdf"},
-{title:"Theory Of Structures E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/theoryofstructurese-bookbydiplomaengineers-2.pdf"},
-{title:"Water Resource Engineering E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000b09c71faa3990755017401f45126630317016264298.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/waterresourceengineeringe-bookbydiplomaengineers-6.pdf"},
-{title:"Public Health Engineering E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f45c72079311416363f02c394789402397388481580.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/publicheathengineeringe-bookbydiplomaengineers-4.pdf"},
-{title:"CMAED",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dbac7207a1d60542f858e24f8037818545726630343.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/construction-management-and-entrepreneur-development.pdf"},
-{title:"RMB",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000003f287207bf60eebf4e92a2608799479752795647630.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/repiar-and-maintenace-of-building.pdf"},
-{title:"DSS",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"},
-{title:"QSV",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000aba071fa9c8274e589af326e1002361587254253798.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/estimating-costing-valuation.pdf"},
-{title:"RCC E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000c3a47207a300da5a2b16e3c32129627255035854469.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/reinforcement-cement-concrete.pdf"},
-{title:"Earthquake Engineering",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e29472078fd4e34ab989848f7428787996213601794.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/03/earthquakeengineeringbyanubhavgangwar.pdf"}
-];
+let books = [];
 
 function escapeHTML(value){
- return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[char]));
+}
+
+function normalizeUrl(value){
+  const url = String(value || "").trim();
+  if(!url) return "";
+  try{
+    const parsed = new URL(url, window.location.href);
+    if(parsed.protocol === "http:" || parsed.protocol === "https:"){
+      return parsed.href;
+    }
+  }catch(e){}
+  return "";
 }
 
 function fallbackCover(title){
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
- <rect width="600" height="800" fill="#f1f5f9"/>
- <rect x="55" y="55" width="490" height="690" rx="22" fill="#fff" stroke="#dbe2ea"/>
- <text x="300" y="330" text-anchor="middle" font-size="110">📖</text>
- <text x="300" y="455" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700" fill="#334155">${escapeHTML(title).replace(/&quot;/g,'"')}</text>
- </svg>`;
- return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
-}
-
-function cleanURL(value){
- try{
-   const u=new URL(String(value||""));
-   return (u.protocol==="https:"||u.protocol==="http:")?u.href:"";
- }catch(e){return "";}
-}
-
-function removeDuplicates(list){
- const seen=new Set();
- return list.filter(book=>{
-   const key=cleanURL(book.pdf||book.link||book.url)||String(book.title||"").trim().toLowerCase();
-   if(!key||seen.has(key)) return false;
-   seen.add(key);
-   return true;
- });
-}
-
-let books=[...defaultBooks];
-let firebaseBooks=[];
-
-/* Firebase/Admin books always stay ABOVE the permanent books. */
-function getBookTime(book){
-  const value =
-    book.timestamp ??
-    book.createdAt ??
-    book.uploadedAt ??
-    book.updatedAt ??
-    book.created_at ??
-    0;
-
-  if(typeof value === "number") return value;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function mergeBooks(){
-  /* Newest admin/founder uploads first, then the permanent books. */
-  const latestUploads=[...firebaseBooks].sort((a,b)=>getBookTime(b)-getBookTime(a));
-  books=[...latestUploads,...defaultBooks];
+  return `
+    <div class="no-cover">
+      <div class="icon">📖</div>
+      <span>${escapeHTML(title || "Book")}</span>
+    </div>
+  `;
 }
 
 function renderBooks(){
- const query=search.value.trim().toLowerCase();
- const filtered=books.filter(book=>{
-   const title=String(book.title||book.name||"").toLowerCase();
-   const category=String(book.category||"").toLowerCase();
-   return !query||title.includes(query)||category.includes(query);
- });
+  const term = search.value.trim().toLowerCase();
 
- count.textContent=filtered.length+(filtered.length===1?" Book":" Books");
- grid.innerHTML="";
- noBooks.style.display=filtered.length?"none":"block";
+  const filtered = books.filter(book => {
+    const title = String(book.title || book.name || "").toLowerCase();
+    const category = String(book.category || book.branch || "").toLowerCase();
+    return !term || title.includes(term) || category.includes(term);
+  });
 
- filtered.forEach(book=>{
-   const title=String(book.title||book.name||"Book").trim();
-   const pdf=cleanURL(book.pdf||book.link||book.file||book.url||book.pdfUrl||book.fileUrl||"");
-   if(!pdf) return;
+  count.textContent = `${filtered.length} book${filtered.length === 1 ? "" : "s"}`;
 
-   const card=document.createElement("article");
-   card.className="book-card";
+  if(!filtered.length){
+    grid.innerHTML = `
+      <div class="state" style="grid-column:1/-1">
+        <div>
+          <strong>${term ? "No books found" : "No books available"}</strong>
+          <small>${term ? "Try another search." : "Books uploaded by admins will appear here."}</small>
+        </div>
+      </div>`;
+    return;
+  }
 
-   const cover=document.createElement("div");
-   cover.className="book-cover";
+  grid.innerHTML = filtered.map((book, index) => {
+    const title = String(book.title || book.name || `Book ${index + 1}`).trim();
 
-   const img=document.createElement("img");
-   img.alt=title;
-   img.loading="lazy";
+    // Support the fields used by the Admin Panel and common older records.
+    const image = normalizeUrl(
+      book.image || book.thumbnail || book.thumb || book.cover || book.imageUrl || ""
+    );
 
-   const info=document.createElement("div");
-   info.className="book-info";
+    const file = normalizeUrl(
+      book.pdf || book.link || book.file || book.url ||
+      book.pdfUrl || book.fileUrl || book.downloadUrl || ""
+    );
 
-   const titleEl=document.createElement("div");
-   titleEl.className="book-title";
-   titleEl.textContent=title;
+    // A book without an attached file cannot be opened.
+    if(!file) return "";
 
-   info.appendChild(titleEl);
-   cover.appendChild(img);
-   card.appendChild(cover);
-   card.appendChild(info);
-   grid.appendChild(card);
+    const safeTitle = escapeHTML(title);
+    const safeImage = escapeHTML(image);
+    const safeFile = escapeHTML(file);
 
-   const image=cleanURL(book.image||book.thumbnail||book.thumb||book.cover||book.imageUrl||"");
-   img.src=image||fallbackCover(title);
-   img.onerror=()=>{img.onerror=null;img.src=fallbackCover(title)};
+    return `
+      <a class="book" href="${safeFile}" target="_blank" rel="noopener noreferrer"
+         aria-label="Open ${safeTitle}">
+        <div class="cover">
+          ${
+            safeImage
+              ? `<img src="${safeImage}" alt="${safeTitle}" loading="lazy"
+                   onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+                     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 533">
+                        <rect width="400" height="533" fill="#f5f6f8"/>
+                        <text x="200" y="260" text-anchor="middle" font-size="72">📖</text>
+                        <text x="200" y="330" text-anchor="middle" font-family="Arial" font-size="22" fill="#555">Book</text>
+                      </svg>`
+                   )}';">`
+              : fallbackCover(title)
+          }
+        </div>
 
-   card.addEventListener("click",()=>window.open(pdf,"_blank","noopener,noreferrer"));
- });
+        <div class="info">
+          <div class="title" title="${safeTitle}">${safeTitle}</div>
+        </div>
+      </a>`;
+  }).join("");
+
+  if(!grid.innerHTML.trim()){
+    grid.innerHTML = `
+      <div class="state" style="grid-column:1/-1">
+        <div>
+          <strong>Books found, but no file link is attached</strong>
+          <small>Please add a PDF/file link from the Admin Panel.</small>
+        </div>
+      </div>`;
+  }
 }
 
-search.addEventListener("input",renderBooks);
-renderBooks();
+async function loadBooks(){
+  grid.innerHTML = `
+    <div class="state" style="grid-column:1/-1">
+      <div>
+        <strong>Loading books...</strong>
+        <small>Fetching the latest collection</small>
+      </div>
+    </div>`;
+  count.textContent = "Loading...";
 
-/*
- Firebase is only an ADDITIONAL source.
- The default books above are permanently embedded in this HTML,
- so they remain available even if Firebase is unavailable.
-*/
-try{
- onValue(ref(db,"books"),snapshot=>{
-   const firebaseBooks=[];
-   if(snapshot.exists()){
-     snapshot.forEach(child=>{
-       const data=child.val();
-       if(data) firebaseBooks.push({id:child.key,...data});
-     });
-   }
-   mergeBooks();
-   renderBooks();
- },error=>{
-   console.error("Firebase read error:",error);
-   books=removeDuplicates(defaultBooks);
-   renderBooks();
- });
-}catch(error){
- console.error("Firebase initialization error:",error);
- books=removeDuplicates(defaultBooks);
- renderBooks();
+  try{
+    const snapshot = await get(ref(db, "books"));
+    books = [];
+
+    if(snapshot.exists()){
+      snapshot.forEach(child => {
+        const value = child.val();
+        if(value && typeof value === "object"){
+          books.push({id: child.key, ...value});
+        }
+      });
+    }
+
+    books.sort((a,b) =>
+      Number(b.timestamp || b.createdAt || 0) -
+      Number(a.timestamp || a.createdAt || 0)
+    );
+
+    renderBooks();
+  }catch(error){
+    console.error("Books load error:", error);
+    count.textContent = "Error";
+    grid.innerHTML = `
+      <div class="state" style="grid-column:1/-1">
+        <div>
+          <strong>Unable to load books</strong>
+          <small>Firebase read permission or connection issue.</small>
+        </div>
+      </div>`;
+  }
 }
 
-})();
+search.addEventListener("input", renderBooks);
+refresh.addEventListener("click", loadBooks);
+
+loadBooks();
 </script>
 </body>
 </html>

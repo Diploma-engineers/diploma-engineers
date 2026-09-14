@@ -922,6 +922,39 @@ body:not(.admin-logged-in) #mobileBottomNav { display:none !important; visibilit
 body:not(.admin-logged-in) #mobileBottomNav { display:none !important; visibility:hidden !important; pointer-events:none !important; }
 body.admin-logged-in #mobileBottomNav { display:flex !important; visibility:visible !important; pointer-events:auto !important; }
 </style>
+
+<style>
+/* FINAL NAV + SPACING FIX */
+/* Keep exactly one navigation: the floating bottom app navigation. */
+.navbar, #appShellNav, .app-shell-nav, .admin-switcher {
+  display:none !important;
+}
+body.admin-logged-in #mobileBottomNav {
+  display:flex !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+body:not(.admin-logged-in) #mobileBottomNav {
+  display:none !important;
+}
+/* Remove unnecessary top whitespace after login */
+#adminPanel { padding-top:0 !important; margin-top:0 !important; }
+.home-shell { padding-top:0 !important; margin-top:0 !important; }
+.admin-mode-section { margin-top:0 !important; }
+#homeAdminSection { padding-top:0 !important; }
+#newsAdminSection, #blogAdminSection, #booksAdminSection, #courseAdminSection, #rankingAdminSection, #profileAdminSection { margin-top:0 !important; }
+/* Active nav item = solid blue */
+.mobile-bottom-nav button.active {
+  background:#2563eb !important;
+  color:#fff !important;
+  box-shadow:0 7px 18px rgba(37,99,235,.25) !important;
+}
+.mobile-bottom-nav button.active i { color:#fff !important; }
+@media(max-width:600px){
+  .home-shell { padding-top:0 !important; }
+  .mobile-bottom-nav { bottom:8px !important; }
+}
+</style>
 </head>
 
 <body>
@@ -3241,7 +3274,9 @@ async function loadHomeUploads(){
   }catch(_){if(rankValue)rankValue.textContent="#—";}
 }
 function initHomeReveal(){document.querySelectorAll("#homeAdminSection .reveal").forEach(el=>{el.classList.add("visible")});}
-function syncAppNav(mode){document.querySelectorAll(".app-nav-link").forEach(b=>b.classList.toggle("active",b.dataset.appTarget===mode));}
+function syncAppNav(mode){
+  document.querySelectorAll(".app-nav-link, #mobileBottomNav [data-app-target]").forEach(b=>b.classList.toggle("active",b.dataset.appTarget===mode));
+}
 function appGo(mode){
   if(mode==="home"){showAdminMode("home");syncAppNav("home");window.scrollTo({top:0,behavior:"smooth"});return;}
   if(mode==="profile"){showAdminMode("profile");syncAppNav("profile");window.scrollTo({top:0,behavior:"smooth"});return;}

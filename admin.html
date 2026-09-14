@@ -552,7 +552,7 @@ button:disabled{
 .switcher-track{
     position:relative;
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
+    grid-template-columns:repeat(4,1fr);
     width:min(800px,100%);
     padding:5px;
     background:#e8eef8;
@@ -564,7 +564,7 @@ button:disabled{
     position:absolute;
     top:5px;
     left:5px;
-    width:calc(33.333% - 4px);
+    width:calc(25% - 4px);
     height:calc(100% - 10px);
     background:#2563eb;
     border-radius:12px;
@@ -573,6 +573,7 @@ button:disabled{
 }
 .switcher-track.books-active .switcher-slider{transform:translateX(100%);}
 .switcher-track.course-active .switcher-slider{transform:translateX(200%);}
+.switcher-track.rank-active .switcher-slider{transform:translateX(300%);}
 .switch-btn{
     position:relative;
     z-index:2;
@@ -816,6 +817,9 @@ button:disabled{
         <button class="switch-btn" id="courseSwitch" type="button">
             <i class="fa-solid fa-graduation-cap"></i> COURSE
         </button>
+        <button class="switch-btn" id="rankSwitch" type="button">
+            <i class="fa-solid fa-ranking-star"></i> RANKING
+        </button>
     </div>
 </div>
 
@@ -1043,6 +1047,19 @@ button:disabled{
               </div>
             </div>
         </div>
+    </div>
+
+    <!-- ADMIN RANKING -->
+    <div id="rankAdminSection" class="admin-mode-section">
+      <div class="ranking-shell">
+        <div class="ranking-head">
+          <div><h1><i class="fa-solid fa-ranking-star"></i> Admin Ranking</h1><p>Team profile ratings • See all admins and your own rank</p></div>
+          <button id="refreshRanking" class="ranking-refresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="my-rank-card" id="myRankCard"><span>Your Rank</span><b id="myRank">—</b><small id="myRankText">Loading ranking...</small></div>
+        <div class="ranking-stats"><div><b id="rankingTotalAdmins">0</b><span>Admins</span></div><div><b id="rankingTotalRatings">0</b><span>Ratings</span></div><div><b id="rankingTopScore">0.0</b><span>Top Rating</span></div></div>
+        <div id="rankingList" class="ranking-list"><div class="ranking-empty">Loading rankings...</div></div>
+      </div>
     </div>
 
     <!-- ADMIN PROFILE MODAL -->
@@ -2398,14 +2415,36 @@ const newsAdminSection = document.getElementById("newsAdminSection");
 const booksAdminSection = document.getElementById("booksAdminSection");
 const courseAdminSection = document.getElementById("courseAdminSection");
 
+const rankSwitch = document.getElementById("rankSwitch");
+const rankAdminSection = document.getElementById("rankAdminSection");
+
+function renderAdminRanking(){
+  const list=document.getElementById("rankingList"); if(!list) return;
+  const totalAdmins=document.getElementById("rankingTotalAdmins"), totalRatings=document.getElementById("rankingTotalRatings"), topScore=document.getElementById("rankingTopScore"), myRank=document.getElementById("myRank"), myRankText=document.getElementById("myRankText");
+  const uid=auth.currentUser?.uid;
+  Promise.all([get(ref(db,"teamProfiles")),get(ref(db,"profileRatings"))]).then(([profilesSnap,ratingsSnap])=>{
+    const profiles=profilesSnap.val()||{}, ratingsRoot=ratingsSnap.val()||{};
+    const rows=Object.entries(profiles).filter(([id,p])=>p&&typeof p==="object").map(([id,p])=>{
+      const rs=ratingsRoot[id]||{}; const vals=Object.values(rs).map(x=>Number(x?.rating)).filter(n=>n>=1&&n<=5); const count=vals.length; const avg=count?vals.reduce((a,b)=>a+b,0)/count:0;
+      return {uid:id,name:p.name||"Team Member",designation:p.designation||p.role||"ADMIN",photo:p.photo||DEFAULT_PROFILE_IMAGE,avg,count};
+    }).sort((a,b)=>b.avg-a.avg||b.count-a.count||a.name.localeCompare(b.name));
+    totalAdmins.textContent=rows.length; totalRatings.textContent=rows.reduce((n,x)=>n+x.count,0); topScore.textContent=rows[0]?.avg?rows[0].avg.toFixed(1):"0.0";
+    list.innerHTML=rows.length?rows.map((r,i)=>`<div class="ranking-row"><div class="rank-number">#${i+1}</div><div class="rank-user"><img class="rank-avatar" src="${escapeHTML(r.photo)}" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"><div><div class="rank-name">${escapeHTML(r.name)}${r.uid===uid?' <span style="color:#2563eb;font-size:8px;">(YOU)</span>':''}</div><div class="rank-role">${escapeHTML(r.designation)}</div></div></div><div class="rank-score"><div class="rank-stars">${"★".repeat(Math.round(r.avg))+"☆".repeat(5-Math.round(r.avg))}</div><strong>${r.avg?r.avg.toFixed(1):"—"}/5</strong><small>${r.count} rating${r.count===1?'':'s'}</small></div></div>`).join(""):'<div class="ranking-empty">No team profiles found. Admins must publish their Team profile first.</div>';
+    const mine=rows.findIndex(r=>r.uid===uid);
+    if(mine>=0){myRank.textContent="#"+(mine+1);myRankText.textContent=`${rows[mine].avg?rows[mine].avg.toFixed(1):"0.0"}/5 • ${rows[mine].count} rating${rows[mine].count===1?'':'s'}`;}else{myRank.textContent="—";myRankText.textContent="Your Team profile is not published yet.";}
+  }).catch(err=>{console.error("Ranking load error",err);list.innerHTML='<div class="ranking-empty">Unable to load ranking. Check Firebase Rules for /teamProfiles and /profileRatings.</div>';});
+}
+
 function showAdminMode(mode) {
-    adminSwitcher.classList.remove("books-active", "course-active");
+    adminSwitcher.classList.remove("books-active", "course-active", "rank-active");
     newsSwitch.classList.remove("active");
     booksSwitch.classList.remove("active");
     courseSwitch.classList.remove("active");
+    rankSwitch.classList.remove("active");
     newsAdminSection.classList.remove("active");
     booksAdminSection.classList.remove("active");
     courseAdminSection.classList.remove("active");
+    rankAdminSection.classList.remove("active");
 
     if (mode === "books") {
         adminSwitcher.classList.add("books-active");
@@ -2416,6 +2455,11 @@ function showAdminMode(mode) {
         courseSwitch.classList.add("active");
         courseAdminSection.classList.add("active");
         if (courseAuth.currentUser) connectCourseAdmin();
+    } else if (mode === "ranking") {
+        adminSwitcher.classList.add("rank-active");
+        rankSwitch.classList.add("active");
+        rankAdminSection.classList.add("active");
+        renderAdminRanking();
     } else {
         newsSwitch.classList.add("active");
         newsAdminSection.classList.add("active");
@@ -2426,6 +2470,8 @@ function showAdminMode(mode) {
 newsSwitch.addEventListener("click", () => showAdminMode("news"));
 booksSwitch.addEventListener("click", () => showAdminMode("books"));
 courseSwitch.addEventListener("click", () => showAdminMode("course"));
+rankSwitch.addEventListener("click", () => showAdminMode("ranking"));
+document.getElementById("refreshRanking")?.addEventListener("click", renderAdminRanking);
 
 /* =====================================================
    INITIAL LOADER ANIMATION

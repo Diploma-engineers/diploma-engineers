@@ -868,6 +868,12 @@ body{background:var(--app-bg)!important;color:var(--app-ink)!important}
 .admin-mode-section{padding-bottom:30px!important}.dashboard{max-width:1180px!important}.box,.panel,.stat-card,.profile-card,.quick-card{box-shadow:var(--app-shadow)!important;border-color:var(--app-line)!important}
 @media(max-width:850px){.home-hero{grid-template-columns:1fr!important}.home-grid{grid-template-columns:repeat(2,1fr)!important}.navbar h2{font-size:15px!important}.navbar .logout{font-size:10px!important;padding:8px 10px!important}}
 @media(max-width:600px){.navbar{height:62px!important;padding:8px 12px!important}.navbar h2{font-size:14px!important}.navbar h2 i{margin-right:3px}.home-shell{padding:13px 11px 100px!important}.pro-app-header{margin-top:2px}.pro-user img{width:43px;height:43px;border-radius:14px}.pro-user strong{font-size:15px}.pro-notify{width:42px;height:42px;border-radius:14px}.pro-search{height:45px;border-radius:14px}.pro-filter{width:45px;border-radius:14px}.home-welcome{padding:18px!important;border-radius:20px!important}.home-welcome h1{font-size:22px!important}.home-rank{border-radius:20px!important}.home-grid{gap:9px!important}.home-module{padding:14px!important;border-radius:17px!important}.home-module p{font-size:9px!important}.upload-card{min-width:225px!important;max-width:225px!important}.upload-card-cover{height:112px!important}.mobile-bottom-nav{bottom:9px!important;width:calc(100% - 16px)!important;border-radius:21px!important}.mobile-bottom-nav button{font-size:8px!important;padding:7px 2px!important}.mobile-bottom-nav button i{font-size:15px!important}}
+
+/* AUTH VISIBILITY: App navigation must NEVER appear on login screen */
+#appShellNav, #mobileBottomNav { visibility:hidden; pointer-events:none; }
+body.admin-logged-in #appShellNav { visibility:visible; pointer-events:auto; }
+body.admin-logged-in #mobileBottomNav { display:flex !important; visibility:visible; pointer-events:auto; }
+body:not(.admin-logged-in) #mobileBottomNav { display:none !important; visibility:hidden; pointer-events:none; }
 </style>
 
 </head>
@@ -1762,6 +1768,7 @@ loginBtn.addEventListener("click", async () => {
 
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
+        document.body.classList.add("admin-logged-in");
         applyCourseVisibility();
         loadNews();
         loadDatabase();
@@ -1805,6 +1812,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
+        document.body.classList.add("admin-logged-in");
         applyCourseVisibility();
         loadNews();
         loadDatabase();
@@ -1817,6 +1825,7 @@ onAuthStateChanged(auth, (user) => {
     } else {
         loginPage.style.display = "flex";
         adminPanel.style.display = "none";
+        document.body.classList.remove("admin-logged-in");
     }
 });
 
@@ -1827,6 +1836,7 @@ logoutBtn.addEventListener("click", async () => {
     try {
         await signOut(courseAuth);
         await signOut(auth);
+        document.body.classList.remove("admin-logged-in");
     } catch (error) {
         console.error(error);
     }

@@ -1158,7 +1158,7 @@ button:disabled{
 ===================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, push, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, remove, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 /* =====================================================
    FIREBASE CONFIG
@@ -1902,31 +1902,36 @@ function isBookOwner(book){
 }
 
 function loadBooksTab() {
-    onValue(ref(db, "books"), snap => {
+    const booksRef = ref(db, "books");
+    const user = auth.currentUser;
+
+    if(!user){
         bookItems = [];
-        const uid = getCurrentAdminUid();
+        renderBookRows();
+        return;
+    }
 
-        if(!uid){
-            renderBookRows();
-            return;
-        }
+    // MASTER ADMIN: load every book.
+    // OTHER ADMINS: Firebase query loads ALL books belonging to their UID.
+    // This avoids the old behaviour where only one/incorrect record appeared.
+    const booksQuery = isMasterBookAdmin()
+        ? booksRef
+        : query(booksRef, orderByChild("ownerUid"), equalTo(user.uid));
 
+    onValue(booksQuery, snap => {
+        bookItems = [];
         if(snap.exists()){
-            snap.forEach(x => {
-                const item = {id: x.key, ...x.val()};
-                // KirLkZUGXoZf0cXHkuCZ4Mfnxam2 = master admin: show ALL books.
-                // Every other admin: show only books uploaded by that admin.
-                if(isMasterBookAdmin() || isBookOwner(item)){
-                    bookItems.push(item);
-                }
-            });
+            snap.forEach(x => bookItems.push({id: x.key, ...x.val()}));
         }
 
         bookItems.sort((a,b) => (Number(b.timestamp)||0) - (Number(a.timestamp)||0));
         renderBookRows();
+        bookMsg(isMasterBookAdmin()
+            ? `Master Admin: ${bookItems.length} total book(s) loaded.`
+            : `Your uploaded books: ${bookItems.length} book(s) loaded.`
+        );
     }, err => bookMsg("Firebase read failed: "+err.message, true));
 }
-
 function renderBookRows(){
     const rowsEl = document.getElementById("bookRows");
     rowsEl.innerHTML = bookItems.length ? bookItems.map(b=>`<tr><td><img src="${escapeHTML(b.image)}" alt=""></td><td><b>${escapeHTML(b.title||b.name||"Untitled")}</b></td><td>${escapeHTML(b.category||"Book PDF")}</td><td>${escapeHTML(b.ownerName||"Legacy / Unknown")}</td><td><a href="${escapeHTML(b.pdf||b.link||"#")}" target="_blank">Open</a></td><td><button class="secondary" data-book-edit="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:pointer;">Edit</button> <button class="danger" data-book-del="${b.id}" style="padding:5px 10px;border-radius:6px;border:0;background:#fee2e2;color:#b91c1c;cursor:pointer;">Delete</button></td></tr>`).join("") : `<tr><td colspan="6" style="text-align:center;padding:30px">No books found</td></tr>`;

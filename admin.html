@@ -980,7 +980,7 @@ body { padding-top: 0 !important; }
 #homeAdminSection, #newsSection, #blogSection, #booksSection, #courseSection, #profileSection { margin-top: 0 !important; }
 .app-shell-nav { margin-top: 0 !important; top: 0 !important; }
 .mobile-bottom-nav { margin-top: 0 !important; }
-<style id="final-home-manage-grid">
+/* final-home-manage-grid */
 html,body{margin:0!important;padding:0!important;}
 body{padding-top:0!important;}
 #adminPanel,#appShell,.admin-panel,.app-shell,.admin-mode-section{margin-top:0!important;padding-top:0!important;}
@@ -991,6 +991,29 @@ body{padding-top:0!important;}
 @media(max-width:600px){
   .manage-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
   .manage-content-grid .home-module{min-height:140px!important;padding:13px!important;}
+}
+</style>
+
+<style id="HARD-TOP-SPACE-FIX">
+/* HARD FIX: the large blank area was caused by conflicting legacy layout rules. */
+html,body{margin:0!important;padding:0!important;min-height:0!important;}
+body{overflow-x:hidden!important;}
+#adminPanel{display:block!important;margin:0!important;padding:0!important;min-height:0!important;}
+#adminPanel>.navbar,#adminPanel>#appShellNav,#adminPanel>.app-shell-nav,#adminPanel>.admin-switcher,#adminPanel>.footer{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;}
+.admin-mode-section{display:none!important;position:static!important;top:auto!important;left:auto!important;right:auto!important;transform:none!important;margin:0!important;padding-top:0!important;}
+.admin-mode-section.active{display:block!important;margin:0!important;padding-top:0!important;min-height:0!important;}
+#newsAdminSection.active,#blogAdminSection.active,#booksAdminSection.active,#courseAdminSection.active,#rankAdminSection.active{margin:0!important;padding-top:0!important;min-height:0!important;}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap,#courseAdminSection .course-admin-shell,#rankAdminSection .ranking-shell{margin-top:0!important;padding-top:8px!important;}
+#newsAdminSection .dashboard>.welcome,#newsAdminSection .dashboard>.app-summary{display:none!important;}
+#newsAdminSection .dashboard>.cards{margin-top:0!important;}
+/* Profile is a normal app page, never vertically centered as a modal. */
+#profileModal{position:static!important;inset:auto!important;display:none!important;align-items:initial!important;justify-content:initial!important;padding:0!important;margin:0!important;background:transparent!important;min-height:0!important;overflow:visible!important;}
+#profileModal.active{display:block!important;}
+#profileModal .profile-card{margin:0 auto!important;max-height:none!important;}
+#profileModal.profile-view-mode .profile-card{width:min(560px,100%)!important;border-radius:22px!important;}
+@media(max-width:600px){
+ #newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap,#courseAdminSection .course-admin-shell,#rankAdminSection .ranking-shell{padding-top:6px!important;}
+ #profileModal.profile-view-mode .profile-card{width:100%!important;}
 }
 </style>
 </head>
@@ -1491,6 +1514,30 @@ body{padding-top:0!important;}
                 <button class="profile-close" id="profileClose" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="profile-body">
+                <!-- Compact profile view, matching the requested mobile-app style -->
+                <div class="profile-display" id="profileDisplay">
+                    <div class="profile-display-top">
+                        <img class="profile-display-avatar" id="profileDisplayAvatar" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile">
+                        <h3 id="profileDisplayName">Admin</h3>
+                        <p id="profileDisplayRole">ADMIN</p>
+                    </div>
+                    <div class="profile-info-card">
+                        <div class="profile-info-item"><span>Full Name</span><b id="profileDisplayFullName">-</b></div>
+                        <div class="profile-info-item"><span>Email</span><b id="profileDisplayEmail">-</b></div>
+                        <div class="profile-info-item"><span>Mobile Number</span><b id="profileDisplayMobile">-</b></div>
+                        <div class="profile-info-item"><span>Engineering Branch</span><b id="profileDisplayBranch">-</b></div>
+                        <div class="profile-info-item"><span>College Name</span><b id="profileDisplayCollege">-</b></div>
+                        <div class="profile-info-item"><span>Education</span><b id="profileDisplayEducation">-</b></div>
+                        <div class="profile-info-item"><span>Experience</span><b id="profileDisplayExperience">-</b></div>
+                        <div class="profile-info-item"><span>Address</span><b id="profileDisplayAddress">-</b></div>
+                    </div>
+                    <div class="profile-display-actions">
+                        <button type="button" class="profile-display-edit" id="profileDisplayEdit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+                        <button type="button" class="profile-display-share" id="profileDisplayShare"><i class="fa-solid fa-id-card"></i> Share Profile Card</button>
+                        <button type="button" class="profile-display-close" id="profileDisplayClose"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
+                    </div>
+                </div>
+
                 <div class="profile-preview">
                     <img class="profile-big-avatar" id="profileAvatarPreview" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile Preview">
                     <div style="min-width:0;flex:1;">
@@ -1720,6 +1767,7 @@ function fillProfile(data){
   };
   Object.entries(map).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
   updateProfilePreview();
+  if(typeof updateProfileDisplay === "function") updateProfileDisplay();
   const dashName = document.getElementById("dashboardProfileName");
   const dashRole = document.getElementById("dashboardProfileRole");
   const dashPhoto = document.getElementById("dashboardProfilePhoto");
@@ -1758,9 +1806,46 @@ function closeProfile(){
   profileModal.setAttribute("aria-hidden","true");
   window.scrollTo({top:0,behavior:"auto"});
 }
+
+function setProfileViewMode(view=true){
+  if(!profileModal) return;
+  profileModal.classList.toggle("profile-view-mode",view);
+  profileModal.classList.toggle("profile-edit-mode",!view);
+  profileModal.setAttribute("aria-hidden","false");
+  if(view){ updateProfileDisplay(); window.scrollTo({top:0,behavior:"auto"}); }
+}
+
+function updateProfileDisplay(){
+  const u=auth.currentUser, p=adminProfile||{};
+  const name=p.name || u?.displayName || "Admin";
+  const role=(u?.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2") ? "FOUNDER" : (p.designation || "ADMIN");
+  const photo=p.photo || DEFAULT_PROFILE_IMAGE;
+  const vals={
+    profileDisplayName:name, profileDisplayRole:role, profileDisplayFullName:name,
+    profileDisplayEmail:p.email || u?.email || "-", profileDisplayMobile:p.mobile || "-",
+    profileDisplayBranch:p.branch || "-", profileDisplayCollege:p.collegeName || p.college || "-",
+    profileDisplayEducation:p.education || p.collegeDegree || "-", profileDisplayExperience:p.experience || "-",
+    profileDisplayAddress:p.address || "-"
+  };
+  Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
+  const a=document.getElementById("profileDisplayAvatar");if(a){a.src=photo;a.onerror=()=>{a.src=DEFAULT_PROFILE_IMAGE;};}
+}
+
+document.getElementById("profileDisplayEdit")?.addEventListener("click",()=>{
+  profileModal.classList.remove("profile-view-mode");
+  profileModal.classList.add("profile-edit-mode");
+  window.scrollTo({top:0,behavior:"auto"});
+});
+document.getElementById("profileDisplayClose")?.addEventListener("click",closeProfile);
+document.getElementById("profileDisplayShare")?.addEventListener("click",async()=>{
+  const u=auth.currentUser,p=adminProfile||{};
+  const text=`${p.name||u?.displayName||"Admin"}\n${p.designation||"ADMIN"}\n${p.branch||""}\n${p.email||u?.email||""}`.trim();
+  try{await navigator.clipboard.writeText(text);setProfileStatus("Profile details copied. You can share them anywhere.",true);}
+  catch(e){setProfileStatus("Profile details are ready to share.",true);}
+});
 profileTrigger.addEventListener("click",openProfile);
-profileClose.addEventListener("click",closeProfile);
-profileCancel.addEventListener("click",closeProfile);
+profileClose.addEventListener("click",()=>setProfileViewMode(true));
+profileCancel.addEventListener("click",()=>setProfileViewMode(true));
 
 document.getElementById("profileName").addEventListener("input",updateProfilePreview);
 document.getElementById("profileDesignation").addEventListener("input",updateProfilePreview);
@@ -1859,7 +1944,9 @@ try {
     adminProfile=data;
     updateProfilePreview();
     syncProfilePage();
+    updateProfileDisplay();
     setProfileStatus("Profile saved successfully. Your profile is now updated.",true);
+    setProfileViewMode(true);
     const saved=document.getElementById("savedProfilePreview"); if(saved){saved.hidden=false;}
   }catch(err){
     console.error("Profile save error:",err);
@@ -3283,6 +3370,8 @@ function showAdminMode(mode) {
         if (courseAuth.currentUser) connectCourseAdmin();
     } else if (mode === "profile") {
         profileModal?.classList.add("active");
+        profileModal?.classList.add("profile-view-mode");
+        profileModal?.classList.remove("profile-edit-mode");
         profileModal?.setAttribute("aria-hidden","false");
         loadAdminProfile();
         syncProfilePage?.();
@@ -3598,6 +3687,41 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 .profile-page-section .profile-actions{position:sticky!important;bottom:82px!important;background:#fff!important;padding:15px 0 2px!important;z-index:3!important;border-top:1px solid #edf1f6!important}
 .profile-page-section .profile-status{text-align:center!important;margin-top:10px!important}
 
+/* ===== REQUESTED COMPACT PROFILE VIEW ===== */
+.profile-display{display:block!important;width:min(540px,100%);margin:0 auto;padding:4px 0 12px}
+.profile-display-top{text-align:center;padding:8px 8px 18px}
+.profile-display-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:1px solid #dce5f1;background:#f8fafc;box-shadow:0 7px 22px rgba(37,99,235,.10);display:block;margin:0 auto 10px}
+.profile-display-top h3{margin:0;color:#0f172a;font-size:18px;font-weight:900}
+.profile-display-top p{margin:4px 0 0;color:#64748b;font-size:11px;font-weight:600}
+.profile-info-card{background:#f8fafc;border:1px solid #dfe7f1;border-radius:15px;padding:13px 14px}
+.profile-info-item{padding:0 0 11px;margin:0 0 11px;border-bottom:0}
+.profile-info-item:last-child{padding-bottom:0;margin-bottom:0}
+.profile-info-item span{display:block;color:#52647e;font-size:11px;line-height:1.3;margin-bottom:4px}
+.profile-info-item b{display:block;color:#0f172a;font-size:12px;line-height:1.45;font-weight:700;word-break:break-word}
+.profile-display-actions{display:grid;gap:9px;margin-top:14px}
+.profile-display-actions button{width:100%;border:0;border-radius:12px;padding:12px 14px;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;transition:.2s}
+.profile-display-actions button:hover{transform:translateY(-1px)}
+.profile-display-edit{background:#2563eb;color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.18)}
+.profile-display-share{background:#fff;color:#2563eb;border:1px solid #dbe5f3!important}
+.profile-display-close{background:#fef2f2;color:#dc2626}
+.profile-page-section.profile-view-mode .profile-head{display:none!important}
+.profile-page-section.profile-view-mode .profile-body{padding:12px 14px 28px!important}
+.profile-page-section.profile-view-mode .profile-preview,
+.profile-page-section.profile-view-mode .profile-grid,
+.profile-page-section.profile-view-mode .profile-social-grid,
+.profile-page-section.profile-view-mode .profile-body>h3,
+.profile-page-section.profile-view-mode .saved-profile-box,
+.profile-page-section.profile-view-mode .profile-actions,
+.profile-page-section.profile-view-mode .profile-status{display:none!important}
+.profile-page-section.profile-edit-mode .profile-display{display:none!important}
+.profile-page-section.profile-edit-mode .profile-head{display:flex!important}
+@media(max-width:600px){
+  .profile-page-section.profile-view-mode{padding:0 7px 92px!important}
+  .profile-page-section.profile-view-mode .profile-card{width:100%!important;border-radius:18px!important}
+  .profile-page-section.profile-view-mode .profile-body{padding:11px 11px 24px!important}
+  .profile-display-avatar{width:86px;height:86px}
+}
+
 /* Create New workflow */
 .admin-create-btn{border:0!important;background:#2563eb!important;color:#fff!important;border-radius:12px!important;padding:10px 14px!important;font:800 12px Poppins,Arial,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important;box-shadow:0 7px 18px rgba(37,99,235,.18)!important}
 .admin-create-btn:hover{transform:translateY(-1px)}
@@ -3806,3 +3930,13 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 </script>
 </body>
 </html>
+
+<style id="absolute-zero-top-gap">
+html,body{margin:0!important;padding:0!important;}
+#adminPanel{margin:0!important;padding:0!important;}
+#adminPanel>.admin-mode-section{margin:0!important;padding-top:0!important;}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{margin-top:0!important;padding-top:0!important;}
+#newsAdminSection .dashboard>*:first-child,#blogAdminSection .dashboard>*:first-child,#booksAdminSection .wrap>*:first-child{margin-top:0!important;}
+#newsAdminSection .welcome,#blogAdminSection .welcome,#booksAdminSection .welcome{margin-top:0!important;}
+#profileModal{margin:0!important;padding-top:0!important;}
+</style>

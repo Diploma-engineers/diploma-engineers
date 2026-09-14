@@ -2531,16 +2531,20 @@ function loadBooksTab() {
         return;
     }
 
-    // Remove any previous listener so the list is never replaced by another
-    // filtered listener. This listener always reads the complete /books node.
+    // Firebase Rules allow normal admins to read only their own books via ownerUid.
+    // Master can read the complete /books node.
     if (typeof booksListenerUnsubscribe === "function") {
         booksListenerUnsubscribe();
         booksListenerUnsubscribe = null;
     }
 
-    bookMsg("Loading ALL books from Firebase...");
+    const readQuery = isMasterBookAdmin()
+        ? booksRef
+        : query(booksRef, orderByChild("ownerUid"), equalTo(user.uid));
 
-    booksListenerUnsubscribe = onValue(booksRef, snapshot => {
+    bookMsg("Loading your books...");
+
+    booksListenerUnsubscribe = onValue(readQuery, snapshot => {
         const allBooks = [];
 
         if (snapshot.exists()) {
@@ -2552,7 +2556,7 @@ function loadBooksTab() {
             });
         }
 
-        // Show every direct record under /books. No owner filtering.
+        // Master sees all; normal admins receive only their ownerUid records.
         allBooks.sort((a, b) => {
             const tb = Number(b.timestamp || b.createdAt || 0);
             const ta = Number(a.timestamp || a.createdAt || 0);
@@ -2561,7 +2565,7 @@ function loadBooksTab() {
 
         bookItems = allBooks;
         renderBookRows();
-        bookMsg(`ALL BOOKS: ${bookItems.length} record(s) found in Firebase /books.`);
+        bookMsg(`YOUR BOOKS: ${bookItems.length} record(s) found.`);
     }, error => {
         console.error("Books read error:", error);
         bookItems = [];
@@ -3678,6 +3682,126 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
     setupNews();setupBlog();setupBooks();setupHome();installNewsFilter();
     setTimeout(()=>{setupNews();setupBlog();setupBooks();setupHome();},1000);
   });
+})();
+</script>
+
+<style id="final-app-shell-fix">
+/* =========================================================
+   FINAL APP SHELL — ONE CONSISTENT PAGE, ZERO TOP GAPS
+========================================================= */
+html,body{margin:0!important;padding:0!important;background:#f6f8fc!important;overflow-x:hidden!important}
+body{padding-top:0!important}
+#page-loader{z-index:999999!important}
+#adminPanel{margin:0!important;padding:0!important}
+.admin-mode-section{display:none!important;position:relative!important;margin:0!important;padding-top:0!important;min-height:calc(100vh - 76px)!important}
+.admin-mode-section.active{display:block!important}
+#homeAdminSection.active,#newsAdminSection.active,#blogAdminSection.active,#booksAdminSection.active,#courseAdminSection.active,#rankAdminSection.active,#profileModal.active{margin-top:0!important;padding-top:0!important}
+/* Remove legacy layouts that create different top offsets */
+.navbar,.app-shell-nav,.admin-switcher,.switcher-track,.app-shell-header,.footer{display:none!important}
+/* Fixed single app navigation */
+#mobileBottomNav{position:fixed!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;width:min(680px,calc(100% - 20px))!important;height:64px!important;padding:7px!important;display:none!important;align-items:stretch!important;justify-content:space-between!important;gap:4px!important;background:rgba(255,255,255,.97)!important;border:1px solid #e5eaf1!important;border-radius:20px!important;box-shadow:0 12px 35px rgba(15,23,42,.14)!important;backdrop-filter:blur(14px)!important;z-index:99990!important}
+body.admin-logged-in #mobileBottomNav{display:flex!important}
+#mobileBottomNav button{flex:1!important;border:0!important;background:transparent!important;color:#64748b!important;border-radius:14px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;font:700 10px Poppins,Arial,sans-serif!important;cursor:pointer!important;min-width:0!important;transition:.15s ease!important}
+#mobileBottomNav button i{font-size:17px!important;color:inherit!important}
+#mobileBottomNav button.active{background:#2563eb!important;color:#fff!important;box-shadow:0 7px 18px rgba(37,99,235,.24)!important}
+#mobileBottomNav button.active i{color:#fff!important}
+/* Every page starts from exactly the same top coordinate */
+#homeAdminSection .home-shell,
+#newsAdminSection .dashboard,
+#blogAdminSection .dashboard,
+#booksAdminSection .wrap,
+#courseAdminSection,
+#rankAdminSection .ranking-shell,
+#profileModal .profile-body{margin-top:0!important}
+#homeAdminSection .home-shell{padding-top:14px!important;padding-bottom:100px!important}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding-top:14px!important;padding-bottom:105px!important}
+#courseAdminSection{padding-bottom:105px!important}
+#rankAdminSection{padding-top:14px!important;padding-bottom:105px!important}
+#profileModal{padding:14px 16px 105px!important}
+/* Instant navigation; no scroll animation delay */
+html{scroll-behavior:auto!important}
+/* Home should render its shell before Firebase cards arrive */
+#homeUploads{min-height:86px!important}
+.home-loading{min-height:70px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+@media(max-width:600px){
+  .admin-mode-section{min-height:calc(100vh - 72px)!important}
+  #homeAdminSection .home-shell{padding:10px 10px 92px!important}
+  #newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding:10px 10px 92px!important}
+  #rankAdminSection{padding:10px 10px 92px!important}
+  #profileModal{padding:10px 9px 92px!important}
+  #mobileBottomNav{bottom:7px!important;width:calc(100% - 14px)!important;height:62px!important;border-radius:18px!important}
+  #mobileBottomNav button{font-size:9px!important}
+  #mobileBottomNav button i{font-size:16px!important}
+}
+</style>
+<script id="final-app-shell-js">
+(function(){
+  'use strict';
+  const sectionIds=['homeAdminSection','newsAdminSection','blogAdminSection','booksAdminSection','courseAdminSection','rankAdminSection','profileModal'];
+  const nav=document.getElementById('mobileBottomNav');
+  const valid=['home','news','blog','books','course','profile'];
+  let current='home';
+
+  function top(){ window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; }
+  function sectionFor(mode){
+    return ({home:'homeAdminSection',news:'newsAdminSection',blog:'blogAdminSection',books:'booksAdminSection',course:'courseAdminSection',ranking:'rankAdminSection',profile:'profileModal'})[mode];
+  }
+  function activate(mode){
+    if(mode==='course' && typeof isCourseAllowed==='function' && !isCourseAllowed()) mode='news';
+    const id=sectionFor(mode)||sectionFor('home');
+    sectionIds.forEach(x=>{const el=document.getElementById(x); if(el) el.classList.toggle('active',x===id);});
+    document.querySelectorAll('.app-nav-link').forEach(b=>b.classList.toggle('active',b.dataset.appTarget===mode));
+    nav?.querySelectorAll('[data-app-target]').forEach(b=>b.classList.toggle('active',b.dataset.appTarget===mode));
+    current=mode; top();
+  }
+
+  // Replace bottom-nav buttons once so old duplicate click handlers cannot fire twice.
+  if(nav){
+    nav.querySelectorAll('button').forEach(old=>{
+      const b=old.cloneNode(true); old.replaceWith(b);
+      b.addEventListener('click',()=>go(b.dataset.appTarget));
+    });
+  }
+
+  window.appGo=function(mode){go(mode)};
+  function go(mode){
+    if(!valid.includes(mode) && mode!=='ranking') mode='home';
+    activate(mode);
+    // Load data only when its screen is actually opened.
+    try{
+      if(mode==='home' && typeof loadHomeUploads==='function') loadHomeUploads();
+      if(mode==='news' && typeof loadNews==='function') loadNews();
+      if(mode==='blog' && typeof loadBlogs==='function') loadBlogs();
+      if(mode==='books' && typeof loadBooksTab==='function') loadBooksTab();
+      if(mode==='course' && typeof connectCourseAdmin==='function' && window.courseAuth?.currentUser) connectCourseAdmin();
+      if(mode==='ranking' && typeof renderAdminRanking==='function') renderAdminRanking();
+      if(mode==='profile' && typeof loadAdminProfile==='function') loadAdminProfile();
+    }catch(e){console.error('App navigation load:',e)}
+  }
+
+  // Make all home quick-access cards feel like native app buttons.
+  document.querySelectorAll('#homeAdminSection [data-home-nav]').forEach(card=>{
+    card.onclick=()=>go(card.dataset.homeNav);
+  });
+  document.querySelectorAll('#homeAdminSection [data-home-url]').forEach(card=>{
+    card.onclick=()=>{ const u=card.dataset.homeUrl; if(u) window.location.href=u; };
+  });
+  document.getElementById('homeRankCard')?.addEventListener('click',()=>go('ranking'));
+
+  // Ensure first authenticated view is always Home, without waiting for content.
+  const ready=()=>{
+    if(document.body.classList.contains('admin-logged-in')){
+      activate('home');
+      requestAnimationFrame(()=>{ if(typeof loadHomeUploads==='function') loadHomeUploads(); });
+    }
+  };
+  document.addEventListener('DOMContentLoaded',ready,{once:true});
+  window.addEventListener('adminProfileUpdated',()=>{if(current==='home' && typeof loadHomeUploads==='function') loadHomeUploads(true)});
+
+  // Kill any remaining artificial loader after auth/UI is ready; Firebase content is background-only.
+  const hide=()=>{const l=document.getElementById('page-loader');if(l)l.classList.add('hide');document.body.style.overflow='';};
+  window.addEventListener('load',hide,{once:true});
+  setTimeout(hide,900);
 })();
 </script>
 </body>

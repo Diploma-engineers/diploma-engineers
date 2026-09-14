@@ -30,10 +30,19 @@ h1{font-size:clamp(25px,4vw,42px);line-height:1.2;color:#0f172a;margin-bottom:13
 .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px;padding-top:20px;border-top:1px solid #e8eef5}.links a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:#f1f5f9;color:#1e40af;border:1px solid #dbe5f0;padding:10px 13px;border-radius:10px;font-size:12px;font-weight:700}.links a.pdf{background:#fff1f2;color:#be123c;border-color:#fecdd3}.empty{padding:70px 20px;text-align:center;color:#64748b}.loading{padding:90px 20px;text-align:center;color:#2563eb}
 .error-box{padding:30px;background:#fff1f2;color:#b91c1c;border:1px solid #fecaca;border-radius:14px}
 @media(max-width:600px){.page{padding:10px 8px 80px}.back-row{margin-bottom:10px}.article{border-radius:16px}.article-header{padding:19px 14px 14px}.article-body{padding:20px 14px 28px}.hero,.hero img{max-height:300px}.article-text{font-size:14px;line-height:1.8}.back-btn,.share-btn{padding:9px 11px;font-size:11px}}
+
+/* Shared Diploma Engineers header/footer integration */
+#header{width:100%;min-height:0;margin:0;padding:0;position:relative;z-index:10000;background:transparent}
+#header-spacer{width:100%;height:84px;margin:0;padding:0}
+.isolated-header-frame{display:block!important;width:100%!important;border:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}
+#footer{width:100%;margin:0;padding:0}
+body{margin:0!important;padding:0!important}
+@media(max-width:768px){#header-spacer{height:84px}}
 </style>
 </head>
 <body>
-<div id="header-placeholder"></div>
+<div id="header"></div>
+<div id="header-spacer"></div>
 <main class="page">
   <div class="container">
     <div class="back-row">
@@ -45,7 +54,7 @@ h1{font-size:clamp(25px,4vw,42px);line-height:1.2;color:#0f172a;margin-bottom:13
     </article>
   </div>
 </main>
-<div id="footer-placeholder"></div>
+<div id="footer"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -99,57 +108,133 @@ document.getElementById('shareBtn').addEventListener('click',async()=>{
   const url=location.href,title=currentItem?.title||'Diploma Engineers News';
   try{if(navigator.share)await navigator.share({title,text:title+' • Diploma Engineers',url});else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert('News link copied successfully.')}else prompt('Copy news link:',url)}catch(e){if(e.name!=='AbortError')console.warn(e)}
 });
-async function fetchPart(id,file){
-  const host=document.getElementById(id);
-  if(!host)return;
-  try{
-    const r=await fetch(file,{cache:'no-store'});
-    if(!r.ok) throw new Error(file+' returned '+r.status);
-    const html=await r.text();
-    const parser=new DOMParser();
-    const doc=parser.parseFromString(html,'text/html');
+async function fetchPart(elementId,filePath){
+  const container=document.getElementById(elementId);
+  if(!container)return;
 
-    // header.html / footer.html may be complete HTML documents. Do not put
-    // their <html>/<head> inside a <div>. Move their stylesheets/styles to
-    // this page and inject only the body content.
-    doc.querySelectorAll('link[rel="stylesheet"],style').forEach(node=>{
-      const copy=node.cloneNode(true);
-      if(node.tagName.toLowerCase()==='link'){
-        const href=node.getAttribute('href');
-        if(href){
-          try{copy.href=new URL(href,new URL(file,location.href)).href}catch(_){ }
+  try{
+    const response=await fetch(filePath+'?v='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw new Error('Could not fetch '+filePath);
+    const rawHtml=await response.text();
+
+    /*
+     * HEADER: load the REAL header.html in an iframe.
+     * This is intentional. header.html has its own CSS, fixed navbar,
+     * mobile menu and scripts. Putting it inside innerHTML breaks that
+     * layout. The iframe keeps header.html exactly as designed.
+     */
+    if(elementId==='header'){
+      container.innerHTML='';
+
+      const frame=document.createElement('iframe');
+      frame.className='isolated-header-frame';
+      frame.title='Diploma Engineers Header';
+      frame.setAttribute('scrolling','no');
+      frame.setAttribute('frameborder','0');
+      frame.style.cssText='display:block;width:100%;height:1px;border:0;margin:0;padding:0;overflow:hidden;background:transparent;';
+      frame.src=filePath+'?v='+Date.now();
+      container.appendChild(frame);
+
+      const resizeHeader=()=>{
+        try{
+          const doc=frame.contentDocument;
+          if(!doc)return;
+          const root=doc.documentElement;
+          const body=doc.body;
+          const height=Math.max(
+            root?.scrollHeight||0,
+            root?.offsetHeight||0,
+            body?.scrollHeight||0,
+            body?.offsetHeight||0
+          );
+          if(height>0){
+            frame.style.height=Math.min(Math.max(height,40),600)+'px';
+          }
+        }catch(e){
+          console.warn('Header resize error:',e);
         }
-      }
+      };
+
+      frame.addEventListener('load',()=>{
+        resizeHeader();
+        setTimeout(resizeHeader,100);
+        setTimeout(resizeHeader,500);
+        setTimeout(resizeHeader,1200);
+
+        try{
+          const doc=frame.contentDocument;
+          if(doc && window.ResizeObserver){
+            const observer=new ResizeObserver(resizeHeader);
+            observer.observe(doc.documentElement);
+            if(doc.body)observer.observe(doc.body);
+            frame._headerObserver=observer;
+          }
+          if(doc){
+            doc.addEventListener('click',()=>setTimeout(resizeHeader,50));
+          }
+        }catch(e){}
+      },{once:true});
+
+      window.addEventListener('resize',resizeHeader);
+
+      /* Keep the page content below the fetched fixed header. */
+      const spacer=document.getElementById('header-spacer');
+      if(spacer)spacer.style.height='84px';
+      return;
+    }
+
+    /*
+     * FOOTER: preserve footer.html styling and execute its scripts.
+     */
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(rawHtml,'text/html');
+
+    doc.querySelectorAll('style').forEach(style=>{
+      const copy=document.createElement('style');
+      copy.textContent=style.textContent;
+      copy.setAttribute('data-fetched-component',filePath);
       document.head.appendChild(copy);
     });
 
-    host.innerHTML=doc.body ? doc.body.innerHTML : html;
-
-    // Re-run scripts from the fetched fragment because innerHTML does not
-    // execute scripts. This keeps menu/dropdown/header behaviour working.
-    const scripts=doc.body ? [...doc.body.querySelectorAll('script')] : [];
-    for(const oldScript of scripts){
-      const script=document.createElement('script');
-      [...oldScript.attributes].forEach(a=>script.setAttribute(a.name,a.value));
-      if(oldScript.src){
-        script.src=new URL(oldScript.getAttribute('src'),new URL(file,location.href)).href;
-      }else{
-        script.textContent=oldScript.textContent;
+    doc.querySelectorAll('link[rel="stylesheet"]').forEach(link=>{
+      const href=link.getAttribute('href');
+      if(!href)return;
+      const absolute=new URL(href,window.location.href).href;
+      const exists=[...document.querySelectorAll('link[rel="stylesheet"]')]
+        .some(x=>x.href===absolute);
+      if(!exists){
+        const copy=document.createElement('link');
+        copy.rel='stylesheet';
+        copy.href=absolute;
+        document.head.appendChild(copy);
       }
-      host.appendChild(script);
+    });
+
+    container.innerHTML=doc.body?.innerHTML||rawHtml;
+
+    const scripts=[...container.querySelectorAll('script')];
+    for(const oldScript of scripts){
+      const newScript=document.createElement('script');
+      [...oldScript.attributes].forEach(a=>newScript.setAttribute(a.name,a.value));
+      if(oldScript.src){
+        newScript.src=new URL(oldScript.getAttribute('src'),window.location.href).href;
+        newScript.async=false;
+      }else{
+        newScript.textContent=oldScript.textContent;
+      }
+      oldScript.parentNode.replaceChild(newScript,oldScript);
     }
-  }catch(e){
-    console.warn('Could not fetch '+file,e);
-    // Keep the page usable even if a shared header/footer file is missing.
-    host.innerHTML='';
+  }catch(error){
+    console.error(filePath+' load error:',error);
+    container.innerHTML='';
   }
 }
 
 (async()=>{
   // Load shared site chrome first, then render the Firebase news.
   await Promise.all([
-    fetchPart('header-placeholder','header.html'),
-    fetchPart('footer-placeholder','footer.html')
+    fetchPart('header','header.html'),
+    fetchPart('footer','footer.html')
   ]);
   await load();
 })();

@@ -955,6 +955,15 @@ body:not(.admin-logged-in) #mobileBottomNav {
   .mobile-bottom-nav { bottom:8px !important; }
 }
 </style>
+
+<style id="remove-top-extra-space">
+html, body { margin: 0 !important; padding: 0 !important; }
+body { padding-top: 0 !important; }
+#adminPanel, #appShell, .admin-panel, .app-shell, .admin-mode-section { margin-top: 0 !important; padding-top: 0 !important; }
+#homeAdminSection, #newsSection, #blogSection, #booksSection, #courseSection, #profileSection { margin-top: 0 !important; }
+.app-shell-nav { margin-top: 0 !important; top: 0 !important; }
+.mobile-bottom-nav { margin-top: 0 !important; }
+</style>
 </head>
 
 <body>
@@ -1088,6 +1097,7 @@ body:not(.admin-logged-in) #mobileBottomNav {
       <div class="home-module reveal" data-home-nav="blog"><div class="module-icon"><i class="fa-solid fa-pen-nib"></i></div><h3>Blogs</h3><p>Write WordPress-style articles and publish them to blogs.html.</p></div>
       <div class="home-module reveal" data-home-nav="books"><div class="module-icon"><i class="fa-solid fa-book-open"></i></div><h3>Books</h3><p>Upload, view and manage the complete Books collection.</p></div>
       <div class="home-module reveal" data-home-nav="course"><div class="module-icon"><i class="fa-solid fa-graduation-cap"></i></div><h3>Course</h3><p>Open course management and purchase verification.</p></div>
+      <div class="home-module reveal" data-home-nav="ranking"><div class="module-icon"><i class="fa-solid fa-ranking-star"></i></div><h3>Ranking</h3><p>View admin team ranking, ratings and your current position.</p></div>
     </div>
   </div>
 </section>
@@ -2306,8 +2316,10 @@ function loadBlogs(){
             blogListEl.innerHTML='<div class="public-empty">No blogs published yet.</div>';
             return;
         }
-        const items=[];
-        snapshot.forEach(child=>items.push({id:child.key,...child.val()}));
+        const uid=auth.currentUser?.uid||"";
+        const allItems=[];
+        snapshot.forEach(child=>allItems.push({id:child.key,...child.val()}));
+        const items=allItems.filter(item=>(item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"")===uid);
         items.sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
         if(blogCountEl)blogCountEl.textContent=items.length;
         items.forEach(item=>{
@@ -2342,10 +2354,12 @@ function loadNews() {
             return;
         }
 
-        const items = [];
+        const uid = auth.currentUser?.uid || "";
+        const allItems = [];
         snapshot.forEach((child) => {
-            items.push({ id: child.key, ...child.val() });
+            allItems.push({ id: child.key, ...child.val() });
         });
+        const items = allItems.filter(item => (item.authorUid || item.ownerUid || item.uploaderUid || item.createdBy || "") === uid);
 
         items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         newsCount.innerText = items.length;
@@ -2353,6 +2367,7 @@ function loadNews() {
         items.forEach((item) => {
             const card = document.createElement("div");
             card.className = "news-card";
+            card.dataset.ownerUid = item.authorUid || item.ownerUid || item.uploaderUid || item.createdBy || "";
 
             const thumb = document.createElement("div");
             thumb.className = "news-thumb";
@@ -2533,12 +2548,14 @@ function renderBookRows(){
     const rowsEl = document.getElementById("bookRows");
     if (!rowsEl) return;
 
-    if (!bookItems.length) {
-        rowsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px">No books found in Firebase /books</td></tr>`;
+    const uid = auth.currentUser?.uid || "";
+    const visibleBooks = bookItems.filter(b => (b.ownerUid || b.authorUid || b.uploaderUid || b.createdBy || "") === uid);
+    if (!visibleBooks.length) {
+        rowsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px">No books uploaded by your account yet.</td></tr>`;
         return;
     }
 
-    rowsEl.innerHTML = bookItems.map((b, index) => {
+    rowsEl.innerHTML = visibleBooks.map((b, index) => {
         const title = b.title || b.name || `Book ${index + 1}`;
         const image = b.image || b.ownerPhoto || DEFAULT_PROFILE_IMAGE;
         const pdf = b.pdf || b.link || "#";
@@ -3287,11 +3304,13 @@ function appGo(mode){
     if(!isCourseAllowed()){showAdminMode("news");syncAppNav("news");window.scrollTo({top:0,behavior:"smooth"});return;}
     showAdminMode("course");
   }
+  else if(mode==="ranking"){showAdminMode("ranking");}
+  else {showAdminMode("news");mode="news";}
   syncAppNav(mode);window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll("[data-app-target]").forEach(btn=>btn.addEventListener("click",()=>appGo(btn.dataset.appTarget)));
 document.querySelectorAll("[data-home-nav]").forEach(btn=>btn.addEventListener("click",()=>appGo(btn.dataset.homeNav)));
-document.getElementById("homeRankCard")?.addEventListener("click",()=>{showAdminMode("ranking");syncAppNav("home");window.scrollTo({top:0,behavior:"smooth"});});
+document.getElementById("homeRankCard")?.addEventListener("click",()=>{showAdminMode("ranking");syncAppNav("ranking");window.scrollTo({top:0,behavior:"smooth"});});
 document.getElementById("appNavProfile")?.addEventListener("click",()=>appGo("profile"));
 
 /* =====================================================
@@ -3441,5 +3460,170 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 })();
 </script>
 
+<style id="admin-app-final-polish">
+/* FINAL ADMIN APP POLISH */
+.profile-page-section{
+  position:relative!important; inset:auto!important; width:100%!important; min-height:calc(100vh - 10px)!important;
+  background:#f8fafc!important; padding:20px 16px 110px!important; display:none!important; overflow:visible!important;
+}
+.profile-page-section.active{display:block!important}
+.profile-page-section .profile-card{
+  width:min(1180px,100%)!important; max-width:1180px!important; margin:0 auto!important;
+  border:1px solid #e5eaf1!important; border-radius:28px!important; background:#fff!important;
+  box-shadow:0 14px 45px rgba(15,23,42,.08)!important; overflow:hidden!important;
+}
+.profile-page-section .profile-head{
+  min-height:88px!important; padding:22px 26px!important; background:#fff!important;
+  border-bottom:1px solid #edf1f6!important; position:sticky; top:0; z-index:4;
+}
+.profile-page-section .profile-head h2{font-size:25px!important;color:#0f172a!important;margin:0!important;font-weight:800!important}
+.profile-page-section .profile-head h2 i{color:#2563eb!important;margin-right:8px}
+.profile-page-section .profile-close{display:none!important}
+.profile-page-section .profile-body{padding:26px!important}
+.profile-page-section .profile-preview{
+  display:flex!important; align-items:center!important; gap:22px!important; padding:22px!important;
+  border:1px solid #e7edf5!important; background:linear-gradient(135deg,#f8fbff,#fff)!important;
+  border-radius:22px!important; margin-bottom:24px!important;
+}
+.profile-page-section .profile-big-avatar{width:116px!important;height:116px!important;border-radius:26px!important;object-fit:cover!important;border:4px solid #fff!important;box-shadow:0 10px 28px rgba(37,99,235,.15)!important}
+.profile-page-section .profile-preview h3{font-size:24px!important;margin:0 0 5px!important;color:#0f172a!important}
+.profile-page-section .profile-preview p{font-size:12px!important;font-weight:800!important;color:#2563eb!important;letter-spacing:.5px!important}
+.profile-page-section .profile-photo-actions{margin-top:13px!important}
+.profile-page-section .profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:17px!important}
+.profile-page-section .profile-field.full{grid-column:1/-1!important}
+.profile-page-section .profile-field label{font-size:12px!important;font-weight:800!important;color:#334155!important;margin-bottom:7px!important}
+.profile-page-section .profile-field input,.profile-page-section .profile-field textarea{min-height:48px!important;border:1px solid #dbe3ed!important;border-radius:13px!important;background:#fff!important;font-size:13px!important;padding:12px 14px!important;box-shadow:none!important}
+.profile-page-section .profile-field textarea{min-height:105px!important;resize:vertical!important}
+.profile-page-section .profile-social-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:17px!important}
+.profile-page-section .saved-profile-box{margin-top:25px!important;border:1px solid #dbe7ff!important;background:#f8fbff!important;border-radius:20px!important;padding:20px!important}
+.profile-page-section .profile-actions{position:sticky!important;bottom:82px!important;background:#fff!important;padding:15px 0 2px!important;z-index:3!important;border-top:1px solid #edf1f6!important}
+.profile-page-section .profile-status{text-align:center!important;margin-top:10px!important}
+
+/* Create New workflow */
+.admin-create-btn{border:0!important;background:#2563eb!important;color:#fff!important;border-radius:12px!important;padding:10px 14px!important;font:800 12px Poppins,Arial,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important;box-shadow:0 7px 18px rgba(37,99,235,.18)!important}
+.admin-create-btn:hover{transform:translateY(-1px)}
+.admin-create-wrap{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.admin-upload-form.is-collapsed{display:none!important}
+.admin-list-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.admin-list-title h2{margin:0!important}
+.admin-user-only-note{font-size:11px;color:#64748b;margin-top:4px}
+#newsAdminSection .dashboard,#blogAdminSection .dashboard{max-width:1180px;margin:0 auto;padding:18px 16px 110px}
+#booksAdminSection .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 110px}
+#newsAdminSection .box,#blogAdminSection .blog-editor-card,#booksAdminSection .panel{border-radius:20px!important;border:1px solid #e5eaf1!important;box-shadow:0 8px 28px rgba(15,23,42,.05)!important;background:#fff!important}
+#blogAdminSection .blog-admin-grid{grid-template-columns:1fr!important}
+#blogAdminSection .blog-editor-card:first-child{display:none}
+#booksAdminSection .panel:first-of-type{display:none}
+#newsAdminSection .box:first-of-type{display:none}
+#newsAdminSection .news-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#blogAdminSection .blog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#booksAdminSection .table{overflow:auto}
+#booksAdminSection table{min-width:720px}
+#homeAdminSection .home-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+
+@media(max-width:900px){
+ #homeAdminSection .home-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #newsAdminSection .news-list,#blogAdminSection .blog-list{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+ .profile-page-section{padding:8px 8px 100px!important}
+ .profile-page-section .profile-card{border-radius:20px!important}
+ .profile-page-section .profile-head{padding:17px 16px!important;min-height:66px!important}
+ .profile-page-section .profile-head h2{font-size:20px!important}
+ .profile-page-section .profile-body{padding:15px!important}
+ .profile-page-section .profile-preview{padding:15px!important;gap:13px!important;border-radius:17px!important}
+ .profile-page-section .profile-big-avatar{width:82px!important;height:82px!important;border-radius:19px!important}
+ .profile-page-section .profile-preview h3{font-size:19px!important}
+ .profile-page-section .profile-grid,.profile-page-section .profile-social-grid{grid-template-columns:1fr!important;gap:12px!important}
+ .profile-page-section .profile-field.full{grid-column:auto!important}
+ .profile-page-section .profile-actions{bottom:74px!important}
+ #newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding:10px 10px 95px!important}
+ #homeAdminSection .home-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+<script>
+(function(){
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const currentUid=()=>window.auth?.currentUser?.uid || null;
+  function addCreateButton(container,label,onClick){
+    if(!container || container.querySelector('.admin-create-btn')) return;
+    const b=document.createElement('button'); b.type='button'; b.className='admin-create-btn';
+    b.innerHTML='<i class="fa-solid fa-plus"></i> '+label; b.addEventListener('click',onClick); container.appendChild(b);
+  }
+  function showForm(form){
+    if(!form)return; form.classList.remove('is-collapsed'); form.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function setupNews(){
+    const sec=$('#newsAdminSection'); if(!sec)return;
+    const formBox=$$('#newsAdminSection .box').find(x=>(x.innerText||'').includes('Publish News'));
+    const listBox=$$('#newsAdminSection .box').find(x=>(x.innerText||'').includes('Published News'));
+    if(formBox)formBox.classList.add('admin-upload-form','is-collapsed');
+    if(listBox){
+      const h=listBox.querySelector('h2'); if(h){h.innerHTML='<i class="fa-solid fa-newspaper"></i> Your Uploaded News'; const wrap=document.createElement('div');wrap.className='admin-create-wrap';
+        const title=document.createElement('div'); title.innerHTML='<div class="admin-user-only-note">Only news uploaded by your current admin account is shown here.</div>'; wrap.appendChild(title);
+        addCreateButton(wrap,'Create New',()=>showForm(formBox)); h.parentElement.replaceChild(wrap,h);
+      }
+    }
+  }
+  function setupBlog(){
+    const sec=$('#blogAdminSection'); if(!sec)return;
+    const editor=$('#blogAdminSection .blog-editor-card');
+    const list=$$('#blogAdminSection .blog-editor-card')[1];
+    if(editor)editor.classList.add('admin-upload-form','is-collapsed');
+    if(list){
+      const header=list.querySelector('div');
+      if(header){
+        const old=header.querySelector('h2');
+        if(old)old.innerHTML='<i class="fa-solid fa-pen-nib"></i> Your Uploaded Blogs';
+        const note=document.createElement('span');note.className='admin-user-only-note';note.textContent='Only blogs uploaded by your current admin account are shown.';header.appendChild(note);
+        addCreateButton(header,'Create New',()=>showForm(editor));
+      }
+    }
+  }
+  function setupBooks(){
+    const sec=$('#booksAdminSection'); if(!sec)return;
+    const form=$('#bookAdminForm')?.closest('.panel');
+    const list=$$('#booksAdminSection .panel')[1];
+    if(form)form.classList.add('admin-upload-form','is-collapsed');
+    if(list){
+      const head=list.querySelector('h2');
+      if(head){const wrap=document.createElement('div');wrap.className='admin-create-wrap';const left=document.createElement('div');left.innerHTML='<h2 style="margin:0;color:#2563eb;font-size:19px"><i class="fa-solid fa-book"></i> Your Uploaded Books</h2><div class="admin-user-only-note">Only books uploaded by your current admin account are shown here.</div>';wrap.appendChild(left);addCreateButton(wrap,'Create New',()=>showForm(form));head.replaceWith(wrap);}
+    }
+  }
+  function setupHome(){
+    $$('#homeAdminSection .home-module').forEach(card=>{
+      if(card.dataset.homeBound)return;card.dataset.homeBound='1';
+      card.addEventListener('click',()=>{const m=card.dataset.homeNav;if(window.appGo)window.appGo(m);});
+    });
+  }
+  function filterNews(){
+    const uid=currentUid(); if(!uid)return;
+    $$('#newsList .news-card').forEach(card=>{
+      // Cards rendered by the original listener are annotated below.
+      const owner=card.dataset.ownerUid||''; card.style.display=owner===uid?'':'none';
+    });
+  }
+  // Re-render the news list with only current-user records, without changing the existing uploader structure.
+  function installNewsFilter(){
+    const original=window.loadNews; if(typeof original!=='function' || original.__filtered)return;
+    // Function source is module-scoped and cannot be monkey patched reliably; use a DOM observer plus metadata extraction.
+    const list=$('#newsList'); if(!list)return;
+    const obs=new MutationObserver(()=>{
+      const uid=currentUid(); if(!uid)return;
+      $$('#newsList .news-card').forEach(card=>{
+        if(card.dataset.ownerChecked)return;
+        const title=(card.querySelector('h3')?.textContent||'').trim();
+        // owner metadata is injected by the patch below in loadNews.
+        if(card.dataset.ownerUid) card.style.display=card.dataset.ownerUid===uid?'':'none';
+      });
+    });
+    obs.observe(list,{childList:true,subtree:true});
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    setupNews();setupBlog();setupBooks();setupHome();installNewsFilter();
+    setTimeout(()=>{setupNews();setupBlog();setupBooks();setupHome();},1000);
+  });
+})();
+</script>
 </body>
 </html>

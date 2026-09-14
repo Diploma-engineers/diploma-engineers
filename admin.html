@@ -1911,26 +1911,34 @@ function loadBooksTab() {
         return;
     }
 
-    // MASTER ADMIN: load every book.
-    // OTHER ADMINS: Firebase query loads ALL books belonging to their UID.
-    // This avoids the old behaviour where only one/incorrect record appeared.
-    const booksQuery = isMasterBookAdmin()
-        ? booksRef
-        : query(booksRef, orderByChild("ownerUid"), equalTo(user.uid));
-
-    onValue(booksQuery, snap => {
+    // IMPORTANT: Show EVERY book stored under /books.
+    // Do NOT filter by ownerUid/authorUid here.
+    // This makes old + new + all-admin uploads visible in the Books List.
+    onValue(booksRef, snap => {
         bookItems = [];
+
         if(snap.exists()){
-            snap.forEach(x => bookItems.push({id: x.key, ...x.val()}));
+            snap.forEach(child => {
+                const value = child.val() || {};
+                bookItems.push({ id: child.key, ...value });
+            });
         }
 
-        bookItems.sort((a,b) => (Number(b.timestamp)||0) - (Number(a.timestamp)||0));
+        // Newest first, while still keeping legacy records without timestamp.
+        bookItems.sort((a, b) => {
+            const ta = Number(a.timestamp || 0);
+            const tb = Number(b.timestamp || 0);
+            return tb - ta;
+        });
+
         renderBookRows();
-        bookMsg(isMasterBookAdmin()
-            ? `Master Admin: ${bookItems.length} total book(s) loaded.`
-            : `Your uploaded books: ${bookItems.length} book(s) loaded.`
-        );
-    }, err => bookMsg("Firebase read failed: "+err.message, true));
+        bookMsg(`All Books: ${bookItems.length} book(s) loaded from /books.`);
+    }, err => {
+        console.error("Books read error:", err);
+        bookItems = [];
+        renderBookRows();
+        bookMsg("Firebase read failed: " + err.message, true);
+    });
 }
 function renderBookRows(){
     const rowsEl = document.getElementById("bookRows");
@@ -1962,7 +1970,7 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
     if(bookEditId){
         const existing = bookItems.find(x => x.id === bookEditId);
         if(!existing || !isBookOwner(existing)){
-            return bookMsg("You can update only your own uploaded books.", true);
+            return bookMsg("You can update only books you are allowed to manage.", true);
         }
     }
 

@@ -1888,9 +1888,15 @@ function getCurrentAdminUid(){
     return auth.currentUser?.uid || "";
 }
 
+function isMasterBookAdmin(){
+    return getCurrentAdminUid() === COURSE_ONLY_ADMIN_UID;
+}
+
 function isBookOwner(book){
     const uid = getCurrentAdminUid();
     if(!uid) return false;
+    // Master admin can manage ALL books. Other admins can manage only their own.
+    if(isMasterBookAdmin()) return true;
     // Support both current and older book records.
     return book.ownerUid === uid || book.authorUid === uid;
 }
@@ -1908,15 +1914,15 @@ function loadBooksTab() {
         if(snap.exists()){
             snap.forEach(x => {
                 const item = {id: x.key, ...x.val()};
-                if(isBookOwner(item)){
+                // KirLkZUGXoZf0cXHkuCZ4Mfnxam2 = master admin: show ALL books.
+                // Every other admin: show only books uploaded by that admin.
+                if(isMasterBookAdmin() || isBookOwner(item)){
                     bookItems.push(item);
                 }
             });
         }
 
-        // Show ALL books uploaded by the currently logged-in admin,
-        // just like the News list shows the admin's own records.
-        bookItems.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+        bookItems.sort((a,b) => (Number(b.timestamp)||0) - (Number(a.timestamp)||0));
         renderBookRows();
     }, err => bookMsg("Firebase read failed: "+err.message, true));
 }

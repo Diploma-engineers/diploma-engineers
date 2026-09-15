@@ -2016,6 +2016,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                     <div class="profile-display-actions">
                         <button type="button" class="profile-display-edit" id="profileDisplayEdit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
                         <button type="button" class="profile-display-share" id="profileDisplayShare"><i class="fa-solid fa-id-card"></i> Share Profile Card</button>
+                        <button type="button" class="profile-display-logout" id="profileDisplayLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                         <button type="button" class="profile-display-close" id="profileDisplayClose"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
                     </div>
                 </div>
@@ -2527,23 +2528,124 @@ document.getElementById("profileDisplayEdit")?.addEventListener("click",()=>{
   window.scrollTo({top:0,behavior:"auto"});
 });
 document.getElementById("profileDisplayClose")?.addEventListener("click",closeProfile);
-document.getElementById("profileDisplayShare")?.addEventListener("click",async()=>{
+/* ===== PROFILE CARD PNG + SHARE ===== */
+async function loadProfileCardImage(url){
+  return new Promise((resolve)=>{
+    const img=new Image();
+    img.crossOrigin="anonymous";
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=url || DEFAULT_PROFILE_IMAGE;
+  });
+}
+
+function wrapCanvasText(ctx,text,maxWidth){
+  const words=String(text||"").trim().split(/\s+/).filter(Boolean);
+  const lines=[]; let line="";
+  for(const word of words){
+    const test=line ? line+" "+word : word;
+    if(ctx.measureText(test).width<=maxWidth || !line){ line=test; }
+    else { lines.push(line); line=word; }
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+async function createProfileCardPNG(){
   const u=auth.currentUser,p=adminProfile||{};
-  const social=[p.facebook,p.youtube,p.telegram,p.emailLink,p.linkedin].filter(Boolean).join("\n");
-  const text=[
-    p.name||u?.displayName||"Admin",
-    p.designation||"ADMIN",
-    p.experience,
-    p.branch,
-    p.collegeName,
-    p.btechCollege,
-    p.mobile,
-    p.address,
-    p.about,
-    social
-  ].filter(Boolean).join("\n").trim();
-  try{await navigator.clipboard.writeText(text);setProfileStatus("Profile details copied. You can share them anywhere.",true);}
-  catch(e){setProfileStatus("Profile details are ready to share.",true);}
+  const name=(p.name||u?.displayName||"Admin").trim();
+  const role=(u?.uid===MASTER_ADMIN_UID)?"FOUNDER":"CONTENT ADMIN";
+  const canvas=document.createElement("canvas");
+  canvas.width=1080; canvas.height=1350;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Header
+  const grad=ctx.createLinearGradient(0,0,1080,0);
+  grad.addColorStop(0,"#1d4ed8"); grad.addColorStop(1,"#3b82f6");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,1080,270);
+  ctx.fillStyle="#ffffff"; ctx.font="900 42px Arial"; ctx.textAlign="left";
+  ctx.fillText("Diploma Engineers",70,72);
+  ctx.font="600 22px Arial"; ctx.globalAlpha=.92;
+  ctx.fillText("The Students' Trusted Learning Platform",70,110); ctx.globalAlpha=1;
+  ctx.font="800 26px Arial"; ctx.fillText("PROFILE CARD",70,220);
+
+  // Profile photo with white ring
+  const photo=await loadProfileCardImage(p.photo||DEFAULT_PROFILE_IMAGE);
+  const cx=540, cy=300, r=112;
+  ctx.beginPath(); ctx.arc(cx,cy,r+9,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip();
+  if(photo){
+    const scale=Math.max((r*2)/photo.width,(r*2)/photo.height);
+    const w=photo.width*scale,h=photo.height*scale;
+    ctx.drawImage(photo,cx-w/2,cy-h/2,w,h);
+  } else {
+    ctx.fillStyle="#e2e8f0"; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  }
+  ctx.restore();
+
+  ctx.textAlign="center"; ctx.fillStyle="#0f172a"; ctx.font="900 38px Arial"; ctx.fillText(name,540,475);
+  ctx.fillStyle="#2563eb"; ctx.font="800 20px Arial"; ctx.fillText(role,540,512);
+
+  const items=[
+    ["Engineering Branch",p.branch||"-"],
+    ["Experience",p.experience||"-"],
+    ["Diploma College",p.collegeName||p.college||"-"],
+    ["B.Tech College",p.btechCollege||p.education||"-"],
+    ["Mobile",p.mobile||"-"],
+    ["Address",p.address||"-"]
+  ];
+  let y=565; const x=70,w=940;
+  for(const [label,value] of items){
+    ctx.fillStyle="#f8fafc"; ctx.strokeStyle="#dbe5f0"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(x,y,w,82,16); ctx.fill(); ctx.stroke();
+    ctx.textAlign="left"; ctx.fillStyle="#64748b"; ctx.font="700 17px Arial"; ctx.fillText(label,x+25,y+29);
+    ctx.fillStyle="#0f172a"; ctx.font="800 21px Arial";
+    const lines=wrapCanvasText(ctx,value,850);
+    ctx.fillText(lines[0]||"-",x+25,y+60);
+    y+=96;
+  }
+
+  ctx.fillStyle="#eff6ff"; ctx.strokeStyle="#bfdbfe"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(70,y,940,135,18); ctx.fill(); ctx.stroke();
+  ctx.textAlign="left"; ctx.fillStyle="#2563eb"; ctx.font="800 17px Arial"; ctx.fillText("About",95,y+30);
+  ctx.fillStyle="#334155"; ctx.font="500 18px Arial";
+  const aboutLines=wrapCanvasText(ctx,p.about||"Diploma Engineers Team Member",885).slice(0,4);
+  aboutLines.forEach((line,i)=>ctx.fillText(line,95,y+61+i*24));
+  y+=160;
+
+  ctx.textAlign="center"; ctx.fillStyle="#94a3b8"; ctx.font="600 16px Arial";
+  ctx.fillText("Shared from Diploma Engineers",540,1320);
+  return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("PNG generation failed")),"image/png",1));
+}
+
+document.getElementById("profileDisplayShare")?.addEventListener("click",async()=>{
+  const btn=document.getElementById("profileDisplayShare");
+  if(!auth.currentUser){setProfileStatus("Please login first.",false);return;}
+  const original=btn?.innerHTML;
+  try{
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Creating PNG...';}
+    const blob=await createProfileCardPNG();
+    const safeName=((adminProfile?.name||auth.currentUser?.displayName||"profile").replace(/[^a-z0-9_-]+/gi,"-").replace(/^-+|-+$/g,"")||"profile");
+    const file=new File([blob],`${safeName}-profile-card.png`,{type:"image/png"});
+
+    // Download PNG first, then open native share when supported.
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share({title:`${adminProfile?.name||"Profile"} | Diploma Engineers`,text:"Diploma Engineers Profile Card",files:[file]});
+      setProfileStatus("Profile card PNG downloaded and shared successfully.",true);
+    }else{
+      setProfileStatus("Profile card PNG downloaded. You can share the PNG from your Downloads folder.",true);
+    }
+  }catch(e){
+    console.error("Profile card share error",e);
+    setProfileStatus("Profile card could not be shared. Please try again.",false);
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML=original||'<i class="fa-solid fa-id-card"></i> Share Profile Card';}
+  }
 });
 profileTrigger.addEventListener("click",openProfile);
 profileClose.addEventListener("click",()=>setProfileViewMode(true));
@@ -4667,6 +4769,9 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 .profile-display-actions button:hover{transform:translateY(-1px)}
 .profile-display-edit{background:#2563eb;color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.18)}
 .profile-display-share{background:#fff;color:#2563eb;border:1px solid #dbe5f3!important}
+.profile-display-share:disabled{opacity:.65;cursor:wait;transform:none!important}
+.profile-display-logout{background:#ef4444!important;color:#fff!important;border:1px solid #ef4444!important;box-shadow:0 5px 14px rgba(239,68,68,.18)}
+.profile-display-logout:hover{background:#dc2626!important;border-color:#dc2626!important;}
 .profile-display-close{background:#fef2f2;color:#dc2626}
 .profile-page-section.profile-view-mode .profile-head{display:none!important}
 .profile-page-section.profile-view-mode .profile-body{padding:12px 14px 28px!important}
@@ -5292,14 +5397,18 @@ i[class*="fa-"]{visibility:hidden!important;display:inline-flex!important;align-
 </style>
 <script>
 (function(){
-  const b=document.getElementById('profileLogoutBtn');
-  if(b && !b.dataset.bound){
-    b.dataset.bound='1';
-    b.addEventListener('click',function(){
-      const old=document.getElementById('logoutBtn');
-      if(old) old.click();
-    });
+  function bindProfileLogout(id){
+    const b=document.getElementById(id);
+    if(b && !b.dataset.bound){
+      b.dataset.bound='1';
+      b.addEventListener('click',function(){
+        const old=document.getElementById('logoutBtn');
+        if(old) old.click();
+      });
+    }
   }
+  bindProfileLogout('profileLogoutBtn');
+  bindProfileLogout('profileDisplayLogout');
 })();
 </script>
 

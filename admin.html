@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
 <title>Admin Panel | Diploma Engineers</title>
 
@@ -1480,7 +1480,7 @@ body{background:#f7f9fc!important;color:#172033!important;padding-top:0!importan
 
 <div id="adminPanel">
 <div class="admin-topbar" id="adminTopBar">
-  <div class="admin-brand-top"><strong>Diploma <span>Engineers</span></strong></div>
+  <div class="admin-brand-top"><strong>Admin Panel</strong></div>
   <div class="admin-top-right">
     <button type="button" class="top-streak" id="topRankBtn" data-app-target="ranking" title="Rank / Streak"><i class="fa-solid fa-fire"></i><b id="topRankValue">3</b></button>
     <button type="button" class="top-profile-icon" id="topProfileBtn" data-app-target="profile" title="Admin Profile" aria-label="Admin Profile">
@@ -4925,6 +4925,40 @@ body{padding-bottom:78px!important;}
 </style>
 
 
+<style id="FINAL_APP_BEHAVIOR">
+/* Native-app feel: no browser zoom, text selection, overscroll or accidental long-press selection. */
+html,body{
+  width:100%;
+  min-height:100%;
+  margin:0!important;
+  padding:0!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:none!important;
+  -webkit-overflow-scrolling:touch;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-touch-callout:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+  touch-action:manipulation;
+}
+body{min-height:100svh!important;}
+img,svg,button,a{
+  -webkit-user-drag:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+input,textarea,select,[contenteditable="true"]{
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  -webkit-touch-callout:default!important;
+  touch-action:auto;
+}
+@media (max-width:600px){
+  html{font-size:16px!important;}
+  body{min-height:100svh!important;}
+}
+</style>
+
 <style id="INLINE_ICON_SYSTEM">
 /* Offline-safe icon system: no icon-font/CDN dependency */
 i[class*="fa-"]{visibility:hidden!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;width:1.15em!important;height:1.15em!important;}
@@ -5000,6 +5034,34 @@ i[class*="fa-"]{visibility:hidden!important;display:inline-flex!important;align-
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>replace()); else replace();
   new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1) replace(n)}))).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="APP_BEHAVIOR_LOCK">
+(function(){
+  // Prevent browser zoom gestures/shortcuts while keeping form fields usable.
+  const block=(e)=>{
+    if(e.ctrlKey || e.metaKey){
+      const k=String(e.key||'').toLowerCase();
+      if(['+','-','=','0'].includes(k)){ e.preventDefault(); return false; }
+    }
+  };
+  document.addEventListener('keydown',block,{passive:false});
+  document.addEventListener('wheel',(e)=>{ if(e.ctrlKey || e.metaKey) e.preventDefault(); },{passive:false});
+  document.addEventListener('gesturestart',(e)=>e.preventDefault(),{passive:false});
+  document.addEventListener('gesturechange',(e)=>e.preventDefault(),{passive:false});
+  document.addEventListener('gestureend',(e)=>e.preventDefault(),{passive:false});
+  document.addEventListener('contextmenu',(e)=>{
+    const t=e.target;
+    if(t && (t.matches('input,textarea,select,[contenteditable="true"]') || t.closest('input,textarea,select,[contenteditable="true"]'))) return;
+    e.preventDefault();
+  });
+  document.addEventListener('dragstart',(e)=>e.preventDefault());
+
+  // App-like viewport height without forcing fullscreen permission.
+  const setVH=()=>document.documentElement.style.setProperty('--app-vh',window.innerHeight+'px');
+  setVH(); window.addEventListener('resize',setVH,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(setVH,120),{passive:true});
 })();
 </script>
 </body>

@@ -907,6 +907,14 @@ body { padding-top:0 !important; }
 .app-switch-bar strong{display:block;color:#0f172a;font-size:13px}.app-switch-bar strong i{color:#2563eb;margin-right:6px}.app-switch-bar span{display:block;color:#64748b;font-size:10px;margin-top:3px}
 .app-switch-main-btn{border:0;border-radius:11px;padding:10px 15px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;white-space:nowrap}
 @media(max-width:600px){.app-switch-bar{margin:10px 10px 0;align-items:stretch;flex-direction:column}.app-switch-main-btn{width:100%}}
+
+<style id="AADHAAR-BLUE-TICK">
+.aadhaar-verified-wrap{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;}
+.aadhaar-blue-tick{width:17px!important;height:17px!important;display:inline-block!important;object-fit:contain!important;vertical-align:middle!important;flex:0 0 17px;}
+.profile-display-top .aadhaar-blue-tick{width:18px!important;height:18px!important;flex-basis:18px;}
+.nav-profile-name-wrap{display:inline-flex;align-items:center;gap:4px;min-width:0;}
+.nav-profile-name-wrap .aadhaar-blue-tick{width:14px!important;height:14px!important;flex-basis:14px;}
+</style>
 </style>
 
 
@@ -1531,7 +1539,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
             <div class="profile-area">
                 <button class="profile-trigger" id="profileTrigger" type="button" title="Open Admin Profile">
                     <img class="profile-avatar" id="navProfileAvatar" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Admin Profile">
-                    <span class="profile-name" id="navProfileName">Admin</span>
+                    <span class="nav-profile-name-wrap"><span class="profile-name" id="navProfileName">Admin</span><img id="navProfileVerifiedTick" class="aadhaar-blue-tick" src="" alt="" aria-hidden="true" style="display:none"></span>
                     <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
                 </button>
             </div>
@@ -1966,7 +1974,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                 <div class="profile-display" id="profileDisplay">
                     <div class="profile-display-top">
                         <img class="profile-display-avatar" id="profileDisplayAvatar" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Profile">
-                        <h3 id="profileDisplayName">Admin</h3>
+                        <h3 id="profileDisplayName" class="aadhaar-name">Admin</h3>
                         <p id="profileDisplayRole">ADMIN</p>
                     </div>
                     <div class="profile-info-card">
@@ -2216,6 +2224,7 @@ function getProfileForm(){
   o.btechCollege = document.getElementById("profileBtechCollege")?.value.trim() || "";
   o.mobile = document.getElementById("profileMobile")?.value.trim() || "";
   o.aadhaarNo = document.getElementById("profileAadhaar")?.value.replace(/\D/g,"").slice(0,12) || "";
+  o.aadhaarVerified = /^\d{12}$/.test(o.aadhaarNo);
   o.address = document.getElementById("profileAddress")?.value.trim() || "";
   o.about = document.getElementById("profileAbout")?.value.trim() || "";
   o.facebook = document.getElementById("profileFacebook")?.value.trim() || "";
@@ -2258,6 +2267,21 @@ function setProfileStatus(text, ok=true){
   profileStatus.className = "profile-status " + (ok ? "ok" : "err");
 }
 
+function setAadhaarVerifiedUI(verified){
+  const src = "https://cdn-icons-png.flaticon.com/512/1271/1271380.png";
+  const names = [document.getElementById("profileDisplayName")];
+  names.forEach(el=>{
+    if(!el) return;
+    let tick=el.querySelector(".aadhaar-blue-tick");
+    if(verified){
+      if(!tick){ tick=document.createElement("img"); tick.className="aadhaar-blue-tick"; tick.alt="Verified"; tick.title="Aadhaar verified"; el.appendChild(tick); }
+      tick.src=src; tick.style.display="inline-block";
+    }else if(tick){ tick.remove(); }
+  });
+  const nav=document.getElementById("navProfileVerifiedTick");
+  if(nav){ nav.src=src; nav.style.display=verified?"inline-block":"none"; }
+}
+
 function updateProfilePreview(){
   const name = document.getElementById("profileName").value.trim() || "Admin";
   const designation = document.getElementById("profileDesignation").value.trim() || "ADMIN";
@@ -2267,6 +2291,8 @@ function updateProfilePreview(){
   const photo = adminProfile.photo || DEFAULT_PROFILE_IMAGE;
   profileAvatarPreview.src = photo;
   navProfileAvatar.src = photo;
+  const aadhaar = (document.getElementById("profileAadhaar")?.value || adminProfile.aadhaarNo || "").replace(/\D/g, "");
+  setAadhaarVerifiedUI(/^\d{12}$/.test(aadhaar));
 }
 
 function fillProfile(data){
@@ -2487,6 +2513,7 @@ function updateProfileDisplay(){
     profileDisplayAbout:p.about || "-"
   };
   Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
+  setAadhaarVerifiedUI(data.aadhaarVerified === true || /^\d{12}$/.test(String(data.aadhaarNo || "").replace(/\D/g,"")));
   const a=document.getElementById("profileDisplayAvatar");
   if(a){a.src=photo;a.onerror=()=>{a.src=DEFAULT_PROFILE_IMAGE;};}
   setProfileSocialLink("profileDisplayFacebook",p.facebook);
@@ -2631,6 +2658,7 @@ profileSave.addEventListener("click",async()=>{
       collegeName: data.collegeName || "",
       btechCollege: data.btechCollege || "",
       mobile: data.mobile || "",
+      aadhaarVerified: data.aadhaarVerified === true,
       address: data.address || "",
       about: data.about || "",
       photo: data.photo || DEFAULT_PROFILE_IMAGE,

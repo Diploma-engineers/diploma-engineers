@@ -2344,6 +2344,8 @@ async function loadAllAdminProfiles(){
     const data=snap.val()||{};
     const entries=Object.entries(data);
     if(!entries.length){ box.innerHTML='<div class="admin-profiles-empty">No admin profiles found yet.</div>'; return; }
+    // Keep email-only access registry updated for the App.
+    await syncAllAdminEmailAccess();
     entries.sort((a,b)=> (a[0]===MASTER_ADMIN_UID?-1:b[0]===MASTER_ADMIN_UID?1:(a[1]?.name||"").localeCompare(b[1]?.name||"")));
     box.innerHTML=entries.map(([uid,p])=>{
       const master=uid===MASTER_ADMIN_UID;
@@ -2371,8 +2373,13 @@ async function loadAllAdminProfiles(){
       if(!isMasterAdmin() || uid===MASTER_ADMIN_UID) return;
       if(!confirm('Delete this admin profile from Admin Profiles and Team Profile?')) return;
       try{
+        const deletedProfileSnap = await get(ref(db,"adminProfiles/"+uid));
+        const deletedProfile = deletedProfileSnap.exists() ? (deletedProfileSnap.val() || {}) : {};
         await remove(ref(db,"adminProfiles/"+uid));
         await remove(ref(db,"teamProfiles/"+uid));
+        if(deletedProfile.email){
+          try{ await remove(ref(db, `adminAccess/${adminEmailKey(deletedProfile.email)}`)); }catch(_){ }
+        }
         await loadAllAdminProfiles();
         setProfileStatus("Admin profile deleted successfully.",true);
       }catch(err){
@@ -2609,12 +2616,28 @@ profileSave.addEventListener("click",async()=>{
   try{
     const targetUid = (isMasterAdmin() && profileEditUid) ? profileEditUid : user.uid;
     const targetIsMaster = targetUid === MASTER_ADMIN_UID;
+    const existingTargetSnap = await get(ref(db,"adminProfiles/"+targetUid));
+    const existingTargetProfile = existingTargetSnap.exists() ? (existingTargetSnap.val() || {}) : {};
     const data=getProfileForm();
+    // When Founder edits another admin, do NOT overwrite that admin's login email
+    // with the Founder's email. The stored email is the App/Admin access identity.
+    if(targetUid !== user.uid && existingTargetProfile.email){
+      data.email = String(existingTargetProfile.email).trim().toLowerCase();
+    }
     data.uid=targetUid;
     if(targetUid===user.uid) data.profileUpdatedAt=Date.now();
     data.designation=targetIsMaster?"FOUNDER":"CONTENT ADMIN";
     if(targetIsMaster && !data.name) data.name="Anubhav Gangwar";
     await set(ref(db,"adminProfiles/"+targetUid),data);
+    // Publish the SAVED PROFILE EMAIL, not the editor's name/identity.
+    if(data.email){
+      try{
+        const accessEmail = String(data.email).trim().toLowerCase();
+        await set(ref(db, `adminAccess/${adminEmailKey(accessEmail)}`), {
+          email: accessEmail, uid: targetUid, enabled:true, updatedAt:Date.now()
+        });
+      }catch(accessErr){ console.warn("Admin email access publish skipped:", accessErr); }
+    }
     if(targetUid===user.uid) await publishAdminAccessRecord(user);
 
     // Publish only the fields intended for the public Team profile.
@@ -2713,6 +2736,30 @@ async function publishAdminAccessRecord(user){
         // Do not block the Admin panel if an older Firebase Ruleset has not
         // yet been updated for adminAccess. Profile saving still works.
         console.warn("adminAccess publish skipped:", err);
+    }
+}
+
+// Founder helper: keep the email-only public registry synchronized with all
+// existing Admin Profiles. This does NOT compare names; email is the only
+// identity field used by the App's Admin Panel switch.
+async function syncAllAdminEmailAccess(){
+    if(!isMasterAdmin()) return;
+    try{
+        const snap = await get(ref(db, "adminProfiles"));
+        if(!snap.exists()) return;
+        const profiles = snap.val() || {};
+        const jobs = [];
+        for(const [uid, profile] of Object.entries(profiles)){
+            const email = String(profile?.email || "").trim().toLowerCase();
+            if(!email) continue;
+            jobs.push(set(ref(db, `adminAccess/${adminEmailKey(email)}`), {
+                email, uid, enabled:true, updatedAt:Date.now()
+            }));
+        }
+        await Promise.all(jobs);
+        console.log("Admin email registry synchronized:", jobs.length);
+    }catch(err){
+        console.warn("Admin email registry sync skipped:", err?.message || err);
     }
 }
 

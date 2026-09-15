@@ -3675,7 +3675,7 @@ html,body{max-width:100%;overflow-x:hidden}
     </section>
 
     <!-- ADMIN ACCESS: shown only when the logged-in app email is registered as an admin -->
-    <section class="profile-admin-access" id="profileAdminAccess">
+    <section class="profile-admin-access" id="profileAdminAccess" hidden>
       <div class="profile-admin-title"><i class="fas fa-user-shield"></i> Admin Access</div>
       <div class="profile-admin-card">
         <div>
@@ -4396,7 +4396,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "block";
-        refreshAdminAccess(user);
+        await refreshAdminAccess(user);
 
         const targetPage = defaultPage;
         if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
@@ -4820,22 +4820,52 @@ window.addEventListener('DOMContentLoaded', () => {
   const adminAccessBtn = document.getElementById("openAdminPanelBtn");
   const adminAccessText = document.getElementById("profileAdminAccessText");
 
-  function refreshAdminAccess(user){
+  async function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
-    const loggedIn = !!user?.email;
-    adminAccessBox.hidden = false;
-    if(adminAccessText){
-      adminAccessText.textContent = loggedIn
-        ? `Logged in as ${user.email}`
-        : "Login required to open Admin Panel.";
+
+    // IMPORTANT: Keep Admin Access completely hidden for normal app users.
+    // It is shown only when the SAME email is registered in the Admin Firebase
+    // project (adminProfiles) and the user is currently logged into the App.
+    adminAccessBox.hidden = true;
+
+    if(!user?.email){
+      return false;
     }
-    if(adminAccessBtn){
-      adminAccessBtn.disabled = !loggedIn;
-      adminAccessBtn.innerHTML = loggedIn
-        ? '<i class="fas fa-user-shield"></i> Admin Panel'
-        : '<i class="fas fa-lock"></i> Login Required';
+
+    try{
+      const email = String(user.email).trim().toLowerCase();
+      const snap = await get(ref(newsDb, "adminProfiles"));
+      let matched = false;
+
+      if(snap.exists()){
+        const profiles = snap.val() || {};
+        for(const [adminUid, profile] of Object.entries(profiles)){
+          const profileEmail = String(profile?.email || "").trim().toLowerCase();
+          if(profileEmail && profileEmail === email){
+            matched = true;
+            break;
+          }
+        }
+      }
+
+      if(!matched){
+        return false;
+      }
+
+      adminAccessBox.hidden = false;
+      if(adminAccessText){
+        adminAccessText.textContent = `Admin account verified • ${user.email}`;
+      }
+      if(adminAccessBtn){
+        adminAccessBtn.disabled = false;
+        adminAccessBtn.innerHTML = '<i class="fas fa-user-shield"></i> Admin Panel';
+      }
+      return true;
+    }catch(err){
+      console.warn("Profile admin access verification failed:", err);
+      adminAccessBox.hidden = true;
+      return false;
     }
-    return loggedIn;
   }
 
   if(adminAccessBtn){

@@ -4274,6 +4274,27 @@ function syncAppNav(mode){
   document.querySelectorAll(".app-nav-link, #mobileBottomNav [data-app-target]").forEach(b=>b.classList.toggle("active",b.dataset.appTarget===mode));
 }
 function appGo(mode){
+  /* Warn before leaving an active Create/Edit form. If user confirms,
+     cancel/close the editor first, then continue navigation. */
+  const createModalOpen = !!document.getElementById('contentCreateModal')?.classList.contains('show');
+  const activeEditor = document.querySelector('.admin-upload-form:not(.is-collapsed)');
+  if((createModalOpen || activeEditor) && !window.__navWarningInProgress){
+    const ok = window.confirm('Create/Edit form is open. Do you want to cancel it and change section?');
+    if(!ok) return;
+    window.__navWarningInProgress = true;
+    try{
+      if(typeof window.__closeCreateEditor === 'function' && createModalOpen){
+        window.__closeCreateEditor();
+      }else if(activeEditor){
+        activeEditor.classList.add('is-collapsed');
+        if(window.bookEditId !== undefined && activeEditor.id === 'bookAdminForm'){
+          try{ resetBookForm(); }catch(_){ }
+        }
+      }
+    }finally{
+      window.__navWarningInProgress = false;
+    }
+  }
   if(mode==="home"){showAdminMode("home");syncAppNav("home");window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="profile"){showAdminMode("profile");syncAppNav("profile");window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="news"){showAdminMode("news");}
@@ -4559,7 +4580,7 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 /* ===== CONTENT CREATE PAGE + ZERO TOP GAP ===== */
 #newsAdminSection .dashboard,#blogAdminSection .dashboard,#booksAdminSection .wrap{padding-top:0!important;margin-top:0!important}
 #newsAdminSection,#blogAdminSection,#booksAdminSection{padding-top:0!important;margin-top:0!important}
-.content-create-modal{position:fixed;inset:0;z-index:50000;background:rgba(248,250,252,.94);backdrop-filter:blur(14px);display:none;overflow:auto;padding:20px}
+.content-create-modal{position:fixed;left:0;right:0;top:64px;bottom:0;z-index:50000;background:rgba(248,250,252,.96);backdrop-filter:blur(14px);display:none;overflow:auto;padding:20px;box-sizing:border-box}
 .content-create-modal.show{display:block}
 .content-create-page{width:min(920px,100%);margin:0 auto;background:#fff;border:1px solid #e5eaf1;border-radius:24px;box-shadow:0 20px 70px rgba(15,23,42,.12);overflow:hidden}
 .content-create-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:rgba(255,255,255,.96);border-bottom:1px solid #e8edf5}
@@ -4574,7 +4595,7 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
 #blogHtmlCode{font-family:Consolas,Monaco,monospace;min-height:150px;line-height:1.55}
 #bookAdminPdfFile,#bookAdminImageUrl{margin-bottom:8px}
 .app-folder-pill{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:7px 10px;border-radius:10px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:800}
-@media(max-width:600px){.content-create-modal{padding:8px}.content-create-page{border-radius:18px}.content-create-head{padding:13px 14px}.content-create-head h2{font-size:16px}.content-create-body{padding:14px}.content-create-footer{padding:10px 14px}.content-create-footer button{flex:1}}
+@media(max-width:600px){.content-create-modal{top:54px;padding:8px}.content-create-page{border-radius:18px}.content-create-head{padding:13px 14px}.content-create-head h2{font-size:16px}.content-create-body{padding:14px}.content-create-footer{padding:10px 14px}.content-create-footer button{flex:1}}
 </style>
 <script>
 (function(){
@@ -4704,9 +4725,20 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
     window.scrollTo(0,0);
   }
   function closeCreate(){
-    if(moved && placeholder && placeholder.parentNode){placeholder.parentNode.insertBefore(moved,placeholder);moved.classList.add('is-collapsed');placeholder.remove();}
+    if(moved && placeholder && placeholder.parentNode){
+      placeholder.parentNode.insertBefore(moved,placeholder);
+      moved.classList.add('is-collapsed');
+      placeholder.remove();
+    }
+    /* Closing Create/Edit is treated as Cancel so stale form data is not kept. */
+    try{
+      if(moved && moved.id === 'bookAdminForm'){
+        if(typeof resetBookForm === 'function') resetBookForm();
+      }
+    }catch(_){ }
     moved=null;placeholder=null;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';
   }
+  window.__closeCreateEditor = closeCreate;
   document.addEventListener('click',e=>{
     const btn=e.target.closest('.admin-create-btn');
     if(!btn)return;
@@ -5308,6 +5340,18 @@ html,body{margin:0!important;padding:0!important;}
   #profileModal.profile-edit-mode .profile-actions > button { width:100% !important; min-width:0 !important; }
   #profileModal.profile-edit-mode .profile-actions > div { grid-column:1/-1 !important; }
 }
+</style>
+<style id="CREATE-NAV-FINAL-FIX">
+/* Create/Edit page must begin below the sticky Admin header. */
+.content-create-modal{top:64px!important;bottom:0!important;inset-inline:0!important;box-sizing:border-box!important;}
+.content-create-page{position:relative!important;margin:0 auto!important;}
+@media(max-width:600px){.content-create-modal{top:54px!important;padding:8px!important;}}
+/* No browser tap flash while using the bottom navigation. */
+#mobileBottomNav,#mobileBottomNav button,#mobileBottomNav button:focus,#mobileBottomNav button:focus-visible,#mobileBottomNav button:active{
+  -webkit-tap-highlight-color:transparent!important;
+  outline:none!important;
+}
+#mobileBottomNav button:active{background:transparent!important;box-shadow:none!important;filter:none!important;}
 </style>
 <script>
 /* Remove duplicate Books Create buttons left by older initialization code. */

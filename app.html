@@ -2576,8 +2576,24 @@ html,body{max-width:100%;overflow-x:hidden}
 <div id="app">
 
   <!-- NAVBAR -->
+  <div class="app-drawer-backdrop" id="appDrawerBackdrop" onclick="closeAppDrawer()"></div>
+  <aside class="app-side-drawer" id="appSideDrawer" aria-hidden="true">
+    <div class="drawer-head"><div class="drawer-brand"><div class="drawer-logo"><i class="fas fa-graduation-cap"></i></div><div><strong>Diploma Engineers</strong><span>Student Learning Platform</span></div></div><button class="drawer-close" type="button" onclick="closeAppDrawer()"><i class="fas fa-xmark"></i></button></div>
+    <div class="drawer-body">
+      <div class="drawer-section-title">Quick Access</div>
+      <button class="drawer-item" onclick="drawerNavigate('homePage')"><i class="fas fa-house"></i><span>Home</span></button>
+      <button class="drawer-item" onclick="drawerNavigate('profilePage')"><i class="fas fa-user"></i><span>My Profile</span></button>
+      <button class="drawer-item" onclick="drawerNavigate('leaderboardPage')"><i class="fas fa-trophy"></i><span>Leaderboard</span></button>
+      <button class="drawer-item" onclick="drawerNavigate('communityPage')"><i class="fas fa-users"></i><span>Community</span></button>
+      <div class="drawer-section-title">Settings</div>
+      <div class="drawer-theme-row"><div class="drawer-theme-info"><i class="fas fa-circle-half-stroke"></i><span>Light / Dark Mode</span></div><button class="theme-switch" id="drawerThemeSwitch" type="button" onclick="toggleAppTheme()" aria-label="Toggle theme"></button></div>
+      <div class="drawer-section-title">Admin</div>
+      <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
+    </div>
+  </aside>
   <div class="navbar">
     <div class="nav-left">
+      <button class="menu-toggle-btn" id="menuToggleBtn" type="button" onclick="openAppDrawer()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
       <div class="nav-logo">Diploma <span>Engineers</span></div>
     </div>
@@ -7823,6 +7839,18 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 @media(max-width:560px){.navbar{height:54px!important;padding:8px 10px!important;}#app{padding-top:54px!important;}}
 .profile-admin-direct-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:13px 16px;border:0;border-radius:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff!important;font:700 14px 'Plus Jakarta Sans',sans-serif;text-decoration:none!important;box-shadow:0 8px 20px rgba(37,99,235,.18);cursor:pointer;}
 .profile-admin-direct-btn:active{transform:scale(.98);}
+
+/* ===== APP SLIDING NAV / DRAWER ===== */
+.menu-toggle-btn{width:38px;height:38px;border:0;background:transparent;color:var(--dark-text);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;flex:0 0 38px}.menu-toggle-btn:active{transform:scale(.92);background:var(--surface-gray)}
+.app-drawer-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.38);z-index:100000;opacity:0;visibility:hidden;transition:.25s ease}.app-drawer-backdrop.open{opacity:1;visibility:visible}
+.app-side-drawer{position:fixed;top:0;left:0;width:min(330px,88vw);height:100dvh;background:var(--bg-white);z-index:100001;transform:translateX(-105%);transition:transform .28s cubic-bezier(.22,.61,.36,1);box-shadow:18px 0 45px rgba(15,23,42,.18);display:flex;flex-direction:column;overflow:hidden}
+.app-side-drawer.open{transform:translateX(0)}
+.drawer-head{padding:18px 16px 15px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}.drawer-brand{display:flex;align-items:center;gap:10px}.drawer-logo{width:42px;height:42px;border-radius:13px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:18px}.drawer-brand strong{display:block;font-size:15px}.drawer-brand span{display:block;font-size:11px;color:var(--muted-text);margin-top:2px}.drawer-close{width:36px;height:36px;border:0;border-radius:11px;background:var(--surface-gray);color:var(--muted-text);font-size:16px}
+.drawer-body{padding:12px;overflow-y:auto;flex:1}.drawer-section-title{font-size:10px;font-weight:800;color:var(--muted-text);letter-spacing:.8px;text-transform:uppercase;padding:9px 10px 6px}.drawer-item{width:100%;border:0;background:transparent;color:var(--dark-text);display:flex;align-items:center;gap:12px;padding:12px 11px;border-radius:13px;text-align:left;font:600 13px inherit;cursor:pointer;margin-bottom:3px}.drawer-item i{width:21px;text-align:center;color:var(--primary);font-size:16px}.drawer-item:active{transform:scale(.985);background:var(--surface-gray)}.drawer-item.admin-item{background:var(--blue-bg);color:var(--blue-text);margin-top:5px}.drawer-item.admin-item i{color:var(--primary)}
+.drawer-theme-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px;border:1px solid var(--border-light);border-radius:14px;margin:5px 0 8px}.drawer-theme-info{display:flex;align-items:center;gap:11px;font-size:13px;font-weight:700}.drawer-theme-info i{color:var(--primary);font-size:16px}.theme-switch{width:48px;height:27px;border-radius:30px;border:0;background:#cbd5e1;position:relative;cursor:pointer;padding:0}.theme-switch:before{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;background:#fff;border-radius:50%;transition:.22s;box-shadow:0 1px 4px rgba(0,0,0,.18)}body.dark-mode .theme-switch{background:var(--primary)}body.dark-mode .theme-switch:before{transform:translateX(21px)}
+body.dark-mode{--bg-white:#0f172a;--surface-gray:#111c2f;--dark-text:#f8fafc;--muted-text:#94a3b8;--border-light:#243247;--blue-bg:#172554;--blue-border:#1e40af;--blue-text:#bfdbfe;background:#0b1220!important;color:#f8fafc!important}body.dark-mode .navbar{background:rgba(15,23,42,.97)!important}body.dark-mode .app-side-drawer{background:#0f172a}body.dark-mode .profile-box,body.dark-mode .card-box,body.dark-mode .notice,body.dark-mode .blue-theme-card-1{background:var(--surface-gray)}
+@media(max-width:560px){.menu-toggle-btn{width:34px;height:34px;flex-basis:34px;font-size:18px}.app-side-drawer{width:min(315px,88vw)}}
+
 </style>
 
 
@@ -8231,6 +8259,16 @@ function render(profiles){teamProfiles=profiles;const slider=document.getElement
 
 document.addEventListener("DOMContentLoaded",()=>{const slider=document.getElementById("appTeamSlider");if(!slider)return;onValue(ref(appTeamDb,"teamProfiles"),snap=>{const obj=snap.val()||{};const entries=Object.entries(obj).filter(([uid,d])=>d&&typeof d==="object").sort((a,b)=>(Number(b[1].updatedAt)||0)-(Number(a[1].updatedAt)||0)).map(([uid,d])=>({...d,uid}));render(entries)},err=>{console.error("App Team Profiles error",err);const loading=document.getElementById("appTeamLoading");if(loading)loading.innerHTML='<i class="fas fa-triangle-exclamation"></i> Unable to load team members.'});slider.addEventListener("mouseenter",()=>teamPaused=true);slider.addEventListener("mouseleave",()=>teamPaused=false);slider.addEventListener("touchstart",()=>teamPaused=true,{passive:true});slider.addEventListener("touchend",()=>setTimeout(()=>teamPaused=false,600),{passive:true});slider.addEventListener("pointerdown",e=>{teamDragging=false;teamStartX=e.clientX;teamStartScroll=slider.scrollLeft;slider.setPointerCapture?.(e.pointerId)});slider.addEventListener("pointermove",e=>{if(Math.abs(e.clientX-teamStartX)>6)teamDragging=true;if(teamDragging)slider.scrollLeft=teamStartScroll-(e.clientX-teamStartX)});slider.addEventListener("pointerup",()=>setTimeout(()=>teamDragging=false,80));
  document.getElementById("appTeamModalClose")?.addEventListener("click",closeAppTeamProfile);document.getElementById("appTeamShareBtn")?.addEventListener("click",shareTeamPNG);document.getElementById("appTeamViewFile")?.addEventListener("click",()=>openAppTeamDetail(window.appTeamActiveIndex));document.getElementById("appTeamDetailBack")?.addEventListener("click",()=>{document.getElementById("appTeamDetail")?.classList.remove("show");document.getElementById("appTeamDetail")?.setAttribute("aria-hidden","true");document.body.style.overflow=""});document.getElementById("appTeamDetailRating")?.addEventListener("click",openRating);document.getElementById("appTeamDetailShare")?.addEventListener("click",shareTeamPNG);document.getElementById("appRatingCancel")?.addEventListener("click",()=>{document.getElementById("appTeamRatingSheet")?.classList.remove("show")});document.getElementById("appRatingSubmit")?.addEventListener("click",submitRating);document.querySelectorAll(".app-rating-star").forEach(btn=>btn.addEventListener("click",()=>{activeRating=Number(btn.dataset.rating);document.querySelectorAll(".app-rating-star").forEach(x=>x.classList.toggle("active",Number(x.dataset.rating)<=activeRating));document.getElementById("appRatingSubmit").disabled=false}));document.getElementById("appTeamRatingSheet")?.addEventListener("click",e=>{if(e.target.id==="appTeamRatingSheet")e.currentTarget.classList.remove("show")});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeAppTeamProfile();document.getElementById("appTeamDetail")?.classList.remove("show");document.getElementById("appTeamRatingSheet")?.classList.remove("show");document.body.style.overflow=""}})});
+
+/* ===== APP DRAWER + THEME ===== */
+window.openAppDrawer=function(){document.getElementById('appSideDrawer')?.classList.add('open');document.getElementById('appDrawerBackdrop')?.classList.add('open');document.getElementById('appSideDrawer')?.setAttribute('aria-hidden','false');document.body.classList.add('drawer-open')};
+window.closeAppDrawer=function(){document.getElementById('appSideDrawer')?.classList.remove('open');document.getElementById('appDrawerBackdrop')?.classList.remove('open');document.getElementById('appSideDrawer')?.setAttribute('aria-hidden','true');document.body.classList.remove('drawer-open')};
+window.drawerNavigate=function(page){closeAppDrawer();if(typeof navigateTo==='function')navigateTo(page)};
+window.openAdminFromDrawer=function(){closeAppDrawer();window.location.href='admin.html'};
+window.toggleAppTheme=function(){document.body.classList.toggle('dark-mode');localStorage.setItem('de_theme',document.body.classList.contains('dark-mode')?'dark':'light')};
+(function(){if(localStorage.getItem('de_theme')==='dark')document.body.classList.add('dark-mode');})();
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDrawer()});
+
 </script>
 
 </body>

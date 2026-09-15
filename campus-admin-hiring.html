@@ -823,6 +823,7 @@ textarea{
   }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
@@ -1479,6 +1480,55 @@ document.getElementById("thankYouCard");
 
 let currentUser = null;
 
+/* =========================================================
+   ONE-FILE EMAIL CONFIG
+   Create an EmailJS service + template, then put your 3 values here.
+   Recipient is fixed to your Diploma Engineers email.
+========================================================= */
+const EMAIL_RECIPIENT = "astar22006@gmail.com";
+const EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
+
+if(window.emailjs){
+  try{ emailjs.init({publicKey: EMAILJS_PUBLIC_KEY}); }catch(e){ console.warn("EmailJS init:",e); }
+}
+
+async function sendApplicationEmail(data){
+  if(EMAILJS_PUBLIC_KEY.startsWith("YOUR_") || EMAILJS_SERVICE_ID.startsWith("YOUR_") || EMAILJS_TEMPLATE_ID.startsWith("YOUR_")){
+    throw new Error("Email service is not configured. Add EmailJS Public Key, Service ID and Template ID in this file.");
+  }
+
+  const skillsText = Array.isArray(data.skills) ? data.skills.join(", ") : (data.skills || "");
+  const submitted = new Date(data.createdAt || Date.now()).toLocaleString("en-IN", {dateStyle:"medium", timeStyle:"short"});
+
+  const templateParams = {
+    to_email: EMAIL_RECIPIENT,
+    recipient_email: EMAIL_RECIPIENT,
+    name: data.name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+    college: data.college || "",
+    city: data.city || "",
+    branch: data.branch || "",
+    year: data.year || "",
+    semester: data.semester || "",
+    reach: data.reach || "",
+    role: data.role || "",
+    skills: skillsText,
+    whyJoin: data.whyJoin || "",
+    contribution: data.contribution || "",
+    time: data.time || "",
+    community: data.community || "",
+    status: data.status || "pending",
+    uid: data.uid || "",
+    createdAt: submitted
+  };
+
+  return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+}
+
+
 
 /* =========================================================
    AUTH CHECK
@@ -1955,24 +2005,54 @@ async function(event){
     );
 
 
+    /* Save first. This creates exactly ONE email attempt for this application. */
+    data.emailNotification = {
+      status: "sending",
+      createdAt: Date.now()
+    };
+
     await set(
       applicationRef,
       data
     );
-
 
     console.log(
       "Application saved:",
       data
     );
 
+    /* ONE-TIME EMAIL: never retry automatically. */
+    try{
+      await sendApplicationEmail(data);
+      data.emailNotification = {
+        status: "sent",
+        sentAt: Date.now()
+      };
+      await set(applicationRef, data);
+    }catch(emailError){
+      console.error("Email notification failed:", emailError);
+      data.emailNotification = {
+        status: "failed",
+        failedAt: Date.now(),
+        error: String(emailError?.message || emailError)
+      };
+      try{ await set(applicationRef, data); }catch(_e){}
+      /* Application itself remains successfully saved. */
+    }
+
+
+    /* =====================================================
+       EMAIL NOTIFICATION
+       Email is sent securely by Firebase Cloud Function after
+       the application is created. Do not send email from browser.
+    ===================================================== */
 
     /* =====================================================
        SUCCESS
     ===================================================== */
 
     formStatus.textContent =
-    "Application submitted successfully.";
+    "Application submitted successfully. Email notification is being processed.";
 
     formStatus.className =
     "status-box success";
@@ -2150,4 +2230,3 @@ document
 
 </body>
 </html>
-

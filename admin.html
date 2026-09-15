@@ -241,6 +241,10 @@ button:disabled{
     cursor:pointer;
 }
 
+.app-return-btn{border:0;background:#fff;color:#2563eb;padding:9px 14px;border-radius:9px;font:700 13px Poppins,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+.app-return-btn:hover{background:#eff6ff;transform:translateY(-1px)}
+@media(max-width:600px){.app-return-btn{padding:9px 11px}.app-return-btn i{margin-right:2px}}
+
 /* =========================
    DASHBOARD
 ========================= */
@@ -1091,10 +1095,15 @@ body{overflow-x:hidden!important;}
                 </button>
             </div>
         </div>
-        <button class="logout" id="logoutBtn">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            Logout
-        </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="app-return-btn" id="returnToAppBtn" type="button" title="Return to Diploma Engineers App">
+                <i class="fa-solid fa-house"></i> App
+            </button>
+            <button class="logout" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </button>
+        </div>
     </nav>
 
 
@@ -1726,6 +1735,7 @@ const profileFields = [
 function getProfileForm(){
   const user = auth.currentUser;
   const o = {};
+  o.email = user?.email || "";
   o.name = document.getElementById("profileName")?.value.trim() || "";
   o.designation = user?.uid === MASTER_ADMIN_UID ? "FOUNDER" : "CONTENT ADMIN";
   o.experience = document.getElementById("profileExperience")?.value.trim() || "";
@@ -2092,6 +2102,7 @@ profileSave.addEventListener("click",async()=>{
     data.designation=targetIsMaster?"FOUNDER":"CONTENT ADMIN";
     if(targetIsMaster && !data.name) data.name="Anubhav Gangwar";
     await set(ref(db,"adminProfiles/"+targetUid),data);
+    if(targetUid===user.uid) await publishAdminAccessRecord(user);
 
     // Publish only the fields intended for the public Team profile.
     const teamProfile = {
@@ -2149,6 +2160,48 @@ function withTimeout(promise, ms, message){
     ]);
 }
 
+function adminEmailKey(email){
+    return encodeURIComponent(String(email || "").trim().toLowerCase());
+}
+
+async function isRegisteredAdmin(user){
+    if(!user?.email) return false;
+    // Founder is always an admin. Other admins must have an Admin Profile
+    // record under their authenticated UID in this Firebase project.
+    if(user.uid === MASTER_ADMIN_UID) return true;
+    try{
+        const snap = await get(ref(db, `adminProfiles/${user.uid}`));
+        if(!snap.exists()) return false;
+        const profile = snap.val() || {};
+        // Prefer the stored email when present; legacy profiles are accepted
+        // by UID so existing admins are not locked out.
+        if(profile.email){
+            return String(profile.email).trim().toLowerCase() === user.email.trim().toLowerCase();
+        }
+        return true;
+    }catch(err){
+        console.error("Admin verification failed:", err);
+        return false;
+    }
+}
+
+async function publishAdminAccessRecord(user){
+    if(!user?.email) return;
+    const key = adminEmailKey(user.email);
+    try{
+        await set(ref(db, `adminAccess/${key}`), {
+            email: user.email.trim().toLowerCase(),
+            uid: user.uid,
+            enabled: true,
+            updatedAt: Date.now()
+        });
+    }catch(err){
+        // Do not block the Admin panel if an older Firebase Ruleset has not
+        // yet been updated for adminAccess. Profile saving still works.
+        console.warn("adminAccess publish skipped:", err);
+    }
+}
+
 loginBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -2193,6 +2246,15 @@ loginBtn.addEventListener("click", async () => {
         if (!auth.currentUser) {
             throw new Error("Main Firebase login did not create an authenticated session.");
         }
+
+        // Only accounts already registered in Admin Profiles may enter the
+        // Admin Panel. The same email is then exposed to the main app as a
+        // tiny access record so no second login is needed there.
+        const registered = await isRegisteredAdmin(auth.currentUser);
+        if(!registered){
+            throw new Error("This email is not registered as an Admin.");
+        }
+        await publishAdminAccessRecord(auth.currentUser);
 
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
@@ -2255,6 +2317,14 @@ onAuthStateChanged(auth, (user) => {
 /* =====================================================
    LOGOUT LOGIC
 ===================================================== */
+document.getElementById("returnToAppBtn")?.addEventListener("click", () => {
+    if(document.referrer && document.referrer.startsWith(window.location.origin)){
+        window.history.back();
+    }else{
+        window.location.href = "index.html";
+    }
+});
+
 logoutBtn.addEventListener("click", async () => {
     try {
         await signOut(courseAuth);

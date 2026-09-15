@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <style>
 *{
@@ -497,6 +498,24 @@ input[type="file"]{
     }
 }
 </style>
+
+/* ============================================================
+   MOBILE MENU SAFETY
+   Does not change the existing header theme.
+   ============================================================ */
+
+@media (max-width: 991.98px){
+
+    #header-container .navbar-collapse.show{
+        display:block !important;
+    }
+
+    #header-container .navbar-toggler{
+        cursor:pointer;
+    }
+
+}
+
 </head>
 
 <body>
@@ -972,6 +991,14 @@ async function loadSharedComponent(containerId, fileName){
         });
 
         /*
+         * Initialize Bootstrap mobile navbar + login dropdown
+         * after header.html has actually been inserted.
+         */
+        if(containerId === "header-container"){
+            initSharedHeaderBootstrap();
+        }
+
+        /*
          * Let shared header know which page is active.
          */
         if(containerId === "header-container"){
@@ -1021,6 +1048,154 @@ async function loadSharedComponent(containerId, fileName){
         container.innerHTML = "";
     }
 }
+
+
+
+/* ============================================================
+   SHARED HEADER BOOTSTRAP INITIALIZER
+   ============================================================ */
+
+function initSharedHeaderBootstrap(){
+
+    const navbar =
+        document.querySelector("#header-container .navbar-collapse");
+
+    const toggler =
+        document.querySelector("#header-container .navbar-toggler");
+
+    /*
+     * Normal Bootstrap 5 operation.
+     */
+    if(
+        window.bootstrap &&
+        navbar &&
+        toggler
+    ){
+
+        try{
+
+            bootstrap.Collapse.getOrCreateInstance(
+                navbar,
+                {
+                    toggle:false
+                }
+            );
+
+        }catch(error){
+
+            console.warn(
+                "Bootstrap navbar initialization:",
+                error
+            );
+        }
+
+    }
+
+    /*
+     * Guaranteed fallback for the mobile menu.
+     * If Bootstrap is delayed/blocked, the hamburger still works.
+     */
+    if(
+        toggler &&
+        !toggler.dataset.mobileMenuBound
+    ){
+
+        toggler.dataset.mobileMenuBound = "true";
+
+        toggler.addEventListener(
+            "click",
+            function(event){
+
+                /*
+                 * If Bootstrap is handling it, let Bootstrap do the job.
+                 */
+                if(window.bootstrap){
+                    return;
+                }
+
+                event.preventDefault();
+
+                const isOpen =
+                    navbar.classList.contains("show");
+
+                if(isOpen){
+
+                    navbar.classList.remove("show");
+                    toggler.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                }else{
+
+                    navbar.classList.add("show");
+                    toggler.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
+        );
+    }
+
+    /*
+     * Login dropdown fallback if Bootstrap is unavailable.
+     */
+    const loginButton =
+        document.querySelector(
+            "#header-container .login-btn-btn"
+        );
+
+    const loginMenu =
+        document.querySelector(
+            "#header-container .dropdown-menu"
+        );
+
+    if(
+        loginButton &&
+        loginMenu &&
+        !loginButton.dataset.dropdownBound
+    ){
+
+        loginButton.dataset.dropdownBound = "true";
+
+        loginButton.addEventListener(
+            "click",
+            function(event){
+
+                if(window.bootstrap){
+                    return;
+                }
+
+                event.preventDefault();
+
+                loginMenu.classList.toggle("show");
+
+                loginButton.setAttribute(
+                    "aria-expanded",
+                    loginMenu.classList.contains("show")
+                        ? "true"
+                        : "false"
+                );
+            }
+        );
+    }
+}
+
+/*
+ * Also run once after all page components are loaded.
+ */
+window.addEventListener(
+    "load",
+    function(){
+
+        setTimeout(
+            initSharedHeaderBootstrap,
+            100
+        );
+
+    }
+);
 
 
 /* ============================================================

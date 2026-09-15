@@ -3549,9 +3549,11 @@ function renderBookRows(){
             <td>${escapeHTML(category)}</td>
             <td>${escapeHTML(owner)}</td>
             <td>${pdf && pdf !== "#" ? `<a href="${escapeHTML(pdf)}" target="_blank" rel="noopener">Open</a>` : `<span style="color:#94a3b8">No link</span>`}</td>
-            <td>
+            <td class="book-actions-cell">
+                <div class="book-actions-wrap">
                 <button class="secondary" data-book-edit="${escapeHTML(b.id)}" ${canManage ? "" : "disabled title=\"No permission\""} style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:${canManage ? "pointer" : "not-allowed"};opacity:${canManage ? "1" : ".55"};">Edit</button>
                 <button class="danger" data-book-del="${escapeHTML(b.id)}" ${canManage ? "" : "disabled title=\"No permission\""} style="padding:5px 10px;border-radius:6px;border:0;background:#fee2e2;color:#b91c1c;cursor:${canManage ? "pointer" : "not-allowed"};opacity:${canManage ? "1" : ".55"};">Delete</button>
+                </div>
             </td>
         </tr>`;
     }).join("");
@@ -5096,6 +5098,17 @@ i[class*="fa-"]{visibility:hidden!important;display:inline-flex!important;align-
     'chevron-down':'<path d="m6 9 6 6 6-6"/>',
     'chevron-right':'<path d="m9 6 6 6-6 6"/>',
     'right-left':'<path d="M3 8h14M13 4l4 4-4 4M21 16H7M11 12l-4 4 4 4"/>',
+    'bold':'<path d="M7 4h5a4 4 0 0 1 0 8H7z"/><path d="M7 12h6a4 4 0 0 1 0 8H7z"/>',
+    'italic':'<path d="M10 4h8M6 20h8M13 4 9 20"/>',
+    'underline':'<path d="M7 4v6a5 5 0 0 0 10 0V4"/><path d="M5 20h14"/>',
+    'list-ul':'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+    'list-ol':'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5v2M3 7h2M3 12h2M3 11a1 1 0 0 1 2 0c0 1-2 1-2 2h2M3 17c0-1 2-1 2 0s-2 1-2 2h2"/>',
+    'eraser':'<path d="m7 17 9-9 4 4-9 9H7z"/><path d="M4 20h11"/>',
+    'pen-nib':'<path d="m7 17 10-10 3 3-10 10-5 1z"/><path d="m14 7 3 3"/>',
+    'pen':'<path d="m4 20 1-5L16 4a2 2 0 0 1 3 3L8 19z"/><path d="m14 6 4 4"/>',
+    'magnifying-glass':'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+    'filter':'<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+    'plus':'<path d="M12 5v14M5 12h14"/>',
     'spinner':'<path d="M12 3a9 9 0 1 0 9 9"/>'
   };
   function iconName(el){
@@ -5643,3 +5656,61 @@ html,body{margin:0!important;padding:0!important;}
   observer.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="NAV-COVER-HEIGHT-FIX">
+/* Slightly shorter white floating navigation cover */
+@media(max-width:720px){
+  #mobileBottomNav{padding:4px 6px 3px!important; min-height:0!important; height:58px!important;}
+  #mobileBottomNav button{padding:5px 3px 4px!important;gap:3px!important;}
+  #mobileBottomNav button i{font-size:15px!important;margin-bottom:0!important;}
+}
+</style>
+
+<style id="NAV-COVER-HEIGHT-FIX">
+/* Only reduce the white cover behind the top-right nav icon; icon itself unchanged. */
+#profileTrigger, #profileTrigger .profile-trigger-inner, .top-profile, .admin-top-profile {
+  min-height: 0 !important;
+  height: 42px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+</style>
+
+<style id="FINAL_BOOK_AND_BLOG_EDITOR_FIX">
+/* BOOKS: keep Edit/Delete controls visible on small screens. */
+#booksAdminSection .book-actions-cell{
+  position:sticky!important;right:0!important;z-index:4!important;
+  min-width:150px!important;width:150px!important;
+  background:#fff!important;box-shadow:-8px 0 16px rgba(15,23,42,.06)!important;
+}
+#booksAdminSection .book-actions-wrap{display:flex!important;align-items:center!important;gap:7px!important;white-space:nowrap!important;}
+#booksAdminSection .book-actions-wrap button{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;}
+#booksAdminSection [data-book-edit],#booksAdminSection [data-book-del]{
+  min-width:62px!important;height:34px!important;font-weight:800!important;
+}
+@media(max-width:600px){
+  #booksAdminSection .table{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
+  #booksAdminSection .book-actions-cell{position:sticky!important;right:0!important;}
+  #booksAdminSection [data-book-edit],#booksAdminSection [data-book-del]{font-size:11px!important;padding:7px 9px!important;}
+}
+
+/* BLOG WRITER: never replace toolbar icons with the fallback plus icon. */
+#blogWriterToolbar button,#blogWriterToolbar button .de-inline-icon{
+  visibility:visible!important;opacity:1!important;
+}
+#blogWriterToolbar button .de-inline-icon{width:18px!important;height:18px!important;}
+#blogWriterToolbar button{
+  min-width:36px!important;width:36px!important;height:34px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 36px!important;
+}
+#blogWriterToolbar button[data-blog-block]{font-size:11px!important;font-weight:900!important;}
+#blogWriterToolbar button[data-blog-block]{color:#334155!important;}
+@media(max-width:600px){
+  #blogWriterToolbar{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;scrollbar-width:none!important;position:relative!important;}
+  #blogWriterToolbar::-webkit-scrollbar{display:none!important;}
+  #blogWriterToolbar button{min-width:38px!important;width:38px!important;height:36px!important;flex:0 0 38px!important;}
+  #blogWriterToolbar button .de-inline-icon{width:19px!important;height:19px!important;}
+  #blogWriterToolbar button[data-blog-block]{font-size:11px!important;}
+}
+</style>

@@ -978,6 +978,12 @@ textarea{
 
 
 <div class="field">
+<label>Email Address *</label>
+<input id="applicantEmail" type="email" required autocomplete="email" placeholder="your@email.com">
+</div>
+
+
+<div class="field">
 <label>WhatsApp / Contact Number *</label>
 <input
 id="phone"
@@ -1411,7 +1417,8 @@ from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInAnonymously
 }
 from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -1531,7 +1538,9 @@ async function sendApplicationEmail(data){
 
 
 /* =========================================================
-   AUTH CHECK
+   NO-LOGIN MODE
+   Firebase Anonymous Authentication is used invisibly.
+   Students do NOT need to create/login to an account.
 ========================================================= */
 
 onAuthStateChanged(auth, async user => {
@@ -1539,83 +1548,54 @@ onAuthStateChanged(auth, async user => {
   currentUser = user;
 
   if(!user){
-
     formStatus.textContent =
-    "Please login to Diploma Engineers before applying.";
-
-    formStatus.className =
-    "status-box error";
-
+      "Preparing secure application...";
+    formStatus.className = "status-box";
     submitBtn.disabled = true;
 
+    try{
+      await signInAnonymously(auth);
+    }catch(error){
+      console.error("Anonymous authentication failed:", error);
+      formStatus.textContent =
+        "Unable to start secure application. Please enable Anonymous Authentication in Firebase.";
+      formStatus.className = "status-box error";
+      submitBtn.disabled = true;
+    }
     return;
   }
 
-
   submitBtn.disabled = false;
-
-
   formStatus.textContent =
-  "Signed in as " +
-  (user.email || "Diploma Engineers student");
+    "Ready to apply — no login required.";
+  formStatus.className = "status-box success";
 
-  formStatus.className =
-  "status-box";
-
-
-  /* Auto name */
-
-  if(
-    user.displayName &&
-    !document.getElementById("fullName").value
-  ){
-
-    document.getElementById("fullName").value =
-    user.displayName;
-
+  /* Keep the applicant's email in the form; anonymous Firebase users have no email. */
+  const emailInput = document.getElementById("applicantEmail");
+  if(emailInput && user.email && !emailInput.value){
+    emailInput.value = user.email;
   }
 
+  /* Auto name only when Firebase happens to provide one. */
+  if(user.displayName && !document.getElementById("fullName").value){
+    document.getElementById("fullName").value = user.displayName;
+  }
 
-  /* Check duplicate application */
-
+  /* Check duplicate application for this browser's anonymous UID. */
   try{
-
-    const existing =
-    await get(
-      ref(
-        db,
-        "campusAdminApplications/" + user.uid
-      )
+    const existing = await get(
+      ref(db, "campusAdminApplications/" + user.uid)
     );
-
 
     if(existing.exists()){
-
       formStatus.textContent =
-      "You have already submitted a Campus Admin application.";
-
-      formStatus.className =
-      "status-box success";
-
+        "You have already submitted a Campus Admin application from this device.";
+      formStatus.className = "status-box success";
       submitBtn.disabled = true;
-
     }
-
   }catch(error){
-
-    console.error(
-      "Duplicate check error:",
-      error
-    );
-
-    /*
-      Don't block the form here.
-      Actual Firebase permission error
-      will be shown during submit.
-    */
-
+    console.error("Duplicate check error:", error);
   }
-
 });
 
 
@@ -1829,11 +1809,7 @@ async function(event){
 
 
   if(!currentUser){
-
-    showToast(
-      "Please login first."
-    );
-
+    showToast("Please wait while the secure application is preparing.");
     return;
   }
 
@@ -1856,6 +1832,16 @@ async function(event){
       "Please select at least one skill."
     );
 
+    return;
+  }
+
+
+  /* Applicant email check */
+  const applicantEmail = document.getElementById("applicantEmail").value.trim().toLowerCase();
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)){
+    showToast("Please enter a valid email address.");
+    document.getElementById("applicantEmail").focus();
     return;
   }
 
@@ -1914,7 +1900,7 @@ async function(event){
       uid: currentUser.uid,
 
       email:
-      currentUser.email || "",
+      applicantEmail,
 
       name:
       document
@@ -2052,7 +2038,7 @@ async function(event){
     ===================================================== */
 
     formStatus.textContent =
-    "Application submitted successfully. Email notification is being processed.";
+    "Application submitted successfully. Your details have been saved.";
 
     formStatus.className =
     "status-box success";

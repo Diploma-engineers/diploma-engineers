@@ -2264,6 +2264,17 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 
 
+/* PROFILE: Admin access */
+.profile-admin-access{margin:18px 0 32px}
+.profile-admin-title{font-size:18px;font-weight:800;color:#1e3a5f;margin:0 0 10px;padding:0 4px;display:flex;align-items:center;gap:9px}
+.profile-admin-title i{color:#2563eb}
+.profile-admin-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px;border:1px solid #dbe5f3;background:#f8fbff;border-radius:16px;box-shadow:0 6px 18px rgba(37,99,235,.07)}
+.profile-admin-card strong{display:block;color:#0f172a;font-size:14px}
+.profile-admin-card span{display:block;color:#64748b;font-size:11px;margin-top:4px}
+.profile-admin-btn{min-width:145px;border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 6px 16px rgba(37,99,235,.2)}
+.profile-admin-btn:hover{transform:translateY(-1px)}
+@media(max-width:600px){.profile-admin-card{align-items:stretch;flex-direction:column}.profile-admin-btn{width:100%}}
+
 /* PROFILE: separate Refer & Earn section */
 .profile-referral-section{margin:20px 0 32px}
 .profile-referral-title{font-size:18px;font-weight:800;color:#1e3a5f;margin:0 0 10px;padding:0 4px;display:flex;align-items:center;gap:9px}
@@ -2273,6 +2284,18 @@ html,body{max-width:100%;overflow-x:hidden}
 
 /* HOME FACULTY MODAL — rating removed */
 #appTeamModal .app-team-modal-rating{display:none!important;}
+
+
+/* ===== TOP APP ↔ ADMIN SWITCH ===== */
+.app-admin-switch{
+  width:36px;height:36px;border:1px solid #dbe5f3;border-radius:50%;
+  background:#f8fbff;color:#2563eb;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:.2s ease;box-shadow:0 4px 12px rgba(37,99,235,.10);
+  flex:0 0 auto;
+}
+.app-admin-switch:hover{transform:translateY(-1px);background:#2563eb;color:#fff;box-shadow:0 7px 16px rgba(37,99,235,.20)}
+.app-admin-switch i{font-size:15px;line-height:1}
+@media(max-width:600px){.app-admin-switch{width:34px;height:34px}.app-admin-switch i{font-size:14px}}
 </style>
 
 <style id="app-team-slider-fix">
@@ -2563,6 +2586,11 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="coin-btn" onclick="navigateTo('leaderboardPage')">
         <i class="fas fa-coins"></i>
         <span id="navCoinCount">0 Coins</span>
+      </button>
+
+      <!-- APP ↔ ADMIN SWITCH: shown only after the same email is found in both Firebase projects -->
+      <button class="app-admin-switch" id="topAdminSwitch" type="button" aria-label="Open Admin Panel" title="Open Admin Panel" style="display:none">
+        <i class="fas fa-right-left"></i>
       </button>
 
       <button class="streak-btn" type="button" onclick="openStreakModal()" aria-label="Open daily streak">
@@ -3645,6 +3673,20 @@ html,body{max-width:100%;overflow-x:hidden}
         <button type="button" class="referral-btn" onclick="shareReferralLink()"><i class="fas fa-share-nodes"></i> Refer to Earn</button>
       </div>
     </section>
+
+    <!-- ADMIN ACCESS: shown only when the logged-in app email is registered as an admin -->
+    <section class="profile-admin-access" id="profileAdminAccess">
+      <div class="profile-admin-title"><i class="fas fa-user-shield"></i> Admin Access</div>
+      <div class="profile-admin-card">
+        <div>
+          <strong>Admin Panel</strong>
+          <span id="profileAdminAccessText">Your account has admin access.</span>
+        </div>
+        <button type="button" class="profile-admin-btn" id="openAdminPanelBtn">
+          <i class="fas fa-gauge-high"></i> Admin
+        </button>
+      </div>
+    </section>
   </div>
 
   <!-- COMMUNITY PAGE -->
@@ -4297,6 +4339,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.logoutFirebase = function() {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
+    const switchBtn = document.getElementById("topAdminSwitch");
+    if(switchBtn) switchBtn.style.display = "none";
+    const box = document.getElementById("profileAdminAccess");
+    if(box) box.hidden = true;
     signOut(auth);
   };
 
@@ -4322,6 +4368,7 @@ window.addEventListener('DOMContentLoaded', () => {
           streak: { currentDays: 0, bestDays: 0, lastCoinDate: "", updatedAt: 0 }
         };
         updateProfileUI(currentUserData);
+        checkDualProjectRegistration(user);
 
         if (userProfileListener) {
           try { userProfileListener(); } catch (_) {}
@@ -4349,6 +4396,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "block";
+        refreshAdminAccess(user);
 
         const targetPage = defaultPage;
         if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
@@ -4708,6 +4756,99 @@ window.addEventListener('DOMContentLoaded', () => {
       if (e?.name !== "AbortError") console.warn("Referral share failed:", e);
     }
   };
+
+  /* =========================================================
+     TOP APP -> ADMIN SWITCH
+     The switch is hidden by default and is enabled only when the
+     currently logged-in App email also has an Admin Firebase profile.
+     App Firebase: diploma-app-9a378
+     Admin Firebase: diplomaengineers-869df
+  ========================================================= */
+  const topAdminSwitch = document.getElementById("topAdminSwitch");
+
+  async function checkDualProjectRegistration(user){
+    if(!topAdminSwitch){ return false; }
+    topAdminSwitch.style.display = "none";
+    if(!user?.email){ return false; }
+
+    try{
+      const email = String(user.email).trim().toLowerCase();
+      // adminProfiles is keyed by the Admin Firebase UID. Read the profiles
+      // and require an exact email match before showing the switch.
+      const snap = await get(ref(newsDb, "adminProfiles"));
+      let matched = false;
+      if(snap.exists()){
+        const profiles = snap.val() || {};
+        for(const [uid, profile] of Object.entries(profiles)){
+          const profileEmail = String(profile?.email || "").trim().toLowerCase();
+          if(profileEmail === email){
+            matched = true;
+            break;
+          }
+        }
+      }
+      if(matched){
+        topAdminSwitch.style.display = "inline-flex";
+        return true;
+      }
+    }catch(err){
+      console.warn("Dual-project admin check failed:", err);
+    }
+    return false;
+  }
+
+  if(topAdminSwitch){
+    topAdminSwitch.addEventListener("click", ()=>{
+      const user = auth.currentUser;
+      if(!user?.email){ return; }
+      const url = new URL("admin.html", document.baseURI);
+      url.searchParams.set("fromApp", "1");
+      url.searchParams.set("adminEmail", user.email);
+      url.searchParams.set("returnTo", window.location.href);
+      window.location.assign(url.href);
+    });
+  }
+
+  /* =========================================================
+     APP -> ADMIN SWITCH
+     The app keeps the existing Firebase login. Because Admin uses
+     a separate Firebase project, the Admin page performs the final
+     same-email/admin-account verification.
+  ========================================================= */
+  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
+  const adminAccessBox = document.getElementById("profileAdminAccess");
+  const adminAccessBtn = document.getElementById("openAdminPanelBtn");
+  const adminAccessText = document.getElementById("profileAdminAccessText");
+
+  function refreshAdminAccess(user){
+    if(!adminAccessBox) return false;
+    const loggedIn = !!user?.email;
+    adminAccessBox.hidden = false;
+    if(adminAccessText){
+      adminAccessText.textContent = loggedIn
+        ? `Logged in as ${user.email}`
+        : "Login required to open Admin Panel.";
+    }
+    if(adminAccessBtn){
+      adminAccessBtn.disabled = !loggedIn;
+      adminAccessBtn.innerHTML = loggedIn
+        ? '<i class="fas fa-user-shield"></i> Admin Panel'
+        : '<i class="fas fa-lock"></i> Login Required';
+    }
+    return loggedIn;
+  }
+
+  if(adminAccessBtn){
+    adminAccessBtn.addEventListener("click", ()=>{
+      const user = auth.currentUser;
+      if(!user?.email){ alert("Please login first."); return; }
+      const url = new URL(ADMIN_PANEL_URL);
+      url.searchParams.set("fromApp", "1");
+      url.searchParams.set("adminEmail", user.email);
+      url.searchParams.set("returnTo", window.location.href);
+      window.location.assign(url.href);
+    });
+  }
 
   function updateProfileUI(data) {
     data = data || {};

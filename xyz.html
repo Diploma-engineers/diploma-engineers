@@ -4322,6 +4322,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.logoutFirebase = function() {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
+    const box = document.getElementById("profileAdminAccess");
+    if(box) box.hidden = true;
     signOut(auth);
   };
 
@@ -4736,46 +4738,37 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   /* =========================================================
-     APP -> ADMIN ACCESS (EMAIL MATCH)
-     The app stays on its existing Firebase login. We only check
-     a small adminAccess record in the Admin Firebase project.
+     APP -> ADMIN SWITCH
+     The app keeps the existing Firebase login. Because Admin uses
+     a separate Firebase project, the Admin page performs the final
+     same-email/admin-account verification.
   ========================================================= */
-  const ADMIN_PANEL_URL = "admin.html";
+  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
   const adminAccessBox = document.getElementById("profileAdminAccess");
   const adminAccessBtn = document.getElementById("openAdminPanelBtn");
   const adminAccessText = document.getElementById("profileAdminAccessText");
 
-  function adminEmailKey(email){
-    return encodeURIComponent(String(email || "").trim().toLowerCase());
-  }
-
-  async function refreshAdminAccess(user){
+  function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
-    adminAccessBox.hidden = true;
-    if(!user?.email || !newsDb) return false;
-    try{
-      const key = adminEmailKey(user.email);
-      const snap = await get(ref(newsDb, `adminAccess/${key}`));
-      const record = snap.exists() ? (snap.val() || {}) : null;
-      const allowed = !!record && record.enabled !== false && String(record.email || "").trim().toLowerCase() === user.email.trim().toLowerCase();
-      if(allowed){
-        adminAccessBox.hidden = false;
-        if(adminAccessText) adminAccessText.textContent = `Admin access verified for ${user.email}`;
-        return true;
-      }
-    }catch(err){
-      console.warn("Admin access check failed:", err);
+    const loggedIn = !!user?.email;
+    adminAccessBox.hidden = !loggedIn;
+    if(adminAccessText){
+      adminAccessText.textContent = loggedIn
+        ? `Admin Panel · ${user.email}`
+        : "Login with your account to open Admin.";
     }
-    return false;
+    return loggedIn;
   }
 
   if(adminAccessBtn){
-    adminAccessBtn.addEventListener("click", async ()=>{
+    adminAccessBtn.addEventListener("click", ()=>{
       const user = auth.currentUser;
       if(!user?.email){ alert("Please login first."); return; }
-      const ok = await refreshAdminAccess(user);
-      if(!ok){ alert("This account is not registered as an Admin."); return; }
-      window.location.href = ADMIN_PANEL_URL;
+      const url = new URL(ADMIN_PANEL_URL);
+      url.searchParams.set("fromApp", "1");
+      url.searchParams.set("adminEmail", user.email);
+      url.searchParams.set("returnTo", window.location.href);
+      window.location.assign(url.href);
     });
   }
 

@@ -4771,29 +4771,43 @@ window.addEventListener('DOMContentLoaded', () => {
     topAdminSwitch.style.display = "none";
     if(!user?.email){ return false; }
 
+    const email = String(user.email).trim().toLowerCase();
+    const emailKey = encodeURIComponent(email);
+
     try{
-      const email = String(user.email).trim().toLowerCase();
-      // adminProfiles is keyed by the Admin Firebase UID. Read the profiles
-      // and require an exact email match before showing the switch.
+      // PRIMARY CHECK: Admin Firebase publishes a tiny adminAccess record
+      // specifically so the main App can verify an admin without reading the
+      // protected adminProfiles collection.
+      const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
+      if(accessSnap.exists()){
+        const access = accessSnap.val() || {};
+        const accessEmail = String(access.email || "").trim().toLowerCase();
+        if(accessEmail === email && access.enabled !== false){
+          topAdminSwitch.style.display = "inline-flex";
+          return true;
+        }
+      }
+    }catch(err){
+      console.warn("Admin access-record check failed; trying adminProfiles:", err);
+    }
+
+    try{
+      // FALLBACK: exact email match in Admin Firebase adminProfiles.
       const snap = await get(ref(newsDb, "adminProfiles"));
-      let matched = false;
       if(snap.exists()){
         const profiles = snap.val() || {};
-        for(const [uid, profile] of Object.entries(profiles)){
+        for(const profile of Object.values(profiles)){
           const profileEmail = String(profile?.email || "").trim().toLowerCase();
           if(profileEmail === email){
-            matched = true;
-            break;
+            topAdminSwitch.style.display = "inline-flex";
+            return true;
           }
         }
       }
-      if(matched){
-        topAdminSwitch.style.display = "inline-flex";
-        return true;
-      }
     }catch(err){
-      console.warn("Dual-project admin check failed:", err);
+      console.warn("Admin profile check failed:", err);
     }
+
     return false;
   }
 
@@ -4823,49 +4837,62 @@ window.addEventListener('DOMContentLoaded', () => {
   async function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
 
-    // IMPORTANT: Keep Admin Access completely hidden for normal app users.
-    // It is shown only when the SAME email is registered in the Admin Firebase
-    // project (adminProfiles) and the user is currently logged into the App.
+    // Hidden by default. It becomes visible only after an exact same-email
+    // verification against the Admin Firebase project.
     adminAccessBox.hidden = true;
+    if(adminAccessBtn) adminAccessBtn.disabled = true;
 
     if(!user?.email){
       return false;
     }
 
+    const email = String(user.email).trim().toLowerCase();
+    const emailKey = encodeURIComponent(email);
+    let matched = false;
+
     try{
-      const email = String(user.email).trim().toLowerCase();
-      const snap = await get(ref(newsDb, "adminProfiles"));
-      let matched = false;
-
-      if(snap.exists()){
-        const profiles = snap.val() || {};
-        for(const [adminUid, profile] of Object.entries(profiles)){
-          const profileEmail = String(profile?.email || "").trim().toLowerCase();
-          if(profileEmail && profileEmail === email){
-            matched = true;
-            break;
-          }
-        }
+      // PRIMARY CHECK: adminAccess is intentionally the small public-safe
+      // bridge written by Admin Firebase for accounts that are registered as
+      // admins. This avoids relying on a read of protected adminProfiles.
+      const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
+      if(accessSnap.exists()){
+        const access = accessSnap.val() || {};
+        const accessEmail = String(access.email || "").trim().toLowerCase();
+        matched = accessEmail === email && access.enabled !== false;
       }
-
-      if(!matched){
-        return false;
-      }
-
-      adminAccessBox.hidden = false;
-      if(adminAccessText){
-        adminAccessText.textContent = `Admin account verified • ${user.email}`;
-      }
-      if(adminAccessBtn){
-        adminAccessBtn.disabled = false;
-        adminAccessBtn.innerHTML = '<i class="fas fa-user-shield"></i> Admin Panel';
-      }
-      return true;
     }catch(err){
-      console.warn("Profile admin access verification failed:", err);
+      console.warn("Profile admin access-record check failed; trying adminProfiles:", err);
+    }
+
+    if(!matched){
+      try{
+        // FALLBACK: exact email match in Admin Firebase adminProfiles.
+        const snap = await get(ref(newsDb, "adminProfiles"));
+        if(snap.exists()){
+          const profiles = snap.val() || {};
+          matched = Object.values(profiles).some(profile =>
+            String(profile?.email || "").trim().toLowerCase() === email
+          );
+        }
+      }catch(err){
+        console.warn("Profile adminProfiles check failed:", err);
+      }
+    }
+
+    if(!matched){
       adminAccessBox.hidden = true;
       return false;
     }
+
+    adminAccessBox.hidden = false;
+    if(adminAccessText){
+      adminAccessText.textContent = `Admin account verified • ${user.email}`;
+    }
+    if(adminAccessBtn){
+      adminAccessBtn.disabled = false;
+      adminAccessBtn.innerHTML = '<i class="fas fa-user-shield"></i> Admin Panel';
+    }
+    return true;
   }
 
   if(adminAccessBtn){

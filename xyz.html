@@ -2271,7 +2271,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .profile-admin-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px;border:1px solid #dbe5f3;background:#f8fbff;border-radius:16px;box-shadow:0 6px 18px rgba(37,99,235,.07)}
 .profile-admin-card strong{display:block;color:#0f172a;font-size:14px}
 .profile-admin-card span{display:block;color:#64748b;font-size:11px;margin-top:4px}
-.profile-admin-btn{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 6px 16px rgba(37,99,235,.2)}
+.profile-admin-btn{min-width:145px;border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 6px 16px rgba(37,99,235,.2)}
 .profile-admin-btn:hover{transform:translateY(-1px)}
 @media(max-width:600px){.profile-admin-card{align-items:stretch;flex-direction:column}.profile-admin-btn{width:100%}}
 
@@ -3658,7 +3658,7 @@ html,body{max-width:100%;overflow-x:hidden}
     </section>
 
     <!-- ADMIN ACCESS: shown only when the logged-in app email is registered as an admin -->
-    <section class="profile-admin-access" id="profileAdminAccess" hidden>
+    <section class="profile-admin-access" id="profileAdminAccess">
       <div class="profile-admin-title"><i class="fas fa-user-shield"></i> Admin Access</div>
       <div class="profile-admin-card">
         <div>
@@ -4751,11 +4751,17 @@ window.addEventListener('DOMContentLoaded', () => {
   function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
     const loggedIn = !!user?.email;
-    adminAccessBox.hidden = !loggedIn;
+    adminAccessBox.hidden = false;
     if(adminAccessText){
       adminAccessText.textContent = loggedIn
-        ? `Admin Panel · ${user.email}`
-        : "Login with your account to open Admin.";
+        ? `Logged in as ${user.email}`
+        : "Login required to open Admin Panel.";
+    }
+    if(adminAccessBtn){
+      adminAccessBtn.disabled = !loggedIn;
+      adminAccessBtn.innerHTML = loggedIn
+        ? '<i class="fas fa-user-shield"></i> Admin Panel'
+        : '<i class="fas fa-lock"></i> Login Required';
     }
     return loggedIn;
   }

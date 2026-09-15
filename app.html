@@ -4215,6 +4215,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /* ROUTER & NAVIGATION SYSTEM */
   window.navigateTo = function(pageId, pushToHistory = true) {
+    if(pageId === 'profilePage' && auth.currentUser){ refreshAdminAccess(auth.currentUser); }
     const target = document.getElementById(pageId);
     if (!target && !EXTERNAL_FILE_MAP[pageId]) {
       console.warn("Unknown page:", pageId);
@@ -4839,63 +4840,65 @@ window.addEventListener('DOMContentLoaded', () => {
   async function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
 
-    // NEVER show this area by default.
+    // Hidden until the LOGIN email is verified against the Admin project.
     adminAccessBox.hidden = true;
     if(adminAccessBtn){
       adminAccessBtn.disabled = true;
       adminAccessBtn.style.display = "none";
     }
 
-    const email = String(user?.email || "").trim().toLowerCase();
-    if(!email) return false;
+    const appEmail = String(user?.email || "").trim().toLowerCase();
+    if(!appEmail) return false;
 
     let verified = false;
     let source = "";
 
-    // 1) Direct exact-email lookup in the Admin Firebase database.
+    // IMPORTANT: EMAIL ONLY. Name, UID, branch, profile name, etc. are NOT used.
+    // The App account email must exactly match an email registered in Admin Firebase.
     try{
-      const snap = await get(ref(newsDb, "adminProfiles"));
-      if(snap.exists()){
-        const profiles = snap.val() || {};
-        for(const [uid, profile] of Object.entries(profiles)){
-          const storedEmail = String(
-            profile?.email ?? profile?.emailAddress ?? profile?.userEmail ?? ""
-          ).trim().toLowerCase();
-          if(storedEmail && storedEmail === email){
+      // First use the public access index written by Admin Panel login.
+      const accessSnap = await get(ref(newsDb, "adminAccess"));
+      if(accessSnap.exists()){
+        const records = accessSnap.val() || {};
+        for(const [key, record] of Object.entries(records)){
+          const adminEmail = String(record?.email || "").trim().toLowerCase();
+          if(adminEmail === appEmail && record?.enabled !== false){
             verified = true;
-            source = "adminProfiles/" + uid;
+            source = "adminAccess/" + key;
             break;
           }
         }
       }
     }catch(err){
-      console.error("Admin Firebase email check failed:", err);
+      console.warn("Admin access index check failed:", err?.message || err);
     }
 
-    // 2) Exact access-bridge lookup created by the Admin Panel.
+    // Fallback: exact email match in Admin Panel adminProfiles.
     if(!verified){
       try{
-        const key = encodeURIComponent(email);
-        const snap = await get(ref(newsDb, "adminAccess/" + key));
-        if(snap.exists()){
-          const record = snap.val() || {};
-          const recordEmail = String(record.email || "").trim().toLowerCase();
-          if(recordEmail === email && record.enabled !== false){
-            verified = true;
-            source = "adminAccess/" + key;
+        const profilesSnap = await get(ref(newsDb, "adminProfiles"));
+        if(profilesSnap.exists()){
+          const profiles = profilesSnap.val() || {};
+          for(const [uid, profile] of Object.entries(profiles)){
+            const adminEmail = String(profile?.email || "").trim().toLowerCase();
+            if(adminEmail && adminEmail === appEmail){
+              verified = true;
+              source = "adminProfiles/" + uid;
+              break;
+            }
           }
         }
       }catch(err){
-        console.error("Admin access bridge check failed:", err);
+        console.warn("Admin profile email check failed:", err?.message || err);
       }
     }
 
     if(!verified){
-      if(adminAccessText) adminAccessText.textContent = "";
+      console.log("[Admin Access] NOT VERIFIED. App email:", appEmail);
       return false;
     }
 
-    // VERIFIED ONLY: reveal the Profile -> Admin Panel switch.
+    // Only after exact EMAIL verification, show the button.
     adminAccessBox.hidden = false;
     if(adminAccessBtn){
       adminAccessBtn.disabled = false;
@@ -4903,9 +4906,9 @@ window.addEventListener('DOMContentLoaded', () => {
       adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
     }
     if(adminAccessText){
-      adminAccessText.textContent = "Verified admin account • " + user.email;
+      adminAccessText.textContent = "Admin email verified • " + user.email;
     }
-    console.log("[Admin Access] VERIFIED", email, source);
+    console.log("[Admin Access] VERIFIED BY EMAIL:", appEmail, source);
     return true;
   }
 

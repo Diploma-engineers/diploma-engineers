@@ -4315,7 +4315,11 @@ window.addEventListener('DOMContentLoaded', () => {
           college: "", enrollment: "", address: "", semester: "", profilePic: "" 
         });
       } else {
+        // App authentication is the only login step. Admin access is then
+        // verified separately by EXACT EMAIL against the Admin Firebase
+        // public access registry. Password/name are NOT compared.
         await signInWithEmailAndPassword(auth, email, password);
+        setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
       }
     } catch (e) {
       alert("Auth Error: " + e.message);
@@ -4340,7 +4344,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.logoutFirebase = function() {
+  window.logoutFirebase = async function() {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
     const switchBtn = document.getElementById("topAdminSwitch");
     if(switchBtn) switchBtn.style.display = "none";
@@ -4840,76 +4844,66 @@ window.addEventListener('DOMContentLoaded', () => {
   async function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
 
-    // Hidden until the LOGIN email is verified against the Admin project.
     adminAccessBox.hidden = true;
     if(adminAccessBtn){
       adminAccessBtn.disabled = true;
-      adminAccessBtn.style.display = "none";
+      adminAccessBtn.style.display = 'none';
     }
 
-    const appEmail = String(user?.email || "").trim().toLowerCase();
-    if(!appEmail) return false;
+    const email = String(user?.email || '').trim().toLowerCase();
+    if(!email) return false;
 
-    let verified = false;
-    let source = "";
-
-    // IMPORTANT: EMAIL ONLY. Name, UID, branch, profile name, etc. are NOT used.
-    // The App account email must exactly match an email registered in Admin Firebase.
+    // EMAIL ONLY verification. This registry is written by the Admin Panel
+    // and contains only approved admin emails. No name or UID comparison is
+    // used for the App user's identity.
     try{
-      // First use the public access index written by Admin Panel login.
-      const accessSnap = await get(ref(newsDb, "adminAccess"));
-      if(accessSnap.exists()){
-        const records = accessSnap.val() || {};
-        for(const [key, record] of Object.entries(records)){
-          const adminEmail = String(record?.email || "").trim().toLowerCase();
-          if(adminEmail === appEmail && record?.enabled !== false){
-            verified = true;
-            source = "adminAccess/" + key;
-            break;
+      const key = encodeURIComponent(email);
+      const exact = await get(ref(newsDb, `adminAccess/${key}`));
+      if(exact.exists()){
+        const record = exact.val() || {};
+        const registeredEmail = String(record.email || '').trim().toLowerCase();
+        if(registeredEmail === email && record.enabled !== false){
+          adminAccessBox.hidden = false;
+          if(adminAccessBtn){
+            adminAccessBtn.disabled = false;
+            adminAccessBtn.style.display = 'inline-flex';
+            adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
           }
+          if(adminAccessText) adminAccessText.textContent = 'Admin email verified • ' + user.email;
+          console.log('[Admin Access] VERIFIED BY EMAIL:', email);
+          return true;
         }
       }
     }catch(err){
-      console.warn("Admin access index check failed:", err?.message || err);
+      console.warn('[Admin Access] Email registry check failed:', err?.message || err);
     }
 
-    // Fallback: exact email match in Admin Panel adminProfiles.
-    if(!verified){
-      try{
-        const profilesSnap = await get(ref(newsDb, "adminProfiles"));
-        if(profilesSnap.exists()){
-          const profiles = profilesSnap.val() || {};
-          for(const [uid, profile] of Object.entries(profiles)){
-            const adminEmail = String(profile?.email || "").trim().toLowerCase();
-            if(adminEmail && adminEmail === appEmail){
-              verified = true;
-              source = "adminProfiles/" + uid;
-              break;
-            }
+    // Compatibility fallback for existing Admin Profiles data.
+    try{
+      const profilesSnap = await get(ref(newsDb, 'adminProfiles'));
+      if(profilesSnap.exists()){
+        const profiles = profilesSnap.val() || {};
+        const match = Object.values(profiles).some(profile =>
+          String(profile?.email || '').trim().toLowerCase() === email
+        );
+        if(match){
+          adminAccessBox.hidden = false;
+          if(adminAccessBtn){
+            adminAccessBtn.disabled = false;
+            adminAccessBtn.style.display = 'inline-flex';
+            adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
           }
+          if(adminAccessText) adminAccessText.textContent = 'Admin email verified • ' + user.email;
+          console.log('[Admin Access] VERIFIED FROM ADMIN PROFILE EMAIL:', email);
+          return true;
         }
-      }catch(err){
-        console.warn("Admin profile email check failed:", err?.message || err);
       }
+    }catch(err){
+      console.warn('[Admin Access] Admin profile check failed:', err?.message || err);
     }
 
-    if(!verified){
-      console.log("[Admin Access] NOT VERIFIED. App email:", appEmail);
-      return false;
-    }
-
-    // Only after exact EMAIL verification, show the button.
-    adminAccessBox.hidden = false;
-    if(adminAccessBtn){
-      adminAccessBtn.disabled = false;
-      adminAccessBtn.style.display = "inline-flex";
-      adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
-    }
-    if(adminAccessText){
-      adminAccessText.textContent = "Admin email verified • " + user.email;
-    }
-    console.log("[Admin Access] VERIFIED BY EMAIL:", appEmail, source);
-    return true;
+    console.log('[Admin Access] HIDDEN — email is not registered:', email);
+    return false;
   }
 
   if(adminAccessBtn){

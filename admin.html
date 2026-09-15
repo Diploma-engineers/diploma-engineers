@@ -1988,6 +1988,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                             <a id="profileDisplayTelegram" href="#" target="_blank" rel="noopener" hidden><i class="fa-brands fa-telegram"></i><span>Telegram</span></a>
                             <a id="profileDisplayEmailLink" href="#" target="_blank" rel="noopener" hidden><i class="fa-solid fa-envelope"></i><span>Email</span></a>
                             <a id="profileDisplayLinkedin" href="#" target="_blank" rel="noopener" hidden><i class="fa-brands fa-linkedin"></i><span>LinkedIn</span></a>
+                            <a id="profileDisplayInstagram" href="#" target="_blank" rel="noopener" hidden><i class="fa-brands fa-instagram"></i><span>Instagram</span></a>
                         </div>
                     </div>
                     <div class="profile-display-actions">
@@ -2017,6 +2018,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                     <div class="profile-field required-field"><label>Diploma College <span>*</span></label><input id="profileCollegeName" maxlength="150" placeholder="Enter diploma college name" required></div>
                     <div class="profile-field"><label>B.tech College</label><input id="profileBtechCollege" maxlength="150" placeholder="Enter B.Tech college name"></div>
                     <div class="profile-field required-field"><label>Mobile <span>*</span></label><input id="profileMobile" type="tel" maxlength="20" inputmode="tel" placeholder="Enter mobile number" required></div>
+                    <div class="profile-field"><label>Aadhaar Number <small>(12 digits, private)</small></label><input id="profileAadhaar" type="text" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="Enter 12-digit Aadhaar number"></div>
                     <div class="profile-field required-field"><label>Address <span>*</span></label><textarea id="profileAddress" maxlength="300" placeholder="Enter address" required></textarea></div>
                     <div class="profile-field full required-field"><label>About <span>*</span></label><textarea id="profileAbout" maxlength="800" placeholder="Write something about yourself..." required></textarea></div>
                 </div>
@@ -2028,6 +2030,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                     <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-telegram"></i> Telegram</label><input id="profileTelegram" type="url" inputmode="url" placeholder="https://t.me/..."></div>
                     <div class="profile-field"><label class="profile-social-label"><i class="fa-solid fa-envelope"></i> Email Link</label><input id="profileEmailLink" type="text" inputmode="email" placeholder="mailto:your@email.com"></div>
                     <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-linkedin"></i> LinkedIn</label><input id="profileLinkedin" type="url" inputmode="url" placeholder="https://linkedin.com/in/..."></div>
+                    <div class="profile-field"><label class="profile-social-label"><i class="fa-brands fa-instagram"></i> Instagram</label><input id="profileInstagram" type="url" inputmode="url" placeholder="https://instagram.com/..."></div>
                 </div>
 
                 <div class="admin-profiles-section" id="allAdminProfilesSection" hidden>
@@ -2049,7 +2052,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
                     <button class="profile-app-btn" id="profileAppBtn" type="button"><i class="fa-solid fa-house"></i> App</button>
                     <button class="profile-logout-btn" id="profileLogoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
 <div style="margin-top:8px;font-size:11px;color:#667085;text-align:center;line-height:1.5;">
-  Saved profile will automatically appear in the <b>Team</b> section.
+  Saved profile will automatically appear in the <b>Team</b> section. Default avatar: <a href="https://www.flaticon.com/free-icon/office-man_15735364" target="_blank" rel="noopener">Flaticon Office Man</a>.
 </div>
                 </div>
                 <div class="profile-status" id="profileStatus"></div>
@@ -2176,7 +2179,9 @@ const newsCount = document.getElementById("newsCount");
 /* =====================================================
    ADMIN PROFILE
    ===================================================== */
-const DEFAULT_PROFILE_IMAGE = "https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg";
+const DEFAULT_PROFILE_IMAGE = "https://cdn-icons-png.flaticon.com/512/15735/15735364.png";
+const DEFAULT_PROFILE_ATTRIBUTION = "https://www.flaticon.com/free-icon/office-man_15735364";
+const PROFILE_EDIT_LOCK_MS = 14 * 24 * 60 * 60 * 1000;
 const profileModal = document.getElementById("profileModal");
 const profileTrigger = document.getElementById("profileTrigger");
 const profileClose = document.getElementById("profileClose");
@@ -2196,7 +2201,7 @@ function isMasterAdmin(){ return auth.currentUser?.uid === MASTER_ADMIN_UID; }
 
 const profileFields = [
   "profileName","profileDesignation","profileExperience","profileBranch","profileCollegeName","profileBtechCollege",
-  "profileMobile","profileAddress","profileAbout","profileFacebook","profileYoutube","profileTelegram","profileEmailLink","profileLinkedin"
+  "profileMobile","profileAadhaar","profileAddress","profileAbout","profileFacebook","profileYoutube","profileTelegram","profileEmailLink","profileLinkedin","profileInstagram"
 ];
 
 function getProfileForm(){
@@ -2210,6 +2215,7 @@ function getProfileForm(){
   o.collegeName = document.getElementById("profileCollegeName")?.value.trim() || "";
   o.btechCollege = document.getElementById("profileBtechCollege")?.value.trim() || "";
   o.mobile = document.getElementById("profileMobile")?.value.trim() || "";
+  o.aadhaarNo = document.getElementById("profileAadhaar")?.value.replace(/\D/g,"").slice(0,12) || "";
   o.address = document.getElementById("profileAddress")?.value.trim() || "";
   o.about = document.getElementById("profileAbout")?.value.trim() || "";
   o.facebook = document.getElementById("profileFacebook")?.value.trim() || "";
@@ -2217,6 +2223,7 @@ function getProfileForm(){
   o.telegram = document.getElementById("profileTelegram")?.value.trim() || "";
   o.emailLink = document.getElementById("profileEmailLink")?.value.trim() || "";
   o.linkedin = document.getElementById("profileLinkedin")?.value.trim() || "";
+  o.instagram = document.getElementById("profileInstagram")?.value.trim() || "";
   o.photo = adminProfile.photo || DEFAULT_PROFILE_IMAGE;
   o.uid = user?.uid || "";
   o.updatedAt = Date.now();
@@ -2233,6 +2240,8 @@ function validateProfileForm(){
     ["profileAddress","Address"],
     ["profileAbout","About"]
   ];
+  const aadhaar=document.getElementById("profileAadhaar");
+  if(aadhaar && aadhaar.value.trim() && !/^\d{12}$/.test(aadhaar.value.trim())){ aadhaar.focus(); setProfileStatus("Aadhaar number must be exactly 12 digits.",false); return false; }
   for(const [id,label] of required){
     const el=document.getElementById(id);
     if(!el || !el.value.trim()){
@@ -2284,7 +2293,8 @@ function fillProfile(data){
     profileYoutube: data.youtube || "",
     profileTelegram: data.telegram || "",
     profileEmailLink: data.emailLink || "",
-    profileLinkedin: data.linkedin || data.linkedIn || ""
+    profileLinkedin: data.linkedin || data.linkedIn || "",
+     profileInstagram: data.instagram || ""
   };
   Object.entries(map).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
   updateProfilePreview();
@@ -2380,6 +2390,35 @@ async function loadAllAdminProfiles(){
   }
 }
 
+function profileLockInfo(targetUid=null){
+  const uid=targetUid || profileEditUid || auth.currentUser?.uid || "";
+  if(!uid || uid!==auth.currentUser?.uid) return {locked:false,remaining:0};
+  const last=Number(adminProfile?.profileUpdatedAt || adminProfile?.updatedAt || 0);
+  if(!last) return {locked:false,remaining:0};
+  const remaining=PROFILE_EDIT_LOCK_MS-(Date.now()-last);
+  return {locked:remaining>0,remaining:Math.max(0,remaining),last};
+}
+function profileLockMessage(remaining){
+  const days=Math.ceil(remaining/86400000);
+  return `Profile editing is locked for 14 days after saving. You can edit it again in ${days} day${days===1?"":"s"}.`;
+}
+function applyProfileLockUI(){
+  const info=profileLockInfo();
+  const ids=["profileName","profileExperience","profileBranch","profileCollegeName","profileBtechCollege","profileMobile","profileAadhaar","profileAddress","profileAbout","profileFacebook","profileYoutube","profileTelegram","profileEmailLink","profileLinkedin","profileInstagram"];
+  ids.forEach(id=>{const el=document.getElementById(id); if(el) el.disabled=!!info.locked;});
+  const photo=document.getElementById("profilePhoto"), remove=document.getElementById("profileRemovePhoto");
+  if(photo) photo.disabled=!!info.locked; if(remove) remove.disabled=!!info.locked;
+  const save=document.getElementById("profileSave"); if(save) save.disabled=!!info.locked;
+  const edit=document.getElementById("profileDisplayEdit"); if(edit) edit.disabled=!!info.locked;
+  if(info.locked) setProfileStatus(profileLockMessage(info.remaining),false);
+  return info;
+}
+function startProfileEdit(){
+  const info=profileLockInfo();
+  if(info.locked){ alert(profileLockMessage(info.remaining)); setProfileStatus(profileLockMessage(info.remaining),false); return false; }
+  setProfileEditMode(true); applyProfileLockUI(); return true;
+}
+
 function setProfileEditMode(edit=true){
   if(!profileModal)return;
   profileModal.classList.toggle("profile-view-mode",!edit);
@@ -2399,6 +2438,7 @@ function openProfile(){
   profileEditUid = auth.currentUser.uid;
   loadAdminProfile();
   loadAllAdminProfiles();
+  setTimeout(()=>{ const info=profileLockInfo(auth.currentUser.uid); if(info.locked) setProfileStatus(profileLockMessage(info.remaining),false); },300);
   window.scrollTo({top:0,behavior:"auto"});
 }
 function closeProfile(){
@@ -2454,11 +2494,11 @@ function updateProfileDisplay(){
   setProfileSocialLink("profileDisplayTelegram",p.telegram);
   setProfileSocialLink("profileDisplayEmailLink",p.emailLink,"email");
   setProfileSocialLink("profileDisplayLinkedin",p.linkedin || p.linkedIn);
+  setProfileSocialLink("profileDisplayInstagram",p.instagram);
 }
 
 document.getElementById("profileDisplayEdit")?.addEventListener("click",()=>{
-  profileModal.classList.remove("profile-view-mode");
-  profileModal.classList.add("profile-edit-mode");
+  if(!startProfileEdit()) return;
   window.scrollTo({top:0,behavior:"auto"});
 });
 document.getElementById("profileDisplayClose")?.addEventListener("click",closeProfile);
@@ -2530,7 +2570,8 @@ function syncProfilePage(){
     link("YouTube","fa-brands fa-youtube",p.youtube),
     link("Telegram","fa-brands fa-telegram",p.telegram),
     link("Email","fa-solid fa-envelope",p.emailLink),
-    link("LinkedIn","fa-brands fa-linkedin",p.linkedin || p.linkedIn)
+    link("LinkedIn","fa-brands fa-linkedin",p.linkedin || p.linkedIn),
+     link("Instagram","fa-brands fa-instagram",p.instagram)
   ].filter(Boolean).join("");
   box.innerHTML=`<div class="public-profile-grid">
     <img src="${escapeHTML(photo)}" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'" alt="Profile">
@@ -2558,6 +2599,14 @@ document.getElementById("seeYourProfile")?.addEventListener("click",()=>{
 profileSave.addEventListener("click",async()=>{
   const user=auth.currentUser;
   if(!user){ setProfileStatus("Please login again.",false); return; }
+  const targetUidForLock = (isMasterAdmin() && profileEditUid) ? profileEditUid : user.uid;
+  const lockInfo = profileLockInfo(targetUidForLock);
+  if(lockInfo.locked){
+    const msg=profileLockMessage(lockInfo.remaining);
+    setProfileStatus(msg,false);
+    alert(msg);
+    return;
+  }
   if(!validateProfileForm()) return;
   profileSave.disabled=true;
   profileSave.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
@@ -2566,6 +2615,7 @@ profileSave.addEventListener("click",async()=>{
     const targetIsMaster = targetUid === MASTER_ADMIN_UID;
     const data=getProfileForm();
     data.uid=targetUid;
+    if(targetUid===user.uid) data.profileUpdatedAt=Date.now();
     data.designation=targetIsMaster?"FOUNDER":"CONTENT ADMIN";
     if(targetIsMaster && !data.name) data.name="Anubhav Gangwar";
     await set(ref(db,"adminProfiles/"+targetUid),data);
@@ -2599,6 +2649,7 @@ profileSave.addEventListener("click",async()=>{
     }
     if(targetUid===user.uid) adminProfile=data;
     updateProfilePreview();
+    applyProfileLockUI();
     syncProfilePage();
     updateProfileDisplay();
     setProfileStatus(targetUid===user.uid ? "Profile saved successfully. Your profile is now updated." : "Admin profile updated successfully.",true);
@@ -5472,5 +5523,123 @@ html,body{margin:0!important;padding:0!important;}
       if(old) old.click();
     });
   }
+})();
+</script>
+
+<style id="FINAL_BLOG_BLANK_EDIT_FIX">
+/* BLOG: remove the extra blank/empty area above the content. */
+#blogAdminSection .dashboard > .welcome,
+#blogAdminSection .dashboard > .cards{
+  display:none!important;
+}
+#blogAdminSection,
+#blogAdminSection .dashboard,
+#blogAdminSection .blog-admin-grid{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+#blogAdminSection .dashboard{
+  min-height:0!important;
+}
+#blogAdminSection .blog-editor-card:last-child{
+  margin-top:0!important;
+}
+
+/* Clear, visible Edit controls for News / Blog / Books. */
+#newsAdminSection .edit-news-btn,
+#newsAdminSection .secondary.edit-news-btn{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  border:1px solid #bfdbfe!important;
+  cursor:pointer!important;
+  font-weight:800!important;
+}
+#newsAdminSection .edit-news-btn:hover,
+#newsAdminSection .secondary.edit-news-btn:hover{
+  background:#dbeafe!important;
+}
+#blogAdminSection .blog-actions .blog-edit-btn,
+#blogAdminSection .blog-actions button[data-blog-edit],
+#blogAdminSection .blog-actions button:first-of-type{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  border:1px solid #bfdbfe!important;
+  font-weight:800!important;
+}
+#booksAdminSection [data-book-edit]{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  border:1px solid #bfdbfe!important;
+  font-weight:800!important;
+}
+#booksAdminSection [data-book-edit]:hover{
+  background:#dbeafe!important;
+}
+
+/* Edit form should be immediately visible and easy to identify. */
+#newsAdminSection .admin-upload-form.editing,
+#blogAdminSection .admin-upload-form.editing,
+#booksAdminSection .admin-upload-form.editing{
+  display:block!important;
+}
+</style>
+
+<script id="FINAL_EDIT_SYSTEM_PATCH">
+(function(){
+  function markEditing(form){
+    if(!form) return;
+    form.classList.remove('is-collapsed');
+    form.classList.add('editing');
+    form.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  /* Keep News edit flow reliable and visible. */
+  const oldEditNews = window.editNews;
+  if(typeof oldEditNews === 'function'){
+    window.editNews = function(id){
+      oldEditNews(id);
+      setTimeout(()=>{
+        const form=document.querySelector('#newsAdminSection .admin-upload-form');
+        markEditing(form);
+      },30);
+    };
+  }
+
+  /* Keep Blog edit flow reliable and visible. */
+  const oldEditBlog = window.editBlog;
+  if(typeof oldEditBlog === 'function'){
+    window.editBlog = function(id){
+      oldEditBlog(id);
+      setTimeout(()=>{
+        const form=document.querySelector('#blogAdminSection .admin-upload-form');
+        markEditing(form);
+      },30);
+    };
+  }
+
+  /* Keep Book edit flow reliable and visible. */
+  const oldEditBook = window.editBookEntry;
+  if(typeof oldEditBook === 'function'){
+    window.editBookEntry = function(id){
+      oldEditBook(id);
+      setTimeout(()=>{
+        const form=document.querySelector('#booksAdminSection .admin-upload-form');
+        markEditing(form);
+      },30);
+    };
+  }
+
+  /* Ensure dynamically rendered edit buttons have the same clean label/style. */
+  const observer=new MutationObserver(()=>{
+    document.querySelectorAll('#newsAdminSection .edit-news-btn').forEach(b=>{
+      b.title='Edit News';
+      if(!b.textContent.trim()) b.innerHTML='<i class="fa-solid fa-pen"></i> Edit';
+    });
+    document.querySelectorAll('#blogAdminSection .blog-actions button').forEach(b=>{
+      if((b.textContent||'').toLowerCase().includes('edit')) b.title='Edit Blog';
+    });
+    document.querySelectorAll('#booksAdminSection [data-book-edit]').forEach(b=>b.title='Edit Book');
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
 })();
 </script>

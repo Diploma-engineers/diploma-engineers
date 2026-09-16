@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f2f63">
+<title>Diploma Engineers News & Notifications</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;touch-action:pan-y}
+body{font-family:Poppins,'Segoe UI',sans-serif;background:#f5f7fb;color:#172033;min-height:100vh;overflow-x:hidden}
+
+.news-page{
+    width:100%;
+    max-width:none;
+    margin:0;
+    background:#fff;
+    border-radius:0;
+    padding:24px clamp(14px,3vw,42px);
+    box-shadow:none;
+}
+.news-inner{width:100%;max-width:1400px;margin:0 auto}
+.page-header{display:flex;align-items:center;gap:12px;margin:0 auto 22px}
+.header-icon{width:44px;height:44px;flex:0 0 44px;background:#eef2ff;color:#2563eb;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.page-header h1{font-size:23px;font-weight:800;color:#0f172a;line-height:1.25;margin:0}
+#newsList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+
+.news-card{
+    background:#fff;border:1px solid #e5eaf1;border-radius:16px;
+    padding:16px;cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.news-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(15,23,42,.07);border-color:#d7dee9}
+.category{display:inline-block;background:#f1f5f9;color:#475569;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px}
+.news-title{font-size:16px;font-weight:750;color:#0f172a;line-height:1.42;margin-bottom:7px;display:flex;align-items:flex-start;gap:8px}
+.news-title i{color:#2563eb;font-size:14px;margin-top:4px;flex:0 0 auto}
+.news-description{font-size:12px;line-height:1.55;color:#64748b;margin:0 0 12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.news-thumb{width:100%;height:185px;object-fit:cover;border-radius:11px;margin:0 0 12px;display:block;background:#f1f5f9}
+.card-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #eef2f7;padding-top:10px;font-size:10px;color:#94a3b8}
+.card-meta span{display:flex;align-items:center;gap:5px;min-width:0}
+.card-meta .read{color:#2563eb;font-weight:800;white-space:nowrap}
+.loading,.empty,.error-box{text-align:center;padding:55px 20px;color:#64748b;grid-column:1/-1}
+.loading i{font-size:23px;color:#2563eb;margin-bottom:8px}
+.empty i{color:#94a3b8}
+.component-error{width:100%;background:#fff7ed;color:#9a3412;text-align:center;padding:10px;font-size:12px}
+
+
+@media(max-width:1000px){#newsList{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+    .news-page{padding:15px 10px 25px}
+    .page-header{margin-bottom:17px}
+    .page-header h1{font-size:19px}
+    .header-icon{width:40px;height:40px;flex-basis:40px}
+    #newsList{grid-template-columns:1fr;gap:11px}
+    .news-card{padding:13px;border-radius:14px}
+    .news-thumb{height:175px}
+}
+</style>
+</head>
+<body>
+
+
+<main class="news-page">
+<div class="news-inner">
+    <div class="page-header">
+        <div class="header-icon"><i class="fa-regular fa-bell"></i></div>
+        <h1>Notifications & News</h1>
+    </div>
+    <div id="newsList">
+        <div class="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Loading Notifications...</p>
+        </div>
+    </div>
+</div>
+</main>
+
+
+
+
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig={
+    apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo", 
+    authDomain:"diplomaengineers-869df.firebaseapp.com",
+    databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",
+    projectId:"diplomaengineers-869df",
+    storageBucket:"diplomaengineers-869df.appspot.com",
+    messagingSenderId:"356779436080",
+    appId:"1:356779436080:web:4b28da380e547420d0e5f5"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const newsList=document.getElementById("newsList");
+
+function esc(v){
+    return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function validURL(v){
+    try{const u=new URL(v);return u.protocol==="http:"||u.protocol==="https:"}catch{return false}
+}
+function cleanText(v){return String(v??"").replace(/\s+/g," ").trim()}
+function openNews(id){
+    window.location.href="news-detail.html?id="+encodeURIComponent(id);
+}
+
+onValue(ref(db,"news"),snapshot=>{
+    newsList.innerHTML="";
+    if(!snapshot.exists()){
+        newsList.innerHTML='<div class="empty"><i class="fa-regular fa-newspaper" style="font-size:32px"></i><p>कोई News या Update उपलब्ध नहीं है।</p></div>';
+        return;
+    }
+
+    const arr=[];
+    snapshot.forEach(child=>{
+        const n=child.val()||{};
+        arr.push({id:child.key,data:n});
+    });
+
+    arr.sort((a,b)=>{
+        const ta=Number(a.data.timestamp)||Date.parse(a.data.date)||0;
+        const tb=Number(b.data.timestamp)||Date.parse(b.data.date)||0;
+        return tb-ta;
+    });
+
+    arr.forEach(({id,data:n})=>{
+        const title=n.title||"Untitled News";
+        const desc=n.text||n.desc||n.description||"";
+        const category=n.cat||n.category||"NOTIFICATION";
+        const date=n.date||"Recent";
+        const image=n.thumb||n.image||n.thumbnail||"";
+
+        const card=document.createElement("article");
+        card.className="news-card";
+        card.tabIndex=0;
+        card.setAttribute("role","button");
+        card.innerHTML=`
+            ${image&&validURL(image)?`<img class="news-thumb" src="${esc(image)}" alt="${esc(title)}" loading="lazy" onerror="this.style.display='none'">`:""}
+            <span class="category">${esc(category)}</span>
+            <h2 class="news-title"><i class="fa-solid fa-square-check"></i><span>${esc(title)}</span></h2>
+            <p class="news-description">${esc(desc)}</p>
+            <div class="card-meta">
+                <span><i class="fa-regular fa-calendar"></i>${esc(date)}</span>
+                <span class="read">View Details <i class="fa-solid fa-arrow-right"></i></span>
+            </div>`;
+        card.addEventListener("click",()=>openNews(id));
+        card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openNews(id)}});
+        newsList.appendChild(card);
+    });
+},error=>{
+    console.error("Firebase news error:",error);
+    newsList.innerHTML='<div class="error-box"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px;margin-bottom:10px"></i><p>Data Load करने में समस्या हुई।</p><small>कृपया कुछ समय बाद पुनः प्रयास करें।</small></div>';
+});
+</script>
+<script>
+document.addEventListener("contextmenu", e=>e.preventDefault());
+document.addEventListener("selectstart", e=>e.preventDefault());
+document.addEventListener("dragstart", e=>e.preventDefault());
+let lastTouch=0;
+document.addEventListener("touchend", e=>{const now=Date.now(); if(now-lastTouch<300)e.preventDefault(); lastTouch=now;},{passive:false});
+document.addEventListener("gesturestart", e=>e.preventDefault(), {passive:false});
+document.addEventListener("gesturechange", e=>e.preventDefault(), {passive:false});
+document.addEventListener("gestureend", e=>e.preventDefault(), {passive:false});
+</script>
+</body>
+</html>

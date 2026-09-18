@@ -1469,6 +1469,20 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
   filter: none !important;
 }
 </style>
+
+<style id="ALL_UPLOADS_HOME_BLOG_FIX">
+#homeAdminSection .home-section-head:first-of-type span{
+  color:#64748b!important;
+}
+#homeAdminSection .home-upload-note{
+  margin:-4px 0 10px;
+  color:#64748b;
+  font-size:10px;
+}
+#blogAdminSection .admin-user-only-note{
+  color:#64748b;
+}
+</style>
 </head>
 
 <body>
@@ -1611,8 +1625,8 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
       </div>
     </div>
 
-    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div>
-    <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading your uploads...</div></div>
+    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div><div class="home-upload-note">All previously uploaded News, Blogs and available Books are shown here.</div>
+    <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading uploaded content...</div></div>
 
     <div class="home-section-head"><h2>Manage Content</h2><span>Quick access</span></div>
     <div class="home-grid manage-content-grid">
@@ -1876,7 +1890,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
 
           <section class="blog-editor-card">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <h2 style="margin:0"><i class="fa-solid fa-layer-group"></i> Published Blogs</h2>
+              <h2 style="margin:0"><i class="fa-solid fa-layer-group"></i> All Published Blogs</h2>
               <a href="admin-blogs.html" target="_blank" class="blog-open" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-radius:9px;padding:8px 11px;font-size:11px"><i class="fa-solid fa-globe"></i> Open admin-blogs.html</a>
             </div>
             <div id="blogList" class="blog-list"><div class="public-empty">Loading blogs...</div></div>
@@ -3471,7 +3485,9 @@ function loadBlogs(){
         const allItems=[];
         snapshot.forEach(child=>allItems.push({id:child.key,...child.val()}));
         window.__adminBlogCache=allItems;
-        const items=isMasterAdmin() ? allItems : allItems.filter(item=>(item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"")===uid);
+        // The Blog section is a complete admin-team list.
+        // Every blog stored under /blogs is shown here, regardless of uploader.
+        const items=allItems;
         items.sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
         if(blogCountEl)blogCountEl.textContent=items.length;
         items.forEach(item=>{
@@ -4493,31 +4509,50 @@ async function loadHomeUploads(force=false){
   if(!homeUploadsLoaded) box.innerHTML='<div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading your uploads...</div>';
 
   try{
-    // News and Blogs are public-readable. Books use the owner query for normal admins
-    // because the Firebase Rules intentionally restrict /books reads.
-    const bookPromise = user.uid===COURSE_ONLY_ADMIN_UID
-      ? get(ref(db,"books"))
-      : get(query(ref(db,"books"), orderByChild("ownerUid"), equalTo(user.uid)));
-    const [newsSnap,blogSnap,booksSnap]=await Promise.all([
+    // HOME MUST SHOW EXISTING ADMIN-TEAM CONTENT even when the current admin
+    // has not uploaded anything. News and Blogs are publicly readable.
+    // Books are attempted as a complete collection first. If Firebase rules
+    // restrict a normal admin from reading all Books, fall back to that
+    // admin's own Books so the Home page still works.
+    const [newsSnap,blogSnap]=await Promise.all([
       get(ref(db,"news")),
-      get(ref(db,"blogs")),
-      bookPromise
+      get(ref(db,"blogs"))
     ]);
+
+    let booksSnap=null;
+    try{
+      booksSnap=await get(ref(db,"books"));
+    }catch(bookErr){
+      console.warn("All-books read restricted; loading current admin books instead.",bookErr);
+      try{
+        booksSnap=await get(query(ref(db,"books"), orderByChild("ownerUid"), equalTo(user.uid)));
+      }catch(_){
+        booksSnap=null;
+      }
+    }
+
     const uploads=[];
     const add=(snap,type,icon)=>{
-      if(!snap.exists())return;
+      if(!snap || !snap.exists())return;
       snap.forEach(ch=>{
         const v=ch.val()||{};
-        const owner=v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||"";
-        if(owner!==user.uid)return;
         uploads.push({
-          id:ch.key,type,icon,title:v.title||v.name||"Untitled",
+          id:ch.key,
+          type,
+          icon,
+          title:v.title||v.name||"Untitled",
           image:v.image||v.thumb||v.ownerPhoto||DEFAULT_PROFILE_IMAGE,
-          link:v.link||v.pdf||"",timestamp:Number(v.timestamp||v.createdAt||0),
-          category:v.category||v.cat||v.branch||type
+          link:v.link||v.pdf||v.fileLink||"",
+          timestamp:Number(v.timestamp||v.createdAt||0),
+          category:v.category||v.cat||v.branch||type,
+          ownerUid:v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||"",
+          ownerName:v.authorName||v.ownerName||v.uploaderName||"Admin"
         });
       });
     };
+
+    // Do NOT filter by the currently logged-in admin here.
+    // This is the shared Home feed of already-uploaded content.
     add(newsSnap,"News","fa-newspaper");
     add(blogSnap,"Blog","fa-pen-nib");
     add(booksSnap,"Book","fa-book");
@@ -4549,7 +4584,7 @@ async function loadHomeUploads(force=false){
 
 function renderHomeUploads(uploads,countEl,box){
   if(countEl)countEl.textContent=uploads.length+" upload"+(uploads.length===1?"":"s");
-  if(!uploads.length){box.innerHTML='<div class="home-empty">No uploads found under your UID yet.</div>';return;}
+  if(!uploads.length){box.innerHTML='<div class="home-empty">No uploaded content found yet.</div>';return;}
   box.innerHTML=uploads.map(x=>`<article class="upload-card reveal"><div class="upload-card-cover"><img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div><div class="upload-card-body"><span class="upload-type"><i class="fa-solid ${x.icon}"></i> ${escapeHTML(x.type)}</span><h3 title="${escapeHTML(x.title)}">${escapeHTML(x.title)}</h3><p>${escapeHTML(x.category)}</p>${x.link?`<a href="${escapeHTML(x.link)}" target="_blank" rel="noopener">📂 Open <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:""}</div></article>`).join('');
   initHomeReveal();
 }
@@ -4919,8 +4954,8 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
       const header=list.querySelector('div');
       if(header){
         const old=header.querySelector('h2');
-        if(old)old.innerHTML='<i class="fa-solid fa-pen-nib"></i> Your Uploaded Blogs';
-        const note=document.createElement('span');note.className='admin-user-only-note';note.textContent='Only blogs uploaded by your current admin account are shown.';header.appendChild(note);
+        if(old)old.innerHTML='<i class="fa-solid fa-pen-nib"></i> All Uploaded Blogs';
+        const note=document.createElement('span');note.className='admin-user-only-note';note.textContent='All blogs uploaded by the admin team are shown here.';header.appendChild(note);
         addCreateButton(header,'Create New',()=>showForm(editor));
       }
     }

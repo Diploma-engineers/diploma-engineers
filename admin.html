@@ -1627,6 +1627,9 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
         <p>Manage News, Blogs, Books and Courses from one professional workspace.</p>
       </div>
       <div class="home-rank reveal" id="homeRankCard">
+        <button type="button" class="de-activity-dashboard-btn de-static-activity-btn" id="deTopActivityBtn" title="Activity History & Certificate" aria-label="Activity History & Certificate">
+          <i class="fa-solid fa-chart-column"></i>
+        </button>
         <div class="rank-icon"><i class="fa-solid fa-ranking-star"></i></div>
         <h3>Admin Ranking</h3><p>Check your team ranking & ratings</p><b id="homeRankValue">#—</b>
       </div>
@@ -6564,6 +6567,7 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   box-shadow:0 7px 18px rgba(37,99,235,.10)!important;z-index:4!important;
 }
 .de-activity-dashboard-btn:hover{background:#eff6ff!important;transform:translateY(-1px)!important;}
+.de-static-activity-btn{z-index:20!important;pointer-events:auto!important;}
 .de-activity-dashboard-btn i{font-size:17px!important;}
 .de-activity-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999999;}
 .de-activity-modal.open{display:flex!important;}
@@ -6725,10 +6729,14 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   function openActivity(){ $('deActivityModal')?.classList.add('open'); $('deActivityModal')?.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; loadActivityHistory(); }
   function closeActivity(){ $('deActivityModal')?.classList.remove('open'); $('deActivityModal')?.setAttribute('aria-hidden','true'); if(!$('deCertificateModal')?.classList.contains('open'))document.body.style.overflow=''; }
   function injectDashboardButton(){
-    const rank=document.getElementById('homeRankCard'); if(!rank || rank.querySelector('.de-activity-dashboard-btn'))return;
+    const rank=document.getElementById('homeRankCard');
+    const b=document.getElementById('deTopActivityBtn');
+    if(!rank || !b)return;
     rank.style.position='relative';
-    const b=document.createElement('button');b.type='button';b.className='de-activity-dashboard-btn';b.title='Activity History & Certificate';b.innerHTML='<i class="fa-solid fa-chart-column"></i>';
-    b.addEventListener('click',e=>{e.stopPropagation();openActivity();});rank.appendChild(b);
+    if(!b.dataset.bound){
+      b.dataset.bound='1';
+      b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openActivity();});
+    }
   }
   async function fetchNode(path){try{return await get(ref(db,path));}catch(e){return null;}}
   async function loadActivityHistory(){
@@ -6746,12 +6754,26 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     const verifiedRequest=Object.values(reqs).find(x=>x&&String(x.status).toLowerCase()==='verified');
     Object.keys(av.days||{}).filter(k=>av.days[k]===true).forEach(k=>items.push({id:'day-'+k,type:'Activity',icon:'fa-calendar-check',title:'Daily active service day',timestamp:Date.parse(k+'T12:00:00Z'),activityOnly:true}));
     const unique=[];const seen2=new Set();items.sort((a,b)=>b.timestamp-a.timestamp).forEach(x=>{const k=x.type+'|'+x.id;if(!seen2.has(k)){seen2.add(k);unique.push(x);}});allActivity=unique;
-    const activeKeys=new Set(unique.filter(x=>x.type!=='Activity').map(x=>dateKey(x.timestamp)).filter(Boolean));
+    const activeKeys=new Set();
     Object.keys(av.days||{}).forEach(k=>{if(av.days[k]===true)activeKeys.add(k);});
+    unique.filter(x=>x.type!=='Activity').forEach(x=>{const k=dateKey(x.timestamp);if(k)activeKeys.add(k);});
     const sortedDays=[...activeKeys].sort();
-    let streak=0,last='';for(let i=sortedDays.length-1;i>=0;i--){if(!last){last=sortedDays[i];streak=1;}else if(diffDays(sortedDays[i],last)===1){streak++;last=sortedDays[i];}else break;}
-    const first=sortedDays[0]||dateKey(unique[unique.length-1]?.timestamp||0);let serviceDays=0;if(first)serviceDays=Math.max(0,diffDays(first,todayIST())+1);
-    // Continuous active service is represented by the current consecutive active-day streak.
+    const today=todayIST();
+    let streak=0;
+    let cursor=today;
+    if(!activeKeys.has(cursor)){
+      const yesterday=new Date(today+'T00:00:00Z');
+      yesterday.setUTCDate(yesterday.getUTCDate()-1);
+      cursor=yesterday.toISOString().slice(0,10);
+    }
+    while(activeKeys.has(cursor)){
+      streak++;
+      const d=new Date(cursor+'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate()-1);
+      cursor=d.toISOString().slice(0,10);
+    }
+    // Certificate service duration is the CURRENT continuous active streak, not total lifetime uploads.
+    const serviceDays=streak;
     const tier=streak>=1095?3:streak>=730?2:streak>=365?1:0;
     const verified=av.diplomaCompletionVerified===true || av.diplomaVerified===true || !!verifiedRequest;
     certInfo={eligible:tier>0&&verified,tier,verified,serviceDays,streak,activity:av,verifiedRequest:verifiedRequest||null};
@@ -6765,13 +6787,13 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   function updateCertUI(){
     const badge=$('deCertBadge'),status=$('deCertStatus'),btn=$('deCertPreviewBtn'),req=$('deCertRequestBtn');
     if(!badge||!status)return;
-    if(certInfo.tier>0 && certInfo.verified){badge.textContent='Eligible';badge.className='activity-pill green';status.innerHTML=`<b>${certInfo.tier}-Year certificate eligible.</b> Continuous active service streak: ${certInfo.streak} days. Diploma completion is verified.`;req.style.display='none';btn.disabled=false;}
-    else if(certInfo.tier>0){badge.textContent='Verification Needed';badge.className='activity-pill red';status.innerHTML=`<b>${certInfo.tier}-Year service milestone reached.</b> Diploma completion verification is still required before download access.`;req.style.display='inline-block';btn.disabled=true;}
-    else{badge.textContent='Not Yet Eligible';badge.className='activity-pill red';status.innerHTML=`Continuous active service: ${certInfo.streak||0} days. <b>365 days</b> are required for the first certificate. Diploma completion verification is also required.`;req.style.display='inline-block';btn.disabled=true;}
+    if(certInfo.tier>0 && certInfo.verified){badge.textContent='Eligible';badge.className='activity-pill green';status.innerHTML=`<b>${certInfo.tier}-Year certificate ready.</b> Current continuous active service: ${certInfo.streak} days. Diploma completion is verified.`;req.style.display='none';btn.disabled=false;}
+    else if(certInfo.tier>0){badge.textContent='Verification Needed';badge.className='activity-pill red';status.innerHTML=`<b>${certInfo.tier}-Year service milestone reached.</b> Diploma completion verification is required before download access.`;req.style.display='inline-block';btn.disabled=true;}
+    else{badge.textContent='Locked';badge.className='activity-pill red';status.innerHTML=`Certificate locked. Current continuous active service: <b>${certInfo.streak||0} days</b>. First certificate unlocks after <b>365 continuous active days</b> + Diploma completion verification.`;req.style.display='none';btn.disabled=true;}
   }
   async function requestVerification(){
     const u=window.auth?.currentUser;if(!u)return;
-    const tier=certInfo.tier||0;if(!tier){alert('Certificate request is not available until 1 year continuous active service is completed.');return;}
+    const tier=certInfo.tier||0;if(!tier){alert('Certificate verification request unlocks after 365 continuous active service days.');return;}
     try{
       await set(ref(db,`certificateRequests/${u.uid}/${tier}Year`),{uid:u.uid,email:u.email||'',name:window.adminProfile?.name||u.displayName||'Admin',tier,serviceDays:certInfo.serviceDays||0,continuousStreak:certInfo.streak||0,requestedAt:Date.now(),status:'pending'});
       alert('Certificate verification request submitted. Diploma completion verification is required before download access.');
@@ -6782,7 +6804,7 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     const tier=certInfo.tier||1;
     $('deCertificateName').textContent=name;$('deCertificateBranch').textContent=p.branch||'-';$('deCertificateCollege').textContent=p.collegeName||p.college||'-';$('deCertificateYears').textContent=tier+' Year';$('deCertificateIssueDate').textContent=new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(new Date());$('deCertificateId').textContent='Certificate ID: DE-'+String(u?.uid||'ADMIN').slice(-8).toUpperCase()+'-'+tier+'Y';
   }
-  function openCertificate(){if(!certInfo.eligible){alert('Certificate download is available only after the required continuous active service period and Diploma completion verification.');return;}fillCertificate();$('deCertificateModal').classList.add('open');$('deCertificateModal').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+  function openCertificate(){if(!certInfo.eligible){alert('Certificate download is locked. Complete 365 continuous active service days and Diploma completion verification first.');return;}fillCertificate();$('deCertificateModal').classList.add('open');$('deCertificateModal').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
   function closeCertificate(){ $('deCertificateModal').classList.remove('open');$('deCertificateModal').setAttribute('aria-hidden','true');if(!$('deActivityModal').classList.contains('open'))document.body.style.overflow='';}
   document.addEventListener('click',e=>{
     const r=e.target.closest?.('[data-de-activity-read]');if(r){const type=r.dataset.deActivityRead,id=r.dataset.deActivityId;const cache=type==='Blog'?(window.__allBlogsCache||[]):type==='News'?(window.__adminNewsCache||[]):(window.__allBooksCache||[]);const item=cache.find(x=>String(x.id)===String(id));if(item&&typeof window.openAdminContentReader==='function')window.openAdminContentReader(type,item);else alert('Please open the News/Blog/Books section once and try again.');}
@@ -6794,8 +6816,8 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     $('deCertificateClose')?.addEventListener('click',closeCertificate);$('deCertificateModal')?.addEventListener('click',e=>{if(e.target.id==='deCertificateModal')closeCertificate();});
     $('deCertificatePrint')?.addEventListener('click',()=>window.print());
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCertificate();closeActivity();}});
-    // Re-inject after existing home/rank rendering.
-    const ob=new MutationObserver(()=>injectDashboardButton());ob.observe(document.body,{childList:true,subtree:true});
+    // Static dashboard button is part of the Home markup. Bind it after page load.
+    injectDashboardButton();
   });
   window.openDEActivityHistory=openActivity;
 })();

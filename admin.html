@@ -1558,6 +1558,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
   <div class="admin-brand-top"><strong>Admin Panel</strong></div>
   <div class="admin-top-right">
     <button type="button" class="top-streak" id="topRankBtn" data-app-target="ranking" title="Rank / Streak"><i class="fa-solid fa-fire"></i><b id="topRankValue">3</b></button>
+    <button type="button" class="de-top-activity-btn" id="deTopActivityBtnTop" title="Activity History & Certificate" aria-label="Activity History & Certificate" onclick="if(window.openDEActivityHistory){window.openDEActivityHistory();} return false;"><i class="fa-solid fa-chart-line"></i></button>
     <button type="button" class="top-profile-icon" id="topProfileBtn" data-app-target="profile" title="Admin Profile" aria-label="Admin Profile">
       <img id="topProfileAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='36' r='18' fill='%2364758b'/%3E%3Cpath d='M20 84c4-19 16-29 30-29s26 10 30 29' fill='%2364758b'/%3E%3C/svg%3E" alt="Admin Profile">
     </button>
@@ -1627,7 +1628,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
         <p>Manage News, Blogs, Books and Courses from one professional workspace.</p>
       </div>
       <div class="home-rank reveal" id="homeRankCard">
-        <button type="button" class="de-activity-dashboard-btn de-static-activity-btn" id="deTopActivityBtn" title="Activity History & Certificate" aria-label="Activity History & Certificate">
+        <button type="button" class="de-activity-dashboard-btn de-static-activity-btn" id="deTopActivityBtn" title="Activity History & Certificate" aria-label="Activity History & Certificate" onclick="if(window.openDEActivityHistory){window.openDEActivityHistory();} return false;">
           <i class="fa-solid fa-chart-column"></i>
         </button>
         <div class="rank-icon"><i class="fa-solid fa-ranking-star"></i></div>
@@ -2152,6 +2153,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+// Expose the main Firebase objects for the standalone Activity/Certificate UI script.
+window.auth = auth;
+window.db = db;
 
 /* =====================================================
    COURSE FIREBASE (SECOND ADMIN SYSTEM)
@@ -2337,6 +2341,7 @@ function fillProfile(data){
   // Backward compatibility: old B.Tech value was stored under `education`.
   if(!data.btechCollege) data.btechCollege = data.education || "";
   adminProfile = data;
+  window.adminProfile = adminProfile;
   const map = {
     profileName: data.name || "",
     profileDesignation: data.designation || "ADMIN",
@@ -2815,7 +2820,7 @@ profileSave.addEventListener("click",async()=>{
       console.error("Team profile publish error:",teamErr);
       throw new Error("Profile saved, but Team profile could not be published. Check Firebase Rules for teamProfiles write access.");
     }
-    if(targetUid===user.uid) adminProfile=data;
+    if(targetUid===user.uid){ adminProfile=data; window.adminProfile=adminProfile; }
     updateProfilePreview();
     applyProfileLockUI();
     syncProfilePage();
@@ -6567,7 +6572,10 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   box-shadow:0 7px 18px rgba(37,99,235,.10)!important;z-index:4!important;
 }
 .de-activity-dashboard-btn:hover{background:#eff6ff!important;transform:translateY(-1px)!important;}
-.de-static-activity-btn{z-index:20!important;pointer-events:auto!important;}
+.de-static-activity-btn{z-index:20!important;pointer-events:auto!important;} .de-top-activity-btn{width:40px!important;height:40px!important;border:1px solid #dbe7f7!important;border-radius:12px!important;background:#fff!important;color:#2563eb!important;display:grid!important;place-items:center!important;cursor:pointer!important;box-shadow:0 6px 16px rgba(37,99,235,.10)!important;z-index:50!important;}
+.de-top-activity-btn:hover{background:#eff6ff!important;transform:translateY(-1px)!important;}
+.de-top-activity-btn i{font-size:16px!important;}
+
 .de-activity-dashboard-btn i{font-size:17px!important;}
 .de-activity-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999999;}
 .de-activity-modal.open{display:flex!important;}
@@ -6749,7 +6757,10 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
       snap.forEach(ch=>{const v=ch.val()||{};const owner=normalizeOwner(v),email=normalizeOwnerEmail(v);if(owner!==u.uid && (!email||email!==userEmail()))return;const ts=Number(v.timestamp||v.createdAt||v.updatedAt||v.uploadedAt||v.date||0);if(!ts)return;const key=type+'|'+ch.key;if(seen.has(key))return;seen.add(key);items.push({id:ch.key,type,icon,title:v.title||v.name||'Untitled',timestamp:ts,link:v.link||v.pdf||v.pdfLink||v.fileLink||v.url||'',data:v});});
     };
     await Promise.all([collect('news','News','fa-newspaper'),collect('blogs','Blog','fa-pen-nib'),collect('books','Book','fa-book')]);
-    const act=await fetchNode('adminActivity/'+u.uid); const av=act?.exists()?(act.val()||{}):{};
+    const act=await fetchNode('adminActivity/'+u.uid);
+    const av=act?.exists()?(act.val()||{}):{};
+    const policyNote=$('serverPolicyStatus');
+    if(!act && policyNote) policyNote.innerHTML='<i class="fa-solid fa-circle-exclamation"></i> Activity server record is not readable. Your content history is still being shown. Check the adminActivity read rule.';
     const reqRoot=await fetchNode('certificateRequests/'+u.uid); const reqs=reqRoot?.exists()?(reqRoot.val()||{}):{};
     const verifiedRequest=Object.values(reqs).find(x=>x&&String(x.status).toLowerCase()==='verified');
     Object.keys(av.days||{}).filter(k=>av.days[k]===true).forEach(k=>items.push({id:'day-'+k,type:'Activity',icon:'fa-calendar-check',title:'Daily active service day',timestamp:Date.parse(k+'T12:00:00Z'),activityOnly:true}));
@@ -6787,7 +6798,7 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   function updateCertUI(){
     const badge=$('deCertBadge'),status=$('deCertStatus'),btn=$('deCertPreviewBtn'),req=$('deCertRequestBtn');
     if(!badge||!status)return;
-    if(certInfo.tier>0 && certInfo.verified){badge.textContent='Eligible';badge.className='activity-pill green';status.innerHTML=`<b>${certInfo.tier}-Year certificate ready.</b> Current continuous active service: ${certInfo.streak} days. Diploma completion is verified.`;req.style.display='none';btn.disabled=false;}
+    if(certInfo.tier>0 && certInfo.verified && certInfo.streak>=365){badge.textContent='Eligible';badge.className='activity-pill green';status.innerHTML=`<b>${certInfo.tier}-Year certificate ready.</b> Current continuous active service: ${certInfo.streak} days. Diploma completion is verified.`;req.style.display='none';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-certificate"></i> View / Download Certificate';}
     else if(certInfo.tier>0){badge.textContent='Verification Needed';badge.className='activity-pill red';status.innerHTML=`<b>${certInfo.tier}-Year service milestone reached.</b> Diploma completion verification is required before download access.`;req.style.display='inline-block';btn.disabled=true;}
     else{badge.textContent='Locked';badge.className='activity-pill red';status.innerHTML=`Certificate locked. Current continuous active service: <b>${certInfo.streak||0} days</b>. First certificate unlocks after <b>365 continuous active days</b> + Diploma completion verification.`;req.style.display='none';btn.disabled=true;}
   }
@@ -6804,13 +6815,17 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     const tier=certInfo.tier||1;
     $('deCertificateName').textContent=name;$('deCertificateBranch').textContent=p.branch||'-';$('deCertificateCollege').textContent=p.collegeName||p.college||'-';$('deCertificateYears').textContent=tier+' Year';$('deCertificateIssueDate').textContent=new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(new Date());$('deCertificateId').textContent='Certificate ID: DE-'+String(u?.uid||'ADMIN').slice(-8).toUpperCase()+'-'+tier+'Y';
   }
-  function openCertificate(){if(!certInfo.eligible){alert('Certificate download is locked. Complete 365 continuous active service days and Diploma completion verification first.');return;}fillCertificate();$('deCertificateModal').classList.add('open');$('deCertificateModal').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+  function openCertificate(){if(!(certInfo.streak>=365 && certInfo.verified)){alert('Certificate is locked. It becomes available only after 365 continuous active service days + Diploma completion verification.');return;}fillCertificate();$('deCertificateModal').classList.add('open');$('deCertificateModal').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
   function closeCertificate(){ $('deCertificateModal').classList.remove('open');$('deCertificateModal').setAttribute('aria-hidden','true');if(!$('deActivityModal').classList.contains('open'))document.body.style.overflow='';}
   document.addEventListener('click',e=>{
     const r=e.target.closest?.('[data-de-activity-read]');if(r){const type=r.dataset.deActivityRead,id=r.dataset.deActivityId;const cache=type==='Blog'?(window.__allBlogsCache||[]):type==='News'?(window.__adminNewsCache||[]):(window.__allBooksCache||[]);const item=cache.find(x=>String(x.id)===String(id));if(item&&typeof window.openAdminContentReader==='function')window.openAdminContentReader(type,item);else alert('Please open the News/Blog/Books section once and try again.');}
   });
   document.addEventListener('DOMContentLoaded',()=>{
     setTimeout(injectDashboardButton,300);setTimeout(injectDashboardButton,1200);
+    const topActivity=$('deTopActivityBtnTop');
+    if(topActivity){ topActivity.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openActivity();}); }
+    const staticActivity=$('deTopActivityBtn');
+    if(staticActivity){ staticActivity.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openActivity();}); }
     $('deActivityClose')?.addEventListener('click',closeActivity);$('deActivityModal')?.addEventListener('click',e=>{if(e.target.id==='deActivityModal')closeActivity();});
     $('deCertRequestBtn')?.addEventListener('click',requestVerification);$('deCertPreviewBtn')?.addEventListener('click',openCertificate);
     $('deCertificateClose')?.addEventListener('click',closeCertificate);$('deCertificateModal')?.addEventListener('click',e=>{if(e.target.id==='deCertificateModal')closeCertificate();});

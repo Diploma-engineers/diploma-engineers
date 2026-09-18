@@ -1470,18 +1470,25 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
 }
 </style>
 
-<style id="ALL_UPLOADS_HOME_BLOG_FIX">
-#homeAdminSection .home-section-head:first-of-type span{
-  color:#64748b!important;
-}
-#homeAdminSection .home-upload-note{
-  margin:-4px 0 10px;
-  color:#64748b;
-  font-size:10px;
-}
-#blogAdminSection .admin-user-only-note{
-  color:#64748b;
-}
+<style id="home-upload-reminder-style">
+.home-upload-reminder{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:0 0 2px;padding:14px 16px;background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:17px;box-shadow:0 7px 22px rgba(234,88,12,.07);}
+.home-upload-reminder-icon{width:44px;height:44px;flex:0 0 44px;border-radius:13px;display:grid;place-items:center;background:#ffedd5;color:#ea580c;font-size:18px;}
+.home-upload-reminder-content{min-width:0;flex:1;}
+.home-upload-reminder-content strong{display:block;color:#9a3412;font-size:13px;margin-bottom:3px;}
+.home-upload-reminder-content p{margin:0;color:#7c2d12;font-size:10px;line-height:1.55;}
+.home-upload-reminder-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;}
+.home-upload-reminder-actions button{border:0;border-radius:9px;padding:7px 10px;background:#fff;color:#c2410c;border:1px solid #fed7aa;font:700 10px Poppins,Arial,sans-serif;cursor:pointer;}
+.home-upload-reminder-actions button:hover{background:#fff7ed;}
+@media(max-width:600px){.home-upload-reminder{align-items:flex-start;padding:12px;}.home-upload-reminder-icon{width:38px;height:38px;flex-basis:38px;font-size:15px;}.home-upload-reminder-content strong{font-size:11px;}.home-upload-reminder-content p{font-size:9px;}.home-upload-reminder-actions button{flex:1;min-width:105px;font-size:9px;padding:7px 6px;}}
+</style>
+
+<style id="admin-14-day-activity-style">
+.activity-dashboard{margin:0 0 18px;background:#fff;border:1px solid #e7edf5;border-radius:22px;padding:18px;box-shadow:0 10px 30px rgba(15,23,42,.05)}
+.activity-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.activity-head h2{margin:0;font-size:17px;color:#0f172a}.activity-head p{margin:4px 0 0;color:#64748b;font-size:10px}
+.activity-days{display:grid;grid-template-columns:repeat(14,minmax(44px,1fr));gap:6px;overflow-x:auto;padding-bottom:3px}
+.activity-day{min-width:44px;border-radius:12px;padding:8px 4px;text-align:center;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c}.activity-day.active{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}.activity-day .dow{font-size:8px;font-weight:800;text-transform:uppercase}.activity-day .num{font-size:15px;font-weight:900;line-height:1.25;margin:2px 0}.activity-day .state{font-size:8px;font-weight:800}.activity-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.activity-pill{font-size:10px;font-weight:800;border-radius:999px;padding:6px 9px;background:#f8fafc;color:#475569;border:1px solid #e2e8f0}.activity-pill.green{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}.activity-pill.red{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+.upload-warning{display:none;margin:0 0 12px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px 14px;box-shadow:0 7px 22px rgba(234,88,12,.07)}.upload-warning.show{display:flex;align-items:flex-start;gap:10px}.upload-warning i{font-size:18px;margin-top:2px}.upload-warning b{display:block;font-size:12px;margin-bottom:3px}.upload-warning span{display:block;font-size:10px;line-height:1.55}.upload-warning .warning-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.upload-warning button{border:0;border-radius:9px;background:#ea580c;color:#fff;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer}
+@media(max-width:850px){.activity-days{grid-template-columns:repeat(14,48px)}.activity-head{align-items:flex-start;flex-direction:column}.activity-dashboard{padding:14px;border-radius:18px}}
 </style>
 </head>
 
@@ -1625,7 +1632,21 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
       </div>
     </div>
 
-    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div><div class="home-upload-note">All previously uploaded News, Blogs and available Books are shown here.</div>
+    <div id="uploadWarning" class="upload-warning" role="alert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div><b>Today's upload is pending</b><span id="uploadWarningText">Content upload karo. Daily activity maintain nahi hui to your admin account can be permanently deleted after 14 continuous inactive days.</span>
+      <div class="warning-actions"><button type="button" data-home-nav="news">Upload News</button><button type="button" data-home-nav="blog">Upload Blog</button><button type="button" data-home-nav="books">Upload Book</button></div></div>
+    </div>
+
+    <div class="activity-dashboard" id="activityDashboard">
+      <div class="activity-head"><div><h2><i class="fa-solid fa-calendar-check" style="color:#2563eb"></i> 14-Day Upload Activity</h2><p>Green = at least one upload that day • Red = no upload</p></div><span class="activity-pill" id="activityStatusPill">Checking...</span></div>
+      <div class="activity-days" id="activityDays"><div class="home-loading">Loading activity...</div></div>
+      <div class="activity-summary"><span class="activity-pill green" id="activeDaysPill">0 active days</span><span class="activity-pill red" id="inactiveDaysPill">0 inactive days</span><span class="activity-pill" id="inactiveStreakPill">Inactive streak: 0 days</span></div><div id="serverPolicyStatus" style="margin-top:10px;font-size:11px;color:#64748b">
+          <i class="fa-solid fa-shield-halved"></i> Server policy: checking…
+        </div>
+    </div>
+
+    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div>
     <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading uploaded content...</div></div>
 
     <div class="home-section-head"><h2>Manage Content</h2><span>Quick access</span></div>
@@ -1890,7 +1911,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
 
           <section class="blog-editor-card">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <h2 style="margin:0"><i class="fa-solid fa-layer-group"></i> All Published Blogs</h2>
+              <h2 style="margin:0"><i class="fa-solid fa-layer-group"></i> Published Blogs</h2>
               <a href="admin-blogs.html" target="_blank" class="blog-open" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-radius:9px;padding:8px 11px;font-size:11px"><i class="fa-solid fa-globe"></i> Open admin-blogs.html</a>
             </div>
             <div id="blogList" class="blog-list"><div class="public-empty">Loading blogs...</div></div>
@@ -3001,6 +3022,7 @@ loginBtn.addEventListener("click", async () => {
         applyCourseVisibility();
         loadAdminProfile();
         loadHomeUploads();
+        loadUploadActivity(true);
         if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") connectCourseAdmin();
 
     } catch (error) {
@@ -3292,6 +3314,7 @@ publishBtn.addEventListener("click", async () => {
             alert("News Updated Successfully!");
         } else {
             await set(push(ref(db, "news")), payload);
+            markLocalUploadActivity();
             statusText.innerText = "Published successfully.";
             alert("News Published Successfully!");
         }
@@ -3437,7 +3460,7 @@ publishBlogBtn?.addEventListener("click",async()=>{
             timestamp:Date.now(), updatedBy:author.uid
         };
         if(blogEditId){ await update(ref(db,"blogs/"+blogEditId),payload); if(blogStatus)blogStatus.textContent="Blog updated successfully."; alert("Blog Updated Successfully!"); }
-        else { await set(push(ref(db,"blogs")),payload); if(blogStatus)blogStatus.textContent="Blog published successfully."; alert("Blog Published Successfully!"); }
+        else { await set(push(ref(db,"blogs")),payload); markLocalUploadActivity(); if(blogStatus)blogStatus.textContent="Blog published successfully."; alert("Blog Published Successfully!"); }
         clearBlogForm();
     }catch(err){
         console.error("Blog publish error",err);
@@ -3485,9 +3508,7 @@ function loadBlogs(){
         const allItems=[];
         snapshot.forEach(child=>allItems.push({id:child.key,...child.val()}));
         window.__adminBlogCache=allItems;
-        // The Blog section is a complete admin-team list.
-        // Every blog stored under /blogs is shown here, regardless of uploader.
-        const items=allItems;
+        const items=isMasterAdmin() ? allItems : allItems.filter(item=>(item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||"")===uid);
         items.sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
         if(blogCountEl)blogCountEl.textContent=items.length;
         items.forEach(item=>{
@@ -3878,6 +3899,7 @@ document.getElementById("bookAdminForm").onsubmit = async e => {
                 };
                 await set(push(ref(db, "books")), data);
             }
+            markLocalUploadActivity();
             bookMsg("Book(s) added successfully.");
         }
 
@@ -4480,6 +4502,124 @@ document.getElementById("refreshRanking")?.addEventListener("click", renderAdmin
 /* =====================================================
    APP HOME — CURRENT ADMIN UPLOAD SLIDER
 ===================================================== */
+
+/* =====================================================
+   ADMIN DAILY UPLOAD ACTIVITY / 14-DAY POLICY
+   A new News, Blog or Book upload marks that calendar day active.
+   The client shows the dashboard/warning. Permanent deletion is handled
+   securely by the scheduled Firebase Admin SDK function supplied separately.
+===================================================== */
+let uploadActivityLoaded = false;
+let uploadActivityLoading = false;
+let uploadActivityCache = {};
+
+function activityDateKey(date=new Date()){
+  const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function activityDayFromKey(key){
+  const [y,m,d]=String(key).split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+function escapeActivityText(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+
+function markLocalUploadActivity(){
+  // UI-only instant feedback. The Firebase Cloud Function is authoritative
+  // and records the activity securely when the new content is created.
+  const key=activityDateKey();
+  uploadActivityCache[key]=true;
+  renderUploadActivity();
+}
+
+function getActivityWindow(){
+  const out=[]; const today=new Date();
+  for(let i=13;i>=0;i--){const d=new Date(today);d.setHours(0,0,0,0);d.setDate(today.getDate()-i);out.push(d);}
+  return out;
+}
+
+function renderUploadActivity(){
+  const daysEl=document.getElementById('activityDays');
+  const warning=document.getElementById('uploadWarning');
+  const warningText=document.getElementById('uploadWarningText');
+  const activePill=document.getElementById('activeDaysPill');
+  const inactivePill=document.getElementById('inactiveDaysPill');
+  const streakPill=document.getElementById('inactiveStreakPill');
+  const statusPill=document.getElementById('activityStatusPill');
+  if(!daysEl)return;
+  const days=getActivityWindow();
+  let active=0;
+  days.forEach(d=>{if(uploadActivityCache[activityDateKey(d)])active++;});
+  const todayKey=activityDateKey();
+  const todayActive=!!uploadActivityCache[todayKey];
+  let streak=0;
+  for(let i=days.length-1;i>=0;i--){if(uploadActivityCache[activityDateKey(days[i])])break;streak++;}
+  daysEl.innerHTML=days.map(d=>{
+    const key=activityDateKey(d), ok=!!uploadActivityCache[key];
+    return `<div class="activity-day ${ok?'active':''}" title="${escapeActivityText(key)}: ${ok?'Upload recorded':'No upload recorded'}"><div class="dow">${d.toLocaleDateString('en-IN',{weekday:'short'})}</div><div class="num">${d.getDate()}</div><div class="state">${ok?'✓ UP':'× NO'}</div></div>`;
+  }).join('');
+  if(activePill)activePill.textContent=`${active} active day${active===1?'':'s'}`;
+  if(inactivePill)inactivePill.textContent=`${14-active} inactive day${14-active===1?'':'s'}`;
+  if(streakPill)streakPill.textContent=`Inactive streak: ${streak} day${streak===1?'':'s'}`;
+  if(statusPill){statusPill.textContent=todayActive?'Today: UPLOAD RECORDED':'Today: UPLOAD REQUIRED';statusPill.className='activity-pill '+(todayActive?'green':'red');}
+  if(warning){
+    warning.classList.toggle('show',!todayActive);
+    if(warningText)warningText.textContent=`Aaj abhi tak koi News, Blog ya Book upload nahi hua. Content upload karo. ${streak>0?`Current inactive streak: ${streak} day${streak===1?'':'s'}. `:''}14 continuous inactive days complete hone par Firebase server account ko permanently delete kar dega. Upload karte hi activity reset/refresh ho jayegi.`;
+  }
+}
+
+async function loadUploadActivity(force=false){
+  const user=auth.currentUser;if(!user)return;
+  if(uploadActivityLoading)return;
+  if(uploadActivityLoaded&&!force){renderUploadActivity();return;}
+  uploadActivityLoading=true;
+  try{
+    const snap=await get(ref(db,`adminActivity/${user.uid}`));
+    uploadActivityCache={};
+    if(snap.exists()){
+      const v=snap.val()||{};
+      const days=v.days||{};
+      Object.keys(days).forEach(k=>{if(days[k]===true)uploadActivityCache[k]=true;});
+      if(v.lastUploadDate)uploadActivityCache[v.lastUploadDate]=true;
+
+      const serverStatus=document.getElementById('serverPolicyStatus');
+      if(serverStatus){
+        const last=v.lastUploadDate||'No upload recorded yet';
+        const next=v.deleteOnDate||'being calculated';
+        const protectedAdmin=!!v.protected;
+        serverStatus.innerHTML=protectedAdmin
+          ? '<i class="fa-solid fa-shield-halved"></i> Server policy: Founder account protected from automatic deletion.'
+          : `<i class="fa-solid fa-server"></i> Server policy active • Last upload: ${escapeActivityText(last)} • Automatic deletion check: ${escapeActivityText(next)}`;
+      }
+    }else{
+      const serverStatus=document.getElementById('serverPolicyStatus');
+      if(serverStatus) serverStatus.innerHTML='<i class="fa-solid fa-server"></i> Server policy active • Upload activity will be recorded automatically.';
+    }
+
+    const collect=(snap)=>{
+      if(!snap?.exists())return;
+      snap.forEach(ch=>{
+        const v=ch.val()||{};
+        const owner=v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||'';
+        if(owner!==user.uid)return;
+        const t=Number(v.timestamp||v.createdAt||0);
+        if(!t)return;
+        const d=new Date(t);
+        if(Date.now()-t<=15*86400000)uploadActivityCache[activityDateKey(d)]=true;
+      });
+    };
+    try{collect(await get(ref(db,'news')));}catch(e){console.warn('News activity backfill skipped',e);}
+    try{collect(await get(ref(db,'blogs')));}catch(e){console.warn('Blog activity backfill skipped',e);}
+    try{collect(await get(query(ref(db,'books'),orderByChild('ownerUid'),equalTo(user.uid))));}catch(e){try{collect(await get(ref(db,'books')));}catch(_){console.warn('Book activity backfill skipped');}}
+    uploadActivityLoaded=true;
+    renderUploadActivity();
+  }catch(err){
+    console.error('Upload activity load error',err);
+    const serverStatus=document.getElementById('serverPolicyStatus');
+    if(serverStatus) serverStatus.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Unable to read activity status. Firebase Rules may need the adminActivity read permission.';
+    renderUploadActivity();
+  }finally{uploadActivityLoading=false;}
+}
+
 let homeUploadsLoaded = false;
 let homeUploadsLoading = false;
 let homeUploadsCache = [];
@@ -4501,7 +4641,7 @@ async function loadHomeUploads(force=false){
   if(navAvatar)navAvatar.src=profile.photo||DEFAULT_PROFILE_IMAGE;
 
   if(homeUploadsLoaded && !force){
-    renderHomeUploads(homeUploadsCache, countEl, box);
+    renderHomeUploads(homeUploadsCache, countEl, box, user.uid);
     return;
   }
   if(homeUploadsLoading)return;
@@ -4509,57 +4649,41 @@ async function loadHomeUploads(force=false){
   if(!homeUploadsLoaded) box.innerHTML='<div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading your uploads...</div>';
 
   try{
-    // HOME MUST SHOW EXISTING ADMIN-TEAM CONTENT even when the current admin
-    // has not uploaded anything. News and Blogs are publicly readable.
-    // Books are attempted as a complete collection first. If Firebase rules
-    // restrict a normal admin from reading all Books, fall back to that
-    // admin's own Books so the Home page still works.
-    const [newsSnap,blogSnap]=await Promise.all([
+    // News and Blogs are public-readable. Books use the owner query for normal admins
+    // because the Firebase Rules intentionally restrict /books reads.
+    const bookPromise = user.uid===COURSE_ONLY_ADMIN_UID
+      ? get(ref(db,"books"))
+      : get(query(ref(db,"books"), orderByChild("ownerUid"), equalTo(user.uid)));
+    const [newsSnap,blogSnap,booksSnap]=await Promise.all([
       get(ref(db,"news")),
-      get(ref(db,"blogs"))
+      get(ref(db,"blogs")),
+      bookPromise
     ]);
-
-    let booksSnap=null;
-    try{
-      booksSnap=await get(ref(db,"books"));
-    }catch(bookErr){
-      console.warn("All-books read restricted; loading current admin books instead.",bookErr);
-      try{
-        booksSnap=await get(query(ref(db,"books"), orderByChild("ownerUid"), equalTo(user.uid)));
-      }catch(_){
-        booksSnap=null;
-      }
-    }
-
     const uploads=[];
     const add=(snap,type,icon)=>{
       if(!snap || !snap.exists())return;
       snap.forEach(ch=>{
         const v=ch.val()||{};
+        const owner=v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||"";
+        // Home shows all already-uploaded content. We separately calculate
+        // the current admin's own uploads for the reminder message below.
         uploads.push({
-          id:ch.key,
-          type,
-          icon,
-          title:v.title||v.name||"Untitled",
+          id:ch.key,type,icon,title:v.title||v.name||"Untitled",
           image:v.image||v.thumb||v.ownerPhoto||DEFAULT_PROFILE_IMAGE,
-          link:v.link||v.pdf||v.fileLink||"",
-          timestamp:Number(v.timestamp||v.createdAt||0),
+          link:v.link||v.pdf||"",timestamp:Number(v.timestamp||v.createdAt||0),
           category:v.category||v.cat||v.branch||type,
-          ownerUid:v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||"",
+          ownerUid:owner,
           ownerName:v.authorName||v.ownerName||v.uploaderName||"Admin"
         });
       });
     };
-
-    // Do NOT filter by the currently logged-in admin here.
-    // This is the shared Home feed of already-uploaded content.
     add(newsSnap,"News","fa-newspaper");
     add(blogSnap,"Blog","fa-pen-nib");
     add(booksSnap,"Book","fa-book");
     uploads.sort((a,b)=>b.timestamp-a.timestamp);
     homeUploadsCache=uploads;
     homeUploadsLoaded=true;
-    renderHomeUploads(uploads,countEl,box);
+    renderHomeUploads(uploads,countEl,box,user.uid);
 
     // Rank is loaded separately so it can never delay the Home content.
     get(ref(db,"teamProfiles")).then(profilesSnap=>{
@@ -4582,10 +4706,38 @@ async function loadHomeUploads(force=false){
   }
 }
 
-function renderHomeUploads(uploads,countEl,box){
+function renderHomeUploads(uploads,countEl,box,currentUid){
   if(countEl)countEl.textContent=uploads.length+" upload"+(uploads.length===1?"":"s");
-  if(!uploads.length){box.innerHTML='<div class="home-empty">No uploaded content found yet.</div>';return;}
-  box.innerHTML=uploads.map(x=>`<article class="upload-card reveal"><div class="upload-card-cover"><img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div><div class="upload-card-body"><span class="upload-type"><i class="fa-solid ${x.icon}"></i> ${escapeHTML(x.type)}</span><h3 title="${escapeHTML(x.title)}">${escapeHTML(x.title)}</h3><p>${escapeHTML(x.category)}</p>${x.link?`<a href="${escapeHTML(x.link)}" target="_blank" rel="noopener">📂 Open <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:""}</div></article>`).join('');
+
+  const myUploads=uploads.filter(x=>x.ownerUid===currentUid);
+  const reminder=myUploads.length===0 ? `
+    <div class="home-upload-reminder">
+      <div class="home-upload-reminder-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="home-upload-reminder-content">
+        <strong>⚠️ Aapne abhi tak kuch upload nahi kiya hai</strong>
+        <p>News, Blog ya Book upload karo. Regular contribution rakho, warna aapki admin activity/rank par effect pad sakta hai.</p>
+        <div class="home-upload-reminder-actions">
+          <button type="button" onclick="showAdminMode('news')"><i class="fa-solid fa-newspaper"></i> Upload News</button>
+          <button type="button" onclick="showAdminMode('blog')"><i class="fa-solid fa-pen-nib"></i> Upload Blog</button>
+          <button type="button" onclick="showAdminMode('books')"><i class="fa-solid fa-book"></i> Upload Book</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  if(!uploads.length){
+    box.innerHTML=reminder || '<div class="home-empty">No uploaded content found yet.</div>';
+    return;
+  }
+
+  box.innerHTML=reminder + uploads.map(x=>`<article class="upload-card reveal">
+    <div class="upload-card-cover"><img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div>
+    <div class="upload-card-body">
+      <span class="upload-type"><i class="fa-solid ${x.icon}"></i> ${escapeHTML(x.type)}</span>
+      <h3 title="${escapeHTML(x.title)}">${escapeHTML(x.title)}</h3>
+      <p>${escapeHTML(x.category)}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:''}</p>
+      ${x.link?`<a href="${escapeHTML(x.link)}" target="_blank" rel="noopener">📂 Open <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:""}
+    </div>
+  </article>`).join('');
   initHomeReveal();
 }
 
@@ -4954,8 +5106,8 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
       const header=list.querySelector('div');
       if(header){
         const old=header.querySelector('h2');
-        if(old)old.innerHTML='<i class="fa-solid fa-pen-nib"></i> All Uploaded Blogs';
-        const note=document.createElement('span');note.className='admin-user-only-note';note.textContent='All blogs uploaded by the admin team are shown here.';header.appendChild(note);
+        if(old)old.innerHTML='<i class="fa-solid fa-pen-nib"></i> Your Uploaded Blogs';
+        const note=document.createElement('span');note.className='admin-user-only-note';note.textContent='Only blogs uploaded by your current admin account are shown.';header.appendChild(note);
         addCreateButton(header,'Create New',()=>showForm(editor));
       }
     }

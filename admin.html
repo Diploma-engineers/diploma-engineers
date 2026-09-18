@@ -4572,8 +4572,14 @@ async function loadUploadActivity(force=false){
   if(uploadActivityLoading)return;
   if(uploadActivityLoaded&&!force){renderUploadActivity();return;}
   uploadActivityLoading=true;
+  let serverActivityReadable=false;
   try{
+    // Refresh the Firebase ID token before reading the protected activity path.
+    // This prevents a stale auth session from being mistaken for a Rules error.
+    try{ await user.getIdToken(true); }catch(_){}
+
     const snap=await get(ref(db,`adminActivity/${user.uid}`));
+    serverActivityReadable=true;
     uploadActivityCache={};
     if(snap.exists()){
       const v=snap.val()||{};
@@ -4613,9 +4619,34 @@ async function loadUploadActivity(force=false){
     uploadActivityLoaded=true;
     renderUploadActivity();
   }catch(err){
-    console.error('Upload activity load error',err);
+    console.error('Upload activity server read error:',err);
+    // Do not leave the dashboard blank if the activity node is temporarily
+    // unreadable. Build a local activity view from the content records the
+    // current admin can already access. The Cloud Function remains authoritative
+    // for the actual 14-day deletion policy.
+    uploadActivityCache={};
+    const collectFallback=(snap)=>{
+      if(!snap?.exists())return;
+      snap.forEach(ch=>{
+        const v=ch.val()||{};
+        const owner=v.authorUid||v.ownerUid||v.uploaderUid||v.createdBy||'';
+        if(owner!==user.uid)return;
+        const t=Number(v.timestamp||v.createdAt||v.updatedAt||0);
+        if(!t)return;
+        const d=new Date(t);
+        if(Date.now()-t<=30*86400000)uploadActivityCache[activityDateKey(d)]=true;
+      });
+    };
+    try{collectFallback(await get(ref(db,'news')));}catch(e){console.warn('News fallback unavailable',e);}
+    try{collectFallback(await get(ref(db,'blogs')));}catch(e){console.warn('Blog fallback unavailable',e);}
+    try{collectFallback(await get(query(ref(db,'books'),orderByChild('ownerUid'),equalTo(user.uid))));}catch(e){
+      try{collectFallback(await get(ref(db,'books')));}catch(_){console.warn('Book fallback unavailable');}
+    }
+    uploadActivityLoaded=true;
     const serverStatus=document.getElementById('serverPolicyStatus');
-    if(serverStatus) serverStatus.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Unable to read activity status. Firebase Rules may need the adminActivity read permission.';
+    if(serverStatus){
+      serverStatus.innerHTML='<i class="fa-solid fa-circle-info"></i> Live server activity record is not readable yet. Dashboard is showing upload history from your content. Deploy the updated Realtime Database Rules to enable the server activity status.';
+    }
     renderUploadActivity();
   }finally{uploadActivityLoading=false;}
 }

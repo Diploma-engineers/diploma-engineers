@@ -3538,7 +3538,7 @@ function loadBlogs(){
             meta.innerHTML=`${escapeHTML(item.category||item.cat||"Education")} • <b>Uploaded by: ${escapeHTML(owner)}</b> • ${escapeHTML(when)}`;
             const excerpt=document.createElement("p"); excerpt.className="blog-admin-excerpt"; excerpt.textContent=item.text||item.desc||"";
             const actions=document.createElement("div"); actions.className="blog-actions";
-            const read=document.createElement("button"); read.className="blog-open"; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; read.onclick=()=>openAdminContentReader("Blog",item); actions.appendChild(read);
+            const read=document.createElement("button"); read.type="button"; read.className="blog-open"; read.dataset.adminRead='1'; read.dataset.adminReadType='Blog'; read.dataset.adminReadId=item.id; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; actions.appendChild(read);
             const ownUid=item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||item.uid||item.userId||item.userUid||item.adminUid||item.uploadedByUid||"";
             const canManage=isMasterAdmin() || (currentUid && ownUid===currentUid);
             if(canManage){
@@ -3610,9 +3610,12 @@ function loadNews() {
             links.className = "links";
 
             const readBtn = document.createElement("button");
+            readBtn.type = "button";
             readBtn.className = "secondary";
+            readBtn.dataset.adminRead='1';
+            readBtn.dataset.adminReadType='News';
+            readBtn.dataset.adminReadId=item.id;
             readBtn.innerHTML = '<i class="fa-solid fa-book-open"></i> Read';
-            readBtn.onclick = () => openAdminContentReader("News", item);
             links.appendChild(readBtn);
 
             if (item.pdf) {
@@ -3739,6 +3742,7 @@ function loadBooksTab() {
         });
 
         bookItems = allBooks;
+        window.__allBooksCache = allBooks;
         renderBookRows();
         bookMsg(`ALL BOOKS: ${bookItems.length} record(s) found in Firebase /books.`);
     }, error => {
@@ -3774,7 +3778,7 @@ function renderBookRows(){
             <td>${escapeHTML(category)}</td>
             <td>${escapeHTML(owner)}</td>
             <td>${escapeHTML(when)}</td>
-            <td>${pdf && pdf !== "#" ? `<a class="blog-open" href="${escapeHTML(pdf)}" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Open / Read</a>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
+            <td>${pdf && pdf !== "#" ? `<button type="button" class="blog-open" data-admin-read="1" data-admin-read-type="Book" data-admin-read-id="${escapeHTML(b.id)}"><i class="fa-solid fa-book-open"></i> Read</button>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
             <td class="book-actions-cell">
                 <div class="book-actions-wrap">
                 <button class="secondary" data-book-edit="${escapeHTML(b.id)}" ${canManage ? "" : "disabled title=\"No permission\""} style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:${canManage ? "pointer" : "not-allowed"};opacity:${canManage ? "1" : ".55"};">Edit</button>
@@ -5572,27 +5576,114 @@ i[class*="fa-"]{visibility:hidden!important;display:inline-flex!important;align-
 .admin-content-reader.open{display:flex}.admin-reader-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(5px)}
 .admin-reader-dialog{position:relative;width:min(900px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
 .admin-reader-close{position:absolute;right:14px;top:14px;width:38px;height:38px;border:0;border-radius:12px;background:#eff6ff;color:#2563eb;cursor:pointer;font-size:17px}
-.admin-reader-type{font-size:10px;font-weight:900;letter-spacing:.12em;color:#2563eb;text-transform:uppercase;margin-right:45px}.admin-reader-dialog h2{margin:7px 45px 8px 0;color:#0f172a;font-size:25px;line-height:1.25}.admin-reader-meta{font-size:12px;color:#64748b;margin-bottom:18px;padding-bottom:13px;border-bottom:1px solid #e2e8f0}.admin-reader-image{width:100%;max-height:360px;object-fit:cover;border-radius:15px;margin-bottom:18px}.admin-reader-body{font-size:15px;line-height:1.8;color:#334155;overflow-wrap:anywhere}.admin-reader-body h1,.admin-reader-body h2,.admin-reader-body h3{color:#0f172a;margin-top:20px}.admin-reader-body img{max-width:100%;height:auto;border-radius:12px}.admin-reader-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0}.admin-reader-actions a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;border-radius:10px;padding:9px 13px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800}.news-content .meta b,.blog-admin-meta b{font-weight:800;color:#334155}@media(max-width:650px){.admin-content-reader{padding:8px}.admin-reader-dialog{padding:17px;border-radius:18px;max-height:95vh}.admin-reader-dialog h2{font-size:20px}.admin-reader-body{font-size:14px}}
+.admin-reader-type{font-size:10px;font-weight:900;letter-spacing:.12em;color:#2563eb;text-transform:uppercase;margin-right:45px}.admin-reader-dialog h2{margin:7px 45px 8px 0;color:#0f172a;font-size:25px;line-height:1.25}.admin-reader-meta{font-size:12px;color:#64748b;margin-bottom:18px;padding-bottom:13px;border-bottom:1px solid #e2e8f0}.admin-reader-image{width:100%;max-height:360px;object-fit:cover;border-radius:15px;margin-bottom:18px}.admin-reader-body{font-size:15px;line-height:1.8;color:#334155;overflow-wrap:anywhere}.admin-reader-body h1,.admin-reader-body h2,.admin-reader-body h3{color:#0f172a;margin-top:20px}.admin-reader-body img{max-width:100%;height:auto;border-radius:12px}.admin-reader-pdf{width:100%;height:min(72vh,850px);border:1px solid #dbe3ef;border-radius:14px;background:#f8fafc}.admin-reader-pdf-loading{padding:20px;text-align:center;color:#64748b}.admin-reader-no-content{padding:25px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;text-align:center}.admin-reader-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0}.admin-reader-actions a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;border-radius:10px;padding:9px 13px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800}.news-content .meta b,.blog-admin-meta b{font-weight:800;color:#334155}@media(max-width:650px){.admin-content-reader{padding:8px}.admin-reader-dialog{padding:17px;border-radius:18px;max-height:95vh}.admin-reader-dialog h2{font-size:20px}.admin-reader-body{font-size:14px}}
 </style>
 <script>
 function openAdminContentReader(type,item){
-  const modal=document.getElementById('adminContentReader'); if(!modal)return;
-  const title=document.getElementById('adminReaderTitle'), meta=document.getElementById('adminReaderMeta'), img=document.getElementById('adminReaderImage'), body=document.getElementById('adminReaderBody'), actions=document.getElementById('adminReaderActions'), label=document.getElementById('adminReaderType');
-  const owner=item.authorName||item.ownerName||item.uploaderName||item.createdByName||item.displayName||item.name||item.authorEmail||item.ownerEmail||item.email||'Admin';
-  const when=item.date||fmt(item.timestamp||item.createdAt||item.updatedAt);
-  label.textContent=type; title.textContent=item.title||('Untitled '+type); meta.innerHTML=`<b>Uploaded by:</b> ${escapeHTML(owner)} &nbsp;•&nbsp; ${escapeHTML(when)}${item.category||item.cat?` &nbsp;•&nbsp; ${escapeHTML(item.category||item.cat)}`:''}`;
-  const image=item.thumb||item.image||item.thumbnail||'';
-  if(image){img.src=image;img.hidden=false;img.onerror=()=>{img.hidden=true}}else{img.hidden=true;img.removeAttribute('src')}
-  body.innerHTML=item.html||item.content||item.text||item.desc||'<p>No readable content is available for this record.</p>';
-  actions.innerHTML='';
-  const pdf=item.pdf||''; const link=item.link||'';
-  if(pdf){const a=document.createElement('a');a.href=pdf;a.target='_blank';a.rel='noopener';a.innerHTML='<i class="fa-solid fa-file-pdf"></i> Open File';actions.appendChild(a)}
-  if(link){const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';a.innerHTML='<i class="fa-solid fa-link"></i> External Link';actions.appendChild(a)}
-  modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+  try{
+    const modal=document.getElementById('adminContentReader');
+    if(!modal){ console.error('Reader modal not found'); alert('Reader could not open. Please refresh the page.'); return; }
+
+    const titleEl=document.getElementById('adminReaderTitle');
+    const metaEl=document.getElementById('adminReaderMeta');
+    const imgEl=document.getElementById('adminReaderImage');
+    const bodyEl=document.getElementById('adminReaderBody');
+    const actionsEl=document.getElementById('adminReaderActions');
+    const labelEl=document.getElementById('adminReaderType');
+
+    const data=item||{};
+    const owner=data.authorName||data.ownerName||data.uploaderName||data.createdByName||data.uploadedByName||data.displayName||data.authorEmail||data.ownerEmail||data.uploaderEmail||data.email||'Admin';
+    const when=data.date||data.uploadedAt||data.publishedAt||fmt(data.timestamp||data.createdAt||data.updatedAt);
+    const category=data.category||data.cat||data.branch||'';
+    const title=data.title||data.name||('Untitled '+String(type||'Content'));
+
+    if(labelEl) labelEl.textContent=String(type||'CONTENT').toUpperCase();
+    if(titleEl) titleEl.textContent=title;
+    if(metaEl) metaEl.innerHTML='<b>Uploaded by:</b> '+escapeHTML(owner)+' &nbsp;•&nbsp; '+escapeHTML(when)+(category?' &nbsp;•&nbsp; '+escapeHTML(category):'');
+
+    const image=data.thumb||data.image||data.thumbnail||data.thumbnailUrl||data.imageUrl||data.coverImage||data.cover||'';
+    if(imgEl){
+      imgEl.onerror=function(){this.hidden=true; this.removeAttribute('src');};
+      if(image){imgEl.src=image;imgEl.hidden=false;}else{imgEl.hidden=true;imgEl.removeAttribute('src');}
+    }
+
+    // Support the different field names used by old and new News/Blog/Book records.
+    const html=data.html||data.htmlCode||data.blogHtml||data.blogContent||data.contentHtml||data.content||data.body||data.newsText||data.newsContent||data.text||data.description||data.desc||'';
+    const pdf=data.pdf||data.pdfUrl||data.pdfLink||data.fileUrl||data.fileLink||data.documentUrl||'';
+    const external=data.link||data.url||data.externalLink||data.file||'';
+
+    if(bodyEl){
+      bodyEl.innerHTML='';
+      if(html && String(html).trim()){
+        const raw=String(html).trim();
+        // If the stored value contains HTML, render it. Plain text is shown safely.
+        if(/<\/?[a-z][\s\S]*>/i.test(raw)) bodyEl.innerHTML=raw;
+        else bodyEl.textContent=raw;
+      }else if(pdf){
+        bodyEl.innerHTML='<div class="admin-reader-pdf-loading">Opening PDF…</div><iframe class="admin-reader-pdf" title="PDF Reader" src="'+escapeHTML(pdf)+'"></iframe>';
+      }else if(external){
+        bodyEl.innerHTML='<div class="admin-reader-no-content">This record does not contain readable text. Use the button below to open the attached file/link.</div>';
+      }else{
+        bodyEl.innerHTML='<div class="admin-reader-no-content">No readable content is available for this record.</div>';
+      }
+    }
+
+    if(actionsEl){
+      actionsEl.innerHTML='';
+      if(pdf){
+        const a=document.createElement('a');
+        a.href=pdf; a.target='_blank'; a.rel='noopener noreferrer';
+        a.innerHTML='<i class="fa-solid fa-file-pdf"></i> Open PDF';
+        actionsEl.appendChild(a);
+      }
+      if(external && external!==pdf){
+        const a=document.createElement('a');
+        a.href=external; a.target='_blank'; a.rel='noopener noreferrer';
+        a.innerHTML='<i class="fa-solid fa-link"></i> Open Link';
+        actionsEl.appendChild(a);
+      }
+    }
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  }catch(err){
+    console.error('Reader open error:',err,item);
+    alert('Unable to open this content: '+(err.message||err));
+  }
 }
-function closeAdminContentReader(){const modal=document.getElementById('adminContentReader');if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
-document.getElementById('adminReaderClose')?.addEventListener('click',closeAdminContentReader);document.querySelector('#adminContentReader .admin-reader-backdrop')?.addEventListener('click',closeAdminContentReader);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentReader()});
-</script>
+window.openAdminContentReader=openAdminContentReader;
+
+function closeAdminContentReader(){
+  const modal=document.getElementById('adminContentReader');
+  if(!modal)return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  const body=document.getElementById('adminReaderBody');
+  if(body) body.innerHTML='';
+  document.body.style.overflow='';
+}
+window.closeAdminContentReader=closeAdminContentReader;
+
+document.addEventListener('click',function(e){
+  const readBtn=e.target.closest?.('[data-admin-read]');
+  if(readBtn){
+    e.preventDefault();
+    const type=readBtn.dataset.adminReadType||'Content';
+    const id=readBtn.dataset.adminReadId||'';
+    const cache=type.toLowerCase()==='blog'?(window.__allBlogsCache||[]):type.toLowerCase()==='news'?(window.__adminNewsCache||[]):(window.__allBooksCache||[]);
+    const item=cache.find(x=>String(x.id)===String(id));
+    if(item) openAdminContentReader(type,item);
+    else if(readBtn.dataset.adminReadJson){
+      try{openAdminContentReader(type,JSON.parse(readBtn.dataset.adminReadJson));}catch(_){alert('Content data could not be read.');}
+    }else alert('Content data not found. Please refresh the page.');
+  }
+});
+
+document.getElementById('adminReaderClose')?.addEventListener('click',closeAdminContentReader);
+document.querySelector('#adminContentReader .admin-reader-backdrop')?.addEventListener('click',closeAdminContentReader);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentReader()});
+
 </body>
 
 <style id="profile-full-width-final">

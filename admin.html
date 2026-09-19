@@ -6844,6 +6844,7 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 .de-cert-logo-native{display:block;opacity:1}
 /* Browser preview uses the original logo image. The PDF uses a self-contained logo mark so cross-origin image/CORS cannot make the logo disappear. */
 .de-cert-pdf-logo{display:none;position:absolute;top:8mm;left:13mm;width:66mm;height:27mm;z-index:6;align-items:center;gap:3.2mm;background:#fff!important;color:#122f5b;font-family:Poppins,Arial,sans-serif;font-weight:700;font-size:5.1mm;letter-spacing:-.12mm;white-space:nowrap}
+.de-cert-pdf-logo-svg{display:block;width:66mm;height:27mm;max-width:none;overflow:visible;background:#fff}
 .de-cert-pdf-logo .pdf-logo-mark{width:18mm;height:18mm;position:relative;flex:0 0 18mm;display:block}
 .de-cert-pdf-logo .pdf-logo-mark:before,.de-cert-pdf-logo .pdf-logo-mark:after{content:"";position:absolute;transform:rotate(45deg);border:1mm solid #b38a3c;box-sizing:border-box}
 .de-cert-pdf-logo .pdf-logo-mark:before{width:13mm;height:13mm;left:2.5mm;top:2.5mm}
@@ -6869,7 +6870,8 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 /* PDF DOWNLOAD CLEAN MODE: preview/date/footer text is UI-only and is never rasterized into the downloaded PDF. */
 .de-certificate.de-pdf-clean .de-cert-issued,
 .de-certificate.de-pdf-clean .de-cert-footer,
-.de-certificate.de-pdf-clean .de-cert-preview-tag{display:none!important;}
+.de-certificate.de-pdf-clean .de-cert-preview-tag,
+.de-certificate.de-pdf-clean .de-cert-logo-native{display:none!important;}
 .de-certificate.de-pdf-clean .de-cert-logo{display:none!important;}
 .de-certificate.de-pdf-clean .de-cert-pdf-logo{display:flex!important;}
 .de-certificate.de-pdf-clean .de-cert-sign .de-signature-name{font-family:'Great Vibes','Segoe Script','Brush Script MT',cursive!important;font-weight:400!important;font-size:8.8mm!important;}
@@ -6909,7 +6911,16 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     <div class="de-certificate" id="deCertificate">
       <div class="de-corner tl"></div><div class="de-corner tr"></div><div class="de-corner bl"></div><div class="de-corner br"></div>
       <img class="de-cert-logo de-cert-logo-native" crossorigin="anonymous" aria-label="Diploma Engineers logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/09/img_20260919_0921106379349376620838767.jpg" alt="Diploma Engineers">
-      <div class="de-cert-pdf-logo" aria-hidden="true"><span class="pdf-logo-mark"></span><span class="pdf-logo-text">Diploma Engineers<span>THE STUDENTS' TRUSTED LEARNING PLATFORM</span></span></div>
+      <div class="de-cert-pdf-logo" aria-hidden="true">
+        <svg class="de-cert-pdf-logo-svg" viewBox="0 0 520 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diploma Engineers">
+          <rect x="2" y="2" width="146" height="146" rx="26" fill="#ffffff"/>
+          <path d="M75 18 L130 73 L75 128 L20 73 Z" fill="none" stroke="#b38a3c" stroke-width="8"/>
+          <path d="M75 38 L110 73 L75 108 L40 73 Z" fill="none" stroke="#152f55" stroke-width="6"/>
+          <path d="M58 73h34M75 56v34" stroke="#b38a3c" stroke-width="5" stroke-linecap="round"/>
+          <text x="170" y="72" font-family="Poppins, Arial, sans-serif" font-size="39" font-weight="800" fill="#122f5b">Diploma Engineers</text>
+          <text x="171" y="105" font-family="Poppins, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="4" fill="#b38a3c">THE STUDENTS' TRUSTED LEARNING PLATFORM</text>
+        </svg>
+      </div>
       <div class="de-cert-id" id="deCertificateId">Certificate ID: 22070001</div><div class="de-cert-preview-tag" id="deCertificatePreviewTag"></div>
       <div class="de-cert-title">Certificate of Achievement</div>
       <div class="de-cert-sub">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
@@ -7058,64 +7069,98 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   async function downloadCertificatePDF(){
     const record=selectedCertificateRecord||seedCurrentRecord()||{};
     fillCertificate(record);
-    const el=$('deCertificate');
-    if(!el)return;
+
+    const source=$('deCertificate');
+    if(!source)return;
+
     if(!window.html2canvas||!window.jspdf?.jsPDF){
       alert('PDF library is still loading. Please wait a moment and try Download Certificate again.');
       return;
     }
 
-    const previousClean=el.classList.contains('de-pdf-clean');
-    el.classList.add('de-pdf-clean');
+    let pdfStage=null;
 
     try{
       if(document.fonts?.ready) await document.fonts.ready;
-      /*
-       * PDF mode deliberately does NOT depend on the remote WordPress logo.
-       * The preview keeps the original image, while the cloned PDF uses the
-       * self-contained CSS Diploma Engineers logo above. This avoids the
-       * cross-origin/CORS problem that caused the logo to disappear in PDFs.
-       */
-      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 
-      const canvas=await html2canvas(el,{
+      /*
+       * IMPORTANT:
+       * The PDF is rendered from a completely isolated clone.
+       * Therefore no preview-only item can accidentally enter the PDF,
+       * and the remote WordPress logo is never handed to html2canvas.
+       */
+      pdfStage=source.cloneNode(true);
+      pdfStage.id='deCertificatePDFStage';
+      pdfStage.classList.add('de-pdf-clean');
+
+      Object.assign(pdfStage.style,{
+        position:'fixed',
+        left:'-10000px',
+        top:'0',
+        width:'297mm',
+        height:'210mm',
+        margin:'0',
+        transform:'none',
+        display:'block',
+        visibility:'visible',
+        opacity:'1',
+        zIndex:'-1',
+        overflow:'hidden',
+        background:'#fff'
+      });
+
+      /* Remove every UI/preview-only element from the PDF clone. */
+      pdfStage.querySelectorAll(
+        '.de-cert-issued,.de-cert-footer,.de-cert-preview-tag,.de-cert-logo-native'
+      ).forEach(node=>node.remove());
+
+      /* Make absolutely sure the self-contained logo is visible. */
+      const pdfLogo=pdfStage.querySelector('.de-cert-pdf-logo');
+      if(pdfLogo){
+        pdfLogo.style.display='flex';
+        pdfLogo.style.visibility='visible';
+        pdfLogo.style.opacity='1';
+      }
+
+      document.body.appendChild(pdfStage);
+
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+      const canvas=await html2canvas(pdfStage,{
         scale:4,
         useCORS:false,
         allowTaint:false,
         backgroundColor:'#ffffff',
         logging:false,
-        imageTimeout:5000,
+        imageTimeout:0,
         removeContainer:true,
-        foreignObjectRendering:false,
-        onclone:(clonedDoc)=>{
-          const cloned=clonedDoc.getElementById('deCertificate');
-          if(cloned) cloned.classList.add('de-pdf-clean');
-          const clonedLogo=cloned?.querySelector('.de-cert-logo');
-          if(clonedLogo){
-            clonedLogo.style.display='none';
-            clonedLogo.removeAttribute('src');
-          }
-          const pdfLogo=cloned?.querySelector('.de-cert-pdf-logo');
-          if(pdfLogo){
-            pdfLogo.style.display='flex';
-            pdfLogo.style.visibility='visible';
-            pdfLogo.style.opacity='1';
-          }
-        }
+        foreignObjectRendering:false
       });
 
       const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+      const pdf=new jsPDF({
+        orientation:'landscape',
+        unit:'mm',
+        format:'a4',
+        compress:true
+      });
+
       pdf.setFillColor(255,255,255);
       pdf.rect(0,0,297,210,'F');
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.98),'JPEG',0,0,297,210,undefined,'FAST');
-      const id=String($('deCertificateId')?.textContent||'DE-CERT').replace(/[^A-Za-z0-9_-]+/g,'_');
+
+      const imageData=canvas.toDataURL('image/jpeg',0.98);
+      pdf.addImage(imageData,'JPEG',0,0,297,210,undefined,'FAST');
+
+      const id=String($('deCertificateId')?.textContent||'DE-CERTIFICATE')
+        .replace(/[^A-Za-z0-9_-]+/g,'_');
+
       pdf.save(id+'.pdf');
+
     }catch(err){
       console.error('Certificate PDF generation failed:',err);
-      alert('PDF could not be generated. Please check that html2canvas and jsPDF are loaded, then try again.');
+      alert('PDF could not be generated. Please try again after the certificate preview is fully loaded.');
     }finally{
-      if(!previousClean) el.classList.remove('de-pdf-clean');
+      if(pdfStage?.parentNode) pdfStage.parentNode.removeChild(pdfStage);
     }
   }
   function openCertificateCard(record){

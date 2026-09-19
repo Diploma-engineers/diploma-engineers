@@ -1559,6 +1559,36 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
 </head>
 
 <body>
+<!-- BOOT SAFETY: keeps the admin login usable even if a remote module/CDN is slow or fails. -->
+<script>
+(function(){
+  var started=Date.now();
+  function revealLogin(reason){
+    try{
+      var loader=document.getElementById('page-loader');
+      var login=document.getElementById('loginPage');
+      var panel=document.getElementById('adminPanel');
+      if(loader){loader.classList.add('hide');loader.style.pointerEvents='none';}
+      if(login && (!panel || panel.style.display!=='block')) login.style.display='flex';
+      document.body.style.overflow='';
+      if(reason){
+        var e=document.getElementById('error');
+        if(e && !e.textContent.trim()) e.textContent='Admin panel is ready. If login does not respond, refresh once.';
+      }
+    }catch(_){ }
+  }
+  window.addEventListener('error',function(ev){
+    // Do not hide useful Firebase errors; only recover the visual boot screen.
+    if(Date.now()-started<15000) revealLogin(false);
+  });
+  window.addEventListener('unhandledrejection',function(){
+    if(Date.now()-started<15000) revealLogin(false);
+  });
+  setTimeout(function(){revealLogin(true);},2500);
+  window.__revealAdminLogin=revealLogin;
+})();
+</script>
+
 
 <!-- ================= LOADER ================= -->
 <div id="page-loader">
@@ -1591,7 +1621,7 @@ html, body, #adminPanel, #mobileBottomNav, #mobileBottomNav * {
      LOGIN
 ========================= -->
 
-<div id="loginPage">
+<div id="loginPage" style="display:flex;">
     <div class="login-box">
         <img class="logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers">
         <h2>Admin Login</h2>
@@ -2943,7 +2973,7 @@ profileSave.addEventListener("click",async()=>{
 });
 
 /* ADMIN_LOADER_FALLBACK */
-setTimeout(()=>{ if(pageLoader && !pageLoader.classList.contains("hide")){ pageLoader.classList.add("hide"); document.body.style.overflow=""; } }, 3000);
+setTimeout(()=>{ if(pageLoader && !pageLoader.classList.contains("hide")){ pageLoader.classList.add("hide"); document.body.style.overflow=""; } }, 2200);
 
 /* =====================================================
    SINGLE LOGIN FOR NEWS + COURSE ADMIN
@@ -5198,9 +5228,29 @@ async function getShareIdentity(uid,profile){
 </nav>
 
 <script>
-/* Bind bottom app navigation after the nav exists */
-document.querySelectorAll('#mobileBottomNav [data-app-target]').forEach(btn=>btn.addEventListener('click',()=>appGo(btn.dataset.appTarget)));
-document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('profile'));
+/* Bind bottom app navigation after the nav exists. The module defining appGo may
+   execute after classic scripts, so bind on DOM ready and resolve the function lazily. */
+(function(){
+  function bindBottomNav(){
+    document.querySelectorAll('#mobileBottomNav [data-app-target]').forEach(function(btn){
+      if(btn.dataset.bound) return;
+      btn.dataset.bound='1';
+      btn.addEventListener('click',function(){
+        if(typeof window.appGo==='function') window.appGo(btn.dataset.appTarget);
+      });
+    });
+    var p=document.getElementById('mobileProfile');
+    if(p && !p.dataset.bound){
+      p.dataset.bound='1';
+      p.addEventListener('click',function(){
+        if(typeof window.appGo==='function') window.appGo('profile');
+      });
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindBottomNav);
+  else bindBottomNav();
+  setTimeout(bindBottomNav,1000);
+})();
 </script>
 
 <script>
@@ -5979,6 +6029,19 @@ document.getElementById('adminReaderClose')?.addEventListener('click',closeAdmin
 document.querySelector('#adminContentReader .admin-reader-backdrop')?.addEventListener('click',closeAdminContentReader);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentReader()});
 
+</script>
+
+<script>
+(function(){
+  function localFileHint(){
+    if(location.protocol!=='file:') return;
+    var box=document.getElementById('error');
+    if(box && !box.textContent.trim()){
+      box.textContent='Local file mode: Firebase requires an internet connection. If login fails from file://, open this HTML through your website/localhost.';
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',localFileHint); else localFileHint();
+})();
 </script>
 </body>
 

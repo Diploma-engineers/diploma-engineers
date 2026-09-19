@@ -927,6 +927,44 @@ input, textarea, select, [contenteditable="true"] {
   user-select: text !important;
 }
 img { -webkit-user-drag: none !important; user-drag: none !important; }
+
+/* Certificate: signatures/names removed */
+.de-certificate .de-cert-signature,
+.de-certificate .de-cert-signature-block,
+.de-certificate .de-cert-signature-name,
+.de-certificate .de-cert-signature-role,
+.de-certificate .de-cert-signature-title{
+  display:none!important;
+}
+
+
+/* PDF: force complete certificate background to pure white */
+.de-certificate.de-pdf-clean,
+#deCertificatePDFStage.de-certificate {
+  background: #ffffff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.de-certificate.de-pdf-clean::before,
+.de-certificate.de-pdf-clean::after,
+#deCertificatePDFStage.de-certificate::before,
+#deCertificatePDFStage.de-certificate::after {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+.de-certificate.de-pdf-clean .de-cert-inner,
+#deCertificatePDFStage .de-cert-inner {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+
+/* Updated certificate logo */
+.de-cert-logo-updated{display:block!important;width:66mm!important;height:27mm!important;object-fit:contain!important;object-position:left center!important;background:#fff!important;border:0!important;box-shadow:none!important;max-width:none!important;}
+.de-certificate .de-cert-main-logo .de-cert-logo-updated{width:66mm!important;height:27mm!important;}
+
 </style>
 
 
@@ -6867,6 +6905,38 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 .de-cert-footer{text-align:center;position:absolute;bottom:2.8mm;left:0;right:0;font-size:2.55mm;color:#26364e;letter-spacing:.15mm;z-index:4}.de-cert-id{position:absolute;top:10.5mm;right:16mm;font-size:4.05mm;color:#102447;font-weight:800;z-index:5}.de-cert-preview-tag{position:absolute;top:15.5mm;right:16mm;font-size:2.65mm;color:#b07f21;font-weight:800;z-index:5}
 @media(max-width:700px){.de-activity-stats{grid-template-columns:repeat(2,1fr)}.de-activity-panel{max-height:95vh;border-radius:18px}.de-certificate-wrap{width:100%;overflow:auto;padding:8px}.de-certificate{transform-origin:top left}.de-certificate-modal{align-items:flex-start}}
 @media print{body *{visibility:hidden!important}.de-certificate-modal,.de-certificate-modal *{visibility:visible!important}.de-certificate-modal{position:static!important;display:block!important;background:#fff!important;padding:0!important}.de-certificate-wrap{width:297mm!important;max-height:none!important;overflow:visible!important;padding:0!important;box-shadow:none!important;border:0!important}.de-certificate-toolbar{display:none!important}.de-certificate{display:block!important;margin:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}@page{size:297mm 210mm landscape;margin:0}}
+
+/* FINAL CERTIFICATE CLEANUP
+   - No signature names
+   - No founder/co-founder signature blocks
+   - No generated/issued date footer
+   - Embedded logo is used in both preview and PDF
+*/
+.de-certificate .de-cert-main-logo{
+  display:flex!important;
+  position:absolute!important;
+  top:8mm!important;
+  left:13mm!important;
+  width:66mm!important;
+  height:27mm!important;
+  align-items:center!important;
+  z-index:6!important;
+  background:#fff!important;
+}
+.de-certificate .de-cert-main-logo .de-cert-pdf-logo-svg{
+  display:block!important;
+  width:66mm!important;
+  height:27mm!important;
+}
+.de-certificate .de-cert-sign,
+.de-certificate .de-cert-issued,
+.de-certificate .de-cert-footer{
+  display:none!important;
+}
+.de-certificate.de-pdf-clean .de-cert-main-logo{
+  display:flex!important;
+}
+
 /* PDF DOWNLOAD CLEAN MODE: preview/date/footer text is UI-only and is never rasterized into the downloaded PDF. */
 .de-certificate.de-pdf-clean .de-cert-issued,
 .de-certificate.de-pdf-clean .de-cert-footer,
@@ -6902,6 +6972,74 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   </div>
 </div>
 
+
+<style id="CERTIFICATE_SIGNATORY_BLOCKS_V1">
+/* ===== CERTIFICATE SIGNATURE BLOCKS =====
+   Layout: stylish signature (top) -> normal name (middle) -> role (bottom)
+   Both preview and generated PDF retain these blocks.
+*/
+.de-certificate .de-cert-signatories{
+  position:absolute!important;
+  bottom:9.5mm!important;
+  width:62mm!important;
+  min-height:28mm!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  z-index:8!important;
+  text-align:center!important;
+}
+.de-certificate .de-cert-signatories.left{left:16mm!important;}
+.de-certificate .de-cert-signatories.right{right:16mm!important;}
+
+.de-certificate .de-cert-signature-text{
+  display:block!important;
+  margin:0 0 1.2mm!important;
+  padding:0!important;
+  font-family:'Great Vibes','Brush Script MT','Segoe Script',cursive!important;
+  font-size:8.5mm!important;
+  line-height:.9!important;
+  font-weight:400!important;
+  color:#122f5b!important;
+  white-space:nowrap!important;
+}
+.de-certificate .de-cert-person-name{
+  display:block!important;
+  margin:0 0 1.2mm!important;
+  padding:0!important;
+  font-family:Poppins,Arial,sans-serif!important;
+  font-size:3.45mm!important;
+  line-height:1.15!important;
+  font-weight:600!important;
+  color:#152f55!important;
+  white-space:nowrap!important;
+}
+.de-certificate .de-cert-person-role{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  font-family:Poppins,Arial,sans-serif!important;
+  font-size:3.05mm!important;
+  line-height:1.15!important;
+  font-weight:500!important;
+  color:#111827!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:700px){
+  .de-certificate .de-cert-signatories{
+    bottom:9mm!important;
+    width:58mm!important;
+  }
+  .de-certificate .de-cert-signatories.left{left:12mm!important;}
+  .de-certificate .de-cert-signatories.right{right:12mm!important;}
+  .de-certificate .de-cert-signature-text{font-size:7.8mm!important;}
+  .de-certificate .de-cert-person-name{font-size:3.2mm!important;}
+  .de-certificate .de-cert-person-role{font-size:2.9mm!important;}
+}
+</style>
+
 <div class="de-certificate-modal" id="deCertificateModal" aria-hidden="true">
   <div class="de-certificate-wrap">
     <div class="de-certificate-toolbar">
@@ -6910,16 +7048,8 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     </div>
     <div class="de-certificate" id="deCertificate">
       <div class="de-corner tl"></div><div class="de-corner tr"></div><div class="de-corner bl"></div><div class="de-corner br"></div>
-      <img class="de-cert-logo de-cert-logo-native" crossorigin="anonymous" aria-label="Diploma Engineers logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/09/img_20260919_0921106379349376620838767.jpg" alt="Diploma Engineers">
-      <div class="de-cert-pdf-logo" aria-hidden="true">
-        <svg class="de-cert-pdf-logo-svg" viewBox="0 0 520 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diploma Engineers">
-          <rect x="2" y="2" width="146" height="146" rx="26" fill="#ffffff"/>
-          <path d="M75 18 L130 73 L75 128 L20 73 Z" fill="none" stroke="#b38a3c" stroke-width="8"/>
-          <path d="M75 38 L110 73 L75 108 L40 73 Z" fill="none" stroke="#152f55" stroke-width="6"/>
-          <path d="M58 73h34M75 56v34" stroke="#b38a3c" stroke-width="5" stroke-linecap="round"/>
-          <text x="170" y="72" font-family="Poppins, Arial, sans-serif" font-size="39" font-weight="800" fill="#122f5b">Diploma Engineers</text>
-          <text x="171" y="105" font-family="Poppins, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="4" fill="#b38a3c">THE STUDENTS' TRUSTED LEARNING PLATFORM</text>
-        </svg>
+      <div class="de-cert-pdf-logo de-cert-main-logo" aria-hidden="true">
+        <img class="de-cert-logo-updated" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/09/file_00000000c6b48211b297bb25f6257b5e8831109986478755794.png" alt="Diploma Engineers Logo" crossorigin="anonymous">
       </div>
       <div class="de-cert-id" id="deCertificateId">Certificate ID: 22070001</div><div class="de-cert-preview-tag" id="deCertificatePreviewTag"></div>
       <div class="de-cert-title">Certificate of Achievement</div>
@@ -6933,15 +7063,17 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
       <div class="de-cert-body">
         <strong>Diploma Engineers</strong> highly appreciates <strong id="deCertificateBodyName">the Campus Admin</strong> for outstanding leadership and significant contribution in delivering academic &amp; career updates, providing study materials, strengthening student community and supporting students. This certificate is awarded in recognition of his dedication and leadership.
       </div>
-      <div class="de-cert-sign left" data-signature="Mukesh Singh">
-        <b class="de-signature-name">Er. Mukesh Singh</b><small>Co-founder</small>
+      <div class="de-cert-signatories left" aria-label="Co-founder signature">
+        <h1 class="de-cert-signature-text">Mukesh Singh</h1>
+        <h3 class="de-cert-person-name">Er. Mukesh Singh</h3>
+        <div class="de-cert-person-role">Co-founder</div>
       </div>
-      <div class="de-cert-sign right" data-signature="Anubhav Gangwar">
-        <b class="de-signature-name">Er. Anubhav Gangwar</b><small>Founder</small>
+      <div class="de-cert-signatories right" aria-label="Founder signature">
+        <h1 class="de-cert-signature-text">Anubhav Gangwar</h1>
+        <h3 class="de-cert-person-name">Er. Anubhav Gangwar</h3>
+        <div class="de-cert-person-role">Founder</div>
       </div>
-      <div class="de-cert-issued"><b id="deCertificateIssueDate">Issued Date</b><span id="deCertificateIssueLabel">Issued on • Diploma Engineers • Authorized Certificate</span></div>
-      <div class="de-cert-footer">The Students' Trusted Learning Platform • Diploma Engineers</div>
-    </div>
+</div>
   </div>
 </div>
 
@@ -7029,7 +7161,8 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     $('deCertificateName').textContent=name;$('deCertificateBodyName').textContent=name;$('deCertificateBranch').textContent=p.branch||'-';$('deCertificateCollege').textContent=p.collegeName||p.college||'-';
     $('deCertificateAdminNo').textContent=adminNo;
     $('deCertificateUploads').textContent=Number(r?.uploads||0);$('deCertificateServiceDays').textContent=days;
-    $('deCertificateIssueDate').textContent=formatDate(Date.now());$('deCertificateId').textContent='Certificate ID: '+adminNo; 
+    $('deCertificateId').textContent='Certificate ID: '+adminNo;
+    if($('deCertificatePreviewTag')) $('deCertificatePreviewTag').textContent=tier>0?'':'FOUNDER PREVIEW • '+days+' DAYS';
   }
   function openCertificate(){
     const r=selectedCertificateRecord||seedCurrentRecord()||{};
@@ -7109,7 +7242,7 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 
       /* Remove every UI/preview-only element from the PDF clone. */
       pdfStage.querySelectorAll(
-        '.de-cert-issued,.de-cert-footer,.de-cert-preview-tag,.de-cert-logo-native'
+        '.de-cert-issued,.de-cert-footer,.de-cert-preview-tag,.de-cert-logo-native,.de-cert-sign'
       ).forEach(node=>node.remove());
 
       /* Make absolutely sure the self-contained logo is visible. */
@@ -7126,11 +7259,11 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 
       const canvas=await html2canvas(pdfStage,{
         scale:4,
-        useCORS:false,
+        useCORS:true,
         allowTaint:false,
         backgroundColor:'#ffffff',
         logging:false,
-        imageTimeout:0,
+        imageTimeout:15000,
         removeContainer:true,
         foreignObjectRendering:false
       });

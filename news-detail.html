@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0f2f63">
 <title>News Details | Diploma Engineers</title>
+<meta name="description" id="metaDescription" content="Diploma Engineers News">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Diploma Engineers">
+<meta property="og:title" id="ogTitle" content="Diploma Engineers News">
+<meta property="og:description" id="ogDescription" content="Diploma Engineers News">
+<meta property="og:image" id="ogImage" content="">
+<meta property="og:url" id="ogUrl" content="">
+<meta property="og:image:alt" id="ogImageAlt" content="Diploma Engineers News">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" id="twitterTitle" content="Diploma Engineers News">
+<meta name="twitter:description" id="twitterDescription" content="Diploma Engineers News">
+<meta name="twitter:image" id="twitterImage" content="">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -125,7 +137,7 @@ function getShareURL(){
  return id ? new URL("/share/news?id="+encodeURIComponent(id),location.origin).href : location.href;
 }
 function showToast(t){const o=document.getElementById("shareToast");if(o)o.remove();const b=document.createElement("div");b.id="shareToast";b.textContent=t;b.style.cssText="position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:999px;font:600 12px Poppins;z-index:999999";document.body.appendChild(b);setTimeout(()=>b.remove(),1600)}
-window.shareWhatsApp=()=>{const n=window.__currentNews||{};window.open("https://wa.me/?text="+encodeURIComponent((n.title||"News")+"\n\n"+getShareURL()),"_blank","noopener,noreferrer")};
+window.shareWhatsApp=()=>{const n=window.__currentNews||{};window.open("https://wa.me/?text="+encodeURIComponent((n.title||"News")+"\\n\\n"+getShareURL()),"_blank","noopener,noreferrer")};
 window.shareTelegram=()=>{const n=window.__currentNews||{};window.open("https://t.me/share/url?url="+encodeURIComponent(getShareURL())+"&text="+encodeURIComponent(n.title||"News"),"_blank","noopener,noreferrer")};
 window.copyNewsLink=async()=>{const u=getShareURL();try{await navigator.clipboard.writeText(u);showToast("Share Link Copied!")}catch{const t=document.createElement("textarea");t.value=u;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();showToast("Share Link Copied!")}};
 const id=new URLSearchParams(location.search).get("id");
@@ -133,6 +145,20 @@ if(!id){root.innerHTML='<div class="error-box"><h3>News not found</h3></div>'}
 else get(ref(db,"news/"+id)).then(s=>{
  if(!s.exists()){root.innerHTML='<div class="error-box"><h3>News not found</h3></div>';return}
  const n=s.val()||{};window.__currentNews=n;
+ const shareUrl=new URL("/news-detail.html?id="+encodeURIComponent(id),location.origin).href;
+ const metaTitle=n.title||"Diploma Engineers News";
+ const metaDescription=(n.text||n.desc||n.description||"").replace(/\\s+/g," ").trim().slice(0,300);
+ const metaImage=n.thumb||n.image||n.thumbnail||"";
+ document.getElementById("ogTitle").setAttribute("content",metaTitle);
+ document.getElementById("ogDescription").setAttribute("content",metaDescription);
+ document.getElementById("ogUrl").setAttribute("content",shareUrl);
+ document.getElementById("ogImage").setAttribute("content",metaImage);
+ document.getElementById("ogImageAlt").setAttribute("content",metaTitle);
+ document.getElementById("twitterTitle").setAttribute("content",metaTitle);
+ document.getElementById("twitterDescription").setAttribute("content",metaDescription);
+ document.getElementById("twitterImage").setAttribute("content",metaImage);
+ document.getElementById("metaDescription").setAttribute("content",metaDescription);
+ document.getElementById("twitterImage").setAttribute("content",metaImage);
  const title=n.title||"Untitled News",category=n.cat||n.category||"NOTIFICATION",date=n.date||formatTimestamp(n.timestamp)||"Recent";
  const description=n.text||n.desc||n.description||"",about=n.html?sanitizeHTML(n.html):`<p>${esc(description).replace(/\n/g,"<br>")}</p>`;
  const image=n.thumb||n.image||n.thumbnail||"",author=n.authorName||n.ownerName||"Admin",designation=n.designation||n.ownerDesignation||"ADMIN";

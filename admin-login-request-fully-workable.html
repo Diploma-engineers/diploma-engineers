@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f2f63">
+<title>Admin Login | Diploma Engineers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+*{box-sizing:border-box}
+:root{--blue:#0f2f63;--blue2:#2563eb;--text:#172033;--muted:#667085;--line:#e5e7eb;--bg:#f6f8fc}
+body{margin:0;font-family:Inter,Arial,sans-serif;color:var(--text);background:linear-gradient(135deg,#f8fbff,#eef4ff);min-height:100vh}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-wrap{width:min(430px,100%)}
+.brand{text-align:center;margin-bottom:22px}
+.logo{width:68px;height:68px;border-radius:20px;margin:auto;display:grid;place-items:center;background:linear-gradient(135deg,#0f2f63,#2563eb);color:white;font-size:28px;box-shadow:0 16px 35px #0f2f6328}
+.brand h1{font-family:Poppins;margin:14px 0 4px;font-size:24px}.brand p{margin:0;color:var(--muted);font-size:13px}
+.card{background:#fff;border:1px solid #e9edf5;border-radius:24px;padding:26px;box-shadow:0 20px 60px #14213d14}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#f2f5fa;padding:4px;border-radius:13px;margin-bottom:22px}
+.tab{border:0;background:transparent;padding:11px;border-radius:10px;font-weight:700;color:#697386}.tab.active{background:#fff;color:var(--blue);box-shadow:0 4px 14px #14213d12}
+.form{display:none}.form.active{display:block}
+.field{margin:0 0 15px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
+.input-wrap{position:relative}.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#98a2b3}.input-wrap input{padding-left:42px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 13px;outline:none;background:#fff;color:var(--text);transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:#7aa2ff;box-shadow:0 0 0 4px #2563eb12}
+.primary{width:100%;border:0;border-radius:12px;padding:13px;background:linear-gradient(135deg,#0f2f63,#2563eb);color:#fff;font-weight:800}
+.google{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;font-weight:700;color:#263143}
+.request-btn{width:100%;margin-top:14px;border:1px solid #cbd8f3;background:#f5f8ff;color:var(--blue);border-radius:12px;padding:12px;font-weight:800}
+.note{text-align:center;color:#98a2b3;font-size:12px;margin-top:16px;line-height:1.5}
+.status{margin:12px 0 0;padding:10px;border-radius:10px;font-size:13px;display:none}.status.show{display:block}.status.ok{background:#ecfdf3;color:#067647}.status.err{background:#fef3f2;color:#b42318}
+.overlay{position:fixed;inset:0;background:#07152bcc;display:none;align-items:center;justify-content:center;padding:14px;z-index:1000}
+.overlay.show{display:flex}
+.modal{width:min(850px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 30px 100px #0005}
+.modal-head{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #edf0f5;padding:18px 20px;display:flex;justify-content:space-between;gap:15px;align-items:center}
+.modal-head h2{font-family:Poppins;font-size:20px;margin:0}.modal-head p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.close{border:0;width:40px;height:40px;border-radius:50%;background:#f2f4f7;color:#344054}
+.modal-body{padding:20px}
+.section{font-family:Poppins;font-weight:800;font-size:15px;margin:18px 0 12px;color:var(--blue)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.full{grid-column:1/-1}
+.req{color:#ef4444}
+textarea{min-height:100px;resize:vertical}
+.skills{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.skill{border:1px solid var(--line);border-radius:11px;padding:10px;font-size:12px;font-weight:700;background:#fafbfc}.skill input{width:auto;margin-right:5px}
+.photo-box,.pay-box{border:1px solid #e5eaf3;background:#f9fbff;border-radius:15px;padding:15px}
+.photo-row{display:flex;gap:14px;align-items:center}.preview{width:78px;height:78px;border-radius:18px;background:#e9eef8;display:grid;place-items:center;overflow:hidden;flex:none;color:#8a96aa;font-size:28px}.preview img{display:none;width:100%;height:100%;object-fit:cover}
+.photo-copy strong{display:block;font-size:13px}.photo-copy small{display:block;color:var(--muted);font-size:11px;margin:5px 0 9px;line-height:1.4}
+.pay-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.pay-top h3{margin:0;font-size:16px}.pay-top p{font-size:12px;color:var(--muted);line-height:1.5}.fee{font-weight:900;font-size:18px;color:var(--blue);white-space:nowrap}
+.pay-btn{width:100%;border:0;border-radius:12px;padding:12px;background:#0f2f63;color:white;font-weight:800}.pay-status{display:none;margin-top:9px;font-size:12px;color:#067647;background:#ecfdf3;padding:9px;border-radius:9px}.pay-status.show{display:block}
+.declaration{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.5;color:#475467}.declaration input{width:auto;margin-top:3px}
+.submit{width:100%;margin-top:16px;border:0;border-radius:13px;padding:14px;background:linear-gradient(135deg,#0f2f63,#2563eb);color:white;font-weight:900}
+.qr-overlay{position:fixed;inset:0;background:#07152bdd;display:none;align-items:center;justify-content:center;padding:18px;z-index:1100}.qr-overlay.show{display:flex}
+.qr-box{position:relative;background:#fff;border-radius:22px;width:min(400px,100%);padding:22px;text-align:center}.qr-box h3{margin:0 0 5px}.qr-box p{font-size:12px;color:var(--muted);line-height:1.5}.qr{width:min(300px,85vw);aspect-ratio:1;object-fit:contain;border:1px solid #eee;border-radius:12px;background:white}.qr-close{position:absolute;right:12px;top:12px;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:50%}.qr-done{width:100%;border:0;border-radius:11px;background:#0f2f63;color:white;padding:12px;font-weight:800}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.skills{grid-template-columns:1fr 1fr}.modal{max-height:96vh;border-radius:18px}.modal-body{padding:15px}.page{padding:14px}}
+</style>
+</head>
+<body>
+
+<main class="page">
+<div class="login-wrap">
+  <div class="brand">
+    <div class="logo"><i class="fas fa-graduation-cap"></i></div>
+    <h1>Diploma Engineers</h1>
+    <p>Admin Portal</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="loginTab" type="button">Login</button>
+      <button class="tab" id="registerTab" type="button">Register</button>
+    </div>
+
+    <form id="loginForm" class="form active">
+      <div class="field"><label>Email</label><div class="input-wrap"><i class="fas fa-envelope"></i><input id="loginEmail" type="email" required placeholder="Enter email"></div></div>
+      <div class="field"><label>Password</label><div class="input-wrap"><i class="fas fa-lock"></i><input id="loginPassword" type="password" required placeholder="Enter password"></div></div>
+      <button class="primary" type="submit">Login</button>
+      <button class="google" type="button" id="googleBtn"><i class="fab fa-google"></i> Continue with Google</button>
+    </form>
+
+    <form id="registerForm" class="form">
+      <div class="field"><label>Full Name</label><input id="regName" required placeholder="Full name"></div>
+      <div class="field"><label>Email</label><input id="regEmail" type="email" required placeholder="Email"></div>
+      <div class="field"><label>Password</label><input id="regPassword" type="password" minlength="6" required placeholder="Minimum 6 characters"></div>
+      <button class="primary" type="submit">Create Account</button>
+    </form>
+
+    <button class="request-btn" type="button" id="openRequest"><i class="fas fa-user-shield"></i> Request to Admin</button>
+    <div class="status" id="loginStatus"></div>
+    <div class="note">Admin access approval is separate from account registration.</div>
+  </div>
+</div>
+</main>
+
+<!-- REQUEST MODAL -->
+<div class="overlay" id="requestOverlay" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2><i class="fas fa-user-shield"></i> Request to Admin</h2><p>Registration form की तरह complete details भरें.</p></div>
+      <button class="close" id="closeRequest" type="button"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="requestForm" novalidate>
+        <div class="section">Personal Information</div>
+        <div class="grid">
+          <div class="field"><label>Full Name <span class="req">*</span></label><input id="fullName" name="Full Name" required></div>
+          <div class="field"><label>Email Address <span class="req">*</span></label><input id="email" name="Email" type="email" required></div>
+          <div class="field"><label>WhatsApp / Contact Number <span class="req">*</span></label><input id="mobile" name="WhatsApp / Contact Number" inputmode="numeric" maxlength="10" required></div>
+          <div class="field"><label>College Name <span class="req">*</span></label><input id="college" name="College Name" required></div>
+          <div class="field"><label>City / District <span class="req">*</span></label><input id="city" name="City / District" required></div>
+          <div class="field"><label>Branch <span class="req">*</span></label><select id="branch" name="Branch" required><option value="">Select Branch</option><option>Civil Engineering</option><option>Computer Science / IT</option><option>Mechanical Engineering</option><option>Electrical Engineering</option><option>Electronics Engineering</option><option>Agriculture Engineering</option><option>Other</option></select></div>
+          <div class="field"><label>Year / Semester <span class="req">*</span></label><select id="year" name="Year / Semester" required><option value="">Select</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>Other</option></select></div>
+          <div class="field"><label>Why do you want to become an Admin? <span class="req">*</span></label><input id="reason" name="Admin Request Reason" required></div>
+          <div class="field full"><label>Why do you want to become a Campus/Admin member? <span class="req">*</span></label><textarea id="motivation" name="Why do you want to become a Campus Admin?" required></textarea></div>
+          <div class="field full"><label>How can you contribute? <span class="req">*</span></label><textarea id="contribution" name="How can you contribute?" required></textarea></div>
+          <div class="field"><label>Daily time you can contribute <span class="req">*</span></label><select id="time" name="Daily Contribution Time" required><option value="">Select</option><option>Less than 30 minutes</option><option>30 - 60 minutes</option><option>1 - 2 hours</option><option>2+ hours</option></select></div>
+          <div class="field"><label>Managed a student community before? <span class="req">*</span></label><select id="previous" name="Managed Student Community Before" required><option value="">Select</option><option>Yes</option><option>No</option></select></div>
+        </div>
+
+        <div class="section">Skills / Contribution Areas</div>
+        <div class="skills">
+          <label class="skill"><input type="checkbox" name="Skills" value="Notes"> Notes</label>
+          <label class="skill"><input type="checkbox" name="Skills" value="Books"> Books</label>
+          <label class="skill"><input type="checkbox" name="Skills" value="PYQs"> PYQs</label>
+          <label class="skill"><input type="checkbox" name="Skills" value="Results"> Results</label>
+          <label class="skill"><input type="checkbox" name="Skills" value="Jobs / Internships"> Jobs / Internships</label>
+          <label class="skill"><input type="checkbox" name="Skills" value="Updates"> Updates</label>
+        </div>
+
+        <div class="section">Profile Photo</div>
+        <div class="photo-box">
+          <div class="photo-row">
+            <div class="preview"><span id="photoIcon"><i class="fas fa-user"></i></span><img id="previewImg" alt="Profile preview"></div>
+            <div class="photo-copy"><strong>Upload your photo <span class="req">*</span></strong><small>JPG/PNG/WebP, maximum 2 MB. Photo Cloudinary पर permanently upload होगी और email में link जाएगा.</small><input id="profilePhoto" name="Profile Photo" type="file" accept="image/jpeg,image/png,image/webp" required></div>
+          </div>
+        </div>
+
+        <div class="section">Registration Payment</div>
+        <div class="pay-box">
+          <div class="pay-top"><div><h3>₹49 Registration Fee</h3><p>पहले ₹49 payment करें. QR scan करने के बाद UTR / Transaction ID दर्ज करें.</p></div><span class="fee">₹49</span></div>
+          <button class="pay-btn" id="payBtn" type="button"><i class="fas fa-qrcode"></i> Pay ₹49 & View QR</button>
+          <div class="pay-status" id="payStatus">✓ QR opened. Payment के बाद UTR दर्ज करें.</div>
+        </div>
+
+        <div class="grid" style="margin-top:13px">
+          <div class="field full"><label>UTR / Transaction ID <span class="req">*</span></label><input id="utr" name="UTR / Transaction ID" minlength="6" maxlength="50" required placeholder="Enter UTR / Transaction ID"></div>
+        </div>
+
+        <div class="section">Declaration</div>
+        <div class="declaration"><input id="declaration" type="checkbox" required><label for="declaration">I confirm that the information provided by me is correct. I understand that payment does not guarantee selection or approval.</label></div>
+
+        <div class="status" id="requestStatus"></div>
+        <button class="submit" id="submitRequest" type="submit"><i class="fas fa-paper-plane"></i> Submit Admin Request</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="qr-overlay" id="qrOverlay">
+  <div class="qr-box">
+    <button class="qr-close" id="qrClose" type="button"><i class="fas fa-times"></i></button>
+    <h3>₹49 Registration Payment</h3>
+    <p>QR scan करके ₹49 payment करें.</p>
+    <img class="qr" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/09/img_20260920_2043202227549097061825559.png" alt="₹49 Registration Payment QR">
+    <p>Payment के बाद UTR / Transaction ID form में दर्ज करना अनिवार्य है.</p>
+    <button class="qr-done" id="qrDone" type="button">✓ Payment Done — Enter UTR</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig={
+ apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
+ authDomain:"diploma-app-9a378.firebaseapp.com",
+ databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",
+ projectId:"diploma-app-9a378",
+ storageBucket:"diploma-app-9a378.firebasestorage.app",
+ messagingSenderId:"160233059797",
+ appId:"1:160233059797:web:be38130ed64f8bd0afb95c"
+};
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
+
+const $=id=>document.getElementById(id);
+function msg(el,text,type){el.textContent=text;el.className="status show "+type}
+
+$("loginTab").onclick=()=>{ $("loginTab").classList.add("active");$("registerTab").classList.remove("active");$("loginForm").classList.add("active");$("registerForm").classList.remove("active") };
+$("registerTab").onclick=()=>{ $("registerTab").classList.add("active");$("loginTab").classList.remove("active");$("registerForm").classList.add("active");$("loginForm").classList.remove("active") };
+
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault(); const s=$("loginStatus");
+ try{await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPassword").value);msg(s,"Login successful.","ok")}
+ catch(err){msg(s,err.message.replace("Firebase: ",""),"err")}
+});
+$("registerForm").addEventListener("submit",async e=>{
+ e.preventDefault(); const s=$("loginStatus");
+ try{const c=await createUserWithEmailAndPassword(auth,$("regEmail").value.trim(),$("regPassword").value);await set(ref(db,"users/"+c.user.uid),{uid:c.user.uid,name:$("regName").value.trim(),email:c.user.email,createdAt:Date.now()});msg(s,"Account created successfully. You can login now.","ok")}
+ catch(err){msg(s,err.message.replace("Firebase: ",""),"err")}
+});
+$("googleBtn").onclick=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider());msg($("loginStatus"),"Google login successful.","ok")}catch(err){msg($("loginStatus"),err.message.replace("Firebase: ",""),"err")}};
+
+const overlay=$("requestOverlay"),qr=$("qrOverlay");
+$("openRequest").onclick=()=>{overlay.classList.add("show");overlay.setAttribute("aria-hidden","false");document.body.style.overflow="hidden"};
+$("closeRequest").onclick=()=>{overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true");document.body.style.overflow=""};
+$("payBtn").onclick=()=>{qr.classList.add("show");$("payStatus").classList.add("show")};
+$("qrClose").onclick=()=>qr.classList.remove("show");
+$("qrDone").onclick=()=>{qr.classList.remove("show");$("utr").focus()};
+overlay.onclick=e=>{if(e.target===overlay)$("closeRequest").click()};
+qr.onclick=e=>{if(e.target===qr)qr.classList.remove("show")};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){qr.classList.remove("show");if(overlay.classList.contains("show"))$("closeRequest").click()}});
+
+$("mobile").addEventListener("input",e=>e.target.value=e.target.value.replace(/\D/g,"").slice(0,10));
+$("profilePhoto").addEventListener("change",e=>{
+ const f=e.target.files[0]; if(!f)return;
+ if(f.size>2*1024*1024){e.target.value="";alert("Photo maximum 2 MB की होनी चाहिए.");return}
+ const r=new FileReader();r.onload=x=>{$("previewImg").src=x.target.result;$("previewImg").style.display="block";$("photoIcon").style.display="none"};r.readAsDataURL(f);
+});
+
+async function uploadPhoto(file){
+ const fd=new FormData();fd.append("file",file);fd.append("upload_preset","news_upload");fd.append("folder","diploma-engineers/admin-request");
+ const r=await fetch("https://api.cloudinary.com/v1_1/ub0qgzwa/image/upload",{method:"POST",body:fd});
+ if(!r.ok)throw new Error("Cloudinary photo upload failed.");
+ return r.json();
+}
+
+$("requestForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const form=e.currentTarget,s=$("requestStatus"),btn=$("submitRequest");
+ if(!form.checkValidity()){form.reportValidity();return}
+ const file=$("profilePhoto").files[0]; if(!file){msg(s,"Profile photo required है.","err");return}
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Uploading Photo...';
+ try{
+  const cloud=await uploadPhoto(file);
+  const data=new FormData(form);
+  data.delete("Profile Photo");
+  data.append("Profile Photo URL",cloud.secure_url);
+  data.append("Photo Link",cloud.secure_url);
+  data.append("Selected Skills",Array.from(form.querySelectorAll('input[name="Skills"]:checked')).map(x=>x.value).join(", ")||"Not specified");
+  data.append("Registration Fee","₹49");
+  data.append("_subject","New Admin Request | Diploma Engineers");
+  data.append("_captcha","false");
+  data.append("_template","table");
+  data.append("_replyto",$("email").value.trim());
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending Request...';
+  const r=await fetch("https://formsubmit.co/ajax/astar22072006@gmail.com",{method:"POST",headers:{Accept:"application/json"},body:data});
+  let j={};try{j=await r.json()}catch(_){}
+  if(!r.ok||j.success===false)throw new Error(j.message||"Form submission failed.");
+  msg(s,"Admin request successfully submit हो गई है. आपकी request review की जाएगी.","ok");
+  form.reset();$("previewImg").style.display="none";$("photoIcon").style.display="block";
+ }catch(err){console.error(err);msg(s,err.message||"Request submit नहीं हो सकी.","err")}
+ finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit Admin Request'}
+});
+</script>
+</body>
+</html>

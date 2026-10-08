@@ -8914,7 +8914,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDraw
 
 
 <script type="module" id="de-test-series-script">
-import { getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 (function(){
@@ -8979,9 +8979,19 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     if(deTsLoaded||deTsLoading) return;
     deTsLoading=true;
     try{
-      const apps=getApps();
-      if(!apps.length) throw new Error("Firebase app is not initialized yet.");
-      const database=getDatabase(apps[0]);
+      /* IMPORTANT: Home app has two Firebase projects.
+         testSeries belongs to diplomaengineers-869df (newsApp),
+         NOT the student's diploma-app-9a378 database. */
+      let newsAppForTests;
+      try {
+        newsAppForTests = getApp("newsApp");
+      } catch (appError) {
+        /* The named app is created by the main Home script. Retry briefly
+           in case this module executes before that script finishes. */
+        await new Promise(resolve => setTimeout(resolve, 250));
+        newsAppForTests = getApp("newsApp");
+      }
+      const database=getDatabase(newsAppForTests);
       const snap=await get(ref(database,"testSeries"));
       const data=snap.val()||{};
       deTsTests=Object.entries(data)

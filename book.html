@@ -6,7 +6,7 @@
 <title>Books | Diploma Engineers</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:Arial,Helvetica,sans-serif;background:#f7f9fc;color:#111827}
 #booksPage{width:100%;min-height:100vh;background:#f7f9fc}
 .books-container{width:100%;max-width:1400px;margin:auto;padding:20px}
@@ -21,7 +21,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f7f9fc;color:#111827}
 .books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;width:100%}
 .book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:15px;overflow:hidden;cursor:pointer;user-select:none;box-shadow:0 3px 12px rgba(0,0,0,.045);transition:transform .16s ease,box-shadow .16s ease}
 .book-card:hover{transform:translateY(-3px);box-shadow:0 5px 14px rgba(0,0,0,.06)}
-.book-card:active{transform:scale(.98)}
+.book-card:active{transform:none;background:#fff}
 .book-cover{width:100%;aspect-ratio:3/4;background:#eef2f7;overflow:hidden;position:relative}
 .book-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .book-info{padding:11px}
@@ -155,6 +155,13 @@ const defaultBooks=[
 {title:"Earthquake Engineering",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e29472078fd4e34ab989848f7428787996213601794.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/03/earthquakeengineeringbyanubhavgangwar.pdf"}
 ];
 
+// Permanent books are legacy uploads maintained by the Founder.
+defaultBooks.forEach(book=>{
+  book.ownerUid="KirLkZUGXoZf0cXHkuCZ4Mfnxam2";
+  book.ownerName="Founder";
+  book.ownerDesignation="Founder & CEO";
+});
+
 function escapeHTML(value){
  return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
@@ -254,7 +261,15 @@ function renderBooks(){
    img.src=image||fallbackCover(title);
    img.onerror=()=>{img.onerror=null;img.src=fallbackCover(title)};
 
-   card.addEventListener("click",()=>window.open(pdf,"_blank","noopener,noreferrer"));
+   card.addEventListener("click",()=>{
+      const id=book.id||book.key||btoa(unescape(encodeURIComponent(title))).replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40);
+      const params=new URLSearchParams({id,title,category:String(book.category||""),pdf});
+      params.set("ownerUid",String(book.ownerUid||book.authorUid||"KirLkZUGXoZf0cXHkuCZ4Mfnxam2"));
+      params.set("ownerName",String(book.ownerName||book.authorName||"Founder"));
+      params.set("ownerDesignation",String(book.ownerDesignation||book.designation||"Founder & CEO"));
+      params.set("ownerPhoto",String(book.ownerPhoto||""));
+      window.location.href="book-reader.html?"+params.toString();
+   });
  });
 }
 

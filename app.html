@@ -312,13 +312,18 @@ body {
 .search-icon{font-size:23px;color:#64748b;margin-right:9px}
 .books-search input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:#111827}
 .books-search input::placeholder{color:#94a3b8}
-.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;width:100%}
-.book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:15px;overflow:hidden;cursor:pointer;user-select:none;box-shadow:0 3px 12px rgba(0,0,0,.045);transition:transform .16s ease,box-shadow .16s ease}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;width:100%;align-items:start}
+.book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:15px;overflow:hidden;cursor:pointer;user-select:none;box-shadow:0 3px 12px rgba(0,0,0,.045);transition:transform .16s ease,box-shadow .16s ease;contain:content}
 .book-card:hover{transform:translateY(-3px);box-shadow:0 5px 14px rgba(0,0,0,.06)}
 .book-card:active{transform:none;background:#fff}
-.book-cover{width:100%;aspect-ratio:3/4;background:#eef2f7;overflow:hidden;position:relative}
-.book-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.book-cover{width:100%;aspect-ratio:210/297;background:#fff;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.book-cover::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,#f1f5f9 8%,#fff 18%,#f1f5f9 33%);background-size:220% 100%;animation:bookShimmer 1.15s linear infinite}
+.book-cover.is-loaded::before{display:none}
+.book-cover img{width:100%;height:100%;object-fit:contain;display:block;position:relative;z-index:1;background:#fff;image-rendering:auto}
+.book-cover img.cover-fill{object-fit:cover}
 .book-info{padding:11px}
+@keyframes bookShimmer{to{background-position:-220% 0}}
+@media(prefers-reduced-motion:reduce){.book-cover::before{animation:none}}
 .book-title{font-size:14px;font-weight:800;color:#111827;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .no-books{text-align:center;padding:70px 20px;color:#64748b}
 .no-books-icon{font-size:48px;margin-bottom:12px}
@@ -330,6 +335,7 @@ body {
   .books-header h1{font-size:23px}
   .books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .book-card{border-radius:12px}
+  .book-cover{aspect-ratio:210/297}
   .book-info{padding:9px}
   .book-title{font-size:12.5px}
   .books-search{height:47px}
@@ -365,6 +371,9 @@ body {
 }
 .header-bell-btn{background:transparent;border:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--dark-text);font-size:18px;cursor:pointer;flex:0 0 34px}
 .header-bell-btn:active{transform:scale(.94);background:var(--surface-gray)}
+.header-bell-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px}
+.news-badge{position:absolute;top:-4px;right:-7px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef233c;color:#fff;font-size:10px;font-weight:900;line-height:18px;text-align:center;border:2px solid #fff;box-shadow:0 2px 7px rgba(239,35,60,.28);display:none;pointer-events:none}
+.news-badge.show{display:block}
 
 .header-back-btn {
   background: var(--surface-gray);
@@ -2692,7 +2701,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="nav-left">
       <button class="menu-toggle-btn" id="menuToggleBtn" type="button" onclick="openAppDrawer()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-      <button class="header-bell-btn" id="headerBellBtn" type="button" onclick="navigateTo('updatePage')" aria-label="Notifications" title="Notifications"><i class="fas fa-bell"></i></button>
+      <span class="header-bell-wrap"><button class="header-bell-btn" id="headerBellBtn" type="button" onclick="openNewsNotifications()" aria-label="Notifications" title="Notifications"><i class="fas fa-bell"></i></button><span id="newsBadge" class="news-badge" aria-label="New news count">0</span></span>
     </div>
     <div class="nav-right-box">
       <!-- COIN BUTTON IN HEADER -->
@@ -4569,8 +4578,9 @@ window.addEventListener('DOMContentLoaded', () => {
       count.textContent=filtered.length+(filtered.length===1?' Book':' Books');grid.innerHTML='';noBooks.style.display=filtered.length?'none':'block';
       filtered.forEach(book=>{
         const title=String(book.title||book.name||'Book').trim();const pdf=cleanURL(book.pdf||book.link||book.file||book.url||book.pdfUrl||book.fileUrl||'');if(!pdf)return;
-        const card=document.createElement('article');card.className='book-card';const cover=document.createElement('div');cover.className='book-cover';const img=document.createElement('img');img.alt=title;img.loading='lazy';const info=document.createElement('div');info.className='book-info';const titleEl=document.createElement('div');titleEl.className='book-title';titleEl.textContent=title;info.appendChild(titleEl);cover.appendChild(img);card.appendChild(cover);card.appendChild(info);grid.appendChild(card);
-        const image=cleanURL(book.image||book.thumbnail||book.thumb||book.cover||book.imageUrl||book.ownerPhoto||'');img.src=image||fallbackCover(title);img.onerror=()=>{img.onerror=null;img.src=fallbackCover(title)};
+        const card=document.createElement('article');card.className='book-card';const cover=document.createElement('div');cover.className='book-cover';const img=document.createElement('img');img.alt=title;img.width=210;img.height=297;img.decoding='async';img.fetchPriority=filtered.indexOf(book)<6?'high':'auto';img.loading=filtered.indexOf(book)<8?'eager':'lazy';const info=document.createElement('div');info.className='book-info';const titleEl=document.createElement('div');titleEl.className='book-title';titleEl.textContent=title;info.appendChild(titleEl);cover.appendChild(img);card.appendChild(cover);card.appendChild(info);grid.appendChild(card);
+        function driveThumb(url){const m=String(url||'').match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([A-Za-z0-9_-]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1000':'';}
+        const image=cleanURL(book.image||book.thumbnail||book.thumb||book.cover||book.imageUrl||'')||driveThumb(pdf);img.src=image||fallbackCover(title);img.onload=()=>cover.classList.add('is-loaded');img.onerror=()=>{img.onerror=null;cover.classList.add('is-loaded');const fb=fallbackCover(title);if(img.src!==fb)img.src=fb};
         card.addEventListener('click',()=>{const id=book.id||book.key||btoa(unescape(encodeURIComponent(title))).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40);const params=new URLSearchParams({id,title,category:String(book.category||''),pdf});params.set('ownerUid',String(book.ownerUid||book.authorUid||'KirLkZUGXoZf0cXHkuCZ4Mfnxam2'));params.set('ownerName',String(book.ownerName||book.authorName||'Founder'));params.set('ownerDesignation',String(book.ownerDesignation||book.designation||'Founder & CEO'));params.set('ownerPhoto',String(book.ownerPhoto||''));window.location.href='book-reader.html?'+params.toString();});
       });
     }
@@ -6270,7 +6280,13 @@ window.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      newsArray.reverse();
+      newsArray.sort((a,b)=>{
+        const ta=Number(a.data.timestamp||a.data.createdAt||a.data.uploadedAt||0);
+        const tb=Number(b.data.timestamp||b.data.createdAt||b.data.uploadedAt||0);
+        return (tb||0)-(ta||0);
+      });
+      window.__DE_NEWS_IDS = newsArray.map(item=>String(item.id));
+      updateNewsBadge(window.__DE_NEWS_IDS, true);
       newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
     }, error => {
       console.error(error);
@@ -6282,64 +6298,129 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function newsReaderUrl(id) {
+    return new URL(`news-reader.html?id=${encodeURIComponent(id)}`, window.location.href).href;
+  }
+
   function createNewsCard(id, n, container) {
     const title = n.title || "Untitled News";
-    const description = n.text || n.desc || n.description || "";
+    const description = n.text || n.desc || n.description || n.details || "";
     const category = n.cat || n.category || "NOTIFICATION";
-    const date = n.date || "Recent";
-    const image = n.thumb || n.image || n.thumbnail || "";
-    const externalLink = n.link || n.pdf || n.fileUrl || "";
+    const date = n.date || n.createdDate || formatNewsDate(n.timestamp || n.createdAt || n.uploadedAt) || "Recent";
+    const image = n.thumb || n.image || n.thumbnail || n.thumbnailUrl || "";
+    const externalLink = n.link || n.externalLink || n.url || n.pdf || n.fileUrl || n.file || "";
+    const by = n.by || n.authorName || n.author || n.uploaderName || n.uploadedBy || n.createdBy || "Diploma Engineers";
+    const readerUrl = newsReaderUrl(id);
 
     const card = document.createElement("article");
     card.className = "news-card";
     card.id = `card-${id}`;
-
-    let actionTarget = externalLink && validURL(externalLink) ? 
-      `<a href="${escapeHTML(externalLink)}" target="_blank" class="action-btn">View News <i class="fa-solid fa-arrow-right"></i></a>` : 
-      `<button class="action-btn" onclick="toggleDetails('${id}')">Read More <i class="fa-solid fa-chevron-down"></i></button>`;
+    card.style.cursor = "pointer";
+    card.setAttribute("role", "article");
 
     card.innerHTML = `
+      ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="${escapeHTML(title)}" loading="lazy" onerror="this.style.display='none'">` : ''}
       <span class="category">${escapeHTML(category)}</span>
-      
-      <h2 class="news-title">
-        <i class="fa-solid fa-square-check"></i>
-        ${escapeHTML(title)}
-      </h2>
-
+      <h2 class="news-title"><i class="fa-solid fa-square-check"></i> ${escapeHTML(title)}</h2>
       <p class="news-description">${escapeHTML(description)}</p>
-
-      <div class="card-footer">
-        <div class="news-date">
-          <i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}
-        </div>
-        <div class="action-links">
-          <button class="action-btn" onclick="toggleDetails('${id}')">
-            <i class="fa-solid fa-share-nodes"></i> Share
-          </button>
-          ${actionTarget}
-        </div>
+      <div class="news-meta-row">
+        <span><i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}</span>
+        <span><i class="fa-solid fa-user-pen"></i> ${escapeHTML(by)}</span>
       </div>
-
-      <div class="expandable-panel" id="panel-${id}">
-        ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="thumbnail">` : ''}
-        <div class="full-desc">${escapeHTML(description)}</div>
-        
-        <div class="share-grid">
-          <button class="share-icon-btn share-whatsapp" onclick="shareWhatsApp('${escapeHTML(title)}', '${id}')">
-            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-          </button>
-          <button class="share-icon-btn share-telegram" onclick="shareTelegram('${escapeHTML(title)}', '${id}')">
-            <i class="fa-brands fa-telegram"></i> Telegram
-          </button>
-          <button class="share-icon-btn share-copy" onclick="copyLink('${escapeHTML(title)}', '${id}')">
-            <i class="fa-regular fa-copy"></i> Copy
-          </button>
+      <div class="card-footer">
+        <div class="action-links">
+          <button class="action-btn" type="button" data-read="true"><i class="fa-solid fa-book-open"></i> Read News</button>
+          <button class="action-btn" type="button" data-share="true"><i class="fa-solid fa-share-nodes"></i> Share</button>
+          ${externalLink && validURL(externalLink) ? `<a href="${escapeHTML(externalLink)}" target="_blank" rel="noopener noreferrer" class="action-btn" data-external="true"><i class="fa-solid fa-arrow-up-right-from-square"></i> External Link</a>` : ''}
         </div>
       </div>
     `;
 
+    const readBtn = card.querySelector('[data-read]');
+    const shareBtn = card.querySelector('[data-share]');
+    const externalBtn = card.querySelector('[data-external]');
+    if (readBtn) readBtn.addEventListener('click', e => { e.stopPropagation(); window.location.href = readerUrl; });
+    if (shareBtn) shareBtn.addEventListener('click', e => { e.stopPropagation(); openNewsShare(id, n); });
+    if (externalBtn) externalBtn.addEventListener('click', e => e.stopPropagation());
+    card.addEventListener('click', () => { window.location.href = readerUrl; });
     container.appendChild(card);
   }
+
+  function formatNewsDate(value) {
+    if (!value) return "";
+    const d = new Date(typeof value === "number" ? value : String(value));
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+  }
+
+  window.openNewsNotifications = function() {
+    markNewsAsSeen();
+    navigateTo('updatePage');
+  };
+
+  function newsSeenStorageKey(){ return 'diploma_engineers_seen_news_v2'; }
+  function readSeenNewsIds(){
+    try { return new Set(JSON.parse(localStorage.getItem(newsSeenStorageKey()) || '[]')); } catch (_) { return new Set(); }
+  }
+  function saveSeenNewsIds(ids){
+    try { localStorage.setItem(newsSeenStorageKey(), JSON.stringify(Array.from(ids).slice(-500))); } catch (_) {}
+  }
+  function updateNewsBadge(newsIds, initializeOnly=false){
+    const badge=document.getElementById('newsBadge');
+    if(!badge) return;
+    let seen=readSeenNewsIds();
+    if(initializeOnly && !localStorage.getItem(newsSeenStorageKey())){
+      seen=new Set(newsIds);
+      saveSeenNewsIds(seen);
+    }
+    const unseen=newsIds.filter(id=>!seen.has(id)).length;
+    badge.textContent=unseen>=100?'99+':(unseen>0?`${unseen}+`:'');
+    badge.classList.toggle('show',unseen>0);
+  }
+  function markNewsAsSeen(){
+    const ids=window.__DE_NEWS_IDS || [];
+    const seen=readSeenNewsIds();
+    ids.forEach(id=>seen.add(id));
+    saveSeenNewsIds(seen);
+    updateNewsBadge(ids);
+  }
+
+  window.openNewsShare = async function(id, n={}) {
+    const title = n.title || 'Diploma Engineers News';
+    const url = newsReaderUrl(id);
+    const text = `${title}\nRead full news on Diploma Engineers`;
+    if (navigator.share) {
+      try { await navigator.share({title, text, url}); return; } catch (_) {}
+    }
+    const panel = document.createElement('div');
+    panel.className='news-share-overlay';
+    panel.innerHTML=`<div class="news-share-sheet" role="dialog" aria-modal="true">
+      <button class="news-share-close" type="button" aria-label="Close">×</button>
+      <h3><i class="fa-solid fa-share-nodes"></i> Share News</h3>
+      <div class="news-share-grid">
+        <button data-share="whatsapp"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></button>
+        <button data-share="telegram"><i class="fa-brands fa-telegram"></i><span>Telegram</span></button>
+        <button data-share="facebook"><i class="fa-brands fa-facebook"></i><span>Facebook</span></button>
+        <button data-share="instagram"><i class="fa-brands fa-instagram"></i><span>Instagram</span></button>
+        <button data-share="x"><i class="fa-brands fa-x-twitter"></i><span>X</span></button>
+        <button data-share="copy"><i class="fa-regular fa-copy"></i><span>Copy Link</span></button>
+      </div></div>`;
+    document.body.appendChild(panel);
+    const close=()=>panel.remove();
+    panel.querySelector('.news-share-close').onclick=close;
+    panel.addEventListener('click',e=>{if(e.target===panel)close();});
+    panel.querySelectorAll('[data-share]').forEach(btn=>btn.addEventListener('click',async()=>{
+      const type=btn.dataset.share;
+      const encodedUrl=encodeURIComponent(url), encodedText=encodeURIComponent(text);
+      if(type==='whatsapp') window.open(`https://wa.me/?text=${encodedText}%0A${encodedUrl}`,'_blank','noopener,noreferrer');
+      else if(type==='telegram') window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,'_blank','noopener,noreferrer');
+      else if(type==='facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,'_blank','noopener,noreferrer');
+      else if(type==='x') window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,'_blank','noopener,noreferrer');
+      else if(type==='instagram') { try{await navigator.clipboard.writeText(`${text}\n${url}`); alert('News link copied. Open Instagram and share it.');}catch(_){prompt('Copy News Link:',url);} }
+      else { try{await navigator.clipboard.writeText(url); alert('News link copied!');}catch(_){prompt('Copy News Link:',url);} }
+      if(type!=='instagram' && type!=='copy') close();
+    }));
+  };
 
   window.toggleDetails = function(id) {
     const panel = document.getElementById(`panel-${id}`);
@@ -6348,26 +6429,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.shareWhatsApp = function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    const text = encodeURIComponent(`${title}\n\nRead details: ${url}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
-
-  window.shareTelegram = function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
-  };
-
-  window.copyLink = async function(title, id) {
-    const url = window.location.href.split('#')[0] + '#card-' + id;
-    try {
-      await navigator.clipboard.writeText(`${title} - ${url}`);
-      alert("Link Copied!");
-    } catch (err) {
-      prompt("Copy Link:", url);
-    }
-  };
+  window.shareWhatsApp = function(title, id) { openNewsShare(id, {title}); };
+  window.shareTelegram = function(title, id) { openNewsShare(id, {title}); };
+  window.copyLink = async function(title, id) { const url=newsReaderUrl(id); try{await navigator.clipboard.writeText(url);alert('Link Copied!');}catch(_){prompt('Copy Link:',url);} };
 
   window.loadPortalFromFile = async function loadPortalFromFile(portalId, forceReload = false) {
     const container = document.getElementById(portalId);
@@ -8803,6 +8867,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDraw
 </body>
 </html>
 
+<style id="news-reader-share-patch">
+.news-meta-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;color:#64748b;font-size:12px;font-weight:700}.news-meta-row span{display:inline-flex;align-items:center;gap:5px}
+.news-share-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:18px}.news-share-sheet{width:min(520px,100%);background:#fff;border-radius:22px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.22);position:relative}.news-share-sheet h3{margin:0 0 16px;font-size:19px;color:#0f172a}.news-share-close{position:absolute;right:12px;top:10px;border:0;background:#f1f5f9;border-radius:50%;width:34px;height:34px;font-size:22px;cursor:pointer}.news-share-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.news-share-grid button{border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:800;cursor:pointer}.news-share-grid i{font-size:22px}@media(max-width:500px){.news-share-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
 <style id="final-header-layout-patch">
 /* Header layout: menu/back + bell at the far left; coins/streak/profile at the far right. */
 .navbar{position:fixed!important;left:0!important;right:0!important;top:0!important;width:100%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:8px 14px!important;}

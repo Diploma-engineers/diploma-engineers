@@ -300,6 +300,41 @@ body {
   cursor: pointer;
 }
 
+/* EMBEDDED BOOKS SECTION */
+
+*{box-sizing:border-box}
+.books-container{width:100%;max-width:1400px;margin:auto;padding:20px}
+.books-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}
+.books-header h1{margin:0;font-size:28px;font-weight:800;color:#0f172a}
+.books-header p{margin:5px 0 0;color:#64748b;font-size:13px}
+.book-count{padding:8px 13px;border-radius:10px;background:#f1f5f9;color:#334155;font-size:13px;font-weight:800;white-space:nowrap}
+.books-search{width:100%;height:50px;display:flex;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:13px;padding:0 15px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.025)}
+.search-icon{font-size:23px;color:#64748b;margin-right:9px}
+.books-search input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:#111827}
+.books-search input::placeholder{color:#94a3b8}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;width:100%}
+.book-card{position:relative;background:#fff;border:1px solid #e8edf3;border-radius:15px;overflow:hidden;cursor:pointer;user-select:none;box-shadow:0 3px 12px rgba(0,0,0,.045);transition:transform .16s ease,box-shadow .16s ease}
+.book-card:hover{transform:translateY(-3px);box-shadow:0 5px 14px rgba(0,0,0,.06)}
+.book-card:active{transform:none;background:#fff}
+.book-cover{width:100%;aspect-ratio:3/4;background:#eef2f7;overflow:hidden;position:relative}
+.book-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.book-info{padding:11px}
+.book-title{font-size:14px;font-weight:800;color:#111827;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.no-books{text-align:center;padding:70px 20px;color:#64748b}
+.no-books-icon{font-size:48px;margin-bottom:12px}
+.no-books h3{margin:0 0 8px;color:#1e293b;font-size:20px}
+.no-books p{margin:0;font-size:14px}
+@media(max-width:600px){
+  .books-container{padding:12px}
+  .books-header{align-items:flex-start;flex-direction:column}
+  .books-header h1{font-size:23px}
+  .books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .book-card{border-radius:12px}
+  .book-info{padding:9px}
+  .book-title{font-size:12.5px}
+  .books-search{height:47px}
+}
+
 /* MAIN APP WRAPPER */
 #app {
   display: none;
@@ -326,8 +361,10 @@ body {
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
+.header-bell-btn{background:transparent;border:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--dark-text);font-size:18px;cursor:pointer;flex:0 0 34px}
+.header-bell-btn:active{transform:scale(.94);background:var(--surface-gray)}
 
 .header-back-btn {
   background: var(--surface-gray);
@@ -2628,9 +2665,9 @@ html,body{max-width:100%;overflow-x:hidden}
   </aside>
   <div class="navbar">
     <div class="nav-left">
+      <button class="header-bell-btn" id="headerBellBtn" type="button" onclick="navigateTo('updatePage')" aria-label="Notifications" title="Notifications"><i class="fas fa-bell"></i></button>
       <button class="menu-toggle-btn" id="menuToggleBtn" type="button" onclick="openAppDrawer()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
       <button class="header-back-btn" id="headerBackBtn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-      <div class="nav-logo">Diploma <span>Engineers</span></div>
     </div>
     <div class="nav-right-box">
       <!-- COIN BUTTON IN HEADER -->
@@ -3712,7 +3749,32 @@ html,body{max-width:100%;overflow-x:hidden}
   </div>
 
   <!-- BOOKS PAGE -->
-  <div id="booksPage" class="page"></div>
+  <div id="booksPage" class="page">
+
+  <div class="books-container">
+    <div class="books-header">
+      <div>
+        <h1>Books</h1>
+        <p>Diploma Engineers — Books & E-Notes</p>
+      </div>
+      <div class="book-count" id="bookCount">0 Books</div>
+    </div>
+
+    <div class="books-search">
+      <span class="search-icon">⌕</span>
+      <input type="search" id="bookSearch" placeholder="Search books..." autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="books-grid" id="booksGrid" aria-live="polite"></div>
+
+    <div class="no-books" id="noBooks" style="display:none">
+      <div class="no-books-icon">📚</div>
+      <h3>No Books Found</h3>
+      <p>Search करके दूसरी book try करें।</p>
+    </div>
+  </div>
+
+  </div>
 
   <!-- PROFILE PAGE -->
   <div id="profilePage" class="page">
@@ -4117,7 +4179,6 @@ const firebaseConfig = {
    * same folder as this app.html (or change the paths below).
    */
   const EXTERNAL_FILE_MAP = Object.freeze({
-    booksPage: "book.html",
     civil: "civil.html",
     computer: "computer.html",
     electrical: "electrical.html",
@@ -4338,6 +4399,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
     if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'booksPage') initEmbeddedBooks();
     if (pageId === 'profilePage') refreshAdminAccess(auth.currentUser);
     renderPageUI(pageId);
 
@@ -4361,10 +4423,112 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'leaderboardPage') loadLeaderboardData();
     if (pageId === 'feedbackPage') { loadFeedbackData(); initFeedbackForm(); }
     if (pageId === 'homePage') loadTrendingPage(false);
+    if (pageId === 'booksPage') initEmbeddedBooks();
     if (pageId === 'profilePage') refreshAdminAccess(auth.currentUser);
     renderPageUI(pageId);
     window.scrollTo({top:0, left:0, behavior:'instant'});
   });
+
+
+  /* =========================================================
+     EMBEDDED BOOKS SECTION
+     Replaces the old book.html fetch/iframe.
+  ========================================================= */
+  let embeddedBooksInitialized = false;
+  function initEmbeddedBooks() {
+    const page = document.getElementById('booksPage');
+    if(!page || embeddedBooksInitialized) return;
+    embeddedBooksInitialized = true;
+    const grid=page.querySelector('#booksGrid'), search=page.querySelector('#bookSearch'), count=page.querySelector('#bookCount'), noBooks=page.querySelector('#noBooks');
+    if(!grid||!search||!count||!noBooks) return;
+
+    const defaultBooks=[
+{title:"Applied Mathematics I",category:"Common",pdf:"https://drive.google.com/file/d/1Rf0MKJ4Z-zbaC5qr8mdVMrOL9TAelDdH/view?usp=drivesdk"},
+{title:"Applied Physics I",category:"Common",pdf:"https://drive.google.com/file/d/1dolduK9Kq7du3-kfCrYXUxhmn_sLjzpP/view?usp=drivesdk"},
+{title:"Applied Chemistry",category:"Common",pdf:"https://drive.google.com/file/d/1hSdXYyC3Nvyp1PxUaj-LhBp_o3rr8R5F/view?usp=drivesdk"},
+{title:"Communication Skills",category:"Common",pdf:"https://drive.google.com/file/d/1ln7z6ak2Fp-wMVnBo9bzCL61xKh65ytm/view?usp=drivesdk"},
+{title:"Engineering Drawing",category:"Common",pdf:"https://drive.google.com/file/d/1Tos3wifPCzR93ZmSeOjQ9ucCU1fKpWiD/view?usp=drivesdk"},
+{title:"Applied Mathematics II",category:"Common",pdf:"https://drive.google.com/file/d/1XO-XRVEUFM7FBFoQ5kLnTpdigF28y_uM/view?usp=drivesdk"},
+{title:"Applied Physics II",category:"Common",pdf:"https://drive.google.com/file/d/19HiDa2-ol9oM-3vjdvAgaKtc_KJH-uKv/view?usp=drivesdk"},
+{title:"Fundamentals of Electrical & Electronics Engineering",category:"Common",pdf:"https://drive.google.com/file/d/1MFVrVnJtPv2L5kpIEc4d4FFlbkrxjLZs/view?usp=drivesdk"},
+{title:"Engineering Mechanics",category:"Common",pdf:"https://drive.google.com/file/d/1pq5Z5qPpvQXA8LsyOG8LTT_dVqL8q6D8/view?usp=drivesdk"},
+{title:"Environmental Studies",category:"Common",pdf:"https://drive.google.com/file/d/1LuaMc-eJ7NgOg-LXK5j2UMSf9ay6s3U0/view?usp=drivesdk"},
+{title:"Introduction to IT Systems",category:"Common",pdf:"https://drive.google.com/file/d/1YAQHoQ-wmm4s0Evu2LtkHEaO-cSX8A7s/view?usp=drivesdk"},
+
+{title:"Digital Electronics",category:"Electronics",pdf:"https://drive.google.com/file/d/1nzCjC4pH2GtN8xdyZNhfB7hngvVAmzIP/view?usp=drivesdk"},
+{title:"Electronic Devices & Circuits",category:"Electronics",pdf:"https://drive.google.com/file/d/1V5kX7tZbbRaWHjiwWXqK6ozHf1bRuMTX/view?usp=drivesdk"},
+{title:"Linear Integrated Circuits",category:"Electronics",pdf:"https://drive.google.com/file/d/1-l1df23wWuXiMPdNgw7QRfuSNWkCpFsV/view?usp=drivesdk"},
+{title:"Principles of Electronic Communication",category:"Electronics",pdf:"https://drive.google.com/file/d/1O3UphaKLM00J5oMKAGXaR3Q93N0hhZ3E/view?usp=drivesdk"},
+{title:"Microprocessor & Applications",category:"Electronics",pdf:"https://drive.google.com/file/d/1O3UphaKLM00J5oMKAGXaR3Q93N0hhZ3E/view?usp=drivesdk"},
+{title:"Electronic Instrumentation & Measurements",category:"Electronics",pdf:"https://drive.google.com/file/d/17bOb-Xzv6c9FIt9UCRdl74eFPqB4vZMX/view?usp=drivesdk"},
+
+{title:"Operating Systems",category:"Computer Science",pdf:"https://drive.google.com/file/d/1Rddlh6aYREcWXwkTOKpY-wzNkRnudhh5/view?usp=drivesdk"},
+{title:"Database Management System",category:"Computer Science",pdf:"https://drive.google.com/file/d/1do0dIKwq52cTyVzS1MB7d37eU97GfKdH/view?usp=drivesdk"},
+{title:"Computer Network",category:"Computer Science",pdf:"https://drive.google.com/file/d/17yNX5t_oZD9enkGVJi1sVmJOzbOp7lOe/view?usp=drivesdk"},
+{title:"Data Structures using C",category:"Computer Science",pdf:"https://drive.google.com/file/d/1gOTadjGjfQ0xqUf2ea0LOj2ryDYx4zcC/view?usp=drivesdk"},
+
+{title:"Construction Materials",category:"Civil",pdf:"https://drive.google.com/file/d/1_QmtCq45r8oN_Y5Fz6wu8yYc3BETVs3F/view?usp=drivesdk"},
+{title:"Basic Surveying",category:"Civil",pdf:"https://drive.google.com/file/d/11pha_oswnd1cq2f6viKmnN-YqsaeRgmf/view?usp=drivesdk"},
+{title:"Mechanics of Material",category:"Civil",pdf:"https://drive.google.com/file/d/1-SROcpofwqptR9pkko5kp9asU6TvGw5p/view?usp=drivesdk"},
+{title:"Building Construction",category:"Civil",pdf:"https://drive.google.com/file/d/16B3Uyw_i0ez4lxTqzW_SXQT3rz8sq_m0/view?usp=drivesdk"},
+{title:"Building Planning and Drawings",category:"Civil",pdf:"https://drive.google.com/file/d/15DbXrl9M1yi_hBwR_izB9282Lu7W07iK/view?usp=drivesdk"},
+{title:"Concrete Technology",category:"Civil",pdf:"https://drive.google.com/file/d/1Qytl1kijygjD9nd_k29EY_K7vFE6MEZ4/view?usp=drivesdk"},
+
+{title:"Hydraulics",category:"Civil",pdf:"https://drive.google.com/file/d/1uBFhBlfJFNAhOpHapipZ34C1NYe9bV6i/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png"},
+{title:"Advance Surveying",category:"Civil",pdf:"https://drive.google.com/file/d/1UKdZaIyHhU9G8vhfYGwCNluV5ysFZbke/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png"},
+{title:"Reinforced Cement Concrete Structures",category:"Civil",pdf:"https://drive.google.com/file/d/1Ia428egQcln55wixF0bXBSsn0_CmZiBp/view?usp=drivesdk"},
+{title:"RCC Drawing",category:"Civil",pdf:"https://drive.google.com/file/d/1_W8l5L3xMObDurzUTnzHDMLV_AFw47sx/view?usp=drivesdk"},
+{title:"Theory of Structure",category:"Civil",pdf:"https://drive.google.com/file/d/1LC2KoSZgXQwmOFtjnfsZ82xv9ei2Bau6/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png"},
+{title:"Water Resource Engineering",category:"Civil",pdf:"https://drive.google.com/file/d/1CKiaKHfk4Odd4RhVe1IRzNYbHoZZXFQp/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000b09c71faa3990755017401f45126630317016264298.png"},
+{title:"Public Health Engineering",category:"Civil",pdf:"https://drive.google.com/file/d/1GS0gG57cS337Kqhg_fop5ozKkaGBBQtY/view?usp=drivesdk",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f45c72079311416363f02c394789402397388481580.png"},
+
+{title:"Electric Power Transmission and Distribution",category:"Electrical",pdf:"https://drive.google.com/file/d/1VKIyK_QNRuEw-AD64bBcMWv5U30PuEeR/view?usp=drivesdk"},
+{title:"Electric Machine – II",category:"Electrical",pdf:"https://drive.google.com/file/d/1BRE8Z6g6XdchlXmFF1L3XOcSB3FBdp7f/view?usp=drivesdk"},
+
+{title:"Applied Physics 2nd",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785269967038020828650364357425.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/appliedphysics-iie-bookbydiplomaengineers28129-2.pdf"},
+{title:"Applied Mathematics 2nd",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785238848774900651388760755359.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/mathematics-ii_75660889_2026_05_09_15_4128129.pdf"},
+{title:"FEEE",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785266369195650990413638221471.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/feeee-bookbydiplomaengineers28329.pdf"},
+{title:"IT System",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/itsysteme-bookbydiplomaengineers.pdf"},
+{title:"Engineering Mechanics E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e7c071faa2f37eca05072fdb556745736750219695.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/engineeringmechanicse-bookbydiplomaengineers.pdf"},
+{title:"Environmental Science E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/17785265939797081237430626543045.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/environmentalsciencee-bookbydiplomaengineers.pdf"},
+{title:"Advanced Surveying E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000feb471fabf9d4dfbc02cdcd16677883179639530415.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/advancedsurveyinge-bookbydiplomaengineers-1.pdf"},
+{title:"Hydraulics E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000006b4c71fabe2f28f3d1606bc65031768841505822370.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/hydraulicse-bookbydiplomaengineers-3.pdf"},
+{title:"Theory Of Structures E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dc4071fab0ad22789068dbc16591845741006678394.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/theoryofstructurese-bookbydiplomaengineers-2.pdf"},
+{title:"Water Resource Engineering E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000b09c71faa3990755017401f45126630317016264298.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/waterresourceengineeringe-bookbydiplomaengineers-6.pdf"},
+{title:"Public Health Engineering E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000f45c72079311416363f02c394789402397388481580.png",pdf:"https://anubhav.finance.blog/wp-content/uploads/2026/05/publicheathengineeringe-bookbydiplomaengineers-4.pdf"},
+{title:"CMAED",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000dbac7207a1d60542f858e24f8037818545726630343.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/construction-management-and-entrepreneur-development.pdf"},
+{title:"RMB",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000003f287207bf60eebf4e92a2608799479752795647630.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/repiar-and-maintenace-of-building.pdf"},
+{title:"DSS",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_000000001de07209a07ffc60998b7f621099887786772814605.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/desigen-of-steei-structure33.pdf"},
+{title:"QSV",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000aba071fa9c8274e589af326e1002361587254253798.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/estimating-costing-valuation.pdf"},
+{title:"RCC E-Book",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000c3a47207a300da5a2b16e3c32129627255035854469.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2024/11/reinforcement-cement-concrete.pdf"},
+{title:"Earthquake Engineering",category:"E-Notes",image:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/05/file_00000000e29472078fd4e34ab989848f7428787996213601794.png",pdf:"https://anubhavfinance.wordpress.com/wp-content/uploads/2026/03/earthquakeengineeringbyanubhavgangwar.pdf"}
+];
+
+    defaultBooks.forEach(book=>{
+      book.ownerUid='KirLkZUGXoZf0cXHkuCZ4Mfnxam2';
+      book.ownerName='Founder';
+      book.ownerDesignation='Founder & CEO';
+    });
+    function escapeHTML(value){return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+    function fallbackCover(title){const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800"><rect width="600" height="800" fill="#f1f5f9"/><rect x="55" y="55" width="490" height="690" rx="22" fill="#fff" stroke="#dbe2ea"/><text x="300" y="330" text-anchor="middle" font-size="110">📖</text><text x="300" y="455" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700" fill="#334155">${escapeHTML(title).replace(/&quot;/g,'"')}</text></svg>`;return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);}
+    function cleanURL(value){try{const u=new URL(String(value||''));return (u.protocol==='https:'||u.protocol==='http:')?u.href:'';}catch(e){return '';}}
+    function getBookTime(book){const value=book.timestamp??book.createdAt??book.uploadedAt??book.updatedAt??book.created_at??0;if(typeof value==='number')return value;const parsed=Date.parse(value);return Number.isNaN(parsed)?0:parsed;}
+    let allBooks=[...defaultBooks],firebaseBooks=[];
+    function mergeBooks(){const latest=[...firebaseBooks].sort((a,b)=>getBookTime(b)-getBookTime(a));allBooks=[...latest,...defaultBooks];}
+    function renderBooks(){
+      const query=search.value.trim().toLowerCase();
+      const filtered=allBooks.filter(book=>{const title=String(book.title||book.name||'').toLowerCase();const category=String(book.category||'').toLowerCase();return !query||title.includes(query)||category.includes(query);});
+      count.textContent=filtered.length+(filtered.length===1?' Book':' Books');grid.innerHTML='';noBooks.style.display=filtered.length?'none':'block';
+      filtered.forEach(book=>{
+        const title=String(book.title||book.name||'Book').trim();const pdf=cleanURL(book.pdf||book.link||book.file||book.url||book.pdfUrl||book.fileUrl||'');if(!pdf)return;
+        const card=document.createElement('article');card.className='book-card';const cover=document.createElement('div');cover.className='book-cover';const img=document.createElement('img');img.alt=title;img.loading='lazy';const info=document.createElement('div');info.className='book-info';const titleEl=document.createElement('div');titleEl.className='book-title';titleEl.textContent=title;info.appendChild(titleEl);cover.appendChild(img);card.appendChild(cover);card.appendChild(info);grid.appendChild(card);
+        const image=cleanURL(book.image||book.thumbnail||book.thumb||book.cover||book.imageUrl||book.ownerPhoto||'');img.src=image||fallbackCover(title);img.onerror=()=>{img.onerror=null;img.src=fallbackCover(title)};
+        card.addEventListener('click',()=>{const id=book.id||book.key||btoa(unescape(encodeURIComponent(title))).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40);const params=new URLSearchParams({id,title,category:String(book.category||''),pdf});params.set('ownerUid',String(book.ownerUid||book.authorUid||'KirLkZUGXoZf0cXHkuCZ4Mfnxam2'));params.set('ownerName',String(book.ownerName||book.authorName||'Founder'));params.set('ownerDesignation',String(book.ownerDesignation||book.designation||'Founder & CEO'));params.set('ownerPhoto',String(book.ownerPhoto||''));window.location.href='book-reader.html?'+params.toString();});
+      });
+    }
+    search.addEventListener('input',renderBooks);renderBooks();
+    try{onValue(ref(db,'books'),snapshot=>{firebaseBooks=[];if(snapshot.exists())snapshot.forEach(child=>{const data=child.val();if(data)firebaseBooks.push({id:child.key,...data});});mergeBooks();renderBooks();},error=>console.error('Firebase books read error:',error));}catch(error){console.error('Firebase books initialization error:',error);}
+  }
 
   function renderPageUI(targetPage) {
     const pages = document.querySelectorAll(".page");
@@ -4384,6 +4548,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const backBtn = document.getElementById("headerBackBtn");
     if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
+    const menuBtn = document.getElementById("menuToggleBtn");
+    if (menuBtn) menuBtn.style.display = targetPage === "homePage" ? "flex" : "none";
+    const bellBtn = document.getElementById("headerBellBtn");
+    if (bellBtn) bellBtn.style.display = "flex";
 
     document.querySelectorAll('.bottom-nav .nav-link-btn').forEach(btn => btn.classList.remove('active'));
     const tab = document.getElementById('tab-' + targetPage);

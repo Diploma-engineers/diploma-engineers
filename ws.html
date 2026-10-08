@@ -1931,6 +1931,9 @@ body.campus-hiring-open{overflow:hidden!important;}
         <button class="switch-btn" id="courseSwitch" type="button" style="display:none;">
             <i class="fa-solid fa-graduation-cap"></i> COURSE
         </button>
+        <button class="switch-btn" id="testSeriesSwitch" type="button" style="display:none;">
+            <i class="fa-solid fa-clipboard-question"></i> TEST SERIES
+        </button>
         <button class="switch-btn" id="rankSwitch" type="button">
             <i class="fa-solid fa-ranking-star"></i> RANKING
         </button>
@@ -2262,7 +2265,6 @@ body.campus-hiring-open{overflow:hidden!important;}
               <div id="notice" class="notice">Login required.</div>
               <div id="courseToolsTabs" class="test-series-tabs" style="margin-top:14px;">
                 <button type="button" class="test-series-tab active" id="coursePaymentTab"><i class="fa-solid fa-receipt"></i> PAYMENT APPROVAL</button>
-                <button type="button" class="test-series-tab" id="courseTestSeriesTab"><i class="fa-solid fa-clipboard-question"></i> TEST SERIES</button>
               </div>
 
 
@@ -2285,9 +2287,24 @@ body.campus-hiring-open{overflow:hidden!important;}
               </div>
 
 
-<!-- =====================================================
-     TEST SERIES ADMIN (INSIDE COURSE)
-===================================================== -->
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- TEST SERIES ADMIN - SEPARATE ADMIN SECTION -->
+    <div id="testSeriesAdminSection" class="admin-mode-section" style="display:none;">
+      <div class="course-admin-shell">
+        <div class="wrap">
+          <div class="top" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px;">
+            <div class="brand">
+              <h1 style="color:#2563eb;font-size:22px;"><i class="fa-solid fa-clipboard-question"></i> Test Series Admin</h1>
+              <p style="color:#64748b;font-size:13px;">Diploma Engineers • Create and manage student test series</p>
+            </div>
+            <button class="btn refresh" id="tsSectionRefreshBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+          
 <div id="testSeriesAdminWrap" style="display:none">
   <div class="test-series-tabs">
     <button type="button" class="test-series-tab active" data-ts-tab="create"><i class="fa-solid fa-circle-plus"></i> CREATE TEST</button>
@@ -2342,9 +2359,8 @@ body.campus-hiring-open{overflow:hidden!important;}
     </div>
   </div>
 </div>
-
-            </div>
         </div>
+      </div>
     </div>
 
     <!-- ADMIN RANKING -->
@@ -2552,7 +2568,9 @@ function applyCourseVisibility(){
     const allowed = isCourseAllowed();
     const track = document.getElementById("adminSwitcher");
     const btn = document.getElementById("courseSwitch");
+    const tsBtn = document.getElementById("testSeriesSwitch");
     const section = document.getElementById("courseAdminSection");
+    const tsSection = document.getElementById("testSeriesAdminSection");
 
     // Extra defensive UI lock: non-owner accounts cannot even see the
     // Course button and cannot leave the section active.
@@ -2562,11 +2580,22 @@ function applyCourseVisibility(){
         btn.setAttribute("aria-hidden", allowed ? "false" : "true");
     }
     if(track) track.classList.toggle("course-enabled", allowed);
+    if(tsBtn) {
+        tsBtn.style.display = allowed ? "block" : "none";
+        tsBtn.disabled = !allowed;
+        tsBtn.setAttribute("aria-hidden", allowed ? "false" : "true");
+    }
     if(!allowed && section){
         section.classList.remove("active");
         section.style.display = "none";
     } else if(allowed && section){
         section.style.removeProperty("display");
+    }
+    if(!allowed && tsSection){
+        tsSection.classList.remove("active");
+        tsSection.style.display = "none";
+    } else if(allowed && tsSection){
+        tsSection.style.removeProperty("display");
     }
     return allowed;
 }
@@ -5005,10 +5034,12 @@ const newsSwitch = document.getElementById("newsSwitch");
 const blogSwitch = document.getElementById("blogSwitch");
 const booksSwitch = document.getElementById("booksSwitch");
 const courseSwitch = document.getElementById("courseSwitch");
+const testSeriesSwitch = document.getElementById("testSeriesSwitch");
 const newsAdminSection = document.getElementById("newsAdminSection");
 const blogAdminSection = document.getElementById("blogAdminSection");
 const booksAdminSection = document.getElementById("booksAdminSection");
 const courseAdminSection = document.getElementById("courseAdminSection");
+const testSeriesAdminSection = document.getElementById("testSeriesAdminSection");
 
 const rankSwitch = document.getElementById("rankSwitch");
 const rankAdminSection = document.getElementById("rankAdminSection");
@@ -5281,11 +5312,13 @@ function showAdminMode(mode) {
     blogSwitch.classList.remove("active");
     booksSwitch.classList.remove("active");
     courseSwitch.classList.remove("active");
+    testSeriesSwitch.classList.remove("active");
     rankSwitch.classList.remove("active");
     newsAdminSection.classList.remove("active");
     blogAdminSection.classList.remove("active");
     booksAdminSection.classList.remove("active");
     courseAdminSection.classList.remove("active");
+    testSeriesAdminSection.classList.remove("active");
     rankAdminSection.classList.remove("active");
     adminCertificatesSection?.classList.remove("active");
     profileModal?.classList.remove("active");
@@ -5315,6 +5348,12 @@ function showAdminMode(mode) {
         courseSwitch.classList.add("active");
         courseAdminSection.classList.add("active");
         if (courseAuth.currentUser) connectCourseAdmin();
+    } else if (mode === "testSeries") {
+        if(!isCourseAllowed()) { applyCourseVisibility(); showAdminMode("news"); return; }
+        testSeriesSwitch.classList.add("active");
+        testSeriesAdminSection.classList.add("active");
+        testSeriesAdminSection.style.display="block";
+        openTsAdmin();
     } else if (mode === "profile") {
         profileModal?.classList.add("active");
         profileModal?.classList.add("profile-view-mode");
@@ -5342,6 +5381,10 @@ booksSwitch.addEventListener("click", () => showAdminMode("books"));
 courseSwitch.addEventListener("click", () => {
     if(!isCourseAllowed()) { denyCourseAccess(); return; }
     showAdminMode("course");
+});
+testSeriesSwitch.addEventListener("click", () => {
+    if(!isCourseAllowed()) { denyCourseAccess(); return; }
+    showAdminMode("testSeries");
 });
 rankSwitch.addEventListener("click", () => showAdminMode("ranking"));
 document.getElementById("refreshRanking")?.addEventListener("click", renderAdminRanking);
@@ -5495,6 +5538,10 @@ function appGo(mode){
   if(mode==="news"){showAdminMode("news");}
   else if(mode==="blog"){showAdminMode("blog");}
   else if(mode==="books"){showAdminMode("books");}
+  else if(mode==="testSeries"){
+    if(!isCourseAllowed()){showAdminMode("news");syncAppNav("news");window.scrollTo({top:0,behavior:"auto"});return;}
+    showAdminMode("testSeries");
+  }
   else if(mode==="course"){
     if(!isCourseAllowed()){showAdminMode("news");syncAppNav("news");window.scrollTo({top:0,behavior:"auto"});return;}
     showAdminMode("course");
@@ -7009,8 +7056,6 @@ function openTsAdmin(){
     return;
   }
   tsWrap.style.display="block";
-  tsPaymentFilters.style.display="none";
-  tsPaymentList.style.display="none";
   loadTsTests();
 }
 
@@ -7040,6 +7085,7 @@ $ts("tsParseBtn")?.addEventListener("click",()=>{
 $ts("tsPublishBtn")?.addEventListener("click",publishTestSeries);
 $ts("tsClearBtn")?.addEventListener("click",clearTsForm);
 $ts("tsRefreshBtn")?.addEventListener("click",loadTsTests);
+document.getElementById("tsSectionRefreshBtn")?.addEventListener("click",loadTsTests);
 document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-ts-delete]");
   if(btn) deleteTsTest(btn.getAttribute("data-ts-delete"));

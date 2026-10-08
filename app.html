@@ -6319,7 +6319,6 @@ window.addEventListener('DOMContentLoaded', () => {
     card.setAttribute("role", "article");
 
     card.innerHTML = `
-      ${image && validURL(image) ? `<img src="${escapeHTML(image)}" class="card-thumbnail" alt="${escapeHTML(title)}" loading="lazy" onerror="this.style.display='none'">` : ''}
       <span class="category">${escapeHTML(category)}</span>
       <h2 class="news-title"><i class="fa-solid fa-square-check"></i> ${escapeHTML(title)}</h2>
       <p class="news-description">${escapeHTML(description)}</p>
@@ -6331,17 +6330,14 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="action-links">
           <button class="action-btn" type="button" data-read="true"><i class="fa-solid fa-book-open"></i> Read News</button>
           <button class="action-btn" type="button" data-share="true"><i class="fa-solid fa-share-nodes"></i> Share</button>
-          ${externalLink && validURL(externalLink) ? `<a href="${escapeHTML(externalLink)}" target="_blank" rel="noopener noreferrer" class="action-btn" data-external="true"><i class="fa-solid fa-arrow-up-right-from-square"></i> External Link</a>` : ''}
         </div>
       </div>
     `;
 
     const readBtn = card.querySelector('[data-read]');
     const shareBtn = card.querySelector('[data-share]');
-    const externalBtn = card.querySelector('[data-external]');
     if (readBtn) readBtn.addEventListener('click', e => { e.stopPropagation(); window.location.href = readerUrl; });
     if (shareBtn) shareBtn.addEventListener('click', e => { e.stopPropagation(); openNewsShare(id, n); });
-    if (externalBtn) externalBtn.addEventListener('click', e => e.stopPropagation());
     card.addEventListener('click', () => { window.location.href = readerUrl; });
     container.appendChild(card);
   }
@@ -8863,6 +8859,21 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDraw
 
 </script>
 
+
+
+<style id="books-a4-full-image-patch">
+/* Books section: always show uploaded cover artwork completely in A4 proportion. */
+#booksPage .book-cover{aspect-ratio:210/297!important;background:#fff!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+#booksPage .book-cover img{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important;background:#fff!important;}
+#booksPage .book-cover img.cover-fill{object-fit:contain!important;}
+</style>
+
+
+<style id="news-compact-card-patch">
+#newsList .news-card{padding:16px!important;}
+#newsList .news-description{display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;margin-bottom:12px!important;}
+#newsList .card-thumbnail{display:none!important;}
+</style>
 
 </body>
 </html>

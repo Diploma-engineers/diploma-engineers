@@ -1743,6 +1743,31 @@ body.user-id-modal-open{overflow:hidden}.leaderboard-user-clickable{cursor:point
 .feedback-recent-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
 .feedback-recent-header h3{margin:0;font-size:16px;font-weight:850;color:#0f172a;}
 .feedback-recent-header span{font-size:10px;font-weight:700;color:#64748b;background:#f1f5f9;border-radius:999px;padding:6px 9px;}
+
+.feedback-see-all-btn{border:1px solid #dbe5f3;background:linear-gradient(135deg,#eff6ff,#fff);color:#2563eb;border-radius:999px;padding:7px 11px;font-size:10px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:.2s ease;}
+.feedback-see-all-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(37,99,235,.12);}
+.feedback-all-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(7px);z-index:10050;display:none;align-items:flex-end;justify-content:center;padding:14px;}
+.feedback-all-overlay.active{display:flex;}
+.feedback-all-modal{width:min(100%,760px);max-height:min(88vh,760px);background:#f8fbff;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 25px 70px rgba(15,23,42,.25);overflow:hidden;display:flex;flex-direction:column;}
+.feedback-all-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:#fff;border-bottom:1px solid #e8eef6;position:sticky;top:0;z-index:2;}
+.feedback-all-title{display:flex;align-items:center;gap:10px;min-width:0;}
+.feedback-all-title-icon{width:38px;height:38px;border-radius:12px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.feedback-all-title h3{margin:0;font-size:17px;font-weight:900;color:#0f172a;}
+.feedback-all-title p{margin:2px 0 0;font-size:10px;color:#64748b;}
+.feedback-all-close{width:36px;height:36px;border:0;border-radius:50%;background:#f1f5f9;color:#334155;cursor:pointer;font-size:15px;}
+.feedback-all-list{padding:16px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.feedback-all-card{background:#fff;border:1px solid #e4ebf5;border-radius:17px;padding:14px;box-shadow:0 6px 18px rgba(15,23,42,.045);}
+.feedback-all-card-top{display:flex;align-items:center;gap:9px;}
+.feedback-all-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;background:#eef4ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:900;}
+.feedback-all-avatar img{width:100%;height:100%;object-fit:cover;}
+.feedback-all-user{min-width:0;flex:1;}
+.feedback-all-user strong{display:block;font-size:13px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.feedback-all-user span{display:block;margin-top:2px;font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.feedback-all-rating{color:#f59e0b;font-size:11px;white-space:nowrap;}
+.feedback-all-message{margin-top:11px;color:#475569;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.feedback-all-date{margin-top:9px;color:#94a3b8;font-size:9px;font-weight:700;}
+.feedback-all-empty{padding:45px 18px;text-align:center;color:#64748b;grid-column:1/-1;font-size:12px;}
+@media(max-width:640px){.feedback-all-overlay{padding:0;align-items:flex-end}.feedback-all-modal{width:100%;max-height:92vh;border-radius:24px 24px 0 0}.feedback-all-list{grid-template-columns:1fr;padding:12px}.feedback-all-head{padding:14px 15px}}
 .feedback-viewport{width:100%;overflow:hidden;position:relative;border-radius:16px;}
 .feedback-track{display:flex;gap:14px;align-items:stretch;will-change:transform;transition:transform .55s cubic-bezier(.22,.61,.36,1);}
 .feedback-card{
@@ -3997,7 +4022,10 @@ html,body{max-width:100%;overflow-x:hidden}
       <div class="feedback-recent-card">
         <div class="feedback-recent-header">
           <h3><i class="fas fa-comments" style="color:#2563eb;margin-right:6px;"></i>Recent Feedback</h3>
-          <span>Latest 10</span>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span>Latest 10</span>
+            <button type="button" class="feedback-see-all-btn" onclick="openAllFeedback()"><i class="fas fa-layer-group"></i> See All</button>
+          </div>
         </div>
         <div class="feedback-viewport" id="feedbackViewport">
           <div id="feedbackTrack" class="feedback-track">
@@ -4014,6 +4042,25 @@ html,body{max-width:100%;overflow-x:hidden}
   </div>
 
 
+
+  <!-- ALL FEEDBACK MODAL -->
+  <div id="allFeedbackOverlay" class="feedback-all-overlay" role="dialog" aria-modal="true" aria-labelledby="allFeedbackTitle" onclick="if(event.target===this) closeAllFeedback()">
+    <div class="feedback-all-modal">
+      <div class="feedback-all-head">
+        <div class="feedback-all-title">
+          <div class="feedback-all-title-icon"><i class="fas fa-comments"></i></div>
+          <div>
+            <h3 id="allFeedbackTitle">All Feedback</h3>
+            <p id="allFeedbackCount">All student experiences</p>
+          </div>
+        </div>
+        <button type="button" class="feedback-all-close" onclick="closeAllFeedback()" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="allFeedbackList" class="feedback-all-list">
+        <div class="feedback-all-empty"><i class="fas fa-spinner fa-spin"></i> Loading feedback...</div>
+      </div>
+    </div>
+  </div>
 
   <!-- IN-APP LEGAL / POLICY PAGE -->
   <div id="legalPage" class="page">
@@ -5235,6 +5282,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let feedbackCarouselIndex = 0;
   let feedbackCarouselCount = 0;
   let feedbackCarouselVisible = 1;
+  let allFeedbackCache = [];
 
   function setFeedbackStatus(message, type) {
     const box = document.getElementById("feedbackStatus");
@@ -5402,6 +5450,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     feedbacks.sort((a, b) => (Number(b.createdAt || b.timestamp || 0) - Number(a.createdAt || a.timestamp || 0)));
+    allFeedbackCache = [...feedbacks];
     const realLatest = feedbacks.slice(0, 10);
     const latest10 = realLatest.length >= 10
       ? realLatest
@@ -5456,6 +5505,52 @@ window.addEventListener('DOMContentLoaded', () => {
       startFeedbackCarousel();
     });
   }
+
+  function renderAllFeedbackList() {
+    const list = document.getElementById("allFeedbackList");
+    const countEl = document.getElementById("allFeedbackCount");
+    if (!list) return;
+
+    const feedbacks = Array.isArray(allFeedbackCache) ? allFeedbackCache : [];
+    if (countEl) countEl.textContent = feedbacks.length ? `${feedbacks.length} feedback${feedbacks.length === 1 ? "" : "s"}` : "All student experiences";
+
+    if (!feedbacks.length) {
+      list.innerHTML = `<div class="feedback-all-empty"><i class="far fa-comment-dots" style="font-size:30px;display:block;margin-bottom:9px;color:#cbd5e1;"></i>No feedback yet. Be the first to share your experience!</div>`;
+      return;
+    }
+
+    list.innerHTML = feedbacks.map(item => {
+      const name = item.name || "Engineer";
+      const branch = item.branch || "Diploma Member";
+      const rating = Number(item.rating) || 0;
+      const message = item.message || item.feedback || "";
+      const image = item.profilePic && validURL(item.profilePic)
+        ? `<img src="${escapeHTML(item.profilePic)}" alt="${escapeHTML(name)}" loading="lazy">`
+        : `<span>${escapeHTML((name.trim().charAt(0) || "E").toUpperCase())}</span>`;
+      return `<article class="feedback-all-card">
+        <div class="feedback-all-card-top">
+          <div class="feedback-all-avatar">${image}</div>
+          <div class="feedback-all-user"><strong>${escapeHTML(name)}</strong><span>${escapeHTML(branch)}</span></div>
+          <div class="feedback-all-rating">${feedbackStars(rating)}</div>
+        </div>
+        <div class="feedback-all-message">${escapeHTML(message)}</div>
+        <div class="feedback-all-date"><i class="far fa-clock"></i> ${escapeHTML(formatFeedbackDate(item.createdAt || item.timestamp))}</div>
+      </article>`;
+    }).join("");
+  }
+
+  window.openAllFeedback = function() {
+    renderAllFeedbackList();
+    const overlay = document.getElementById("allFeedbackOverlay");
+    if (overlay) overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+  };
+
+  window.closeAllFeedback = function() {
+    const overlay = document.getElementById("allFeedbackOverlay");
+    if (overlay) overlay.classList.remove("active");
+    document.body.style.overflow = "";
+  };
 
   function loadFeedbackData() {
     if (feedbackListenerStarted) return;
@@ -8706,3 +8801,14 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDraw
 
 </body>
 </html>
+<style id="final-left-bell-patch">
+/* Final header positioning: notification bell stays at the absolute left edge. */
+.navbar{position:fixed!important;left:0!important;right:0!important;top:0!important;width:100%!important;}
+.nav-left{position:absolute!important;left:0!important;top:50%!important;transform:translateY(-50%)!important;margin:0!important;padding:0!important;gap:2px!important;}
+.header-bell-btn{margin:0!important;padding:0!important;width:40px!important;height:40px!important;border-radius:0 10px 10px 0!important;}
+.menu-toggle-btn,.header-back-btn{margin:0!important;}
+@media(max-width:560px){
+  .nav-left{left:0!important;gap:0!important;}
+  .header-bell-btn{width:42px!important;height:40px!important;}
+}
+</style>

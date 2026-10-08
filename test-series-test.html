@@ -9,405 +9,87 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
 <style>
 :root{--primary:#0f2f63;--blue:#1d4ed8;--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#697386;--border:#e5e9f2;--green:#16834b;--red:#c92a3b;--orange:#b87900}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
-button{font:inherit}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}button{font:inherit}
 .top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
-.nav{max-width:1180px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font-family:Poppins;font-size:20px;font-weight:800;color:var(--primary)}
-.brand span{display:block;font-family:Inter;font-size:11px;color:var(--muted);font-weight:500}
-.timer{background:#eef3fa;color:var(--primary);border-radius:11px;padding:9px 12px;font-weight:800;font-size:13px}
-.timer.warning{background:#fff0f1;color:var(--red)}
-.container{max-width:980px;margin:auto;padding:24px 16px 60px}
-.card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(15,47,99,.06);padding:20px;margin-bottom:16px}
-.hero h1{font-family:Poppins;font-size:27px;margin:0 0 7px}
-.hero p{margin:0;color:var(--muted);line-height:1.6}
-.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.meta span{background:#f6f8fc;border:1px solid var(--border);padding:7px 9px;border-radius:9px;font-size:11px}
-.instructions{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:13px;margin-top:15px;color:#4b5568;font-size:13px;line-height:1.6;white-space:pre-line}
-.progress-wrap{position:sticky;top:63px;z-index:10;background:rgba(245,247,251,.94);backdrop-filter:blur(10px);padding:8px 0}
-.progress-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px}
-.progress{height:7px;background:#e8edf5;border-radius:20px;overflow:hidden}
-.progress i{display:block;height:100%;width:0;background:var(--blue);transition:.2s}
-.qcard{padding:20px}
-.qnumber{font-size:11px;font-weight:800;color:var(--blue);margin-bottom:9px;text-transform:uppercase;letter-spacing:.3px}
-.question{font-family:Poppins;font-size:18px;line-height:1.55;margin-bottom:15px}
-.option{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:11px;padding:12px 13px;margin:8px 0;cursor:pointer;transition:.15s}
-.option:hover{border-color:#9bb3e4;background:#f9fbff}
-.option.selected{border-color:#4f78c9;background:#eef4ff}
-.option input{margin-top:3px;accent-color:var(--blue)}
-.letter{font-weight:800;color:var(--primary);min-width:20px}
-.option-text{font-size:14px;line-height:1.5}
-.nav-actions{display:flex;justify-content:space-between;gap:10px;margin-top:17px}
-.btn{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-blue{background:var(--blue);color:#fff}
-.btn-light{background:#eef3fa;color:var(--primary)}
-.btn-success{background:var(--green);color:#fff}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.submit-wrap{text-align:center}
-.submit{min-width:220px}
-.result{text-align:center}
-.score{font-family:Poppins;font-size:42px;font-weight:800;color:var(--primary);margin:5px 0}
-.result p{color:var(--muted);line-height:1.6}
-.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
-.result-box{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:12px}
-.result-box b{display:block;font-size:20px;color:var(--primary)}
-.result-box span{font-size:11px;color:var(--muted)}
-.review{text-align:left;margin-top:18px}
-.review-item{border:1px solid var(--border);border-radius:12px;padding:14px;margin:10px 0}
-.review-item.correct{border-color:#a9dfc1;background:#f4fcf7}
-.review-item.wrong{border-color:#f1b5bd;background:#fff7f8}
-.review-q{font-weight:800;line-height:1.5;margin-bottom:8px}
-.review-line{font-size:13px;line-height:1.6;color:#4b5568}
-.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:800}
-.badge.green{background:#eaf8f0;color:#147442}
-.badge.red{background:#fff0f1;color:#a91f2d}
-.loading,.error{text-align:center;padding:50px 20px;color:var(--muted)}
-.error{color:#a91f2d;background:#fff0f1;border:1px solid #ffd1d5;border-radius:13px}
-.hidden{display:none!important}
-@media(max-width:650px){
- .container{padding:18px 11px 45px}.hero h1{font-size:23px}.brand{font-size:17px}
- .qcard,.card{padding:15px}.question{font-size:16px}.result-grid{grid-template-columns:repeat(2,1fr)}
- .nav{padding:11px 12px}.timer{font-size:12px;padding:8px 9px}
- .progress-wrap{top:57px}
-}
+.nav{max-width:1180px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-family:Poppins;font-size:20px;font-weight:800;color:var(--primary)}.brand span{display:block;font-family:Inter;font-size:11px;color:var(--muted);font-weight:500}.timer{background:#eef3fa;color:var(--primary);border-radius:11px;padding:9px 12px;font-weight:800;font-size:13px}.timer.warning{background:#fff0f1;color:var(--red)}
+.container{max-width:980px;margin:auto;padding:24px 16px 60px}.card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(15,47,99,.06);padding:20px;margin-bottom:16px}.hero h1{font-family:Poppins;font-size:27px;margin:0 0 7px}.hero p{margin:0;color:var(--muted);line-height:1.6}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.meta span{background:#f6f8fc;border:1px solid var(--border);padding:7px 9px;border-radius:9px;font-size:11px}.instructions{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:13px;margin-top:15px;color:#4b5568;font-size:13px;line-height:1.6;white-space:pre-line}
+.progress-wrap{position:sticky;top:63px;z-index:10;background:rgba(245,247,251,.94);backdrop-filter:blur(10px);padding:8px 0}.progress-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px}.progress{height:7px;background:#e8edf5;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:var(--blue);transition:.2s}
+.qcard{padding:20px}.qnumber{font-size:11px;font-weight:800;color:var(--blue);margin-bottom:9px;text-transform:uppercase;letter-spacing:.3px}.question{font-family:Poppins;font-size:18px;line-height:1.55;margin-bottom:15px}.question-lang{font-family:Inter;font-size:12px;color:var(--muted);font-weight:700;margin:4px 0 12px}.bilingual-line{display:block;margin-bottom:7px}.hindi{font-family:"Noto Sans Devanagari","Nirmala UI",Mangal,Arial,sans-serif}
+.option{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:11px;padding:12px 13px;margin:8px 0;cursor:pointer;transition:.15s}.option:hover{border-color:#9bb3e4;background:#f9fbff}.option.selected{border-color:#4f78c9;background:#eef4ff}.option input{margin-top:3px;accent-color:var(--blue)}.letter{font-weight:800;color:var(--primary);min-width:20px}.option-text{font-size:14px;line-height:1.5}.option-text .en,.option-text .hi{display:block}.option-text .hi{margin-top:3px}
+.nav-actions{display:flex;justify-content:space-between;gap:10px;margin-top:17px}.btn{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn-primary{background:var(--primary);color:#fff}.btn-blue{background:var(--blue);color:#fff}.btn-light{background:#eef3fa;color:var(--primary)}.btn-success{background:var(--green);color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}.submit-wrap{text-align:center}.submit{min-width:220px}
+.result{text-align:center}.score{font-family:Poppins;font-size:42px;font-weight:800;color:var(--primary);margin:5px 0}.result p{color:var(--muted);line-height:1.6}.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.result-box{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:12px}.result-box b{display:block;font-size:20px;color:var(--primary)}.result-box span{font-size:11px;color:var(--muted)}.review{text-align:left;margin-top:18px}.review-item{border:1px solid var(--border);border-radius:12px;padding:14px;margin:10px 0}.review-item.correct{border-color:#a9dfc1;background:#f4fcf7}.review-item.wrong{border-color:#f1b5bd;background:#fff7f8}.review-q{font-weight:800;line-height:1.5;margin-bottom:8px}.review-line{font-size:13px;line-height:1.6;color:#4b5568}.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:800}.badge.green{background:#eaf8f0;color:#147442}.badge.red{background:#fff0f1;color:#a91f2d}
+.loading,.error{text-align:center;padding:50px 20px;color:var(--muted)}.error{color:#a91f2d;background:#fff0f1;border:1px solid #ffd1d5;border-radius:13px}.hidden{display:none!important}
+#instructionGate{max-width:760px;margin:10px auto}.gate-title{font-family:Poppins;font-size:25px;margin:0 0 5px}.gate-subtitle{color:var(--muted);margin:0 0 16px;line-height:1.6}.gate-box{background:#f7f9fc;border:1px solid var(--border);border-radius:14px;padding:16px;margin:15px 0;line-height:1.7;font-size:14px;white-space:pre-line}.language-title{font-weight:800;margin:18px 0 10px}.language-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.lang-option{border:1px solid var(--border);background:#fff;border-radius:13px;padding:14px;text-align:center;cursor:pointer;font-weight:800;color:var(--primary)}.lang-option small{display:block;color:var(--muted);font-weight:500;margin-top:4px}.lang-option.selected{border:2px solid var(--blue);background:#eef4ff}.agree-row{display:flex;align-items:flex-start;gap:9px;margin:18px 0;font-size:13px;line-height:1.5}.agree-row input{margin-top:3px;accent-color:var(--blue)}.gate-start{width:100%;padding:13px}.mini-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+@media(max-width:650px){.container{padding:18px 11px 45px}.hero h1{font-size:23px}.brand{font-size:17px}.qcard,.card{padding:15px}.question{font-size:16px}.result-grid{grid-template-columns:repeat(2,1fr)}.nav{padding:11px 12px}.timer{font-size:12px;padding:8px 9px}.progress-wrap{top:57px}.language-grid{grid-template-columns:1fr}.gate-title{font-size:21px}}
 </style>
 </head>
-
 <body>
 <header class="top">
   <div class="nav">
     <div class="brand">Diploma Engineers<span>Online Test Series</span></div>
-    <div id="timer" class="timer"><i class="fa-regular fa-clock"></i> --:--</div>
+    <div id="timer" class="timer hidden"><i class="fa-regular fa-clock"></i> --:--</div>
   </div>
 </header>
-
 <main class="container">
-  <section id="loading" class="card loading">
-    <i class="fa-solid fa-spinner fa-spin" style="font-size:28px"></i>
-    <p>Test loading...</p>
-  </section>
-
+  <section id="loading" class="card loading"><i class="fa-solid fa-spinner fa-spin" style="font-size:28px"></i><p>Test loading...</p></section>
   <section id="errorBox" class="error hidden"></section>
-
   <div id="testApp" class="hidden">
-    <section class="card hero">
-      <h1 id="title">Test Series</h1>
-      <p id="description"></p>
-      <div id="meta" class="meta"></div>
-      <div id="instructions" class="instructions hidden"></div>
-    </section>
-
-    <div class="progress-wrap">
-      <div class="progress-top">
-        <span id="progressText">Question 1 of 1</span>
-        <span id="answeredText">0 Answered</span>
+    <section id="instructionGate" class="card">
+      <div class="mini-label">Before You Start</div>
+      <h1 id="gateTitle" class="gate-title">Test Instructions</h1>
+      <p class="gate-subtitle">Please read the instructions, select your language, and click <b>I Agree & Continue</b> to start the test.</p>
+      <div id="gateInstructions" class="gate-box"></div>
+      <div class="language-title">Choose Test Language / Test की भाषा चुनें</div>
+      <div class="language-grid">
+        <button type="button" class="lang-option" data-lang="en">English<small>English only</small></button>
+        <button type="button" class="lang-option" data-lang="hi">हिन्दी<small>Hindi only</small></button>
+        <button type="button" class="lang-option" data-lang="bi">English + हिन्दी<small>Bilingual</small></button>
       </div>
-      <div class="progress"><i id="progressBar"></i></div>
-    </div>
-
-    <section id="questionCard" class="card qcard"></section>
-
-    <section id="submitCard" class="card submit-wrap">
-      <p style="color:var(--muted);font-size:13px">All questions can be reviewed before submitting.</p>
-      <button id="submitBtn" class="btn btn-success submit">
-        <i class="fa-solid fa-paper-plane"></i> Submit Test
-      </button>
+      <label class="agree-row"><input id="agreeCheck" type="checkbox"><span>I have read and understood the instructions and agree to start the test.<br>मैंने निर्देश पढ़ और समझ लिए हैं तथा टेस्ट शुरू करने के लिए सहमत हूँ।</span></label>
+      <button id="startTestBtn" class="btn btn-primary gate-start" disabled><i class="fa-solid fa-circle-check"></i> I Agree & Continue</button>
     </section>
-
-    <section id="resultCard" class="card result hidden"></section>
+    <div id="testContent" class="hidden">
+      <section class="card hero">
+        <h1 id="title">Test Series</h1><p id="description"></p><div id="meta" class="meta"></div><div id="instructions" class="instructions hidden"></div>
+      </section>
+      <div class="progress-wrap"><div class="progress-top"><span id="progressText">Question 1 of 1</span><span id="answeredText">0 Answered</span></div><div class="progress"><i id="progressBar"></i></div></div>
+      <section id="questionCard" class="card qcard"></section>
+      <section id="submitCard" class="card submit-wrap"><p style="color:var(--muted);font-size:13px">All questions can be reviewed before submitting.</p><button id="submitBtn" class="btn btn-success submit"><i class="fa-solid fa-paper-plane"></i> Submit Test</button></section>
+      <section id="resultCard" class="card result hidden"></section>
+    </div>
   </div>
 </main>
-
 <script>
-const firebaseConfig={
- apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",
- authDomain:"diplomaengineers-869df.firebaseapp.com",
- databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",
- projectId:"diplomaengineers-869df",
- storageBucket:"diplomaengineers-869df.firebasestorage.app",
- messagingSenderId:"356779436080",
- appId:"1:356779436080:web:4b28da380e547420d0e5f5",
- measurementId:"G-NGNBW3YGFG"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-
-const params=new URLSearchParams(location.search);
-const testId=params.get("id");
-
-let test=null;
-let questions=[];
-let currentIndex=0;
-let answers={};
-let secondsLeft=0;
-let timerInterval=null;
-let submitted=false;
-
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
-
-function formatTime(sec){
-  sec=Math.max(0,Number(sec)||0);
-  const m=Math.floor(sec/60);
-  const s=sec%60;
-  return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-}
-
-function formatDate(v){
-  if(!v)return "";
-  const d=new Date(Number(v));
-  return isNaN(d.getTime())?"":d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
-}
-
-function showError(msg){
-  $("loading").classList.add("hidden");
-  $("testApp").classList.add("hidden");
-  $("errorBox").textContent=msg;
-  $("errorBox").classList.remove("hidden");
-}
-
-function renderMeta(){
-  const total=questions.length;
-  const marks=(Number(test.marksPerQuestion)||1)*total;
-  $("meta").innerHTML=`
-    <span><i class="fa-solid fa-code-branch"></i> ${esc(test.branch||"")}</span>
-    <span><i class="fa-solid fa-layer-group"></i> ${esc(test.semester||"")}</span>
-    <span><i class="fa-solid fa-book"></i> ${esc(test.subject||"")}</span>
-    <span><i class="fa-solid fa-list-check"></i> ${total} Questions</span>
-    <span><i class="fa-regular fa-clock"></i> ${Number(test.durationMinutes)||0} min</span>
-    <span><i class="fa-solid fa-star"></i> ${marks} Marks</span>
-    <span><i class="fa-solid fa-minus"></i> ${Number(test.negativeMark)||0} Negative</span>
-  `;
-  if(test.instructions){
-    $("instructions").textContent=test.instructions;
-    $("instructions").classList.remove("hidden");
-  }
-}
-
-function renderQuestion(){
-  if(submitted)return;
-  const q=questions[currentIndex];
-  const letters=["A","B","C","D"];
-  const selected=answers[q.id]||"";
-
-  $("questionCard").innerHTML=`
-    <div class="qnumber">Question ${currentIndex+1} of ${questions.length}</div>
-    <div class="question">${esc(q.question||"")}</div>
-    <div>
-      ${(q.options||[]).slice(0,4).map((op,i)=>`
-        <label class="option ${selected===letters[i]?"selected":""}">
-          <input type="radio" name="answer" value="${letters[i]}" ${selected===letters[i]?"checked":""}>
-          <span class="letter">${letters[i]})</span>
-          <span class="option-text">${esc(op||"")}</span>
-        </label>
-      `).join("")}
-    </div>
-    <div class="nav-actions">
-      <button id="prevBtn" class="btn btn-light" ${currentIndex===0?"disabled":""}>
-        <i class="fa-solid fa-arrow-left"></i> Previous
-      </button>
-      <button id="nextBtn" class="btn btn-blue" ${currentIndex===questions.length-1?"disabled":""}>
-        Next <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-  `;
-
-  document.querySelectorAll('input[name="answer"]').forEach(input=>{
-    input.addEventListener("change",()=>{
-      answers[q.id]=input.value;
-      renderQuestion();
-      updateProgress();
-    });
-  });
-
-  $("prevBtn").addEventListener("click",()=>{
-    if(currentIndex>0){currentIndex--;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:"smooth"});}
-  });
-
-  $("nextBtn").addEventListener("click",()=>{
-    if(currentIndex<questions.length-1){currentIndex++;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:"smooth"});}
-  });
-
-  updateProgress();
-}
-
-function updateProgress(){
-  const answered=Object.keys(answers).length;
-  $("progressText").textContent=`Question ${currentIndex+1} of ${questions.length}`;
-  $("answeredText").textContent=`${answered} Answered`;
-  $("progressBar").style.width=((answered/questions.length)*100)+"%";
-}
-
-function startTimer(){
-  secondsLeft=(Number(test.durationMinutes)||30)*60;
-  $("timer").textContent=formatTime(secondsLeft);
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    secondsLeft--;
-    $("timer").innerHTML='<i class="fa-regular fa-clock"></i> '+formatTime(secondsLeft);
-    if(secondsLeft<=60)$("timer").classList.add("warning");
-    if(secondsLeft<=0){
-      clearInterval(timerInterval);
-      submitTest(true);
-    }
-  },1000);
-}
-
-function calculateResult(){
-  let correct=0,wrong=0,unanswered=0;
-  const marks=Number(test.marksPerQuestion)||1;
-  const negative=Number(test.negativeMark)||0;
-
-  questions.forEach(q=>{
-    const selected=answers[q.id];
-    if(!selected) unanswered++;
-    else if(selected===String(q.answer||"").toUpperCase()) correct++;
-    else wrong++;
-  });
-
-  const score=(correct*marks)-(wrong*negative);
-  const maxMarks=questions.length*marks;
-  const percentage=maxMarks>0?(score/maxMarks)*100:0;
-  const pass=percentage >= (Number(test.passPercentage)||0);
-
-  return {correct,wrong,unanswered,score,maxMarks,percentage,pass};
-}
-
-function submitTest(auto=false){
-  if(submitted)return;
-
-  const unanswered=questions.length-Object.keys(answers).length;
-  if(!auto && unanswered>0){
-    const ok=confirm(`${unanswered} question(s) unanswered हैं. क्या आप test submit करना चाहते हैं?`);
-    if(!ok)return;
-  }
-
-  submitted=true;
-  clearInterval(timerInterval);
-
-  const r=calculateResult();
-  $("questionCard").classList.add("hidden");
-  $("submitCard").classList.add("hidden");
-  $("timer").classList.add("hidden");
-
-  $("resultCard").classList.remove("hidden");
-  $("resultCard").innerHTML=`
-    <span class="badge ${r.pass?"green":"red"}">${r.pass?"PASSED":"NOT PASSED"}</span>
-    <h2 style="font-family:Poppins;margin:10px 0 0">${auto?"Time Over":"Test Completed"}</h2>
-    <div class="score">${r.score.toFixed(2)} / ${r.maxMarks}</div>
-    <p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p>
-
-    <div class="result-grid">
-      <div class="result-box"><b>${r.correct}</b><span>Correct</span></div>
-      <div class="result-box"><b>${r.wrong}</b><span>Wrong</span></div>
-      <div class="result-box"><b>${r.unanswered}</b><span>Unanswered</span></div>
-      <div class="result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div>
-    </div>
-
-    <div class="actions" style="justify-content:center;display:flex;gap:9px;flex-wrap:wrap">
-      <button id="reviewBtn" class="btn btn-light"><i class="fa-solid fa-list-check"></i> Review Answers</button>
-      <button id="retryBtn" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Try Again</button>
-    </div>
-    <div id="review" class="review hidden"></div>
-  `;
-
-  $("reviewBtn").addEventListener("click",()=>{
-    const review=$("review");
-    review.classList.toggle("hidden");
-    if(!review.classList.contains("hidden")) renderReview();
-  });
-
-  $("retryBtn").addEventListener("click",()=>location.reload());
-}
-
-function renderReview(){
-  const letters=["A","B","C","D"];
-  $("review").innerHTML=questions.map((q,i)=>{
-    const selected=answers[q.id]||"Not Answered";
-    const correct=String(q.answer||"").toUpperCase();
-    const isCorrect=selected===correct;
-    return `
-      <div class="review-item ${isCorrect?"correct":selected==="Not Answered"?"":"wrong"}">
-        <div class="review-q">${i+1}. ${esc(q.question||"")}</div>
-        <div class="review-line"><b>Your Answer:</b> ${esc(selected)}</div>
-        <div class="review-line"><b>Correct Answer:</b> ${esc(correct)}</div>
-        <div style="margin-top:8px">
-          ${(q.options||[]).slice(0,4).map((op,j)=>`
-            <div style="font-size:12px;margin:4px 0;color:${letters[j]===correct?"#147442":letters[j]===selected&&selected!==correct?"#a91f2d":"#697386"}">
-              <b>${letters[j]})</b> ${esc(op||"")}
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-async function loadTest(){
-  if(!testId){
-    showError("Test ID missing. Published Test Series से test open करें.");
-    return;
-  }
-
-  try{
-    const snap=await db.ref("testSeries/"+testId).once("value");
-    test=snap.val();
-
-    if(!test){
-      showError("Test नहीं मिला.");
-      return;
-    }
-
-    if(test.status!=="published" || test.active===false){
-      showError("यह test अभी published नहीं है या inactive है.");
-      return;
-    }
-
-    if(!Array.isArray(test.questions) || !test.questions.length){
-      showError("इस test में कोई question उपलब्ध नहीं है.");
-      return;
-    }
-
-    // हर नया attempt में questions का order random रहेगा.
-    questions=shuffle(test.questions.map((q,i)=>({
-      id:q.id||("q"+(i+1)),
-      question:q.question||"",
-      options:Array.isArray(q.options)?q.options.slice(0,4):[],
-      answer:String(q.answer||"").toUpperCase()
-    })));
-
-    $("title").textContent=test.title||"Test Series";
-    $("description").textContent=test.description||"Practice this test and check your score instantly.";
-    renderMeta();
-
-    $("loading").classList.add("hidden");
-    $("testApp").classList.remove("hidden");
-
-    renderQuestion();
-    startTimer();
-
-  }catch(e){
-    console.error(e);
-    showError("Test load नहीं हो सका: "+(e.message||"Firebase error"));
-  }
-}
-
-$("submitBtn").addEventListener("click",()=>submitTest(false));
-loadTest();
+const firebaseConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eD_kTo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.firebasestorage.app",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5",measurementId:"G-NGNBW3YGFG"};
+firebase.initializeApp(firebaseConfig);const db=firebase.database();
+const $=id=>document.getElementById(id);const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+const params=new URLSearchParams(location.search);const testId=params.get("id");
+let test=null,questions=[],currentIndex=0,answers={},secondsLeft=0,timerInterval=null,submitted=false,selectedLanguage="bi",started=false;
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function formatTime(sec){sec=Math.max(0,Number(sec)||0);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function formatDate(v){if(!v)return"";const d=new Date(Number(v));return isNaN(d.getTime())?"":d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}
+function showError(msg){$("loading").classList.add("hidden");$("testApp").classList.add("hidden");$("errorBox").textContent=msg;$("errorBox").classList.remove("hidden")}
+function getField(obj,enNames,hiNames,fallback=""){for(const k of enNames)if(obj&&obj[k]!=null&&String(obj[k]).trim())return String(obj[k]);return fallback}
+function bilingual(obj,enNames,hiNames,fallback=""){let en="",hi="";for(const k of enNames)if(obj&&obj[k]!=null&&String(obj[k]).trim()){en=String(obj[k]);break}for(const k of hiNames)if(obj&&obj[k]!=null&&String(obj[k]).trim()){hi=String(obj[k]);break}if(!en&&!hi)en=fallback;return{en,hi}}
+function displayText(pair){if(selectedLanguage==="en")return pair.en||pair.hi||"";if(selectedLanguage==="hi")return pair.hi||pair.en||"";if(pair.en&&pair.hi&&pair.en!==pair.hi)return `<span class="bilingual-line">${esc(pair.en)}</span><span class="bilingual-line hindi">${esc(pair.hi)}</span>`;return esc(pair.en||pair.hi||"")}
+function autoInstructions(){const mins=Number(test.durationMinutes)||30,marks=Number(test.marksPerQuestion)||1,neg=Number(test.negativeMark)||0;const en=`1. Read each question carefully before selecting an answer.\n2. Total Questions: ${questions.length}.\n3. Test Duration: ${mins} minutes.\n4. Each correct answer carries ${marks} mark(s).\n5. Negative marking: ${neg} mark(s) for each wrong answer.\n6. You can use Previous/Next to review questions.\n7. Click Submit Test after completing the test.\n8. The test will be submitted automatically when the timer reaches zero.`;const hi=`1. प्रत्येक प्रश्न को ध्यान से पढ़कर उत्तर चुनें।\n2. कुल प्रश्न: ${questions.length}।\n3. टेस्ट अवधि: ${mins} मिनट।\n4. प्रत्येक सही उत्तर के लिए ${marks} अंक।\n5. गलत उत्तर के लिए ${neg} अंक की Negative Marking।\n6. Previous/Next से प्रश्नों को दोबारा देख सकते हैं।\n7. टेस्ट पूरा होने पर Submit Test पर क्लिक करें।\n8. समय समाप्त होने पर टेस्ट अपने आप submit हो जाएगा।`;return{en,hi}}
+function instructionForGate(){const p=bilingual(test,["instructionsEnglish","instructionEnglish","instructionsEn"],["instructionsHindi","instructionHindi","instructionsHi"],"");if(!p.en&&!p.hi)return autoInstructions();return p}
+function renderGateInstructions(){const p=instructionForGate();$("gateInstructions").innerHTML=displayText(p);}
+function renderMeta(){const total=questions.length,marks=(Number(test.marksPerQuestion)||1)*total;$('meta').innerHTML=`<span><i class="fa-solid fa-code-branch"></i> ${esc(test.branch||"")}</span><span><i class="fa-solid fa-layer-group"></i> ${esc(test.semester||"")}</span><span><i class="fa-solid fa-book"></i> ${esc(test.subject||"")}</span><span><i class="fa-solid fa-list-check"></i> ${total} Questions</span><span><i class="fa-regular fa-clock"></i> ${Number(test.durationMinutes)||0} min</span><span><i class="fa-solid fa-star"></i> ${marks} Marks</span><span><i class="fa-solid fa-minus"></i> ${Number(test.negativeMark)||0} Negative</span>`;const p=instructionForGate();if(p.en||p.hi){$("instructions").innerHTML=displayText(p);$("instructions").classList.remove("hidden")}}
+function questionPair(q){return bilingual(q,["questionEnglish","questionEn","englishQuestion"],["questionHindi","questionHi","hindiQuestion"],q.question||"")}
+function optionPair(q,index){const enKeys=[`option${index+1}English`,`option${index+1}En`],hiKeys=[`option${index+1}Hindi`,`option${index+1}Hi`];const p=bilingual(q,enKeys,hiKeys,"");if(p.en||p.hi)return p;const op=(q.options||[])[index]||"";return bilingual(op,["english","en"],["hindi","hi"],op)}
+function renderQuestion(){if(submitted)return;const q=questions[currentIndex],letters=["A","B","C","D"],selected=answers[q.id]||"",qp=questionPair(q);$("questionCard").innerHTML=`<div class="qnumber">Question ${currentIndex+1} of ${questions.length}</div><div class="question">${displayText(qp)}</div><div>${[0,1,2,3].map((i)=>{const p=optionPair(q,i);return `<label class="option ${selected===letters[i]?"selected":""}"><input type="radio" name="answer" value="${letters[i]}" ${selected===letters[i]?"checked":""}><span class="letter">${letters[i]})</span><span class="option-text">${displayText(p)}</span></label>`}).join("")}</div><div class="nav-actions"><button id="prevBtn" class="btn btn-light" ${currentIndex===0?"disabled":""}><i class="fa-solid fa-arrow-left"></i> Previous</button><button id="nextBtn" class="btn btn-blue" ${currentIndex===questions.length-1?"disabled":""}>Next <i class="fa-solid fa-arrow-right"></i></button></div>`;document.querySelectorAll('input[name="answer"]').forEach(input=>input.addEventListener("change",()=>{answers[q.id]=input.value;renderQuestion();updateProgress()}));$("prevBtn").addEventListener("click",()=>{if(currentIndex>0){currentIndex--;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:"smooth"})}});$("nextBtn").addEventListener("click",()=>{if(currentIndex<questions.length-1){currentIndex++;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:"smooth"})}});updateProgress()}
+function updateProgress(){const answered=Object.keys(answers).length;$("progressText").textContent=`Question ${currentIndex+1} of ${questions.length}`;$("answeredText").textContent=`${answered} Answered`;$("progressBar").style.width=((answered/questions.length)*100)+"%"}
+function startTimer(){secondsLeft=(Number(test.durationMinutes)||30)*60;$("timer").innerHTML='<i class="fa-regular fa-clock"></i> '+formatTime(secondsLeft);$("timer").classList.remove("hidden");clearInterval(timerInterval);timerInterval=setInterval(()=>{secondsLeft--;$("timer").innerHTML='<i class="fa-regular fa-clock"></i> '+formatTime(secondsLeft);if(secondsLeft<=60)$("timer").classList.add("warning");if(secondsLeft<=0){clearInterval(timerInterval);submitTest(true)}},1000)}
+function calculateResult(){let correct=0,wrong=0,unanswered=0;const marks=Number(test.marksPerQuestion)||1,negative=Number(test.negativeMark)||0;questions.forEach(q=>{const selected=answers[q.id];if(!selected)unanswered++;else if(selected===String(q.answer||"").toUpperCase())correct++;else wrong++});const score=(correct*marks)-(wrong*negative),maxMarks=questions.length*marks,percentage=maxMarks>0?(score/maxMarks)*100:0,pass=percentage>=(Number(test.passPercentage)||0);return{correct,wrong,unanswered,score,maxMarks,percentage,pass}}
+function submitTest(auto=false){if(submitted)return;const unanswered=questions.length-Object.keys(answers).length;if(!auto&&unanswered>0&&!confirm(`${unanswered} question(s) unanswered हैं. क्या आप test submit करना चाहते हैं?`))return;submitted=true;clearInterval(timerInterval);const r=calculateResult();$("questionCard").classList.add("hidden");$("submitCard").classList.add("hidden");$("timer").classList.add("hidden");$("resultCard").classList.remove("hidden");$("resultCard").innerHTML=`<span class="badge ${r.pass?"green":"red"}">${r.pass?"PASSED":"NOT PASSED"}</span><h2 style="font-family:Poppins;margin:10px 0 0">${auto?"Time Over":"Test Completed"}</h2><div class="score">${r.score.toFixed(2)} / ${r.maxMarks}</div><p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p><div class="result-grid"><div class="result-box"><b>${r.correct}</b><span>Correct</span></div><div class="result-box"><b>${r.wrong}</b><span>Wrong</span></div><div class="result-box"><b>${r.unanswered}</b><span>Unanswered</span></div><div class="result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div></div><div class="actions" style="justify-content:center;display:flex;gap:9px;flex-wrap:wrap"><button id="reviewBtn" class="btn btn-light"><i class="fa-solid fa-list-check"></i> Review Answers</button><button id="retryBtn" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Try Again</button></div><div id="review" class="review hidden"></div>`;$("reviewBtn").addEventListener("click",()=>{const review=$("review");review.classList.toggle("hidden");if(!review.classList.contains("hidden"))renderReview()});$("retryBtn").addEventListener("click",()=>location.reload())}
+function renderReview(){const letters=["A","B","C","D"];$("review").innerHTML=questions.map((q,i)=>{const selected=answers[q.id]||"Not Answered",correct=String(q.answer||"").toUpperCase(),isCorrect=selected===correct,qp=questionPair(q);return `<div class="review-item ${isCorrect?"correct":selected==="Not Answered"?"":"wrong"}"><div class="review-q">${i+1}. ${displayText(qp)}</div><div class="review-line"><b>Your Answer:</b> ${esc(selected)}</div><div class="review-line"><b>Correct Answer:</b> ${esc(correct)}</div><div style="margin-top:8px">${[0,1,2,3].map(j=>{const p=optionPair(q,j);return `<div style="font-size:12px;margin:4px 0;color:${letters[j]===correct?"#147442":letters[j]===selected&&selected!==correct?"#a91f2d":"#697386"}"><b>${letters[j]})</b> ${displayText(p)}</div>`}).join("")}</div></div>`}).join("")}
+function beginTest(){if(!$("agreeCheck").checked)return;started=true;$("instructionGate").classList.add("hidden");$("testContent").classList.remove("hidden");renderMeta();renderQuestion();startTimer();window.scrollTo({top:0,behavior:"smooth"})}
+function setupGate(){document.querySelectorAll(".lang-option").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".lang-option").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");selectedLanguage=btn.dataset.lang;renderGateInstructions();$("startTestBtn").disabled=!$("agreeCheck").checked}));document.querySelector('.lang-option[data-lang="bi"]').classList.add("selected");$("agreeCheck").addEventListener("change",()=>$("startTestBtn").disabled=!$("agreeCheck").checked);$("startTestBtn").addEventListener("click",beginTest)}
+async function loadTest(){if(!testId){showError("Test ID missing. Published Test Series से test open करें.");return}try{const snap=await db.ref("testSeries/"+testId).once("value");test=snap.val();if(!test){showError("Test नहीं मिला.");return}if(test.status!=="published"||test.active===false){showError("यह test अभी published नहीं है या inactive है.");return}if(!Array.isArray(test.questions)||!test.questions.length){showError("इस test में कोई question उपलब्ध नहीं है.");return}questions=shuffle(test.questions.map((q,i)=>({id:q.id||("q"+(i+1)),question:q.question||"",questionEnglish:q.questionEnglish||q.questionEn||q.englishQuestion||"",questionHindi:q.questionHindi||q.questionHi||q.hindiQuestion||"",options:Array.isArray(q.options)?q.options.slice(0,4):[],answer:String(q.answer||"").toUpperCase(),option1English:q.option1English,option1Hindi:q.option1Hindi,option2English:q.option2English,option2Hindi:q.option2Hindi,option3English:q.option3English,option3Hindi:q.option3Hindi,option4English:q.option4English,option4Hindi:q.option4Hindi})));$("title").textContent=test.title||"Test Series";$("description").textContent=test.description||"Practice this test and check your score instantly.";$("gateTitle").textContent=test.title||"Test Instructions";renderGateInstructions();setupGate();$("loading").classList.add("hidden");$("testApp").classList.remove("hidden")}catch(e){console.error(e);showError("Test load नहीं हो सका: "+(e.message||"Firebase error"))}}
+$("submitBtn").addEventListener("click",()=>submitTest(false));loadTest();
 </script>
 </body>
 </html>

@@ -3799,6 +3799,63 @@ html,body{max-width:100%;overflow-x:hidden}
     </div>
   </div>
 
+  <!-- EMBEDDED TEST RUNNER PAGE - ALL TEST FLOW IN THIS SAME FILE -->
+  <div id="testRunnerPage" class="page">
+    <div class="de-tr-container">
+      <section id="deTrLoading" class="de-tr-card de-tr-loading">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:28px"></i>
+        <p>Test loading...</p>
+      </section>
+
+      <section id="deTrError" class="de-tr-error" style="display:none"></section>
+
+      <div id="deTrApp" style="display:none">
+        <!-- ENGLISH-ONLY INSTRUCTION GATE -->
+        <section id="deTrGate" class="de-tr-card de-tr-gate">
+          <div class="de-tr-mini-label">BEFORE YOU START</div>
+          <h1 id="deTrGateTitle">Test Instructions</h1>
+          <p class="de-tr-subtitle">Please read the instructions carefully and click <b>I Agree &amp; Start Test</b> to begin.</p>
+          <div id="deTrGateInstructions" class="de-tr-instructions"></div>
+          <label class="de-tr-agree-row">
+            <input id="deTrAgree" type="checkbox">
+            <span>I have read and understood all instructions and agree to start the test.</span>
+          </label>
+          <button id="deTrStartBtn" type="button" class="de-tr-btn de-tr-primary" disabled>
+            <i class="fa-solid fa-circle-check"></i> I Agree &amp; Start Test
+          </button>
+        </section>
+
+        <!-- TEST CONTENT: INSTRUCTIONS ARE NOT SHOWN HERE -->
+        <div id="deTrContent" style="display:none">
+          <section class="de-tr-card de-tr-hero">
+            <div class="de-tr-test-top"><div><h1 id="deTrTitle">Test Series</h1>
+            <p id="deTrDescription"></p></div><div id="deTrTimer" class="de-tr-timer"><i class="fa-regular fa-clock"></i> <span>--:--</span></div></div>
+            <div id="deTrMeta" class="de-tr-meta"></div>
+          </section>
+
+          <div class="de-tr-progress-wrap">
+            <div class="de-tr-progress-top">
+              <span id="deTrProgressText">Question 1 of 1</span>
+              <span id="deTrAnsweredText">0 Answered</span>
+            </div>
+            <div class="de-tr-progress"><i id="deTrProgressBar"></i></div>
+          </div>
+
+          <section id="deTrQuestionCard" class="de-tr-card de-tr-qcard"></section>
+
+          <section id="deTrSubmitCard" class="de-tr-card de-tr-submit-wrap">
+            <p>All questions can be reviewed before submitting.</p>
+            <button id="deTrSubmitBtn" type="button" class="de-tr-btn de-tr-success">
+              <i class="fa-solid fa-paper-plane"></i> Submit Test
+            </button>
+          </section>
+
+          <section id="deTrResultCard" class="de-tr-card de-tr-result" style="display:none"></section>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- UPDATE & NOTIFICATIONS PAGE -->
   <div id="updatePage" class="page">
     <div class="news-page">
@@ -4493,6 +4550,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'homePage') loadTrendingPage(false);
     if (pageId === 'booksPage') initEmbeddedBooks();
     if (pageId === 'testSeriesPage' && typeof window.initEmbeddedTestSeries === 'function') window.initEmbeddedTestSeries();
+    if (pageId === 'testRunnerPage' && typeof window.initEmbeddedTestRunner === 'function') window.initEmbeddedTestRunner(window.__pendingTestId || '');
     if (pageId === 'profilePage') refreshAdminAccess(auth.currentUser);
     renderPageUI(pageId);
 
@@ -4518,6 +4576,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (pageId === 'homePage') loadTrendingPage(false);
     if (pageId === 'booksPage') initEmbeddedBooks();
     if (pageId === 'testSeriesPage' && typeof window.initEmbeddedTestSeries === 'function') window.initEmbeddedTestSeries();
+    if (pageId === 'testRunnerPage' && typeof window.initEmbeddedTestRunner === 'function') window.initEmbeddedTestRunner(window.__pendingTestId || '');
     if (pageId === 'profilePage') refreshAdminAccess(auth.currentUser);
     renderPageUI(pageId);
     window.scrollTo({top:0, left:0, behavior:'instant'});
@@ -8913,6 +8972,29 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDraw
 </style>
 
 
+<script>
+/* Open the test runner inside this same app.html file. */
+window.__pendingTestId = "";
+window.openEmbeddedTest = function(testId){
+  if(!testId) return;
+  window.__pendingTestId = String(testId);
+  if(typeof window.navigateTo === "function") window.navigateTo("testRunnerPage");
+};
+</script>
+
+<style id="embedded-test-runner-style">
+.de-tr-container{max-width:980px;margin:0 auto;padding:8px 0 60px;color:#172033;font-family:Inter,Arial,sans-serif}
+.de-tr-card{background:#fff;border:1px solid #e5e9f2;border-radius:18px;box-shadow:0 10px 30px rgba(15,47,99,.06);padding:20px;margin-bottom:16px}
+.de-tr-loading{text-align:center;padding:55px 20px;color:#697386}.de-tr-loading i{color:#1d4ed8}
+.de-tr-error{padding:15px;border-radius:13px;color:#a91f2d;background:#fff0f1;border:1px solid #ffd1d5;margin-bottom:16px}
+.de-tr-gate{max-width:760px;margin:10px auto}.de-tr-mini-label{font-size:11px;color:#697386;font-weight:800;letter-spacing:.5px}.de-tr-gate h1,.de-tr-hero h1{font-family:Poppins,Arial,sans-serif;color:#0f2f63;margin:5px 0 7px;font-size:27px}.de-tr-subtitle{color:#697386;line-height:1.6;margin:0 0 15px}.de-tr-instructions{background:#f7f9fc;border:1px solid #e5e9f2;border-radius:13px;padding:15px;line-height:1.7;font-size:14px;white-space:pre-line;color:#3e485b}.de-tr-agree-row{display:flex;align-items:flex-start;gap:9px;margin:18px 0;font-size:13px;line-height:1.5}.de-tr-agree-row input{margin-top:3px;accent-color:#1d4ed8}.de-tr-btn{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.de-tr-primary{background:#0f2f63;color:#fff;width:100%}.de-tr-success{background:#16834b;color:#fff;min-width:220px}.de-tr-btn:disabled{opacity:.45;cursor:not-allowed}
+.de-tr-test-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}.de-tr-timer{background:#eef3fa;color:#0f2f63;border-radius:11px;padding:9px 12px;font-weight:800;font-size:13px;white-space:nowrap}.de-tr-timer.warning{background:#fff0f1;color:#c92a3b}.de-tr-hero p{margin:0;color:#697386;line-height:1.6}.de-tr-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.de-tr-meta span{background:#f6f8fc;border:1px solid #e5e9f2;padding:7px 9px;border-radius:9px;font-size:11px}
+.de-tr-progress-wrap{position:sticky;top:63px;z-index:10;background:rgba(245,247,251,.94);backdrop-filter:blur(10px);padding:8px 0}.de-tr-progress-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#697386;margin-bottom:6px}.de-tr-progress{height:7px;background:#e8edf5;border-radius:20px;overflow:hidden}.de-tr-progress i{display:block;height:100%;width:0;background:#1d4ed8;transition:.2s}
+.de-tr-qnumber{font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:9px;text-transform:uppercase;letter-spacing:.3px}.de-tr-question{font-family:Poppins,Arial,sans-serif;font-size:18px;line-height:1.55;margin-bottom:15px}.de-tr-bilingual-line{display:block;margin-bottom:7px}.de-tr-hindi{font-family:"Noto Sans Devanagari","Nirmala UI",Mangal,Arial,sans-serif}
+.de-tr-option{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid #e5e9f2;border-radius:11px;padding:12px 13px;margin:8px 0;cursor:pointer;transition:.15s}.de-tr-option:hover{border-color:#9bb3e4;background:#f9fbff}.de-tr-option.selected{border-color:#4f78c9;background:#eef4ff}.de-tr-option input{margin-top:3px;accent-color:#1d4ed8}.de-tr-letter{font-weight:800;color:#0f2f63;min-width:20px}.de-tr-option-text{font-size:14px;line-height:1.5}.de-tr-option-text .en,.de-tr-option-text .hi{display:block}.de-tr-option-text .hi{margin-top:3px}.de-tr-nav-actions{display:flex;justify-content:space-between;gap:10px;margin-top:17px}.de-tr-light{background:#eef3fa;color:#0f2f63}.de-tr-blue{background:#1d4ed8;color:#fff}.de-tr-submit-wrap{text-align:center}.de-tr-submit-wrap p{color:#697386;font-size:13px}.de-tr-result{text-align:center}.de-tr-badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:800}.de-tr-badge.green{background:#eaf8f0;color:#147442}.de-tr-badge.red{background:#fff0f1;color:#a91f2d}.de-tr-score{font-family:Poppins,Arial,sans-serif;font-size:42px;font-weight:800;color:#0f2f63;margin:5px 0}.de-tr-result p{color:#697386;line-height:1.6}.de-tr-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.de-tr-result-box{background:#f7f9fc;border:1px solid #e5e9f2;border-radius:12px;padding:12px}.de-tr-result-box b{display:block;font-size:20px;color:#0f2f63}.de-tr-result-box span{font-size:11px;color:#697386}.de-tr-review{text-align:left;margin-top:18px}.de-tr-review-item{border:1px solid #e5e9f2;border-radius:12px;padding:14px;margin:10px 0}.de-tr-review-item.correct{border-color:#a9dfc1;background:#f4fcf7}.de-tr-review-item.wrong{border-color:#f1b5bd;background:#fff7f8}.de-tr-review-q{font-weight:800;line-height:1.5;margin-bottom:8px}.de-tr-review-line{font-size:13px;line-height:1.6;color:#4b5568}.de-tr-hidden{display:none!important}
+@media(max-width:650px){.de-tr-test-top{align-items:flex-start}.de-tr-timer{font-size:12px;padding:8px 9px}.de-tr-container{padding:5px 0 45px}.de-tr-card{padding:15px}.de-tr-gate h1,.de-tr-hero h1{font-size:23px}.de-tr-question{font-size:16px}.de-tr-result-grid{grid-template-columns:repeat(2,1fr)}.de-tr-progress-wrap{top:57px}}
+</style>
+
 <script type="module" id="de-test-series-script">
 import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -8970,7 +9052,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
           <span>Pass ${Number(t.passPercentage)||0}%</span>
         </div>
         <div class="de-ts-meta" style="margin-bottom:12px">Published ${esc(formatDate(t.publishedAt||t.createdAt))}</div>
-        <a class="de-ts-btn" href="test-series-test.html?id=${encodeURIComponent(id)}"><i class="fa-solid fa-play"></i> Start Test</a>
+        <button type="button" class="de-ts-btn" data-test-id="${esc(id)}" onclick="openEmbeddedTest(this.dataset.testId)"><i class="fa-solid fa-play"></i> Start Test</button>
       </article>`;
     }).join("");
   }
@@ -9027,6 +9109,105 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 })();
 </script>
 
+<script type="module" id="de-test-runner-script">
+import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+(function(){
+  let currentTestId="";
+  let test=null, questions=[], currentIndex=0, answers={}, secondsLeft=0, timerInterval=null, submitted=false, runnerReady=false;
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+
+  function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  function formatTime(sec){sec=Math.max(0,Number(sec)||0);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+  function showError(msg){clearInterval(timerInterval);if($('deTrLoading'))$('deTrLoading').style.display='none';if($('deTrApp'))$('deTrApp').style.display='none';const e=$('deTrError');if(e){e.textContent=msg;e.style.display='block'}}
+  function resetRunnerUI(){
+    clearInterval(timerInterval); timerInterval=null; test=null; questions=[]; currentIndex=0; answers={}; secondsLeft=0; submitted=false;
+    $('deTrLoading').style.display='block'; $('deTrError').style.display='none'; $('deTrApp').style.display='none';
+    $('deTrGate').style.display='block'; $('deTrContent').style.display='none'; $('deTrAgree').checked=false; $('deTrStartBtn').disabled=true;
+    $('deTrQuestionCard').innerHTML=''; $('deTrResultCard').innerHTML=''; $('deTrResultCard').style.display='none'; $('deTrSubmitCard').style.display='block';
+  }
+  function bilingual(obj,enNames,hiNames,fallback=""){
+    let en="",hi=""; for(const k of enNames)if(obj&&obj[k]!=null&&String(obj[k]).trim()){en=String(obj[k]);break} for(const k of hiNames)if(obj&&obj[k]!=null&&String(obj[k]).trim()){hi=String(obj[k]);break} if(!en&&!hi)en=fallback; return {en,hi};
+  }
+  function displayText(pair){if(pair.en&&pair.hi&&pair.en!==pair.hi)return `<span class="de-tr-bilingual-line">${esc(pair.en)}</span><span class="de-tr-bilingual-line de-tr-hindi">${esc(pair.hi)}</span>`;return esc(pair.en||pair.hi||"")}
+  function questionPair(q){return bilingual(q,["questionEnglish","questionEn","englishQuestion"],["questionHindi","questionHi","hindiQuestion"],q.question||"")}
+  function optionPair(q,index){
+    const enKeys=[`option${index+1}English`,`option${index+1}En`],hiKeys=[`option${index+1}Hindi`,`option${index+1}Hi`];
+    const p=bilingual(q,enKeys,hiKeys,""); if(p.en||p.hi)return p;
+    const op=(q.options||[])[index]||""; if(typeof op==='object')return bilingual(op,["english","en"],["hindi","hi"],""); return {en:String(op),hi:""};
+  }
+  function instructionText(){
+    const supplied=test?.instructionsEnglish||test?.instructionEnglish||test?.instructionsEn||"";
+    if(String(supplied).trim()) return String(supplied);
+    const mins=Number(test?.durationMinutes)||30, marks=Number(test?.marksPerQuestion)||1, neg=Number(test?.negativeMark)||0;
+    return `1. Read each question carefully before selecting an answer.\n2. Total Questions: ${questions.length}.\n3. Test Duration: ${mins} minutes.\n4. Each correct answer carries ${marks} mark(s).\n5. Negative marking: ${neg} mark(s) for each wrong answer.\n6. You can use Previous and Next to review questions.\n7. You may review your answers before submitting the test.\n8. Click Submit Test after completing the test.\n9. The test will be submitted automatically when the timer reaches zero.`;
+  }
+  function renderGate(){
+    $('deTrGateTitle').textContent=test?.title||'Test Instructions';
+    $('deTrGateInstructions').textContent=instructionText();
+    $('deTrAgree').checked=false; $('deTrStartBtn').disabled=true;
+  }
+  function renderMeta(){
+    const total=questions.length, marks=(Number(test.marksPerQuestion)||1)*total;
+    $('deTrMeta').innerHTML=`<span><i class="fa-solid fa-code-branch"></i> ${esc(test.branch||"")}</span><span><i class="fa-solid fa-layer-group"></i> ${esc(test.semester||"")}</span><span><i class="fa-solid fa-book"></i> ${esc(test.subject||"")}</span><span><i class="fa-solid fa-list-check"></i> ${total} Questions</span><span><i class="fa-regular fa-clock"></i> ${Number(test.durationMinutes)||0} min</span><span><i class="fa-solid fa-star"></i> ${marks} Marks</span><span><i class="fa-solid fa-minus"></i> ${Number(test.negativeMark)||0} Negative</span>`;
+  }
+  function updateProgress(){const answered=Object.keys(answers).length;$('deTrProgressText').textContent=`Question ${currentIndex+1} of ${questions.length}`;$('deTrAnsweredText').textContent=`${answered} Answered`;$('deTrProgressBar').style.width=(questions.length?((answered/questions.length)*100):0)+"%"}
+  function renderQuestion(){
+    if(submitted)return; const q=questions[currentIndex], letters=["A","B","C","D"], selected=answers[q.id]||"", qp=questionPair(q);
+    $('deTrQuestionCard').innerHTML=`<div class="de-tr-qnumber">Question ${currentIndex+1} of ${questions.length}</div><div class="de-tr-question">${displayText(qp)}</div><div>${[0,1,2,3].map(i=>{const p=optionPair(q,i);return `<label class="de-tr-option ${selected===letters[i]?"selected":""}"><input type="radio" name="deTrAnswer" value="${letters[i]}" ${selected===letters[i]?"checked":""}><span class="de-tr-letter">${letters[i]})</span><span class="de-tr-option-text">${displayText(p)}</span></label>`}).join("")}</div><div class="de-tr-nav-actions"><button id="deTrPrev" type="button" class="de-tr-btn de-tr-light" ${currentIndex===0?"disabled":""}><i class="fa-solid fa-arrow-left"></i> Previous</button><button id="deTrNext" type="button" class="de-tr-btn de-tr-blue" ${currentIndex===questions.length-1?"disabled":""}>Next <i class="fa-solid fa-arrow-right"></i></button></div>`;
+    document.querySelectorAll('input[name="deTrAnswer"]').forEach(input=>input.addEventListener("change",()=>{answers[q.id]=input.value;renderQuestion();updateProgress()}));
+    $('deTrPrev').addEventListener('click',()=>{if(currentIndex>0){currentIndex--;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:'smooth'})}});
+    $('deTrNext').addEventListener('click',()=>{if(currentIndex<questions.length-1){currentIndex++;renderQuestion();updateProgress();window.scrollTo({top:0,behavior:'smooth'})}});
+    updateProgress();
+  }
+  function startTimer(){
+    secondsLeft=(Number(test.durationMinutes)||30)*60; const timer=document.getElementById('deTrTimer');
+    if(timer){timer.innerHTML='<i class="fa-regular fa-clock"></i> <span>'+formatTime(secondsLeft)+'</span>';timer.classList.remove('de-tr-hidden')}
+    clearInterval(timerInterval);timerInterval=setInterval(()=>{secondsLeft--;if(timer)timer.innerHTML='<i class="fa-regular fa-clock"></i> <span>'+formatTime(secondsLeft)+'</span>';if(timer&&secondsLeft<=60)timer.classList.add('warning');if(secondsLeft<=0){clearInterval(timerInterval);submitTest(true)}},1000);
+  }
+  function calculateResult(){let correct=0,wrong=0,unanswered=0;const marks=Number(test.marksPerQuestion)||1,negative=Number(test.negativeMark)||0;questions.forEach(q=>{const selected=answers[q.id];if(!selected)unanswered++;else if(selected===String(q.answer||"").toUpperCase())correct++;else wrong++});const score=(correct*marks)-(wrong*negative),maxMarks=questions.length*marks,percentage=maxMarks>0?(score/maxMarks)*100:0,pass=percentage>=(Number(test.passPercentage)||0);return{correct,wrong,unanswered,score,maxMarks,percentage,pass}}
+  function renderReview(){
+    const letters=["A","B","C","D"]; $('deTrReview').innerHTML=questions.map((q,i)=>{const selected=answers[q.id]||"Not Answered",correct=String(q.answer||"").toUpperCase(),isCorrect=selected===correct,qp=questionPair(q);return `<div class="de-tr-review-item ${isCorrect?'correct':selected==='Not Answered'?'':'wrong'}"><div class="de-tr-review-q">${i+1}. ${displayText(qp)}</div><div class="de-tr-review-line"><b>Your Answer:</b> ${esc(selected)}</div><div class="de-tr-review-line"><b>Correct Answer:</b> ${esc(correct)}</div><div style="margin-top:8px">${[0,1,2,3].map(j=>{const p=optionPair(q,j);return `<div style="font-size:12px;margin:4px 0;color:${letters[j]===correct?'#147442':letters[j]===selected&&selected!==correct?'#a91f2d':'#697386'}"><b>${letters[j]})</b> ${displayText(p)}</div>`}).join('')}</div></div>`}).join('');
+  }
+  function submitTest(auto=false){
+    if(submitted)return; const unanswered=questions.length-Object.keys(answers).length;
+    if(!auto&&unanswered>0&&!confirm(`${unanswered} question(s) are unanswered. Do you want to submit the test?`))return;
+    submitted=true;clearInterval(timerInterval);const r=calculateResult();const timer=document.getElementById('deTrTimer');if(timer)timer.classList.add('hidden');
+    $('deTrQuestionCard').style.display='none';$('deTrSubmitCard').style.display='none';$('deTrResultCard').style.display='block';
+    $('deTrResultCard').innerHTML=`<span class="de-tr-badge ${r.pass?'green':'red'}">${r.pass?'PASSED':'NOT PASSED'}</span><h2 style="font-family:Poppins;margin:10px 0 0">${auto?'Time Over':'Test Completed'}</h2><div class="de-tr-score">${r.score.toFixed(2)} / ${r.maxMarks}</div><p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p><div class="de-tr-result-grid"><div class="de-tr-result-box"><b>${r.correct}</b><span>Correct</span></div><div class="de-tr-result-box"><b>${r.wrong}</b><span>Wrong</span></div><div class="de-tr-result-box"><b>${r.unanswered}</b><span>Unanswered</span></div><div class="de-tr-result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button id="deTrReviewBtn" type="button" class="de-tr-btn de-tr-light"><i class="fa-solid fa-list-check"></i> Review Answers</button><button id="deTrRetryBtn" type="button" class="de-tr-btn de-tr-primary" style="width:auto"><i class="fa-solid fa-rotate"></i> Try Again</button></div><div id="deTrReview" class="de-tr-review" style="display:none"></div>`;
+    $('deTrReviewBtn').addEventListener('click',()=>{const review=$('deTrReview');review.style.display=review.style.display==='none'?'block':'none';if(review.style.display==='block')renderReview()});
+    $('deTrRetryBtn').addEventListener('click',()=>{loadTest(currentTestId,true)});
+  }
+  function beginTest(){if(!$('deTrAgree').checked)return;$('deTrGate').style.display='none';$('deTrContent').style.display='block';renderMeta();renderQuestion();startTimer();window.scrollTo({top:0,behavior:'smooth'})}
+  async function loadTest(id,retry=false){
+    if(!id){showError('Test ID is missing. Please open the test from Published Test Series.');return}
+    currentTestId=String(id); if(retry)resetRunnerUI();
+    try{
+      let app;try{app=getApp('newsApp')}catch(e){await new Promise(r=>setTimeout(r,250));app=getApp('newsApp')}
+      const database=getDatabase(app);const snap=await get(ref(database,'testSeries/'+currentTestId));test=snap.val();
+      if(!test){showError('Test not found.');return} if(test.status!=='published'||test.active===false){showError('This test is not published or is inactive.');return}
+      if(!Array.isArray(test.questions)||!test.questions.length){showError('No questions are available in this test.');return}
+      questions=shuffle(test.questions.map((q,i)=>({id:q.id||('q'+(i+1)),question:q.question||'',questionEnglish:q.questionEnglish||q.questionEn||q.englishQuestion||'',questionHindi:q.questionHindi||q.questionHi||q.hindiQuestion||'',options:Array.isArray(q.options)?q.options.slice(0,4):[],answer:String(q.answer||'').toUpperCase(),option1English:q.option1English,option1Hindi:q.option1Hindi,option2English:q.option2English,option2Hindi:q.option2Hindi,option3English:q.option3English,option3Hindi:q.option3Hindi,option4English:q.option4English,option4Hindi:q.option4Hindi})));
+      $('deTrTitle').textContent=test.title||'Test Series';$('deTrDescription').textContent=test.description||'Complete the test and check your score instantly.';renderGate();
+      $('deTrLoading').style.display='none';$('deTrError').style.display='none';$('deTrApp').style.display='block';
+      runnerReady=true;
+    }catch(e){console.error('Embedded Test Runner error:',e);showError('Test load failed: '+(e.message||'Firebase error'))}
+  }
+  window.initEmbeddedTestRunner=function(id){
+    const target=id||window.__pendingTestId||currentTestId;
+    if(!target)return;
+    if(currentTestId!==String(target)||!runnerReady)resetRunnerUI();
+    loadTest(target,false);
+  };
+  document.addEventListener('DOMContentLoaded',()=>{
+    $('deTrAgree')?.addEventListener('change',()=>{$('deTrStartBtn').disabled=!$('deTrAgree').checked});
+    $('deTrStartBtn')?.addEventListener('click',beginTest);
+    $('deTrSubmitBtn')?.addEventListener('click',()=>submitTest(false));
+  });
+})();
+</script>
 </body>
 </html>
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f2f63">
-<title>Test Series Creator | Diploma Engineers</title>
+<title>Test Series Creator v2 | Diploma Engineers</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -194,6 +194,9 @@ th{background:#f7f9fc;font-weight:800}
   <div class="page-title">
     <h1>Create Test Series</h1>
     <p>Folder Details → MCQ Input → Auto Create → Preview → Save / Publish</p>
+    <div style="margin-top:10px;font-size:12px;color:#16834b;font-weight:700">
+      <i class="fa-solid fa-circle-check"></i> Authorized Admin Panel
+    </div>
   </div>
 
   <!-- FOLDER DETAILS -->
@@ -339,6 +342,10 @@ D) 3 × 10⁹ m/s
   <!-- GENERATED DATA -->
   <section class="card" id="generatedCard">
     <h2 class="section-title"><i class="fa-solid fa-code"></i> Auto Generated Test Data</h2>
+    <div class="hint" style="margin-bottom:10px">
+      Data is saved under <b>testSeries/{testId}</b>. Published tests use
+      <b>status: published</b> and <b>active: true</b>.
+    </div>
     <pre id="generatedCode" class="codebox">No test generated yet.</pre>
     <div class="actions" style="margin-top:13px">
       <button class="btn btn-light" id="copyCodeBtn">
@@ -347,6 +354,10 @@ D) 3 × 10⁹ m/s
       <button class="btn btn-light" id="downloadCodeBtn">
         <i class="fa-solid fa-download"></i> Download JSON
       </button>
+      <button class="btn btn-light" id="loadJsonBtn">
+        <i class="fa-solid fa-file-arrow-up"></i> Load JSON
+      </button>
+      <input id="jsonFileInput" type="file" accept=".json,application/json" class="hidden">
     </div>
   </section>
 
@@ -415,6 +426,30 @@ const db = firebase.database();
 let currentUser = null;
 let generatedTest = null;
 let allTests = {};
+let isAuthorizedAdmin = false;
+
+async function checkAdminAccess(user){
+  if(!user) return false;
+  try{
+    const email = (user.email || "").toLowerCase();
+    if(email === "astar22072006@gmail.com") return true;
+
+    const rootSnap = await db.ref("admins/" + user.uid).once("value");
+    if(rootSnap.val() === true) return true;
+
+    const accessSnap = await db.ref("adminAccess/" + user.uid).once("value");
+    const access = accessSnap.val();
+    if(access && access.status !== "deactivated") return true;
+
+    // Master admin UID from the current Firebase rules.
+    if(user.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2") return true;
+
+    return false;
+  }catch(e){
+    console.error("Admin access check:", e);
+    return false;
+  }
+}
 
 /* ================= HELPERS ================= */
 const $ = id => document.getElementById(id);
@@ -491,13 +526,25 @@ $("loginPassword").addEventListener("keydown",e=>{
 
 $("logoutBtn").addEventListener("click",()=>auth.signOut());
 
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(async user=>{
   currentUser=user;
   if(user){
+    $("loginBtn").disabled=true;
+    isAuthorizedAdmin = await checkAdminAccess(user);
+
+    if(!isAuthorizedAdmin){
+      await auth.signOut();
+      showLoginError("This account is not authorized as an admin.");
+      $("loginBtn").disabled=false;
+      return;
+    }
+
     $("loginScreen").classList.add("hidden");
     $("app").classList.remove("hidden");
     loadTests();
+    $("loginBtn").disabled=false;
   }else{
+    isAuthorizedAdmin=false;
     $("loginScreen").classList.remove("hidden");
     $("app").classList.add("hidden");
   }
@@ -798,6 +845,10 @@ function updateGeneratedCode(){
 
 /* ================= SAVE ================= */
 async function saveTest(status){
+  if(!isAuthorizedAdmin){
+    showToast("Admin access required.");
+    return;
+  }
   if(!validateTest()) return;
 
   const data=buildTest(status);
@@ -851,9 +902,49 @@ $("downloadCodeBtn").addEventListener("click",()=>{
   URL.revokeObjectURL(a.href);
 });
 
+/* ================= LOAD JSON ================= */
+$("loadJsonBtn").addEventListener("click",()=>$("jsonFileInput").click());
+
+$("jsonFileInput").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];
+  if(!file) return;
+
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+
+    $("folderName").value=data.folderName||"";
+    $("testTitle").value=data.title||"";
+    $("branch").value=data.branch||"";
+    $("semester").value=data.semester||"";
+    $("subject").value=data.subject||"";
+    $("topic").value=data.topic||"";
+    $("duration").value=data.durationMinutes??30;
+    $("marks").value=data.marksPerQuestion??1;
+    $("negative").value=data.negativeMark??0;
+    $("passPercentage").value=data.passPercentage??40;
+    $("description").value=data.description||"";
+    $("instructions").value=data.instructions||"";
+
+    if(Array.isArray(data.questions) && data.questions.length){
+      generatedTest={questions:data.questions};
+      renderPreview(data.questions);
+      $("generatedCode").textContent=JSON.stringify(data,null,2);
+      showToast("JSON test loaded successfully.");
+    }else{
+      showToast("JSON में questions नहीं मिले.");
+    }
+  }catch(err){
+    console.error(err);
+    showToast("Invalid JSON file.");
+  }finally{
+    e.target.value="";
+  }
+});
+
 /* ================= MANAGE ================= */
 async function loadTests(){
-  if(!currentUser) return;
+  if(!currentUser || !isAuthorizedAdmin) return;
 
   $("testsList").innerHTML='<div class="empty">Loading tests...</div>';
 

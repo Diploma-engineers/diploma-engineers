@@ -380,6 +380,7 @@ D) 3 × 10⁹ m/s
   <!-- MANAGE -->
   <section class="card">
     <h2 class="section-title"><i class="fa-solid fa-layer-group"></i> Existing Test Series</h2>
+    <div id="testCountInfo" class="hint" style="margin:-8px 0 14px"></div>
     <div class="actions" style="margin-bottom:14px">
       <button class="btn btn-light" id="refreshBtn">
         <i class="fa-solid fa-rotate"></i> Refresh
@@ -846,7 +847,7 @@ function updateGeneratedCode(){
 /* ================= SAVE ================= */
 async function saveTest(status){
   if(!isAuthorizedAdmin){
-    showToast("Admin access required.");
+    showToast("Admin access required. Please login again.");
     return;
   }
   if(!validateTest()) return;
@@ -857,21 +858,22 @@ async function saveTest(status){
   data.id=newRef.key;
   data.slug=slugify(data.title)+"-"+newRef.key.slice(-5);
 
+  if(status==="published"){
+    data.publishedAt=Date.now();
+  }
+
   try{
-    if(status==="published"){
-      data.publishedAt=Date.now();
-    }
-
     await newRef.set(data);
-
     generatedTest=null;
     $("generatedCode").textContent=JSON.stringify(data,null,2);
-
     showToast(status==="published" ? "Test published successfully!" : "Draft saved successfully!");
-    loadTests();
+    await loadTests();
   }catch(e){
-    console.error(e);
-    showToast(e.message || "Firebase save failed.");
+    console.error("Firebase testSeries write failed:",e);
+    const msg = e && e.code === "PERMISSION_DENIED"
+      ? "Permission denied. Firebase Rules में testSeries admin write rule publish करें और सही admin account से login करें."
+      : (e.message || "Firebase save failed.");
+    showToast(msg);
   }
 }
 
@@ -955,6 +957,10 @@ async function loadTests(){
       (b[1].createdAt||0)-(a[1].createdAt||0)
     );
 
+    const publishedCount = entries.filter(([id,t]) => t.status === "published" && t.active !== false).length;
+    const draftCount = entries.length - publishedCount;
+    $("testCountInfo").innerHTML = `<b>${entries.length}</b> total · <b>${publishedCount}</b> published · <b>${draftCount}</b> draft`;
+
     if(!entries.length){
       $("testsList").innerHTML='<div class="empty">No Test Series found.</div>';
       return;
@@ -1008,8 +1014,8 @@ async function loadTests(){
       </div>
     `;
   }catch(e){
-    console.error(e);
-    $("testsList").innerHTML='<div class="empty">Could not load tests.</div>';
+    console.error("Firebase testSeries read failed:",e);
+    $("testsList").innerHTML='<div class="empty">Could not load tests. '+escapeHtml(e.message||"Firebase error")+'</div>';
   }
 }
 

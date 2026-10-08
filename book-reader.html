@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Book Reader | Diploma Engineers</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:#f7f9fc;color:#111827;font-family:Arial,Helvetica,sans-serif;-webkit-tap-highlight-color:transparent}
+.reader{max-width:900px;margin:auto;padding:16px}.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}.back{border:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 13px;cursor:pointer;font-weight:700}.brand{font-weight:800;color:#0f172a}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.05)}.hero{display:grid;grid-template-columns:250px 1fr;gap:22px;padding:20px}.cover{width:100%;aspect-ratio:3/4;background:#eef2f7;border-radius:12px;overflow:hidden}.cover img{width:100%;height:100%;object-fit:cover}.meta{padding:5px 0}.category{display:inline-block;background:#eff6ff;color:#2563eb;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;margin-bottom:12px}.title{font-size:30px;line-height:1.18;margin:0 0 14px;color:#0f172a}.owner{display:flex;align-items:center;gap:10px;margin:14px 0}.avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#e2e8f0}.owner-name{font-weight:800}.owner-role{font-size:12px;color:#64748b;margin-top:2px}.read{display:inline-block;text-decoration:none;background:#2563eb;color:#fff;padding:12px 18px;border-radius:11px;font-weight:800;margin-top:8px}.comments{margin-top:18px;padding:20px}.comments h2{margin:0 0 14px;font-size:20px}.comment-form{display:flex;gap:10px;margin-bottom:18px}.comment-form input{flex:1;min-width:0;border:1px solid #dbe2ea;border-radius:10px;padding:12px;outline:0}.comment-form button{border:0;background:#111827;color:#fff;border-radius:10px;padding:0 17px;font-weight:800;cursor:pointer}.comment{border-top:1px solid #edf0f4;padding:13px 0}.comment:first-child{border-top:0}.comment-head{display:flex;justify-content:space-between;gap:10px}.comment-name{font-weight:800}.comment-date{font-size:11px;color:#94a3b8}.comment-text{margin-top:6px;color:#475569;line-height:1.5;white-space:pre-wrap}.status{font-size:13px;color:#64748b}.empty{text-align:center;color:#94a3b8;padding:18px 0}@media(max-width:650px){.hero{grid-template-columns:125px 1fr;gap:14px;padding:14px}.title{font-size:21px}.reader{padding:10px}.comments{padding:15px}.comment-form{flex-direction:column}.comment-form button{height:44px}.read{font-size:13px;padding:10px 13px}}
+</style>
+</head>
+<body>
+<div class="reader">
+  <div class="top"><button class="back" onclick="history.back()">← Back</button><div class="brand">Diploma Engineers · Book Reader</div></div>
+  <div class="card">
+    <section class="hero">
+      <div class="cover"><img id="cover" alt="Book thumbnail"></div>
+      <div class="meta">
+        <div class="category" id="category">Book</div>
+        <h1 class="title" id="title">Loading book...</h1>
+        <div class="owner"><img class="avatar" id="ownerPhoto" alt="Author"><div><div class="owner-name" id="ownerName">Founder</div><div class="owner-role" id="ownerRole">Founder & CEO</div></div></div>
+        <a class="read" id="readBtn" href="#" target="_blank" rel="noopener noreferrer">📖 Read / Open Book</a>
+      </div>
+    </section>
+    <section class="comments">
+      <h2>💬 Comments</h2>
+      <div class="comment-form"><input id="commentInput" maxlength="500" placeholder="Write your comment..."><button id="commentBtn">Post</button></div>
+      <div class="status" id="commentStatus">Loading comments...</div>
+      <div id="commentsList"></div>
+    </section>
+  </div>
+</div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {getDatabase,ref,get,onValue,push,set} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import {getAuth,signInAnonymously,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+const config={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
+const app=initializeApp(config),db=getDatabase(app),auth=getAuth(app); const qs=new URLSearchParams(location.search);
+const id=qs.get('id')||''; const $=x=>document.getElementById(x); const fallback='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800"><rect width="600" height="800" fill="#eef2f7"/><text x="300" y="410" text-anchor="middle" font-size="110">📖</text></svg>');
+function safe(v){try{const u=new URL(String(v||''));return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}}
+const params={title:qs.get('title')||'Book',category:qs.get('category')||'Book',pdf:qs.get('pdf')||'',ownerUid:qs.get('ownerUid')||'KirLkZUGXoZf0cXHkuCZ4Mfnxam2',ownerName:qs.get('ownerName')||'Founder',ownerDesignation:qs.get('ownerDesignation')||'Founder & CEO',ownerPhoto:qs.get('ownerPhoto')||''};
+function render(b){b=b||{}; $('title').textContent=b.title||b.name||params.title; $('category').textContent=b.category||params.category||'Book'; $('readBtn').href=safe(b.pdf||b.link||b.file||b.url||b.pdfUrl||b.fileUrl||params.pdf)||'#'; $('ownerName').textContent=b.ownerName||b.authorName||b.uploaderName||params.ownerName||'Founder'; $('ownerRole').textContent=b.ownerDesignation||b.designation||params.ownerDesignation||'Founder & CEO'; const img=safe(b.image||b.thumbnail||b.thumb||b.cover||b.imageUrl||params.ownerPhoto); $('cover').src=img||fallback; $('cover').onerror=()=>{$('cover').src=fallback}; const av=safe(b.ownerPhoto||b.authorPhoto||b.profilePic||params.ownerPhoto); $('ownerPhoto').src=av||fallback;}
+async function load(){render(params);if(!id)return;try{const s=await get(ref(db,'books/'+id));if(s.exists())render({...params,...s.val()});}catch(e){console.error(e)}}
+function renderComments(data){const list=$('commentsList');list.innerHTML='';const arr=[];if(data)Object.entries(data).forEach(([key,v])=>{if(v)arr.push({id:key,...v})});arr.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));$('commentStatus').textContent=arr.length?arr.length+' comment'+(arr.length>1?'s':''):'No comments yet. Be the first!';arr.forEach(c=>{const d=document.createElement('div');d.className='comment';d.innerHTML='<div class="comment-head"><span class="comment-name"></span><span class="comment-date"></span></div><div class="comment-text"></div>';d.querySelector('.comment-name').textContent=c.name||'Student';d.querySelector('.comment-date').textContent=c.createdAt?new Date(c.createdAt).toLocaleString():'';d.querySelector('.comment-text').textContent=c.text||'';list.appendChild(d)})}
+function watchComments(){if(!id){$('commentStatus').textContent='Comments are available for Firebase books.';return}onValue(ref(db,'bookComments/'+id),s=>renderComments(s.exists()?s.val():null),e=>{$('commentStatus').textContent='Unable to load comments.';console.error(e)})}
+let currentUser=null; onAuthStateChanged(auth,u=>{currentUser=u}); signInAnonymously(auth).catch(e=>console.error('Anonymous auth disabled:',e));
+$('commentBtn').addEventListener('click',async()=>{const text=$('commentInput').value.trim();if(!text||!id)return;if(!currentUser){$('commentStatus').textContent='Please wait, connecting...';return}try{const r=push(ref(db,'bookComments/'+id));await set(r,{uid:currentUser.uid,name:'Student',text,createdAt:Date.now(),bookId:id});$('commentInput').value='';}catch(e){console.error(e);$('commentStatus').textContent='Comment could not be saved.'}});
+load();watchComments();
+</script>
+</body></html>

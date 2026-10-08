@@ -2581,9 +2581,10 @@ function applyCourseVisibility(){
     }
     if(track) track.classList.toggle("course-enabled", allowed);
     if(tsBtn) {
-        tsBtn.style.display = allowed ? "block" : "none";
-        tsBtn.disabled = !allowed;
-        tsBtn.setAttribute("aria-hidden", allowed ? "false" : "true");
+        const tsVisible = !!auth.currentUser;
+        tsBtn.style.display = tsVisible ? "block" : "none";
+        tsBtn.disabled = !tsVisible;
+        tsBtn.setAttribute("aria-hidden", tsVisible ? "false" : "true");
     }
     if(!allowed && section){
         section.classList.remove("active");
@@ -2591,10 +2592,10 @@ function applyCourseVisibility(){
     } else if(allowed && section){
         section.style.removeProperty("display");
     }
-    if(!allowed && tsSection){
+    if(!auth.currentUser && tsSection){
         tsSection.classList.remove("active");
         tsSection.style.display = "none";
-    } else if(allowed && tsSection){
+    } else if(auth.currentUser && tsSection){
         tsSection.style.removeProperty("display");
     }
     return allowed;
@@ -3585,6 +3586,7 @@ async function checkAndApplyAdminActivityPolicy(user,{render=true}={}){
 
 async function blockDeactivatedAdminSession(user,result){
     try{await signOut(courseAuth);}catch(_){}
+    try{await signOut(tsAuth);}catch(_){}
     try{await signOut(auth);}catch(_){}
     loginPage.style.display="flex";
     adminPanel.style.display="none";
@@ -3627,6 +3629,18 @@ loginBtn.addEventListener("click", async () => {
             12000,
             "Main Firebase login timed out. Check your internet connection and Firebase Authentication."
         );
+
+        // TEST SERIES Firebase: sign in every valid Admin Panel account.
+        try {
+            await withTimeout(
+                signInWithEmailAndPassword(tsAuth, email, password),
+                8000,
+                "Test Series Firebase unavailable"
+            );
+        } catch (tsError) {
+            console.warn("Test Series Firebase login skipped:", tsError?.code || tsError?.message);
+            try { await signOut(tsAuth); } catch (_) {}
+        }
 
         // COURSE Firebase is available ONLY to the dedicated course-admin UID.
         // Other admins are never signed into the Course Firebase account.
@@ -3682,6 +3696,7 @@ loginBtn.addEventListener("click", async () => {
     } catch (error) {
         console.error("Admin login error:", error);
         try { await signOut(courseAuth); } catch (_) {}
+        try { await signOut(tsAuth); } catch (_) {}
         try { await signOut(auth); } catch (_) {}
 
         const code = error?.code || "";
@@ -3788,6 +3803,7 @@ logoutBtn.addEventListener("click", async () => {
     if(adminActivityWatcher){ clearInterval(adminActivityWatcher); adminActivityWatcher=null; }
     try {
         await signOut(courseAuth);
+        await signOut(tsAuth);
         await signOut(auth);
         document.body.classList.remove("admin-logged-in");
     } catch (error) {
@@ -5349,7 +5365,7 @@ function showAdminMode(mode) {
         courseAdminSection.classList.add("active");
         if (courseAuth.currentUser) connectCourseAdmin();
     } else if (mode === "testSeries") {
-        if(!isCourseAllowed()) { applyCourseVisibility(); showAdminMode("news"); return; }
+        if(!tsAllowed()) { applyCourseVisibility(); showAdminMode("news"); return; }
         testSeriesSwitch.classList.add("active");
         testSeriesAdminSection.classList.add("active");
         testSeriesAdminSection.style.display="block";
@@ -5383,7 +5399,7 @@ courseSwitch.addEventListener("click", () => {
     showAdminMode("course");
 });
 testSeriesSwitch.addEventListener("click", () => {
-    if(!isCourseAllowed()) { denyCourseAccess(); return; }
+    if(!tsAllowed()) { showAdminMode("news"); return; }
     showAdminMode("testSeries");
 });
 rankSwitch.addEventListener("click", () => showAdminMode("ranking"));
@@ -5847,6 +5863,7 @@ document.getElementById("adminCertificatesBack")?.addEventListener("click",close
 async function hardAdminLogout(event){
   try{event?.preventDefault();event?.stopImmediatePropagation();}catch(_){}
   try{await signOut(courseAuth);}catch(_){}
+  try{await signOut(tsAuth);}catch(_){}
   try{await signOut(auth);}catch(_){}
   document.body.classList.remove("admin-logged-in");
   loginPage.style.display="flex";
@@ -6853,7 +6870,7 @@ const tsPaymentFilters = document.querySelector(".course-filter-tabs");
 const tsPaymentList = $ts("list");
 
 function tsAllowed(){
-  return tsAuth.currentUser?.uid === TS_ADMIN_UID;
+  return !!auth.currentUser;
 }
 
 function tsSetStatus(message,type="ok"){

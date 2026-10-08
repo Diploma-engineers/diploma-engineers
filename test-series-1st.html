@@ -31,40 +31,9 @@ button,input,select{font:inherit}
 </head>
 <body>
 
-<div id="authPage" class="auth-page">
-  <div class="auth-card">
-    <div class="brand">
-      <img class="logo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/09/img_20260920_2043202227549097061825559.png" alt="Diploma Engineers">
-      <h1>Diploma Engineers</h1>
-      <p>The Students' Trusted Learning Platform • Test Series</p>
-    </div>
-    <div class="auth-tabs">
-      <button id="loginTab" class="active">LOGIN</button>
-      <button id="signupTab">CREATE ACCOUNT</button>
-    </div>
-
-    <div id="loginForm">
-      <div class="field"><label>EMAIL</label><input id="loginEmail" type="email" placeholder="Enter email"></div>
-      <div class="field"><label>PASSWORD</label><input id="loginPassword" type="password" placeholder="Enter password"></div>
-      <button class="primary" id="loginBtn">LOGIN & CONTINUE</button>
-      <button class="secondary" id="forgotBtn" style="width:100%;margin-top:8px">Forgot Password?</button>
-    </div>
-
-    <div id="signupForm" class="hidden">
-      <div class="field"><label>FULL NAME</label><input id="signupName" placeholder="Enter full name"></div>
-      <div class="field"><label>MOBILE</label><input id="signupMobile" placeholder="10 digit mobile number"></div>
-      <div class="field"><label>EMAIL</label><input id="signupEmail" type="email" placeholder="Enter email"></div>
-      <div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" placeholder="Minimum 6 characters"></div>
-      <button class="primary" id="signupBtn">CREATE ACCOUNT</button>
-    </div>
-    <div id="authMsg" class="msg"></div>
-  </div>
-</div>
-
-<div id="app" class="app hidden">
+<div id="app" class="app">
   <div class="topbar">
-    <div><h1>DIPLOMA ENGINEERS TEST SERIES</h1><small id="studentTop">Student</small></div>
-    <button class="logout" id="logoutBtn">Logout</button>
+    <div><h1>DIPLOMA ENGINEERS TEST SERIES</h1><small>Online Mock Test • No Login Required</small></div>
   </div>
   <main class="page">
     <section class="welcome">
@@ -151,8 +120,7 @@ button,input,select{font:inherit}
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig={
   apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",
@@ -165,210 +133,35 @@ const firebaseConfig={
   measurementId:"G-9646VK4C6L"
 };
 const app=getApps().find(a=>a.name==="testSeriesStudentApp") || initializeApp(firebaseConfig,"testSeriesStudentApp");
-const auth=getAuth(app), db=getDatabase(app);
+const db=getDatabase(app);
 const $=id=>document.getElementById(id);
-
-let tests=[];
-let selectedTest=null;
+let tests=[],selectedTest=null;
 let state={test:null,index:0,answers:[],marked:new Set(),remaining:0,timer:null,startTime:0};
-
-function msg(text,type="err"){const el=$("authMsg");el.textContent=text;el.className="msg show "+type}
-function clearMsg(){$("authMsg").className="msg"}
+const visitorId=localStorage.getItem("de_test_visitor") || (()=>{const id="guest_"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem("de_test_visitor",id);return id})();
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-
-$("loginTab").onclick=()=>{ $("loginTab").classList.add("active");$("signupTab").classList.remove("active");$("loginForm").classList.remove("hidden");$("signupForm").classList.add("hidden");clearMsg() };
-$("signupTab").onclick=()=>{ $("signupTab").classList.add("active");$("loginTab").classList.remove("active");$("signupForm").classList.remove("hidden");$("loginForm").classList.add("hidden");clearMsg() };
-
-$("loginBtn").onclick=async()=>{
-  const email=$("loginEmail").value.trim(), password=$("loginPassword").value;
-  if(!email||!password){msg("Email और password भरें.");return}
-  try{$("loginBtn").disabled=true;await signInWithEmailAndPassword(auth,email,password);clearMsg()}
-  catch(e){msg(firebaseError(e))}
-  finally{$("loginBtn").disabled=false}
-};
-$("signupBtn").onclick=async()=>{
-  const name=$("signupName").value.trim(), mobile=$("signupMobile").value.trim(), email=$("signupEmail").value.trim(), password=$("signupPassword").value;
-  if(!name||!email||password.length<6){msg("Name, valid email और कम से कम 6 character password भरें.");return}
-  if(mobile && !/^\d{10}$/.test(mobile)){msg("Mobile number 10 digits का होना चाहिए.");return}
-  try{
-    $("signupBtn").disabled=true;
-    const cred=await createUserWithEmailAndPassword(auth,email,password);
-    await updateProfile(cred.user,{displayName:name});
-    await set(ref(db,"testStudents/"+cred.user.uid),{uid:cred.user.uid,name,mobile,email,createdAt:Date.now()});
-    clearMsg();
-  }catch(e){msg(firebaseError(e))}
-  finally{$("signupBtn").disabled=false}
-};
-$("forgotBtn").onclick=async()=>{
-  const email=$("loginEmail").value.trim();
-  if(!email){msg("पहले email भरें.");return}
-  try{await sendPasswordResetEmail(auth,email);msg("Password reset link email पर भेज दिया गया.","ok")}
-  catch(e){msg(firebaseError(e))}
-};
-$("logoutBtn").onclick=()=>signOut(auth);
-
-function firebaseError(e){
-  const code=e?.code||"";
-  const map={
-    "auth/invalid-credential":"Email या password गलत है.",
-    "auth/user-not-found":"Account नहीं मिला.",
-    "auth/email-already-in-use":"यह email पहले से registered है.",
-    "auth/weak-password":"Password कम से कम 6 characters का रखें.",
-    "auth/invalid-email":"Valid email डालें.",
-    "auth/too-many-requests":"बहुत ज्यादा attempts हुए हैं. थोड़ी देर बाद try करें."
-  };
-  return map[code]||e?.message||"Authentication error.";
-}
-
-onAuthStateChanged(auth,user=>{
-  if(user){
-    $("authPage").classList.add("hidden");$("app").classList.remove("hidden");
-    $("studentTop").textContent=user.displayName||user.email||"Student";
-    loadTests();
-  }else{
-    $("authPage").classList.remove("hidden");$("app").classList.add("hidden");
-    $("exam").classList.remove("active");$("result").style.display="none";
-  }
-});
-
 function loadTests(){
-  onValue(ref(db,"testSeries"),snap=>{
-    const raw=snap.val()||{};
-    tests=Object.entries(raw).map(([id,v])=>({id,...(v||{})}))
-      .filter(t=>t.active!==false && Array.isArray(t.questions) && t.questions.length)
-      .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0));
-    buildFilters();renderTests();
-  },err=>{
-    $("seriesGrid").innerHTML=`<div class="empty">Test Series load नहीं हो सकी: ${esc(err.message)}</div>`;
-  });
+ onValue(ref(db,"testSeries"),snap=>{
+  const raw=snap.val()||{};
+  tests=Object.entries(raw).map(([id,v])=>({id,...(v||{})})).filter(t=>t.active!==false&&Array.isArray(t.questions)&&t.questions.length).sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0));
+  buildFilters();renderTests();
+ },err=>{$("seriesGrid").innerHTML=`<div class="empty">Test Series load नहीं हो सकी: ${esc(err.message)}</div>`});
 }
-function fillSelect(id,values,label){
-  const el=$(id), old=el.value;
-  el.innerHTML=`<option value="">All ${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
-  if(values.includes(old))el.value=old;
-}
-function buildFilters(){
-  fillSelect("filterBranch",[...new Set(tests.map(x=>x.branch).filter(Boolean))].sort(),"Branches");
-  fillSelect("filterSemester",[...new Set(tests.map(x=>x.semester).filter(Boolean))].sort(),"Semesters");
-  fillSelect("filterSubject",[...new Set(tests.map(x=>x.subject).filter(Boolean))].sort(),"Subjects");
-  fillSelect("filterTopic",[...new Set(tests.map(x=>x.topic).filter(Boolean))].sort(),"Topics");
-}
-function filtered(){
-  const b=$("filterBranch").value,s=$("filterSemester").value,sub=$("filterSubject").value,t=$("filterTopic").value;
-  return tests.filter(x=>(!b||x.branch===b)&&(!s||x.semester===s)&&(!sub||x.subject===sub)&&(!t||x.topic===t));
-}
-function renderTests(){
-  const arr=filtered(),grid=$("seriesGrid");
-  if(!arr.length){grid.innerHTML='<div class="empty"><b>No Test Series Found</b><br>इस filter के लिए अभी कोई test available नहीं है.</div>';return}
-  grid.innerHTML=arr.map(t=>`
-    <article class="series-card" data-test="${esc(t.id)}">
-      <div class="series-icon">?</div>
-      <h3>${esc(t.title||"Untitled Test")}</h3>
-      <div class="chips"><span class="chip blue">${esc(t.branch||"All Branches")}</span><span class="chip">${esc(t.semester||"")}</span><span class="chip">${esc(t.subject||"")}</span></div>
-      <p style="font-size:10px;color:#64748b;margin-top:8px">${esc(t.topic||"")}</p>
-      <div class="series-meta">
-        <div><b>QUESTIONS</b><span>${Number(t.questions.length)}</span></div>
-        <div><b>DURATION</b><span>${Number(t.durationMinutes||0)} min</span></div>
-        <div><b>MARK / Q</b><span>${Number(t.marksPerQuestion||0)}</span></div>
-        <div><b>NEGATIVE</b><span>${Number(t.negativeMark||0)}</span></div>
-      </div>
-    </article>`).join("");
-  grid.querySelectorAll("[data-test]").forEach(card=>card.onclick=()=>openInstructions(card.dataset.test));
-}
-$("applyFilters").onclick=renderTests;
-$("resetFilters").onclick=()=>{["filterBranch","filterSemester","filterSubject","filterTopic"].forEach(id=>$(id).value="");renderTests()};
-
-function openInstructions(id){
-  selectedTest=tests.find(x=>x.id===id);
-  if(!selectedTest)return;
-  $("insTitle").textContent=selectedTest.title||"Test Instructions";
-  $("insMeta").textContent=`${selectedTest.branch||"All Branches"} • ${selectedTest.semester||""} • ${selectedTest.subject||""} • ${selectedTest.topic||""} • ${selectedTest.questions.length} Questions • ${selectedTest.durationMinutes||0} Minutes`;
-  $("instructionModal").classList.add("open");
-}
-$("closeInstruction").onclick=()=>$("instructionModal").classList.remove("open");
-$("startSelectedTest").onclick=()=>{
-  if(!selectedTest)return;
-  $("instructionModal").classList.remove("open");
-  startExam(selectedTest);
-};
-
-function startExam(test){
-  state={test,index:0,answers:Array(test.questions.length).fill(null),marked:new Set(),remaining:Math.max(1,Number(test.durationMinutes)||1)*60,timer:null,startTime:Date.now()};
-  $("app").classList.add("hidden");$("exam").classList.add("active");$("result").style.display="none";
-  $("examTitle").textContent=test.title||"DIPLOMA ENGINEERS CBT MOCK TEST";
-  $("examStudent").textContent=auth.currentUser.displayName||auth.currentUser.email||"Student";
-  $("examMeta").textContent=`${test.branch||"All Branches"} • ${test.semester||""}`;
-  $("examSubject").textContent=(test.subject||"SUBJECT").toUpperCase();
-  $("examTopic").textContent=(test.topic||"TOPIC").toUpperCase();
-  renderQuestion();startTimer();
-  window.scrollTo(0,0);
-}
-function renderQuestion(){
-  const t=state.test,q=t.questions[state.index],selected=state.answers[state.index];
-  $("qNo").textContent=`Question No. ${state.index+1} of ${t.questions.length}`;
-  $("question").textContent=q.q||"";
-  $("options").innerHTML=(q.opt||[]).map((o,i)=>`<label class="option ${selected===i?"selected":""}"><input type="radio" name="answer" ${selected===i?"checked":""} data-i="${i}"><span><b>${String.fromCharCode(65+i)})</b> ${esc(o)}</span></label>`).join("");
-  $("options").querySelectorAll("input").forEach(inp=>inp.onchange=()=>{state.answers[state.index]=Number(inp.dataset.i);renderQuestion()});
-  renderPalette();
-  $("reviewBtn").textContent=state.marked.has(state.index)?"UNMARK REVIEW":"MARK FOR REVIEW";
-}
-function renderPalette(){
-  $("palette").innerHTML=state.test.questions.map((_,i)=>`<button class="pal ${state.answers[i]!==null?"answered":""} ${state.marked.has(i)?"marked":""} ${i===state.index?"current":""}" data-p="${i}">${i+1}</button>`).join("");
-  $("palette").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.index=Number(b.dataset.p);renderQuestion()});
-}
-function saveNext(){if(state.index<state.test.questions.length-1){state.index++;renderQuestion()}else{submitExam()}}
-function prev(){if(state.index>0){state.index--;renderQuestion()}}
-$("nextBtn").onclick=saveNext;$("prevBtn").onclick=prev;
-$("clearBtn").onclick=()=>{state.answers[state.index]=null;renderQuestion()};
-$("reviewBtn").onclick=()=>{state.marked.has(state.index)?state.marked.delete(state.index):state.marked.add(state.index);renderQuestion()};
-
-function startTimer(){
-  clearInterval(state.timer);
-  const tick=()=>{
-    const s=state.remaining;
-    $("timer").textContent=`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-    if(state.remaining<=0){clearInterval(state.timer);alert("Time is over. Test is being submitted.");submitExam(true);return}
-    state.remaining--;
-  };
-  tick();state.timer=setInterval(tick,1000);
-}
+function fillSelect(id,values,label){const el=$(id),old=el.value;el.innerHTML=`<option value="">All ${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");if(values.includes(old))el.value=old}
+function buildFilters(){fillSelect("filterBranch",[...new Set(tests.map(x=>x.branch).filter(Boolean))].sort(),"Branches");fillSelect("filterSemester",[...new Set(tests.map(x=>x.semester).filter(Boolean))].sort(),"Semesters");fillSelect("filterSubject",[...new Set(tests.map(x=>x.subject).filter(Boolean))].sort(),"Subjects");fillSelect("filterTopic",[...new Set(tests.map(x=>x.topic).filter(Boolean))].sort(),"Topics")}
+function filtered(){const b=$("filterBranch").value,s=$("filterSemester").value,sub=$("filterSubject").value,t=$("filterTopic").value;return tests.filter(x=>(!b||x.branch===b)&&(!s||x.semester===s)&&(!sub||x.subject===sub)&&(!t||x.topic===t))}
+function renderTests(){const arr=filtered(),grid=$("seriesGrid");if(!arr.length){grid.innerHTML='<div class="empty"><b>No Test Series Found</b><br>इस filter के लिए अभी कोई test available नहीं है.</div>';return}grid.innerHTML=arr.map(t=>`<article class="series-card" data-test="${esc(t.id)}"><div class="series-icon">?</div><h3>${esc(t.title||"Untitled Test")}</h3><div class="chips"><span class="chip blue">${esc(t.branch||"All Branches")}</span><span class="chip">${esc(t.semester||"")}</span><span class="chip">${esc(t.subject||"")}</span></div><p style="font-size:10px;color:#64748b;margin-top:8px">${esc(t.topic||"")}</p><div class="series-meta"><div><b>QUESTIONS</b><span>${Number(t.questions.length)}</span></div><div><b>DURATION</b><span>${Number(t.durationMinutes||0)} min</span></div><div><b>MARK / Q</b><span>${Number(t.marksPerQuestion||0)}</span></div><div><b>NEGATIVE</b><span>${Number(t.negativeMark||0)}</span></div></div></article>`).join("");grid.querySelectorAll("[data-test]").forEach(card=>card.onclick=()=>openInstructions(card.dataset.test))}
+$("applyFilters").onclick=renderTests;$("resetFilters").onclick=()=>{["filterBranch","filterSemester","filterSubject","filterTopic"].forEach(id=>$(id).value="");renderTests()};
+function openInstructions(id){selectedTest=tests.find(x=>x.id===id);if(!selectedTest)return;$("insTitle").textContent=selectedTest.title||"Test Instructions";$("insMeta").textContent=`${selectedTest.branch||"All Branches"} • ${selectedTest.semester||""} • ${selectedTest.subject||""} • ${selectedTest.topic||""} • ${selectedTest.questions.length} Questions • ${selectedTest.durationMinutes||0} Minutes`;$("instructionModal").classList.add("open")}
+$("closeInstruction").onclick=()=>$("instructionModal").classList.remove("open");$("startSelectedTest").onclick=()=>{if(!selectedTest)return;$("instructionModal").classList.remove("open");startExam(selectedTest)};
+function startExam(test){state={test,index:0,answers:Array(test.questions.length).fill(null),marked:new Set(),remaining:Math.max(1,Number(test.durationMinutes)||1)*60,timer:null,startTime:Date.now()};$("app").classList.add("hidden");$("exam").classList.add("active");$("result").style.display="none";$("examTitle").textContent=test.title||"DIPLOMA ENGINEERS CBT MOCK TEST";$("examStudent").textContent="Guest Student • No Login";$("examMeta").textContent=`${test.branch||"All Branches"} • ${test.semester||""}`;$("examSubject").textContent=(test.subject||"SUBJECT").toUpperCase();$("examTopic").textContent=(test.topic||"TOPIC").toUpperCase();renderQuestion();startTimer();window.scrollTo(0,0)}
+function renderQuestion(){const t=state.test,q=t.questions[state.index],selected=state.answers[state.index];$("qNo").textContent=`Question No. ${state.index+1} of ${t.questions.length}`;$("question").textContent=q.q||"";$("options").innerHTML=(q.opt||[]).map((o,i)=>`<label class="option ${selected===i?"selected":""}"><input type="radio" name="answer" ${selected===i?"checked":""} data-i="${i}"><span><b>${String.fromCharCode(65+i)})</b> ${esc(o)}</span></label>`).join("");$("options").querySelectorAll("input").forEach(inp=>inp.onchange=()=>{state.answers[state.index]=Number(inp.dataset.i);renderQuestion()});renderPalette();$("reviewBtn").textContent=state.marked.has(state.index)?"UNMARK REVIEW":"MARK FOR REVIEW"}
+function renderPalette(){$("palette").innerHTML=state.test.questions.map((_,i)=>`<button class="pal ${state.answers[i]!==null?"answered":""} ${state.marked.has(i)?"marked":""} ${i===state.index?"current":""}" data-p="${i}">${i+1}</button>`).join("");$("palette").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.index=Number(b.dataset.p);renderQuestion()})}
+function saveNext(){if(state.index<state.test.questions.length-1){state.index++;renderQuestion()}else submitExam()}function prev(){if(state.index>0){state.index--;renderQuestion()}}$("nextBtn").onclick=saveNext;$("prevBtn").onclick=prev;$("clearBtn").onclick=()=>{state.answers[state.index]=null;renderQuestion()};$("reviewBtn").onclick=()=>{state.marked.has(state.index)?state.marked.delete(state.index):state.marked.add(state.index);renderQuestion()};
+function startTimer(){clearInterval(state.timer);const tick=()=>{const s=state.remaining;$("timer").textContent=`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;if(state.remaining<=0){clearInterval(state.timer);alert("Time is over. Test is being submitted.");submitExam(true);return}state.remaining--};tick();state.timer=setInterval(tick,1000)}
 $("submitBtn").onclick=()=>submitExam(false);
-
-async function submitExam(auto=false){
-  if(!state.test)return;
-  if(!auto && !confirm("Are you sure you want to submit the test?"))return;
-  clearInterval(state.timer);
-  const t=state.test, q=t.questions;
-  let correct=0,wrong=0,attempted=0;
-  q.forEach((item,i)=>{if(state.answers[i]!==null){attempted++;if(Number(state.answers[i])===Number(item.ans))correct++;else wrong++}});
-  const marks=correct*Number(t.marksPerQuestion||0)-wrong*Number(t.negativeMark||0);
-  const max=q.length*Number(t.marksPerQuestion||0);
-  const percent=max>0?Math.max(0,(marks/max)*100):0;
-  const used=Math.max(0,Date.now()-state.startTime);
-  $("scoreMarks").textContent=marks.toFixed(2).replace(/\.00$/,"");
-  $("scoreCorrect").textContent=correct;
-  $("scoreWrong").textContent=wrong;
-  $("scorePercent").textContent=percent.toFixed(1)+"%";
-  $("resultTestName").textContent=t.title||"Test";
-  $("rStudent").textContent=auth.currentUser.displayName||auth.currentUser.email||"Student";
-  $("rTotal").textContent=q.length;$("rAttempted").textContent=attempted;
-  $("rTime").textContent=Math.floor(used/60000)+"m "+Math.floor((used%60000)/1000)+"s";
-  $("reviewList").innerHTML=q.map((item,i)=>{
-    const a=state.answers[i],ok=a!==null&&Number(a)===Number(item.ans);
-    const selected=a===null?"Not Attempted":(item.opt[a]||"");
-    return `<div class="review-item ${ok?"correct":"wrong"}"><h4>${i+1}. ${esc(item.q)}</h4><p>Your Answer: <b>${esc(selected)}</b></p><p>Correct Answer: <b>${esc(item.opt[item.ans]||"")}</b></p></div>`;
-  }).join("");
-  $("exam").classList.remove("active");$("result").style.display="block";
-  try{
-    await set(push(ref(db,`testResults/${auth.currentUser.uid}`)),{
-      uid:auth.currentUser.uid,testId:t.id,testTitle:t.title||"",branch:t.branch||"",semester:t.semester||"",subject:t.subject||"",topic:t.topic||"",
-      attempted,correct,wrong,marks,maxMarks:max,percentage:Number(percent.toFixed(2)),answers:state.answers,submittedAt:Date.now()
-    });
-  }catch(e){console.warn("Result save failed:",e)}
-  window.scrollTo(0,0);
-}
-$("backToTests").onclick=()=>{ $("result").style.display="none";$("app").classList.remove("hidden");window.scrollTo(0,0); };
-
+async function submitExam(auto=false){if(!state.test)return;if(!auto&&!confirm("Are you sure you want to submit the test?"))return;clearInterval(state.timer);const t=state.test,q=t.questions;let correct=0,wrong=0,attempted=0;q.forEach((item,i)=>{if(state.answers[i]!==null){attempted++;if(Number(state.answers[i])===Number(item.ans))correct++;else wrong++}});const marks=correct*Number(t.marksPerQuestion||0)-wrong*Number(t.negativeMark||0),max=q.length*Number(t.marksPerQuestion||0),percent=max>0?Math.max(0,marks/max*100):0,used=Math.max(0,Date.now()-state.startTime);$("scoreMarks").textContent=marks.toFixed(2).replace(/\.00$/,"");$("scoreCorrect").textContent=correct;$("scoreWrong").textContent=wrong;$("scorePercent").textContent=percent.toFixed(1)+"%";$("resultTestName").textContent=t.title||"Test";$("rStudent").textContent="Guest Student";$("rTotal").textContent=q.length;$("rAttempted").textContent=attempted;$("rTime").textContent=Math.floor(used/60000)+"m "+Math.floor(used%60000/1000)+"s";$("reviewList").innerHTML=q.map((item,i)=>{const a=state.answers[i],ok=a!==null&&Number(a)===Number(item.ans),selected=a===null?"Not Attempted":(item.opt[a]||"");return `<div class="review-item ${ok?"correct":"wrong"}"><h4>${i+1}. ${esc(item.q)}</h4><p>Your Answer: <b>${esc(selected)}</b></p><p>Correct Answer: <b>${esc(item.opt[item.ans]||"")}</b></p></div>`}).join("");$("exam").classList.remove("active");$("result").style.display="block";try{await set(push(ref(db,"testResults")),{visitorId,testId:t.id,testTitle:t.title||"",branch:t.branch||"",semester:t.semester||"",subject:t.subject||"",topic:t.topic||"",attempted,correct,wrong,marks,maxMarks:max,percentage:Number(percent.toFixed(2)),answers:state.answers,submittedAt:Date.now()})}catch(e){console.warn("Result save failed:",e)}window.scrollTo(0,0)}
+$("backToTests").onclick=()=>{$("result").style.display="none";$("app").classList.remove("hidden");window.scrollTo(0,0)};
+loadTests();
 </script>
 </body>
 </html>

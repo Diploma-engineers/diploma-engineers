@@ -2139,11 +2139,11 @@ body.campus-hiring-open{overflow:hidden!important;}
     <section class="ts-card">
       <h2 class="ts-section-title"><i class="fa-solid fa-folder-open"></i> Folder Details</h2>
       <div class="ts-grid">
-        <div class="ts-field"><label>Folder Name *</label><input id="tsFolderName" placeholder="Example: Physics Unit 1"></div>
+        <div class="ts-field"><label>Folder Name (Optional)</label><input id="tsFolderName" placeholder="Optional: Physics Unit 1"></div>
         <div class="ts-field"><label>Test Title *</label><input id="tsTestTitle" placeholder="Example: Physics MCQ – 10 Questions"></div>
-        <div class="ts-field"><label>Branch *</label><select id="tsBranch">
-          <option value="">Select Branch</option><option>Agricultural Engineering</option><option>Civil Engineering</option><option>Electrical Engineering</option><option>Electronics Engineering</option><option>Mechanical Engineering</option><option>Computer Science Engineering</option><option>Information Technology</option><option>Other</option>
-        </select></div>
+        <div class="ts-field"><label>Category *</label><select id="tsBranch">
+          <option value="Common" selected>Common — All Branches</option><option value="Agricultural Engineering">Agricultural Engineering</option><option value="Civil Engineering">Civil Engineering</option><option value="Electrical Engineering">Electrical Engineering</option><option value="Electronics Engineering">Electronics Engineering</option><option value="Mechanical Engineering">Mechanical Engineering</option><option value="Computer Science Engineering">Computer Science Engineering</option><option value="Information Technology">Information Technology</option><option value="Other">Other</option>
+        </select><small>Choose Common to make this test available to students of every branch. Student reader must include Common tests in its branch filter.</small></div>
         <div class="ts-field"><label>Semester *</label><select id="tsSemester">
           <option value="">Select Semester</option><option>1st Semester</option><option>2nd Semester</option><option>3rd Semester</option><option>4th Semester</option><option>5th Semester</option><option>6th Semester</option>
         </select></div>
@@ -6092,7 +6092,7 @@ function parseTestMCQs(raw){
 }
 
 function tsValidateTest(){
-  for(const [id,name] of [["tsFolderName","Folder Name"],["tsTestTitle","Test Title"],["tsBranch","Branch"],["tsSemester","Semester"],["tsSubject","Subject"],["tsTopic","Topic"]]){
+  for(const [id,name] of [["tsTestTitle","Test Title"],["tsBranch","Category"],["tsSemester","Semester"],["tsSubject","Subject"],["tsTopic","Topic"]]){
     if(!tsGetValue(id)){tsToast(name+" भरना जरूरी है.");TS(id)?.focus();return false;}
   }
   if(!tsGeneratedTest?.questions?.length){tsToast("पहले AUTO CREATE TEST दबाकर questions generate करें.");return false;}
@@ -6100,7 +6100,8 @@ function tsValidateTest(){
 }
 function tsBuildTest(status,existing=null){
   const qs=tsGeneratedTest?.questions||[],now=Date.now();
-  return {folderName:tsGetValue("tsFolderName"),branch:tsGetValue("tsBranch"),semester:tsGetValue("tsSemester"),subject:tsGetValue("tsSubject"),topic:tsGetValue("tsTopic"),title:tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:existing?.createdAt||now,updatedAt:now,createdBy:auth.currentUser?.uid||"",createdByEmail:auth.currentUser?.email||""};
+  const selectedCategory=tsGetValue("tsBranch")||"Common";
+  return {folderName:tsGetValue("tsFolderName")||"General",category:selectedCategory,branch:selectedCategory,availableToAllBranches:selectedCategory==="Common",semester:tsGetValue("tsSemester"),subject:tsGetValue("tsSubject"),topic:tsGetValue("tsTopic"),title:tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:existing?.createdAt||now,updatedAt:now,createdBy:auth.currentUser?.uid||"",createdByEmail:auth.currentUser?.email||""};
 }
 function tsRenderPreview(qs){
   TS("tsStats").classList.remove("hidden");
@@ -6230,7 +6231,7 @@ async function tsDeleteTest(id){
 }
 function tsResetForm(){
   ["tsFolderName","tsTestTitle","tsSubject","tsTopic","tsDescription","tsInstructions","tsMcqInput"].forEach(id=>{if(TS(id))TS(id).value="";});
-  ["tsBranch","tsSemester"].forEach(id=>{if(TS(id))TS(id).value="";});
+  if(TS("tsBranch"))TS("tsBranch").value="Common";if(TS("tsSemester"))TS("tsSemester").value="";
   TS("tsDuration").value=30;TS("tsMarks").value=1;TS("tsNegative").value=0;TS("tsPassPercentage").value=40;tsGeneratedTest=null;TS("tsStats").classList.add("hidden");TS("tsPreview").innerHTML='<div class="ts-empty"><i class="fa-regular fa-rectangle-list"></i><p>Questions will appear here after Auto Create.</p></div>';TS("tsGeneratedCode").textContent="No test generated yet.";
 }
 TS("tsSampleBtn")?.addEventListener("click",()=>{TS("tsMcqInput").value=TS_SAMPLE;if(!tsGetValue("tsTestTitle"))TS("tsTestTitle").value="Physics MCQ – 10 Questions";if(!tsGetValue("tsFolderName"))TS("tsFolderName").value="Physics";if(!tsGetValue("tsSubject"))TS("tsSubject").value="Physics";if(!tsGetValue("tsTopic"))TS("tsTopic").value="Basic Physics";tsParseAndPreview();});

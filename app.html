@@ -4564,6 +4564,23 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.goBack = function() {
+    const activePage = document.querySelector('.page.active-page');
+    const activeId = activePage ? activePage.id : '';
+
+    // Phone-style folder navigation: the single top-bar back button first
+    // moves up one folder instead of leaving the Test Series page.
+    if (activeId === 'testSeriesPage' && typeof window.deTsGoBack === 'function') {
+      if (window.deTsGoBack()) return;
+      navigateTo(defaultPage, false);
+      return;
+    }
+
+    // While taking a test, return to the published-test folders in the app.
+    if (activeId === 'testRunnerPage') {
+      navigateTo('testSeriesPage');
+      return;
+    }
+
     if (window.history.length > 1) {
       window.history.back();
     } else {
@@ -4704,7 +4721,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (targetPage === 'homePage') loadTrendingPage(false);
 
     const backBtn = document.getElementById("headerBackBtn");
-    if (backBtn) backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
+    if (backBtn) {
+      backBtn.style.display = targetPage === "homePage" ? "none" : "flex";
+      backBtn.setAttribute('aria-label', targetPage === 'testSeriesPage' ? 'Go back to previous folder' : 'Go back');
+      backBtn.title = targetPage === 'testSeriesPage' ? 'Back to previous folder' : 'Back';
+    }
     const menuBtn = document.getElementById("menuToggleBtn");
     if (menuBtn) menuBtn.style.display = targetPage === "homePage" ? "flex" : "none";
     const bellBtn = document.getElementById("headerBellBtn");
@@ -9138,10 +9159,19 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     const search=$("deTsSearch");
     if(search&&!search.dataset.tsBound){search.dataset.tsBound="1";search.addEventListener("input",render);}
     const back=$("deTsBack");
-    if(back&&!back.dataset.tsBound){back.dataset.tsBound="1";back.addEventListener("click",()=>{deTsPath.pop();render();});}
+    if(back&&!back.dataset.tsBound){back.dataset.tsBound="1";back.addEventListener("click",()=>{window.deTsGoBack();});}
   }
 
-  function loadWhenOpen(){init();load();}
+  function loadWhenOpen(){init();load();render();}
+  // Returns true when it handled a folder-level back action.
+  window.deTsGoBack = function(){
+    if(!deTsPath.length) return false;
+    deTsPath.pop();
+    render();
+    const page=document.getElementById('testSeriesPage');
+    if(page && page.classList.contains('active-page')) window.scrollTo({top:0,left:0,behavior:'smooth'});
+    return true;
+  };
   window.initEmbeddedTestSeries=loadWhenOpen;
   document.addEventListener("DOMContentLoaded",()=>{init();});
 })();

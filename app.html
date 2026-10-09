@@ -9027,6 +9027,10 @@ window.openEmbeddedTest = function(testId){
 .de-tr-student{display:flex;align-items:center;gap:13px;min-width:0}.de-tr-student-avatar{width:62px;height:62px;border-radius:50%;object-fit:cover;border:3px solid #dbeafe;background:#eff6ff;flex:0 0 62px}.de-tr-student-avatar-fallback{display:grid;place-items:center;font-weight:900;color:#1e40af;font-size:21px}.de-tr-student-info{min-width:0}.de-tr-student-info b{display:block;font-size:18px;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.de-tr-student-info span{display:block;font-size:12px;color:#64748B;margin-top:3px;line-height:1.4}.de-tr-performance{padding:9px 13px;border-radius:12px;background:#eff6ff;color:#1e40af;font-weight:900;text-align:center;white-space:nowrap}.de-tr-performance small{display:block;font-size:10px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}.de-tr-result-image-wrap{margin:18px auto 10px;max-width:720px;border:1px solid #e2e8f0;border-radius:16px;padding:8px;background:#f8fafc}.de-tr-result-image{display:block;width:100%;height:auto;border-radius:11px;background:#fff}.de-tr-result-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:13px}.de-tr-result-action{border:0;border-radius:11px;padding:11px 15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.de-tr-share{background:#0F3B78;color:#fff}.de-tr-download{background:#ecfdf5;color:#047857}.de-tr-copy{background:#eef2ff;color:#3730a3}.de-tr-result-note{font-size:11px;color:#64748B;margin-top:9px}
 @media(max-width:650px){.de-tr-result-hero{grid-template-columns:1fr}.de-tr-performance{justify-self:start}.de-tr-student-avatar{width:54px;height:54px;flex-basis:54px}.de-tr-student-info b{font-size:16px}}
 </style>
+<style id="de-tr-analysis-return-style">
+.de-tr-after-result{margin:22px 0 4px;padding:18px 14px;border:1px solid #bfdbfe;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#fff);text-align:center}.de-tr-after-result p{font-size:12px;color:#64748b;margin:0 0 12px}.de-tr-analysis-btn{width:min(100%,360px);background:linear-gradient(135deg,#1d4ed8,#0f2f63);color:#fff;box-shadow:0 8px 18px rgba(29,78,216,.18)}
+#testSeriesPage #deTsDashboard{scroll-margin-top:78px}
+</style>
 
 <script type="module" id="de-test-series-script">
 import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -9170,6 +9174,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   function loadWhenOpen(){init();load();render();}
   // Returns true when it handled a folder-level back action.
   window.__deTsPathHasFolder = function(){return deTsPath.length>0;};
+  window.deTsResetPath = function(){deTsPath.length=0;render();return true;};
   window.deTsGoBack = function(){
     if(!deTsPath.length) return false;
     deTsPath.pop();
@@ -9357,21 +9362,30 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     try{
       const profile=(typeof currentProfile==='object'&&currentProfile)||{};
       const signedUser=(typeof auth!=='undefined'&&auth&&auth.currentUser)||null;
-      const userKey=String(signedUser?.uid||profile.uid||profile.email||student.name||'guest').toLowerCase().replace(/[^a-z0-9_-]/g,'_');
-      const storageKey='de_test_history_v1_'+userKey;
-      const prior=JSON.parse(localStorage.getItem(storageKey)||'[]');
-      prior.unshift({id:String(currentTestId||test?.id||''),title:String(test?.title||'Test Series'),branch:String(test?.branch||student.branch||''),semester:String(test?.semester||student.semester||''),subject:String(test?.subject||''),topic:String(test?.topic||''),score:Number(r.score)||0,maxMarks:Number(r.maxMarks)||0,percentage:Number(r.percentage)||0,correct:Number(r.correct)||0,wrong:Number(r.wrong)||0,unanswered:Number(r.unanswered)||0,passed:!!r.pass,rank:String(rank.label||''),rankSub:String(rank.sub||''),date:Date.now(),durationMinutes:Number(test?.durationMinutes)||0});
+      const storageKey=(typeof window.deTestHistoryKey==='function')?window.deTestHistoryKey():('de_test_history_v2_'+String(signedUser?.uid||profile.uid||profile.email||student.name||'guest').toLowerCase().replace(/[^a-z0-9_-]/g,'_'));
+      let prior=[];try{const old=JSON.parse(localStorage.getItem(storageKey)||'[]');if(Array.isArray(old))prior=old;}catch(_){}
+      const record={id:String(currentTestId||test?.id||''),title:String(test?.title||'Test Series'),branch:String(test?.branch||student.branch||''),semester:String(test?.semester||student.semester||''),subject:String(test?.subject||''),topic:String(test?.topic||''),score:Number(r.score)||0,maxMarks:Number(r.maxMarks)||0,percentage:Number(r.percentage)||0,correct:Number(r.correct)||0,wrong:Number(r.wrong)||0,unanswered:Number(r.unanswered)||0,passed:!!r.pass,rank:String(rank.label||''),rankSub:String(rank.sub||''),date:Date.now(),durationMinutes:Number(test?.durationMinutes)||0};
+      prior.unshift(record);
       localStorage.setItem(storageKey,JSON.stringify(prior.slice(0,300)));
       localStorage.setItem('de_test_history_last_key',storageKey);
+      // Verify the write, then refresh dashboard counters/history immediately.
+      const verify=JSON.parse(localStorage.getItem(storageKey)||'[]');
+      if(!Array.isArray(verify)||!verify.some(x=>String(x.id)===record.id&&Number(x.date)===record.date))throw new Error('Browser storage write could not be verified');
       window.dispatchEvent(new CustomEvent('de-test-history-updated'));
-    }catch(historyError){console.warn('Could not save local test history:',historyError)}
+    }catch(historyError){console.warn('Could not save local test history:',historyError);window.__deTestHistorySaveError=String(historyError?.message||historyError)}
     $('deTrQuestionCard').style.display='none';$('deTrSubmitCard').style.display='none';$('deTrResultCard').style.display='block';
-    $('deTrResultCard').innerHTML=`<span class="de-tr-badge ${r.pass?'green':'red'}">${r.pass?'PASSED':'NOT PASSED'}</span><h2 style="font-family:Poppins;margin:10px 0 0">${auto?'Time Over':'Test Completed'}</h2><div class="de-tr-score">${r.score.toFixed(2)} / ${r.maxMarks}</div><p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p><div class="de-tr-result-hero"><div class="de-tr-student"><div id="deTrAvatarWrap" class="de-tr-student-avatar de-tr-student-avatar-fallback">${esc(initials(student.name))}</div><div class="de-tr-student-info"><b>${esc(student.name)}</b><span>${esc([student.branch,student.semester].filter(Boolean).join(' • ')||'Diploma Student')}</span></div></div><div class="de-tr-performance"><small>Performance Rank</small><i class="fa-solid ${rank.icon}"></i> ${esc(rank.label)}<br><span style="font-size:10px;font-weight:700">${esc(rank.sub)}</span></div></div><div class="de-tr-result-grid"><div class="de-tr-result-box"><b>${r.correct}</b><span>Correct</span></div><div class="de-tr-result-box"><b>${r.wrong}</b><span>Wrong</span></div><div class="de-tr-result-box"><b>${r.unanswered}</b><span>Unanswered</span></div><div class="de-tr-result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div></div><div class="de-tr-result-image-wrap"><img id="deTrResultImage" class="de-tr-result-image" alt="Test Result PNG Preview"><div class="de-tr-result-note">Your result card is generated as a PNG with your name, profile photo, score and performance rank.</div></div><div class="de-tr-result-actions"><button id="deTrShareResultBtn" type="button" class="de-tr-result-action de-tr-share"><i class="fa-solid fa-share-nodes"></i> Share Result PNG</button><button id="deTrDownloadResultBtn" type="button" class="de-tr-result-action de-tr-download"><i class="fa-solid fa-download"></i> Download PNG</button><button id="deTrCopyResultBtn" type="button" class="de-tr-result-action de-tr-copy"><i class="fa-regular fa-copy"></i> Copy Result</button></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:10px"><button id="deTrReviewBtn" type="button" class="de-tr-btn de-tr-light"><i class="fa-solid fa-list-check"></i> Review Answers</button><button id="deTrRetryBtn" type="button" class="de-tr-btn de-tr-primary" style="width:auto"><i class="fa-solid fa-rotate"></i> Try Again</button></div><div id="deTrReview" class="de-tr-review" style="display:none"></div>`;
+    $('deTrResultCard').innerHTML=`<span class="de-tr-badge ${r.pass?'green':'red'}">${r.pass?'PASSED':'NOT PASSED'}</span><h2 style="font-family:Poppins;margin:10px 0 0">${auto?'Time Over':'Test Completed'}</h2><div class="de-tr-score">${r.score.toFixed(2)} / ${r.maxMarks}</div><p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p><div class="de-tr-result-hero"><div class="de-tr-student"><div id="deTrAvatarWrap" class="de-tr-student-avatar de-tr-student-avatar-fallback">${esc(initials(student.name))}</div><div class="de-tr-student-info"><b>${esc(student.name)}</b><span>${esc([student.branch,student.semester].filter(Boolean).join(' • ')||'Diploma Student')}</span></div></div><div class="de-tr-performance"><small>Performance Rank</small><i class="fa-solid ${rank.icon}"></i> ${esc(rank.label)}<br><span style="font-size:10px;font-weight:700">${esc(rank.sub)}</span></div></div><div class="de-tr-result-grid"><div class="de-tr-result-box"><b>${r.correct}</b><span>Correct</span></div><div class="de-tr-result-box"><b>${r.wrong}</b><span>Wrong</span></div><div class="de-tr-result-box"><b>${r.unanswered}</b><span>Unanswered</span></div><div class="de-tr-result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div></div><div class="de-tr-result-image-wrap"><img id="deTrResultImage" class="de-tr-result-image" alt="Test Result PNG Preview"><div class="de-tr-result-note">Your result card is generated as a PNG with your name, profile photo, score and performance rank.</div></div><div class="de-tr-result-actions"><button id="deTrShareResultBtn" type="button" class="de-tr-result-action de-tr-share"><i class="fa-solid fa-share-nodes"></i> Share Result PNG</button><button id="deTrDownloadResultBtn" type="button" class="de-tr-result-action de-tr-download"><i class="fa-solid fa-download"></i> Download PNG</button><button id="deTrCopyResultBtn" type="button" class="de-tr-result-action de-tr-copy"><i class="fa-regular fa-copy"></i> Copy Result</button></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:10px"><button id="deTrReviewBtn" type="button" class="de-tr-btn de-tr-light"><i class="fa-solid fa-list-check"></i> Review Answers</button><button id="deTrRetryBtn" type="button" class="de-tr-btn de-tr-primary" style="width:auto"><i class="fa-solid fa-rotate"></i> Try Again</button></div><div id="deTrReview" class="de-tr-review" style="display:none"></div><div class="de-tr-after-result"><p>Your result has been saved to your test history on this device.</p><button id="deTrViewAnalysisBtn" type="button" class="de-tr-btn de-tr-analysis-btn"><i class="fa-solid fa-chart-line"></i> View Full Test Analysis</button></div>`;
     const avatarWrap=document.getElementById('deTrAvatarWrap');
     if(student.photo){const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{avatarWrap.innerHTML='';avatarWrap.classList.remove('de-tr-student-avatar-fallback');im.className='de-tr-student-avatar';avatarWrap.replaceWith(im)};im.src=student.photo+(student.photo.includes('?')?'&':'?')+'de_result='+Date.now()}
     $('deTrReviewBtn').addEventListener('click',()=>{const review=$('deTrReview');review.style.display=review.style.display==='none'?'block':'none';if(review.style.display==='block')renderReview()});
     $('deTrRetryBtn').addEventListener('click',()=>{loadTest(currentTestId,true)});
     $('deTrShareResultBtn').addEventListener('click',shareResultPNG);$('deTrDownloadResultBtn').addEventListener('click',downloadResultPNG);$('deTrCopyResultBtn').addEventListener('click',copyResultText);
+    $('deTrViewAnalysisBtn')?.addEventListener('click',()=>{
+      if(typeof window.deTsResetPath==='function')window.deTsResetPath();
+      if(typeof window.navigateTo==='function')window.navigateTo('testSeriesPage',true);
+      else {document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active-page',el.id==='testSeriesPage'));}
+      setTimeout(()=>{window.deTsRenderHistory?.();const dash=document.getElementById('deTsDashboard');if(dash){dash.scrollIntoView({behavior:'smooth',block:'start'});}},100);
+    });
     generateResultPNG(r).catch(e=>console.warn('Result PNG generation failed:',e));
   }
   function beginTest(){if(!$('deTrAgree').checked)return;$('deTrGate').style.display='none';$('deTrContent').style.display='block';renderMeta();renderQuestion();startTimer();window.scrollTo({top:0,behavior:'smooth'})}
@@ -9459,13 +9473,18 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
       const p=(typeof currentProfile==='object'&&currentProfile)||{};
       const u=(typeof auth!=='undefined'&&auth&&auth.currentUser)||null;
       const raw=String(u?.uid||p.uid||p.email||p.name||'guest').toLowerCase();
-      return 'de_test_history_v1_'+raw.replace(/[^a-z0-9_-]/g,'_');
-    }catch(e){return 'de_test_history_v1_guest'}
+      return 'de_test_history_v2_'+raw.replace(/[^a-z0-9_-]/g,'_');
+    }catch(e){return 'de_test_history_v2_guest'}
   }
+  window.deTestHistoryKey=currentHistoryKey;
   function readHistory(){
     try{
-      const a=JSON.parse(localStorage.getItem(currentHistoryKey())||'[]');
-      return Array.isArray(a)?a:[];
+      const keys=[currentHistoryKey()];
+      // Read the exact key used by earlier builds if the app profile/auth becomes available later.
+      try{const last=localStorage.getItem('de_test_history_last_key');if(last&&!keys.includes(last))keys.push(last)}catch(_){}
+      const merged=[],seen=new Set();
+      keys.forEach(key=>{try{const arr=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(arr))arr.forEach(x=>{const sig=String(x.id||'')+'_'+String(x.date||'')+'_'+String(x.score||'');if(!seen.has(sig)){seen.add(sig);merged.push(x)}})}catch(_){}});
+      return merged.sort((a,b)=>(Number(b.date)||0)-(Number(a.date)||0));
     }catch(e){return []}
   }
   function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -9475,8 +9494,9 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     const list=readHistory();
     const total=list.length,passed=list.filter(x=>x.passed).length,avg=total?list.reduce((s,x)=>s+(Number(x.percentage)||0),0)/total:0,best=total?Math.max(...list.map(x=>Number(x.percentage)||0)):0;
     const successRate=total?Math.round(passed/total*100):0;
-    const recent=list.slice(0,6);
-    root.innerHTML=`<div class="de-ts-dash-heading"><h2><i class="fa-solid fa-chart-line" style="color:#2563eb;margin-right:6px"></i> Your Test Progress</h2><span>PERSONAL DASHBOARD</span></div>
+    const recent=list;
+    const saveWarning=window.__deTestHistorySaveError?`<div class="de-ts-history-empty" style="color:#9a3412;background:#fff7ed;border-color:#fed7aa;margin-bottom:12px"><b>History storage warning</b><br>${safe(window.__deTestHistorySaveError)}. Browser storage may be blocked or full.</div>`:'';
+    root.innerHTML=`${saveWarning}<div class="de-ts-dash-heading"><h2><i class="fa-solid fa-chart-line" style="color:#2563eb;margin-right:6px"></i> Your Test Progress</h2><span>PERSONAL DASHBOARD</span></div>
       <div class="de-ts-stat-grid">
         <div class="de-ts-progress-stat"><div class="icon"><i class="fa-solid fa-file-circle-check"></i></div><b>${total}</b><span>Tests Attempted</span></div>
         <div class="de-ts-progress-stat"><div class="icon" style="background:#eaf8f0;color:#15803d"><i class="fa-solid fa-circle-check"></i></div><b>${passed}</b><span>Tests Passed</span></div>
@@ -9486,7 +9506,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
       <div class="de-ts-progress-panel"><div class="de-ts-progress-line"><span>Overall pass rate</span><span>${successRate}% (${passed}/${total})</span></div><div class="de-ts-progress-track"><div class="de-ts-progress-fill" style="width:${successRate}%"></div></div></div>
       <div class="de-ts-history"><div class="de-ts-dash-heading"><h2><i class="fa-solid fa-clock-rotate-left" style="color:#2563eb;margin-right:6px"></i> Your Test History</h2><div class="de-ts-history-actions"><span>${total} attempt${total===1?'':'s'}</span>${total?'<button type="button" id="deTsClearHistory">Clear history</button>':''}</div></div>
       ${recent.length?`<div class="de-ts-history-list">${recent.map(x=>{const pct=Math.max(0,Math.min(100,Number(x.percentage)||0));return `<article class="de-ts-history-card"><div class="de-ts-history-top"><h3>${safe(x.title||'Test Series')}</h3><span class="de-ts-history-pill ${x.passed?'':'fail'}">${x.passed?'PASSED':'NOT PASSED'}</span></div><div class="de-ts-history-meta">${safe([x.branch,x.semester,x.subject,x.topic].filter(Boolean).join(' • ')||'Published Test')}<br>${safe(dateLabel(x.date))}</div><div class="de-ts-history-score"><b>${(Number(x.score)||0).toFixed(2)} / ${(Number(x.maxMarks)||0).toFixed(2)}</b><span>${pct.toFixed(1)}% · ${safe(x.rank||'PRACTICE')}</span></div><div class="de-ts-history-mini"><i style="width:${pct}%"></i></div></article>`}).join('')}</div>`:'<div class="de-ts-history-empty"><i class="fa-solid fa-book-open-reader"></i><b>No test attempts yet</b><br>Complete your first test and your score, result, rank and date will appear here.</div>'}</div>`;
-    $('deTsClearHistory')?.addEventListener('click',()=>{if(confirm('Clear saved test history on this device? This will not change published tests.')){try{localStorage.removeItem(currentHistoryKey());}catch(e){}renderHistory();}});
+    $('deTsClearHistory')?.addEventListener('click',()=>{if(confirm('Clear saved test history on this device? This will not change published tests.')){try{localStorage.removeItem(currentHistoryKey());const last=localStorage.getItem('de_test_history_last_key');if(last)localStorage.removeItem(last);localStorage.removeItem('de_test_history_last_key');}catch(e){}renderHistory();}});
   }
   window.deTsRenderHistory=renderHistory;
   window.addEventListener('de-test-history-updated',renderHistory);
@@ -9496,26 +9516,17 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   function route(page,push){if(typeof window.navigateTo==='function')window.navigateTo(page,!!push);else{document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active-page',x.id===page));}}
   function backAction(source){
     const active=activePageId();
-    if(active==='testRunnerPage'){route('testSeriesPage',false);try{history.replaceState({pageId:'testSeriesPage',__deTestRoute:true},'',location.href)}catch(e){};return true}
+    if(active==='testRunnerPage'){route('testSeriesPage',true);setTimeout(()=>{window.deTsRenderHistory?.();},0);return true}
     if(active==='testSeriesPage'){
-      if(typeof window.deTsGoBack==='function'&&window.deTsGoBack()){
-        // The folder stack also has browser history entries; use the app's stack as the source of truth.
-        try{history.replaceState({pageId:'testSeriesPage',__deTestRoute:true},'',location.href)}catch(e){}
-        return true;
-      }
-      route('homePage',false);try{history.replaceState({pageId:'homePage',__deTestRoute:true},'',location.href)}catch(e){};return true;
+      if(typeof window.deTsGoBack==='function'&&window.deTsGoBack())return true;
+      if(typeof window.deTsResetPath==='function')window.deTsResetPath();
+      route('homePage',true);return true;
     }
-    if(active!=='homePage'){route('homePage',false);try{history.replaceState({pageId:'homePage',__deTestRoute:true},'',location.href)}catch(e){};return true}
+    if(active!=='homePage'){route('homePage',true);return true}
     return false;
   }
   // Override previous layered back handlers, which otherwise called browser history and jumped to Home.
-  window.goBack=function(){
-    const active=activePageId();
-    if(active==='testSeriesPage'&&window.__deTsPathHasFolder&&window.__deTsPathHasFolder()){
-      try{history.back();return true}catch(e){return backAction('button')}
-    }
-    return backAction('button');
-  };
+  window.goBack=function(){return backAction('button');};
   window.addEventListener('popstate',function(e){
     const active=activePageId();
     if(active==='testRunnerPage'){

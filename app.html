@@ -3780,21 +3780,21 @@ html,body{max-width:100%;overflow-x:hidden}
         <div>
           <div class="de-ts-brand">Diploma Engineers <span>Published Test Series</span></div>
           <h1>Test Series</h1>
-          <p>Published CBT tests — Branch, Semester, Subject और Topic के अनुसार practice करें.</p>
+          <p>Choose a Branch → Semester → Subject → Topic, just like opening folders on your phone.</p>
         </div>
       </section>
 
       <div id="deTsErrorBox" class="de-ts-error"></div>
 
       <section class="de-ts-filters">
-        <div class="de-ts-filtergrid">
-          <div class="de-ts-field"><label>Search</label><input id="deTsSearch" placeholder="Test title, subject, topic..."></div>
-          <div class="de-ts-field"><label>Branch</label><select id="deTsBranch"><option value="">All Branches</option></select></div>
-          <div class="de-ts-field"><label>Semester</label><select id="deTsSemester"><option value="">All Semesters</option></select></div>
-          <div class="de-ts-field"><label>Subject</label><select id="deTsSubject"><option value="">All Subjects</option></select></div>
+        <div class="de-ts-filtergrid de-ts-folder-search">
+          <div class="de-ts-field"><label>Search tests or folders</label><input id="deTsSearch" placeholder="Search branch, semester, subject, topic..."></div>
         </div>
       </section>
-
+      <div class="de-ts-folder-toolbar">
+        <button type="button" id="deTsBack" class="de-ts-back" style="display:none"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <div id="deTsBreadcrumb" class="de-ts-breadcrumb">All Branches</div>
+      </div>
       <div id="deTsStats" class="de-ts-stats"></div>
       <section id="deTsList" class="de-ts-grid">
         <div class="de-ts-empty"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading published tests...</p></div>
@@ -9031,34 +9031,66 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     return isNaN(d.getTime())?"":d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
   }
 
+  let deTsPath=[];
+  const folderIcon=["fa-code-branch","fa-layer-group","fa-book-open","fa-folder-open"];
+  function fieldValue(t,key){
+    if(key==="topic") return String(t.topic||t.folderName||"Other Topics").trim();
+    return String(t[key]||"").trim();
+  }
+  function uniqueVals(items,key){
+    return [...new Set(items.map(t=>fieldValue(t,key)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  }
+  function folderCard(label,level,count){
+    const icons=["fa-code-branch","fa-layer-group","fa-book-open","fa-folder-open"];
+    return `<button type="button" class="de-ts-folder-card" data-folder-level="${level}" data-folder-value="${esc(label)}">
+      <span class="de-ts-folder-icon"><i class="fa-solid ${icons[level]||"fa-folder"}"></i></span>
+      <span class="de-ts-folder-label">${esc(label)}</span>
+      <span class="de-ts-folder-count">${count} ${count===1?"item":"items"}</span>
+      <i class="fa-solid fa-chevron-right de-ts-folder-arrow"></i></button>`;
+  }
   function render(){
     const q=($("deTsSearch")?.value||"").trim().toLowerCase();
-    const b=$("deTsBranch")?.value||"", s=$("deTsSemester")?.value||"", sub=$("deTsSubject")?.value||"";
+    const keys=["branch","semester","subject","topic"];
+    const labels=["Branches","Semesters","Subjects","Topics"];
     const filtered=deTsTests.filter(t=>{
-      const text=[t.title,t.folderName,t.subject,t.topic,t.description].join(" ").toLowerCase();
-      return (!q||text.includes(q))&&(!b||String(t.branch||"")===b)&&(!s||String(t.semester||"")===s)&&(!sub||String(t.subject||"")===sub);
+      const text=[t.title,t.folderName,t.branch,t.semester,t.subject,t.topic,t.description].join(" ").toLowerCase();
+      return !q||text.includes(q);
     });
-    if($("deTsStats")) $("deTsStats").innerHTML=`<div class="de-ts-stat"><b>${deTsTests.length}</b> Published Tests</div><div class="de-ts-stat"><b>${filtered.length}</b> Showing</div>`;
-    const list=$("deTsList"); if(!list) return;
-    if(!filtered.length){
-      list.innerHTML='<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No published test found.</p></div>';
+    const list=$("deTsList"); if(!list)return;
+    const back=$("deTsBack"), crumb=$("deTsBreadcrumb");
+    if(back) back.style.display=deTsPath.length?"inline-flex":"none";
+    if(crumb) crumb.textContent=deTsPath.length?deTsPath.map(p=>p.value).join("  /  "):"All Branches";
+    if($("deTsStats")) $("deTsStats").innerHTML=`<div class="de-ts-stat"><b>${deTsTests.length}</b> Published Tests</div><div class="de-ts-stat"><b>${filtered.length}</b> Matching Tests</div>`;
+    let level=deTsPath.length;
+    let current=filtered.filter(t=>deTsPath.every((p,i)=>fieldValue(t,keys[i])===p.value));
+    if(level<4){
+      let vals=uniqueVals(current,keys[level]);
+      if(q && level===0) vals=uniqueVals(filtered,keys[0]);
+      if(!vals.length){
+        list.innerHTML='<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No folders found.</p></div>';return;
+      }
+      list.innerHTML=`<div class="de-ts-folder-grid">${vals.map(v=>{
+        const subset=current.filter(t=>fieldValue(t,keys[level])===v);
+        return folderCard(v,level,level===3?subset.length:uniqueVals(subset,keys[level+1]).length);
+      }).join("")}</div>`;
+      list.querySelectorAll("[data-folder-level]").forEach(btn=>btn.addEventListener("click",()=>{
+        const l=Number(btn.dataset.folderLevel), value=btn.dataset.folderValue;
+        deTsPath=deTsPath.slice(0,l);deTsPath.push({key:keys[l],value});render();
+      }));
       return;
     }
-    list.innerHTML=filtered.map(t=>{
-      const id=t.id||"";
-      const count=Number(t.questionCount||t.questions?.length||0);
+    if(!current.length){
+      list.innerHTML='<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No published tests found in this topic.</p></div>';return;
+    }
+    list.innerHTML=current.map(t=>{
+      const id=t.id||"", count=Number(t.questionCount||t.questions?.length||0);
       const total=(Number(t.marksPerQuestion)||0)*count;
       return `<article class="de-ts-card">
-        <div class="de-ts-badges"><span class="de-ts-badge green">PUBLISHED</span><span class="de-ts-badge">${esc(t.branch||"")}</span></div>
+        <div class="de-ts-badges"><span class="de-ts-badge green">PUBLISHED</span></div>
         <h2>${esc(t.title||"Untitled Test")}</h2>
-        <div class="de-ts-meta">${esc(t.subject||"")} · ${esc(t.topic||"")} · ${esc(t.semester||"")}</div>
+        <div class="de-ts-meta">${esc(t.subject||"")} · ${esc(t.topic||t.folderName||"")} · ${esc(t.semester||"")}</div>
         <div class="de-ts-desc">${esc(t.description||"Practice this test and check your score instantly.")}</div>
-        <div class="de-ts-info">
-          <span><i class="fa-regular fa-circle-question"></i> ${count} Q</span>
-          <span><i class="fa-regular fa-clock"></i> ${Number(t.durationMinutes)||0} min</span>
-          <span><i class="fa-solid fa-star"></i> ${total} marks</span>
-          <span>Pass ${Number(t.passPercentage)||0}%</span>
-        </div>
+        <div class="de-ts-info"><span><i class="fa-regular fa-circle-question"></i> ${count} Q</span><span><i class="fa-regular fa-clock"></i> ${Number(t.durationMinutes)||0} min</span><span><i class="fa-solid fa-star"></i> ${total} marks</span><span>Pass ${Number(t.passPercentage)||0}%</span></div>
         <div class="de-ts-meta" style="margin-bottom:12px">Published ${esc(formatDate(t.publishedAt||t.createdAt))}</div>
         <button type="button" class="de-ts-btn" data-test-id="${esc(id)}" onclick="openEmbeddedTest(this.dataset.testId)"><i class="fa-solid fa-play"></i> Start Test</button>
       </article>`;
@@ -9103,12 +9135,10 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   }
 
   function init(){
-    ["deTsSearch","deTsBranch","deTsSemester","deTsSubject"].forEach(id=>{
-      const el=$(id);
-      if(!el||el.dataset.tsBound) return;
-      el.dataset.tsBound="1";
-      el.addEventListener(id==="deTsSearch"?"input":"change",render);
-    });
+    const search=$("deTsSearch");
+    if(search&&!search.dataset.tsBound){search.dataset.tsBound="1";search.addEventListener("input",render);}
+    const back=$("deTsBack");
+    if(back&&!back.dataset.tsBound){back.dataset.tsBound="1";back.addEventListener("click",()=>{deTsPath.pop();render();});}
   }
 
   function loadWhenOpen(){init();load();}
@@ -9116,6 +9146,23 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   document.addEventListener("DOMContentLoaded",()=>{init();});
 })();
 </script>
+
+<style id="de-ts-folder-layout">
+.de-test-series-page .de-ts-hero{margin-bottom:18px}
+.de-ts-folder-toolbar{display:flex;align-items:center;gap:12px;margin:14px 0 10px;min-height:38px}
+.de-ts-back{border:1px solid #dbe5f1;background:#fff;color:#173b75;border-radius:10px;padding:9px 13px;font-weight:800;font-size:13px;align-items:center;gap:8px}
+.de-ts-breadcrumb{font-size:13px;color:#64748b;font-weight:800;overflow-wrap:anywhere}
+.de-ts-folder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.de-ts-folder-card{position:relative;min-width:0;min-height:126px;border:1px solid #e2e8f0;border-radius:17px;background:#fff;padding:15px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;box-shadow:0 4px 15px rgba(15,23,42,.045);cursor:pointer;color:#0f172a}
+.de-ts-folder-card:active{transform:scale(.98);background:#f8fbff}
+.de-ts-folder-icon{width:43px;height:43px;border-radius:13px;background:#eaf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px}
+.de-ts-folder-label{font-size:13px;font-weight:850;line-height:1.35;padding-right:15px;overflow-wrap:anywhere}
+.de-ts-folder-count{font-size:11px;color:#64748b;font-weight:600}
+.de-ts-folder-arrow{position:absolute;right:12px;top:18px;color:#94a3b8;font-size:12px}
+.de-ts-folder-search{grid-template-columns:1fr!important}
+@media(min-width:640px){.de-ts-folder-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.de-ts-folder-card{min-height:140px;padding:17px}.de-ts-folder-label{font-size:14px}}
+@media(max-width:380px){.de-ts-folder-grid{gap:9px}.de-ts-folder-card{padding:12px 10px;min-height:118px}.de-ts-folder-label{font-size:12px}}
+</style>
 
 <script type="module" id="de-test-runner-script">
 import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";

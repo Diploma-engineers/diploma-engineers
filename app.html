@@ -3778,12 +3778,16 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="de-test-series-page">
       <section class="de-ts-hero">
         <div>
-          <div class="de-ts-brand">Diploma Engineers <span>Published Test Series</span></div>
-          <h1>Test Series</h1>
-          <p>Choose a Branch → Semester → Subject → Topic, just like opening folders on your phone.</p>
+          <div class="de-ts-brand"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS <span>STUDENT TEST ARENA</span></div>
+          <div class="de-ts-welcome-row">
+            <div><div class="de-ts-eyebrow">YOUR LEARNING JOURNEY</div><h1>Welcome to Test Series<span class="de-ts-title-dot">.</span></h1>
+              <p>Practice smart, track every attempt, improve your score, and climb your performance rank.</p></div>
+            <div class="de-ts-hero-icon"><i class="fa-solid fa-trophy"></i><span>LEARN • PRACTICE • RANK</span></div>
+          </div>
         </div>
       </section>
 
+      <section id="deTsDashboard" class="de-ts-dashboard" aria-label="Your test progress and history"></section>
       <div id="deTsErrorBox" class="de-ts-error"></div>
 
       <section class="de-ts-filters">
@@ -9097,6 +9101,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
       list.querySelectorAll("[data-folder-level]").forEach(btn=>btn.addEventListener("click",()=>{
         const l=Number(btn.dataset.folderLevel), value=btn.dataset.folderValue;
         deTsPath=deTsPath.slice(0,l);deTsPath.push({key:keys[l],value});render();
+        try{history.pushState({pageId:'testSeriesPage',__deTestFolderLevel:deTsPath.length},'',location.href)}catch(e){}
       }));
       return;
     }
@@ -9164,6 +9169,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 
   function loadWhenOpen(){init();load();render();}
   // Returns true when it handled a folder-level back action.
+  window.__deTsPathHasFolder = function(){return deTsPath.length>0;};
   window.deTsGoBack = function(){
     if(!deTsPath.length) return false;
     deTsPath.pop();
@@ -9348,6 +9354,17 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     if(!auto&&unanswered>0&&!confirm(`${unanswered} question(s) are unanswered. Do you want to submit the test?`))return;
     submitted=true;clearInterval(timerInterval);const r=calculateResult();const timer=document.getElementById('deTrTimer');if(timer)timer.classList.add('hidden');
     const student=getStudentData(),rank=getPerformanceRank(r.percentage);
+    try{
+      const profile=(typeof currentProfile==='object'&&currentProfile)||{};
+      const signedUser=(typeof auth!=='undefined'&&auth&&auth.currentUser)||null;
+      const userKey=String(signedUser?.uid||profile.uid||profile.email||student.name||'guest').toLowerCase().replace(/[^a-z0-9_-]/g,'_');
+      const storageKey='de_test_history_v1_'+userKey;
+      const prior=JSON.parse(localStorage.getItem(storageKey)||'[]');
+      prior.unshift({id:String(currentTestId||test?.id||''),title:String(test?.title||'Test Series'),branch:String(test?.branch||student.branch||''),semester:String(test?.semester||student.semester||''),subject:String(test?.subject||''),topic:String(test?.topic||''),score:Number(r.score)||0,maxMarks:Number(r.maxMarks)||0,percentage:Number(r.percentage)||0,correct:Number(r.correct)||0,wrong:Number(r.wrong)||0,unanswered:Number(r.unanswered)||0,passed:!!r.pass,rank:String(rank.label||''),rankSub:String(rank.sub||''),date:Date.now(),durationMinutes:Number(test?.durationMinutes)||0});
+      localStorage.setItem(storageKey,JSON.stringify(prior.slice(0,300)));
+      localStorage.setItem('de_test_history_last_key',storageKey);
+      window.dispatchEvent(new CustomEvent('de-test-history-updated'));
+    }catch(historyError){console.warn('Could not save local test history:',historyError)}
     $('deTrQuestionCard').style.display='none';$('deTrSubmitCard').style.display='none';$('deTrResultCard').style.display='block';
     $('deTrResultCard').innerHTML=`<span class="de-tr-badge ${r.pass?'green':'red'}">${r.pass?'PASSED':'NOT PASSED'}</span><h2 style="font-family:Poppins;margin:10px 0 0">${auto?'Time Over':'Test Completed'}</h2><div class="de-tr-score">${r.score.toFixed(2)} / ${r.maxMarks}</div><p>${r.percentage.toFixed(1)}% Score · Required ${Number(test.passPercentage)||0}%</p><div class="de-tr-result-hero"><div class="de-tr-student"><div id="deTrAvatarWrap" class="de-tr-student-avatar de-tr-student-avatar-fallback">${esc(initials(student.name))}</div><div class="de-tr-student-info"><b>${esc(student.name)}</b><span>${esc([student.branch,student.semester].filter(Boolean).join(' • ')||'Diploma Student')}</span></div></div><div class="de-tr-performance"><small>Performance Rank</small><i class="fa-solid ${rank.icon}"></i> ${esc(rank.label)}<br><span style="font-size:10px;font-weight:700">${esc(rank.sub)}</span></div></div><div class="de-tr-result-grid"><div class="de-tr-result-box"><b>${r.correct}</b><span>Correct</span></div><div class="de-tr-result-box"><b>${r.wrong}</b><span>Wrong</span></div><div class="de-tr-result-box"><b>${r.unanswered}</b><span>Unanswered</span></div><div class="de-tr-result-box"><b>${r.percentage.toFixed(1)}%</b><span>Percentage</span></div></div><div class="de-tr-result-image-wrap"><img id="deTrResultImage" class="de-tr-result-image" alt="Test Result PNG Preview"><div class="de-tr-result-note">Your result card is generated as a PNG with your name, profile photo, score and performance rank.</div></div><div class="de-tr-result-actions"><button id="deTrShareResultBtn" type="button" class="de-tr-result-action de-tr-share"><i class="fa-solid fa-share-nodes"></i> Share Result PNG</button><button id="deTrDownloadResultBtn" type="button" class="de-tr-result-action de-tr-download"><i class="fa-solid fa-download"></i> Download PNG</button><button id="deTrCopyResultBtn" type="button" class="de-tr-result-action de-tr-copy"><i class="fa-regular fa-copy"></i> Copy Result</button></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:10px"><button id="deTrReviewBtn" type="button" class="de-tr-btn de-tr-light"><i class="fa-solid fa-list-check"></i> Review Answers</button><button id="deTrRetryBtn" type="button" class="de-tr-btn de-tr-primary" style="width:auto"><i class="fa-solid fa-rotate"></i> Try Again</button></div><div id="deTrReview" class="de-tr-review" style="display:none"></div>`;
     const avatarWrap=document.getElementById('deTrAvatarWrap');
@@ -9385,6 +9402,144 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   });
 })();
 </script>
+
+<style id="de-test-series-welcome-history-style">
+#testSeriesPage .de-ts-hero{position:relative;overflow:hidden;border-radius:0 0 26px 26px;background:radial-gradient(circle at 88% 5%,rgba(255,255,255,.20),transparent 28%),linear-gradient(125deg,#0b2454 0%,#124b9b 56%,#2878e7 100%);color:#fff;padding:24px clamp(16px,3vw,34px)!important;box-shadow:0 12px 30px rgba(15,59,120,.16)}
+#testSeriesPage .de-ts-brand{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#eaf2ff;font-size:12px;font-weight:900;letter-spacing:.8px}
+#testSeriesPage .de-ts-brand span{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);border-radius:999px;padding:5px 9px;font-size:9px;letter-spacing:.7px}
+#testSeriesPage .de-ts-welcome-row{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:17px}
+#testSeriesPage .de-ts-eyebrow{font-size:10px;font-weight:900;letter-spacing:1.8px;color:#b9d8ff;margin-bottom:7px}
+#testSeriesPage .de-ts-hero h1{color:#fff!important;font-size:clamp(25px,4vw,39px)!important;font-weight:900;letter-spacing:-1px;margin:0 0 9px!important;line-height:1.13}
+#testSeriesPage .de-ts-title-dot{color:#ffbe55}
+#testSeriesPage .de-ts-hero p{max-width:610px;color:#e3eeff!important;font-size:13px!important;line-height:1.7;margin:0}
+#testSeriesPage .de-ts-hero-icon{width:122px;min-width:122px;height:112px;border:1px solid rgba(255,255,255,.22);border-radius:24px;background:rgba(255,255,255,.11);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#ffd47b}
+#testSeriesPage .de-ts-hero-icon i{font-size:38px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.15))}
+#testSeriesPage .de-ts-hero-icon span{font-size:8px;letter-spacing:.5px;font-weight:900;color:#fff}
+#testSeriesPage .de-ts-dashboard{width:calc(100% - 28px);margin:16px auto 18px;}
+#testSeriesPage .de-ts-dash-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 11px}
+#testSeriesPage .de-ts-dash-heading h2{font-size:16px;font-weight:900;color:#10254a;margin:0}
+#testSeriesPage .de-ts-dash-heading span{font-size:10px;font-weight:800;color:#64748b}
+#testSeriesPage .de-ts-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#testSeriesPage .de-ts-progress-stat{min-width:0;padding:13px;border:1px solid #e1eaf7;border-radius:16px;background:linear-gradient(145deg,#fff,#f6f9ff);box-shadow:0 5px 16px rgba(15,47,99,.045)}
+#testSeriesPage .de-ts-progress-stat .icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#eaf2ff;color:#2563eb;margin-bottom:9px;font-size:14px}
+#testSeriesPage .de-ts-progress-stat b{display:block;color:#0f2f63;font-size:23px;font-weight:900;line-height:1.1;overflow-wrap:anywhere}
+#testSeriesPage .de-ts-progress-stat span{display:block;margin-top:5px;color:#64748b;font-size:10px;font-weight:800}
+#testSeriesPage .de-ts-progress-panel{margin-top:11px;padding:14px 15px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 5px 16px rgba(15,47,99,.04)}
+#testSeriesPage .de-ts-progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:11px;color:#475569;font-weight:800;margin-bottom:9px}
+#testSeriesPage .de-ts-progress-track{height:9px;border-radius:99px;background:#eaf0f8;overflow:hidden}
+#testSeriesPage .de-ts-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#38bdf8);width:0;transition:width .35s}
+#testSeriesPage .de-ts-history{margin-top:17px}
+#testSeriesPage .de-ts-history-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#testSeriesPage .de-ts-history-card{min-width:0;padding:14px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.04)}
+#testSeriesPage .de-ts-history-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+#testSeriesPage .de-ts-history-card h3{font-size:13px;font-weight:900;color:#142b50;line-height:1.4;margin:0 0 6px;overflow-wrap:anywhere}
+#testSeriesPage .de-ts-history-pill{font-size:9px;font-weight:900;padding:5px 7px;border-radius:99px;white-space:nowrap;background:#eaf8f0;color:#147442}
+#testSeriesPage .de-ts-history-pill.fail{background:#fff0f1;color:#b42332}
+#testSeriesPage .de-ts-history-meta{font-size:10px;color:#718096;line-height:1.6;margin-bottom:10px}
+#testSeriesPage .de-ts-history-score{display:flex;align-items:end;justify-content:space-between;gap:8px}
+#testSeriesPage .de-ts-history-score b{font-size:21px;font-weight:900;color:#0f2f63}
+#testSeriesPage .de-ts-history-score span{font-size:10px;color:#64748b;font-weight:800}
+#testSeriesPage .de-ts-history-mini{height:6px;border-radius:99px;background:#edf2f8;overflow:hidden;margin-top:9px}
+#testSeriesPage .de-ts-history-mini i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#38bdf8)}
+#testSeriesPage .de-ts-history-empty{padding:19px;border:1px dashed #cbd5e1;border-radius:15px;text-align:center;color:#64748b;font-size:12px;background:#fff}
+#testSeriesPage .de-ts-history-empty i{display:block;font-size:24px;color:#94a3b8;margin-bottom:7px}
+#testSeriesPage .de-ts-history-actions{display:flex;gap:8px;align-items:center}
+#testSeriesPage .de-ts-history-actions button{border:1px solid #dbe5f3;border-radius:9px;background:#fff;color:#31517e;padding:6px 9px;font-size:10px;font-weight:800}
+#testSeriesPage .de-ts-history-actions button:active{transform:scale(.97)}
+#testSeriesPage .de-ts-filters{margin-top:0}
+@media(max-width:650px){#testSeriesPage .de-ts-welcome-row{gap:10px}#testSeriesPage .de-ts-hero-icon{width:75px;min-width:75px;height:78px;border-radius:19px}#testSeriesPage .de-ts-hero-icon i{font-size:27px}#testSeriesPage .de-ts-hero-icon span{font-size:6px}#testSeriesPage .de-ts-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#testSeriesPage .de-ts-progress-stat{padding:11px}#testSeriesPage .de-ts-progress-stat b{font-size:21px}#testSeriesPage .de-ts-history-list{grid-template-columns:1fr}#testSeriesPage .de-ts-dashboard{width:calc(100% - 24px)}#testSeriesPage .de-ts-history-card{padding:13px}}
+@media(min-width:900px){#testSeriesPage .de-ts-dashboard{width:calc(100% - 48px)}#testSeriesPage .de-ts-history-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+<script id="de-test-series-history-and-back-fix">
+(function(){
+  'use strict';
+  const $=id=>document.getElementById(id);
+  function currentHistoryKey(){
+    try{
+      const p=(typeof currentProfile==='object'&&currentProfile)||{};
+      const u=(typeof auth!=='undefined'&&auth&&auth.currentUser)||null;
+      const raw=String(u?.uid||p.uid||p.email||p.name||'guest').toLowerCase();
+      return 'de_test_history_v1_'+raw.replace(/[^a-z0-9_-]/g,'_');
+    }catch(e){return 'de_test_history_v1_guest'}
+  }
+  function readHistory(){
+    try{
+      const a=JSON.parse(localStorage.getItem(currentHistoryKey())||'[]');
+      return Array.isArray(a)?a:[];
+    }catch(e){return []}
+  }
+  function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function dateLabel(v){try{return new Date(Number(v)||v).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return 'Date unavailable'}}
+  function renderHistory(){
+    const root=$('deTsDashboard');if(!root)return;
+    const list=readHistory();
+    const total=list.length,passed=list.filter(x=>x.passed).length,avg=total?list.reduce((s,x)=>s+(Number(x.percentage)||0),0)/total:0,best=total?Math.max(...list.map(x=>Number(x.percentage)||0)):0;
+    const successRate=total?Math.round(passed/total*100):0;
+    const recent=list.slice(0,6);
+    root.innerHTML=`<div class="de-ts-dash-heading"><h2><i class="fa-solid fa-chart-line" style="color:#2563eb;margin-right:6px"></i> Your Test Progress</h2><span>PERSONAL DASHBOARD</span></div>
+      <div class="de-ts-stat-grid">
+        <div class="de-ts-progress-stat"><div class="icon"><i class="fa-solid fa-file-circle-check"></i></div><b>${total}</b><span>Tests Attempted</span></div>
+        <div class="de-ts-progress-stat"><div class="icon" style="background:#eaf8f0;color:#15803d"><i class="fa-solid fa-circle-check"></i></div><b>${passed}</b><span>Tests Passed</span></div>
+        <div class="de-ts-progress-stat"><div class="icon" style="background:#fff7e8;color:#c27a08"><i class="fa-solid fa-ranking-star"></i></div><b>${best.toFixed(0)}%</b><span>Best Score</span></div>
+        <div class="de-ts-progress-stat"><div class="icon" style="background:#f3e8ff;color:#7e22ce"><i class="fa-solid fa-chart-simple"></i></div><b>${avg.toFixed(1)}%</b><span>Average Score</span></div>
+      </div>
+      <div class="de-ts-progress-panel"><div class="de-ts-progress-line"><span>Overall pass rate</span><span>${successRate}% (${passed}/${total})</span></div><div class="de-ts-progress-track"><div class="de-ts-progress-fill" style="width:${successRate}%"></div></div></div>
+      <div class="de-ts-history"><div class="de-ts-dash-heading"><h2><i class="fa-solid fa-clock-rotate-left" style="color:#2563eb;margin-right:6px"></i> Your Test History</h2><div class="de-ts-history-actions"><span>${total} attempt${total===1?'':'s'}</span>${total?'<button type="button" id="deTsClearHistory">Clear history</button>':''}</div></div>
+      ${recent.length?`<div class="de-ts-history-list">${recent.map(x=>{const pct=Math.max(0,Math.min(100,Number(x.percentage)||0));return `<article class="de-ts-history-card"><div class="de-ts-history-top"><h3>${safe(x.title||'Test Series')}</h3><span class="de-ts-history-pill ${x.passed?'':'fail'}">${x.passed?'PASSED':'NOT PASSED'}</span></div><div class="de-ts-history-meta">${safe([x.branch,x.semester,x.subject,x.topic].filter(Boolean).join(' • ')||'Published Test')}<br>${safe(dateLabel(x.date))}</div><div class="de-ts-history-score"><b>${(Number(x.score)||0).toFixed(2)} / ${(Number(x.maxMarks)||0).toFixed(2)}</b><span>${pct.toFixed(1)}% · ${safe(x.rank||'PRACTICE')}</span></div><div class="de-ts-history-mini"><i style="width:${pct}%"></i></div></article>`}).join('')}</div>`:'<div class="de-ts-history-empty"><i class="fa-solid fa-book-open-reader"></i><b>No test attempts yet</b><br>Complete your first test and your score, result, rank and date will appear here.</div>'}</div>`;
+    $('deTsClearHistory')?.addEventListener('click',()=>{if(confirm('Clear saved test history on this device? This will not change published tests.')){try{localStorage.removeItem(currentHistoryKey());}catch(e){}renderHistory();}});
+  }
+  window.deTsRenderHistory=renderHistory;
+  window.addEventListener('de-test-history-updated',renderHistory);
+  document.addEventListener('DOMContentLoaded',renderHistory);
+  // Reliable single top-bar back behavior for both browser/system Back and the app's arrow.
+  function activePageId(){return document.querySelector('.page.active-page')?.id||'homePage'}
+  function route(page,push){if(typeof window.navigateTo==='function')window.navigateTo(page,!!push);else{document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active-page',x.id===page));}}
+  function backAction(source){
+    const active=activePageId();
+    if(active==='testRunnerPage'){route('testSeriesPage',false);try{history.replaceState({pageId:'testSeriesPage',__deTestRoute:true},'',location.href)}catch(e){};return true}
+    if(active==='testSeriesPage'){
+      if(typeof window.deTsGoBack==='function'&&window.deTsGoBack()){
+        // The folder stack also has browser history entries; use the app's stack as the source of truth.
+        try{history.replaceState({pageId:'testSeriesPage',__deTestRoute:true},'',location.href)}catch(e){}
+        return true;
+      }
+      route('homePage',false);try{history.replaceState({pageId:'homePage',__deTestRoute:true},'',location.href)}catch(e){};return true;
+    }
+    if(active!=='homePage'){route('homePage',false);try{history.replaceState({pageId:'homePage',__deTestRoute:true},'',location.href)}catch(e){};return true}
+    return false;
+  }
+  // Override previous layered back handlers, which otherwise called browser history and jumped to Home.
+  window.goBack=function(){
+    const active=activePageId();
+    if(active==='testSeriesPage'&&window.__deTsPathHasFolder&&window.__deTsPathHasFolder()){
+      try{history.back();return true}catch(e){return backAction('button')}
+    }
+    return backAction('button');
+  };
+  window.addEventListener('popstate',function(e){
+    const active=activePageId();
+    if(active==='testRunnerPage'){
+      e.stopImmediatePropagation();e.preventDefault();
+      route('testSeriesPage',false);
+      try{history.replaceState({pageId:'testSeriesPage',__deTestRoute:true},'',location.href)}catch(err){}
+      syncArrow();
+      return;
+    }
+    if(active==='testSeriesPage'&&window.__deTsPathHasFolder && window.__deTsPathHasFolder()){
+      e.stopImmediatePropagation();e.preventDefault();
+      if(typeof window.deTsGoBack==='function')window.deTsGoBack();
+      syncArrow();
+      return;
+    }
+  },true);
+  // Keep the arrow visible on the runner and folder page; hide only on Home.
+  function syncArrow(){const id=activePageId(),b=$('headerBackBtn');if(b){b.style.display=id==='homePage'?'none':'flex';b.setAttribute('aria-label',id==='testSeriesPage'?'Back to previous folder':'Go back');b.title=id==='testSeriesPage'?'Back to previous folder':'Go back';}}
+  const observer=new MutationObserver(syncArrow);const app=$('app');if(app)observer.observe(app,{subtree:true,attributes:true,attributeFilter:['class']});document.addEventListener('DOMContentLoaded',syncArrow);
+  const oldNavigate=window.navigateTo;
+  if(typeof oldNavigate==='function')window.navigateTo=function(pageId,pushToHistory=true){const out=oldNavigate.apply(this,arguments);setTimeout(()=>{syncArrow();if(pageId==='testSeriesPage')renderHistory()},0);return out};
+})();
+</script>
+
 </body>
 </html>
 

@@ -3284,7 +3284,10 @@ html,body{max-width:100%;overflow-x:hidden}
       <button type="button" class="course-filter-chip" data-filter="chemical">Chemical</button>
     </div>
 
-    <div class="course-grid">
+    <div class="course-uploaded-heading" style="margin:14px 0 6px;font-weight:800;color:#0f172a"><i class="fa-solid fa-cloud-arrow-down" style="color:#2563eb;margin-right:7px"></i>Courses Uploaded by Admin</div>
+    <div id="adminUploadedCourseGrid" class="course-grid"><div class="course-no-results show" style="display:block">Loading published courses...</div></div>
+
+    <div class="course-grid" id="builtInCourseGrid">
 
       <!-- Year 1 Course -->
       <div class="course-card" data-course-search="1st year course">
@@ -7235,6 +7238,9 @@ homeAccessUnsub=onValue(accessRef,()=>refresh(),err=>console.error('[Diploma Eng
 }
 window.loadApprovedHomeCoursesExternal=loadApprovedHomeCourses;
 
+window.openCoursePayment = openPayment;
+window.openCourseReader = openCourse;
+
 function showVerifyTick(){
   const o=document.getElementById('verifyTickOverlay');
   if(!o)return;
@@ -9593,6 +9599,29 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 })();
 </script>
 
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+const courseAdminConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
+const existing=getApps().find(a=>a.name==="studentCourseCatalog");
+const catalogApp=existing||initializeApp(courseAdminConfig,"studentCourseCatalog");
+const catalogDb=getDatabase(catalogApp);
+const escCourse=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const courseSlug=id=>String(id).replace(/[^a-zA-Z0-9_-]/g,"_");
+function renderAdminCourses(data){
+ const grid=document.getElementById("adminUploadedCourseGrid");if(!grid)return;
+ const entries=Object.entries(data||{}).filter(([id,c])=>c&&typeof c==="object"&&c.status==="approved"&&c.title);
+ if(!entries.length){grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1">No published courses yet. Courses approved/published by Admin will appear here.</div>';return;}
+ grid.innerHTML=entries.map(([id,c])=>{
+  const title=escCourse(c.title||"Course"),branch=escCourse(c.branch||c.category||"Diploma Engineering"),desc=escCourse(c.description||"Video lectures, PDF notes and study resources."),img=String(c.bannerUrl||c.thumbnailUrl||c.imageUrl||"").replace(/"/g,"&quot;"),price=Number(c.price||c.amount||99),sid=escCourse(id),search=escCourse([c.title,c.branch,c.category,c.description].join(" ").toLowerCase());
+  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> Admin uploaded course content</li><li><i class="fa-solid fa-circle-check"></i> Lectures and PDF resources</li></ul><button type="button" class="action-btn" data-admin-course-buy="${sid}"><i class="fa-solid fa-lock"></i> Get This Course ₹${price}</button></div></article>`;
+ }).join("");
+ grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");}));
+ if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
+}
+onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=>{const grid=document.getElementById("adminUploadedCourseGrid");if(grid)grid.innerHTML='<div class="course-no-results show" style="display:block">Could not load courses. Check Firebase Database Rules and courseCatalog access.</div>';console.error("Admin course catalog load failed",err);});
+</script>
 </body>
 </html>
 

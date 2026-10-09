@@ -7032,11 +7032,8 @@ window.addEventListener('DOMContentLoaded', () => {
    <div class="payment-course" id="paymentCourseName">Course</div>
    <div class="payment-price">₹99 INR</div>
    <img class="payment-qr" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png" alt="UPI Payment QR">
-   <div class="payment-note">Pay the displayed course amount using this QR, then enter your details and UTR / Transaction ID. Your request will be sent to admin verification.</div>
-   <label class="payment-field-label" for="paymentStudentName">Full Name</label><input id="paymentStudentName" class="utr-input" type="text" maxlength="100" autocomplete="name" placeholder="Enter full name" required>
-   <label class="payment-field-label" for="paymentStudentBranch">Branch</label><input id="paymentStudentBranch" class="utr-input" type="text" maxlength="100" placeholder="Enter branch" required>
-   <label class="payment-field-label" for="paymentStudentMobile">Mobile Number</label><input id="paymentStudentMobile" class="utr-input" type="tel" inputmode="numeric" maxlength="15" autocomplete="tel" placeholder="Enter mobile number" required>
-   <label class="payment-field-label" for="paymentStudentEmail">Email</label><input id="paymentStudentEmail" class="utr-input" type="email" maxlength="150" autocomplete="email" placeholder="Enter email address" required>
+   <div class="payment-note">Pay using this QR and enter only your UTR / Transaction ID. Your profile details will be sent to the admin automatically.</div>
+   <input id="paymentStudentName" type="hidden"><input id="paymentStudentBranch" type="hidden"><input id="paymentStudentMobile" type="hidden"><input id="paymentStudentEmail" type="hidden">
    <label class="payment-field-label" for="paymentUTR">UTR / Transaction ID</label><input id="paymentUTR" class="utr-input" type="text" maxlength="80" autocomplete="off" placeholder="Enter UTR / Transaction ID" required>
    <button id="paymentSubmit" class="payment-submit" type="button">Submit for Verification</button>
    <div id="paymentStatus" class="payment-status"></div>
@@ -7322,9 +7319,7 @@ async function submitPurchase(){
   const studentMobile=document.getElementById('paymentStudentMobile').value.trim();
   const studentEmail=document.getElementById('paymentStudentEmail').value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
-  if(!studentName||!studentBranch||!studentMobile||!studentEmail){showStatus('Please complete Name, Branch, Mobile and Email.','err');return;}
-  if(!/^[0-9+()\-\s]{8,15}$/.test(studentMobile)){showStatus('Please enter a valid mobile number.','err');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentEmail)){showStatus('Please enter a valid email address.','err');return;}
+  // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
   /* DIRECT PAYMENT SUCCESS SOUND */
   if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
@@ -7347,13 +7342,13 @@ async function submitPurchase(){
       purchaseId:p.key,uid:currentUid,courseId:currentCourse,
       courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,
       status:'pending',verified:false,submittedAt:now,
-      name:studentName,email:studentEmail,
-      mobile:studentMobile,branch:studentBranch,
+      name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),
+      mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member'),
       college:String(currentProfile.college||''),semester:String(currentProfile.semester||''),
       profilePic:String(currentProfile.profilePic||'')
     });
 
-    currentProfile={...currentProfile,name:studentName,email:studentEmail,mobile:studentMobile,branch:studentBranch};
+    currentProfile={...currentProfile,name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member')};
     showVerifyTick();
     showStatus('Request submitted successfully ✓','ok');
     const submittedCourseId=currentCourse;

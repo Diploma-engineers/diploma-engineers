@@ -3791,11 +3791,11 @@ html,body{max-width:100%;overflow-x:hidden}
           <div class="de-ts-field"><label>Search tests or folders</label><input id="deTsSearch" placeholder="Search branch, semester, subject, topic..."></div>
         </div>
       </section>
-      <div class="de-ts-folder-toolbar">
+      <div class="de-ts-folder-toolbar" aria-hidden="true" style="display:none!important">
         <button type="button" id="deTsBack" class="de-ts-back" style="display:none"><i class="fa-solid fa-arrow-left"></i> Back</button>
         <div id="deTsBreadcrumb" class="de-ts-breadcrumb">All Branches</div>
       </div>
-      <div id="deTsStats" class="de-ts-stats"></div>
+      <div id="deTsStats" class="de-ts-stats" style="display:none!important"></div>
       <section id="deTsList" class="de-ts-grid">
         <div class="de-ts-empty"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading published tests...</p></div>
       </section>
@@ -9148,20 +9148,28 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 </script>
 
 <style id="de-ts-folder-layout">
-.de-test-series-page .de-ts-hero{margin-bottom:18px}
-.de-ts-folder-toolbar{display:flex;align-items:center;gap:12px;margin:14px 0 10px;min-height:38px}
-.de-ts-back{border:1px solid #dbe5f1;background:#fff;color:#173b75;border-radius:10px;padding:9px 13px;font-weight:800;font-size:13px;align-items:center;gap:8px}
-.de-ts-breadcrumb{font-size:13px;color:#64748b;font-weight:800;overflow-wrap:anywhere}
-.de-ts-folder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.de-ts-folder-card{position:relative;min-width:0;min-height:126px;border:1px solid #e2e8f0;border-radius:17px;background:#fff;padding:15px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;box-shadow:0 4px 15px rgba(15,23,42,.045);cursor:pointer;color:#0f172a}
-.de-ts-folder-card:active{transform:scale(.98);background:#f8fbff}
-.de-ts-folder-icon{width:43px;height:43px;border-radius:13px;background:#eaf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px}
-.de-ts-folder-label{font-size:13px;font-weight:850;line-height:1.35;padding-right:15px;overflow-wrap:anywhere}
-.de-ts-folder-count{font-size:11px;color:#64748b;font-weight:600}
-.de-ts-folder-arrow{position:absolute;right:12px;top:18px;color:#94a3b8;font-size:12px}
-.de-ts-folder-search{grid-template-columns:1fr!important}
-@media(min-width:640px){.de-ts-folder-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.de-ts-folder-card{min-height:140px;padding:17px}.de-ts-folder-label{font-size:14px}}
-@media(max-width:380px){.de-ts-folder-grid{gap:9px}.de-ts-folder-card{padding:12px 10px;min-height:118px}.de-ts-folder-label{font-size:12px}}
+/* Test Series folder browser: use the full available app width. The app's own top-bar back button is the only back control. */
+#testSeriesPage .de-test-series-page{width:100%;max-width:none;min-width:0;overflow-x:hidden;padding-bottom:28px}
+#testSeriesPage .de-ts-hero{margin:0 0 14px;padding:18px clamp(14px,3vw,30px);}
+#testSeriesPage .de-ts-hero h1{font-size:clamp(23px,3vw,30px);margin:12px 0 6px}
+#testSeriesPage .de-ts-hero p{font-size:14px}
+#testSeriesPage .de-ts-filters{width:calc(100% - 28px);max-width:none;margin:0 auto 16px;padding:14px;border-radius:15px}
+#testSeriesPage .de-ts-folder-toolbar,#testSeriesPage #deTsStats{display:none!important}
+#testSeriesPage #deTsList.de-ts-grid{display:block!important;width:calc(100% - 28px);max-width:none;margin:0 auto}
+#testSeriesPage .de-ts-folder-grid{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+#testSeriesPage .de-ts-folder-card{position:relative;min-width:0;min-height:130px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:8px;box-shadow:0 4px 15px rgba(15,23,42,.05);cursor:pointer;color:#0f172a;width:100%;}
+#testSeriesPage .de-ts-folder-card:active{transform:scale(.98);background:#f8fbff}
+#testSeriesPage .de-ts-folder-icon{width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:#eaf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px}
+#testSeriesPage .de-ts-folder-label{font-size:13px;font-weight:800;line-height:1.4;padding-right:12px;overflow-wrap:anywhere;word-break:normal}
+#testSeriesPage .de-ts-folder-count{font-size:11px;color:#64748b;font-weight:600;margin-top:auto}
+#testSeriesPage .de-ts-folder-arrow{position:absolute;right:11px;top:16px;color:#94a3b8;font-size:12px}
+#testSeriesPage .de-ts-folder-search{grid-template-columns:minmax(0,1fr)!important}
+#testSeriesPage .de-ts-field input{font-size:16px;min-height:44px}
+#testSeriesPage .de-ts-card{min-width:0}
+@media(min-width:560px){#testSeriesPage .de-ts-folder-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}#testSeriesPage .de-ts-folder-card{min-height:145px;padding:16px}#testSeriesPage .de-ts-folder-label{font-size:14px}}
+@media(min-width:900px){#testSeriesPage .de-ts-folder-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}#testSeriesPage .de-ts-filters,#testSeriesPage #deTsList.de-ts-grid{width:calc(100% - 48px)}#testSeriesPage .de-ts-folder-card{min-height:155px;padding:18px}}
+@media(min-width:1250px){#testSeriesPage .de-ts-folder-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:380px){#testSeriesPage .de-ts-folder-grid{gap:9px}#testSeriesPage .de-ts-folder-card{padding:12px 10px;min-height:120px}#testSeriesPage .de-ts-folder-label{font-size:12px}}
 </style>
 
 <script type="module" id="de-test-runner-script">

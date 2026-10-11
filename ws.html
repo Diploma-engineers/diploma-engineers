@@ -2724,6 +2724,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <h2 id="formTitle">Student Login</h2>
     <div id="registerFields" style="display:none;">
       <div class="form-group"><input type="text" id="name" placeholder="Student Full Name" autocomplete="name"></div>
+      <div class="form-group"><input type="text" id="rollNo" placeholder="Roll Number" autocomplete="off" inputmode="numeric" required></div>
       <div class="form-group"><select id="branch" aria-label="Select class">
         <option value="KG">KG</option><option value="1st Class">Class 1</option><option value="2nd Class">Class 2</option><option value="3rd Class">Class 3</option><option value="4th Class">Class 4</option><option value="5th Class">Class 5</option><option value="6th Class">Class 6</option><option value="7th Class">Class 7</option><option value="8th Class">Class 8</option><option value="9th Class">Class 9</option><option value="10th Class">Class 10</option><option value="11th Class">Class 11</option><option value="12th Class">Class 12</option>
       </select></div>
@@ -4913,15 +4914,34 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem("schoolTeacherSession");
         syncTeacherAdminNav();
         const name=document.getElementById("name").value.trim();
+        const rollNo=document.getElementById("rollNo").value.trim();
         const branch=document.getElementById("branch").value;
         const mobile=document.getElementById("mobile").value.trim();
         if(!name){showAuthToast("Please enter the student's full name.","error","Name required");return;}
+        if(!rollNo){showAuthToast("Please enter the student's roll number.","error","Roll number required");return;}
         const cred=await createUserWithEmailAndPassword(auth,email,password);
-        await set(ref(db,"users/"+cred.user.uid),{name,email,branch,mobile,role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:"",createdAt:Date.now()});
+        await set(ref(db,"users/"+cred.user.uid),{name,rollNo,rollNumber:rollNo,email,branch,mobile,role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:"",createdAt:Date.now()});
+        localStorage.removeItem("schoolTeacherSession");
+        syncTeacherAdminNav();
         showAuthToast("Your student account has been created successfully.","success","Account created");
       } else {
-        await signInWithEmailAndPassword(auth,email,password);
+        // Sign in to the student project first. If the same credentials are also
+        // a school-created teacher account in lalaramadmin, keep both sessions
+        // so this teacher can use student features and the Admin Panel.
         localStorage.removeItem("schoolTeacherSession");
+        syncTeacherAdminNav();
+        await signInWithEmailAndPassword(auth,email,password);
+        try {
+          const teacherResult=await signInWithEmailAndPassword(teacherAuth,email,password);
+          teacherSession=teacherResult.user;
+          localStorage.setItem("schoolTeacherSession","true");
+          showAuthToast("Signed in as student and verified teacher. Admin Panel enabled.","success","Teacher verified");
+        } catch(teacherError) {
+          await signOut(teacherAuth).catch(()=>{});
+          teacherSession=null;
+          localStorage.removeItem("schoolTeacherSession");
+          showAuthToast("Student login successful. Teacher/Admin access is not enabled for this account.","info","Student login");
+        }
         syncTeacherAdminNav();
       }
     } catch(e) {
@@ -4934,13 +4954,13 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const result=await signInWithPopup(auth,provider);
       const snapshot=await get(child(ref(db),`users/${result.user.uid}`));
-      if(!snapshot.exists()) await set(ref(db,"users/"+result.user.uid),{name:result.user.displayName||"Student",email:result.user.email,branch:"KG",mobile:"",role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:result.user.photoURL||"",createdAt:Date.now()});
+      if(!snapshot.exists()) await set(ref(db,"users/"+result.user.uid),{name:result.user.displayName||"Student",email:result.user.email,branch:"KG",mobile:"",rollNo:"",rollNumber:"",role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:result.user.photoURL||"",createdAt:Date.now()});
     } catch(e) {showAuthToast(authErrorMessage(e,false,"student"),"error","Google login failed");}
   };
 
   onAuthStateChanged(teacherAuth, (user)=>{
     syncTeacherAdminNav();
-    if(user && localStorage.getItem("schoolTeacherSession")==="true" && !auth.currentUser){
+    if(user && localStorage.getItem("schoolTeacherSession")==="true"){
       teacherSession=user;
       currentUserData={name:user.displayName||"Teacher",email:user.email||"",branch:"Teacher",profilePic:user.photoURL||"",coins:0,streak:{}};
       document.getElementById("authPage").style.display="none";
@@ -4971,7 +4991,10 @@ window.addEventListener('DOMContentLoaded', () => {
   onAuthStateChanged(auth, async (user) => {
     try {
       if (user) {
-        localStorage.removeItem("schoolTeacherSession");
+        // Keep teacher session if this same person is authenticated in both Firebase projects.
+        if (!(teacherAuth.currentUser && localStorage.getItem("schoolTeacherSession") === "true")) {
+          localStorage.removeItem("schoolTeacherSession");
+        }
         syncTeacherAdminNav();
         // Always create a usable profile immediately from Firebase Auth.
         // This keeps Profile/Leaderboard working even if the profile node is

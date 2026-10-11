@@ -2645,9 +2645,33 @@ html,body{max-width:100%;overflow-x:hidden}
 </style>
 
 <style id="school-login-only-style">
-.school-login-icon{font-size:54px;color:var(--primary);text-align:center;margin:4px auto 14px;line-height:1}
-#registerFields,.btn-google,#switchText{display:none!important}
-#authPage .auth-box h2{margin-top:0}
+.school-login-icon{font-size:48px;color:var(--primary);text-align:center;margin:0 auto 10px;line-height:1}
+.school-auth-box{max-width:430px;position:relative;overflow:hidden;padding:25px 22px 22px;border-radius:24px}
+.school-auth-brand{text-align:center;font-size:18px;font-weight:900;line-height:1.45;color:var(--dark-text)}
+.school-auth-subtitle{text-align:center;font-size:12px;color:var(--muted-text);margin:5px 0 18px}
+.auth-role-switch{display:grid;grid-template-columns:1fr 1fr;position:relative;gap:0;padding:4px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:14px;margin:0 0 18px;isolation:isolate}
+.auth-role-slider{position:absolute;z-index:-1;left:4px;top:4px;bottom:4px;width:calc(50% - 4px);border-radius:10px;background:var(--primary);box-shadow:0 3px 10px rgba(0,0,0,.12);transition:transform .25s ease}
+.auth-role-switch.teacher-active .auth-role-slider{transform:translateX(100%)}
+.auth-role-btn{border:0;background:transparent;color:#64748b;padding:10px 8px;border-radius:10px;font-weight:800;cursor:pointer;font:inherit;font-size:13px;transition:color .2s;z-index:1}
+.auth-role-btn.active{color:#fff}
+#authPage .auth-box h2{text-align:center;margin:0 0 17px;font-size:21px}
+#authPage .form-group{margin-bottom:12px}
+#authPage .form-group input,#authPage .form-group select{width:100%;min-height:46px;border:1px solid #dbe3ee;border-radius:12px;padding:11px 13px;background:#fff;outline:none;font:inherit;font-size:14px;box-sizing:border-box}
+#authPage .form-group input:focus,#authPage .form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+#authPage .btn-main,#authPage .btn-google{width:100%;min-height:46px;border-radius:12px;font-weight:800;margin-top:4px;cursor:pointer}
+#authPage .btn-google{display:block;background:#fff;border:1px solid #e2e8f0;color:#334155;margin-top:10px}
+#authPage .switch{display:block;text-align:center;margin-top:15px;font-size:13px;font-weight:800;color:var(--primary);cursor:pointer}
+.teacher-login-note{margin-top:13px;padding:11px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-size:12px;line-height:1.5}
+.auth-toast{position:fixed;z-index:999999;top:18px;left:50%;transform:translate(-50%,-18px);width:min(390px,calc(100vw - 28px));display:flex;align-items:flex-start;gap:11px;padding:13px 12px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;box-shadow:0 15px 45px rgba(15,23,42,.18);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
+.auth-toast.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.auth-toast-icon{width:34px;height:34px;border-radius:11px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;flex:none}
+.auth-toast.success .auth-toast-icon{background:#dcfce7;color:#15803d}.auth-toast.error .auth-toast-icon{background:#fee2e2;color:#b91c1c}.auth-toast strong{display:block;font-size:13px;color:#0f172a;margin:1px 0 3px}.auth-toast p{font-size:12px;color:#475569;line-height:1.45;margin:0;overflow-wrap:anywhere}.auth-toast button{border:0;background:transparent;color:#94a3b8;font-size:22px;line-height:1;cursor:pointer;padding:0 2px;margin-left:auto}
+@media(max-width:480px){.school-auth-box{padding:22px 17px;border-radius:21px}.school-auth-brand{font-size:16px}}
+</style>
+
+<style id="teacher-only-admin-navigation">
+#teacherAdminNav[hidden]{display:none!important}
+#teacherAdminNav{display:block}
 </style>
 
 </head>
@@ -2669,8 +2693,8 @@ html,body{max-width:100%;overflow-x:hidden}
         </div>
 
         <h1 class="loader-title">
-            <span class="orange-text">DIPLOMA</span>
-            <span class="blue-text">ENGINEERS</span>
+            <span class="orange-text">लालाराम नत्थो कुँवारि</span>
+            <span class="blue-text">इण्टर कॉलेज</span>
         </h1>
 
         <p class="loader-subtitle">विद्यालय का डिजिटल लर्निंग प्लेटफॉर्म</p>
@@ -2686,48 +2710,34 @@ html,body{max-width:100%;overflow-x:hidden}
     </div>
 </div>
 
-<!-- AUTH PAGE -->
+<!-- AUTH PAGE: Student / Teacher combined login -->
 <div id="authPage" style="display:none;">
-  <div class="auth-box">
+  <div class="auth-box school-auth-box">
     <div class="school-login-icon" aria-label="Login"><i class="fas fa-face-smile"></i></div>
-    <h2 id="formTitle">Login</h2>
-    
+    <div class="school-auth-brand">लालाराम नत्थो कुँवारि इण्टर कॉलेज</div>
+    <p class="school-auth-subtitle">विद्यालय का डिजिटल लर्निंग प्लेटफॉर्म</p>
+    <div class="auth-role-switch" role="tablist" aria-label="Choose login type">
+      <button type="button" class="auth-role-btn active" id="studentRoleBtn" onclick="switchAuthRole('student')"><i class="fas fa-user-graduate"></i> Student</button>
+      <button type="button" class="auth-role-btn" id="teacherRoleBtn" onclick="switchAuthRole('teacher')"><i class="fas fa-chalkboard-user"></i> Teacher</button>
+      <span class="auth-role-slider" id="authRoleSlider"></span>
+    </div>
+    <h2 id="formTitle">Student Login</h2>
     <div id="registerFields" style="display:none;">
-      <div class="form-group">
-        <input type="text" id="name" placeholder="Full Name">
-      </div>
-      <div class="form-group">
-        <select id="branch">
-          <option value="Civil Engineering" selected>Civil Engineering</option>
-          <option value="Computer Science Engineering">Computer Science Engineering</option>
-          <option value="Electrical Engineering">Electrical Engineering</option>
-          <option value="Electronics Engineering">Electronics Engineering</option>
-          <option value="Mechanical Engineering">Mechanical Engineering</option>
-          <option value="Information Technology">Information Technology</option>
-          <option value="Agriculture Engineering">Agriculture Engineering</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <input type="text" id="mobile" placeholder="Mobile Number">
-      </div>
+      <div class="form-group"><input type="text" id="name" placeholder="Student Full Name" autocomplete="name"></div>
+      <div class="form-group"><select id="branch" aria-label="Select class">
+        <option value="KG">KG</option><option value="1st Class">Class 1</option><option value="2nd Class">Class 2</option><option value="3rd Class">Class 3</option><option value="4th Class">Class 4</option><option value="5th Class">Class 5</option><option value="6th Class">Class 6</option><option value="7th Class">Class 7</option><option value="8th Class">Class 8</option><option value="9th Class">Class 9</option><option value="10th Class">Class 10</option><option value="11th Class">Class 11</option><option value="12th Class">Class 12</option>
+      </select></div>
+      <div class="form-group"><input type="tel" id="mobile" placeholder="Mobile Number (optional)" autocomplete="tel"></div>
     </div>
-    
-    <div class="form-group">
-      <input type="email" id="email" placeholder="Email Address">
-    </div>
-    <div class="form-group">
-      <input type="password" id="password" placeholder="Password">
-    </div>
-    
-    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
-    
-    <button class="btn-google" onclick="googleLogin()">
-      <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
-    </button>
-
-    <div class="switch" onclick="toggleForm()" id="switchText">New User? Register Here</div>
+    <div class="form-group"><input type="email" id="email" placeholder="Email Address" autocomplete="username" inputmode="email"></div>
+    <div class="form-group"><input type="password" id="password" placeholder="Password" autocomplete="current-password"></div>
+    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login as Student</button>
+    <button class="btn-google" id="googleLoginBtn" onclick="googleLogin()"><i class="fab fa-google" style="color:#ea4335"></i> Continue with Google</button>
+    <div class="switch" onclick="toggleForm()" id="switchText">New student? Create account</div>
+    <div class="teacher-login-note" id="teacherLoginNote" style="display:none"><i class="fas fa-shield-halved"></i> Teacher accounts are created by the school. Login with your assigned email and password.</div>
   </div>
 </div>
+<div id="authToast" class="auth-toast" role="status" aria-live="polite"><span class="auth-toast-icon"><i class="fas fa-circle-info"></i></span><div><strong id="authToastTitle">Notice</strong><p id="authToastMessage"></p></div><button type="button" aria-label="Dismiss" onclick="hideAuthToast()">×</button></div>
 
 <!-- MAIN APP INTERFACE -->
 <div id="app">
@@ -2744,8 +2754,10 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="drawer-item" onclick="drawerNavigate('communityPage')"><i class="fas fa-users"></i><span>Community</span></button>
       <div class="drawer-section-title">Settings</div>
       <div class="drawer-theme-row"><div class="drawer-theme-info"><i class="fas fa-circle-half-stroke"></i><span>Light / Dark Mode</span></div><button class="theme-switch" id="drawerThemeSwitch" type="button" onclick="toggleAppTheme()" aria-label="Toggle theme"></button></div>
-      <div class="drawer-section-title">Admin</div>
-      <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
+      <div class="admin-nav-section" id="teacherAdminNav" hidden>
+        <div class="drawer-section-title">Admin</div>
+        <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
+      </div>
     </div>
   </aside>
   <div class="navbar">
@@ -4361,9 +4373,32 @@ const firebaseConfig = {
   };
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+  const auth = getAuth(app); // Student accounts: lalaram-d42df
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
+
+  // Teacher accounts are managed separately by the school in lalaramadmin.
+  const teacherFirebaseConfig = {
+    apiKey: "AIzaSyC_7DNoopMMvRlQ3AzqlNMltKw_nQ_w368",
+    authDomain: "lalaramadmin.firebaseapp.com",
+    projectId: "lalaramadmin",
+    storageBucket: "lalaramadmin.firebasestorage.app",
+    messagingSenderId: "167227732284",
+    appId: "1:227732284:web:76bdf258dbecefd0282e39",
+    measurementId: "G-LGDHX3J6YB"
+  };
+  // Correct the teacher appId to the exact Firebase web-app ID supplied by the school.
+  teacherFirebaseConfig.appId = "1:167227732284:web:76bdf258dbecefd0282e39";
+  const teacherApp = initializeApp(teacherFirebaseConfig, "schoolTeacherAuth");
+  const teacherAuth = getAuth(teacherApp);
+  // Admin navigation is shown only when a valid teacher Firebase session is active.
+  const syncTeacherAdminNav = () => {
+    const nav = document.getElementById("teacherAdminNav");
+    if (nav) nav.hidden = !(teacherAuth.currentUser && localStorage.getItem("schoolTeacherSession") === "true");
+  };
+  let activeLoginRole = "student";
+  let teacherSession = null;
+  let authToastTimer = null;
 
   const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
   const newsDb = getDatabase(newsApp);
@@ -4801,68 +4836,121 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tab) tab.classList.add('active');
   }
 
-  window.toggleForm = function() {
-    isRegister = !isRegister;
-    document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
-    document.getElementById("submitBtnText").innerText = isRegister ? "Register" : "Login";
-    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
-    document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
+  window.showAuthToast = function(message, type="info", title="Notice") {
+    const box=document.getElementById("authToast"); if(!box) return;
+    const icon=box.querySelector(".auth-toast-icon i");
+    box.className="auth-toast show "+type;
+    document.getElementById("authToastTitle").textContent=title;
+    document.getElementById("authToastMessage").textContent=message;
+    if(icon) icon.className=type==="success"?"fas fa-circle-check":type==="error"?"fas fa-circle-exclamation":"fas fa-circle-info";
+    clearTimeout(authToastTimer); authToastTimer=setTimeout(()=>box.classList.remove("show"),4200);
+  };
+  window.hideAuthToast = function(){const b=document.getElementById("authToast");if(b)b.classList.remove("show");clearTimeout(authToastTimer);};
+
+  window.switchAuthRole = function(role) {
+    activeLoginRole = role === "teacher" ? "teacher" : "student";
+    const isTeacher = activeLoginRole === "teacher";
+    document.getElementById("studentRoleBtn").classList.toggle("active",!isTeacher);
+    document.getElementById("teacherRoleBtn").classList.toggle("active",isTeacher);
+    document.querySelector(".auth-role-switch").classList.toggle("teacher-active",isTeacher);
+    isRegister = false;
+    document.getElementById("formTitle").innerText = isTeacher ? "Teacher Login" : "Student Login";
+    document.getElementById("submitBtnText").innerText = isTeacher ? "Login as Teacher" : "Login as Student";
+    document.getElementById("registerFields").style.display = "none";
+    document.getElementById("switchText").style.display = isTeacher ? "none" : "block";
+    document.getElementById("switchText").innerText = "New student? Create account";
+    document.getElementById("googleLoginBtn").style.display = isTeacher ? "none" : "block";
+    document.getElementById("teacherLoginNote").style.display = isTeacher ? "block" : "none";
+    document.getElementById("password").autocomplete = isTeacher ? "current-password" : (isRegister ? "new-password" : "current-password");
   };
 
+  window.toggleForm = function() {
+    if(activeLoginRole !== "student") return;
+    isRegister = !isRegister;
+    document.getElementById("formTitle").innerText = isRegister ? "Create Student Account" : "Student Login";
+    document.getElementById("submitBtnText").innerText = isRegister ? "Create Account" : "Login as Student";
+    document.getElementById("registerFields").style.display = isRegister ? "block" : "none";
+    document.getElementById("switchText").innerText = isRegister ? "Already have an account? Login" : "New student? Create account";
+    document.getElementById("password").autocomplete = isRegister ? "new-password" : "current-password";
+  };
+
+  function authErrorMessage(error, isRegister, role) {
+    const code=error?.code||"";
+    if(code.includes("invalid-email")) return "Please enter a valid email address.";
+    if(code.includes("email-already-in-use")) return "This email already has an account. Please login instead.";
+    if(code.includes("weak-password")) return "Please choose a stronger password (at least 6 characters).";
+    if(code.includes("invalid-credential")||code.includes("wrong-password")||code.includes("user-not-found")) return "Email or password is incorrect. Please check and try again.";
+    if(code.includes("too-many-requests")) return "Too many attempts. Please wait a little and try again.";
+    if(code.includes("network-request-failed")) return "Network problem. Check your internet connection and try again.";
+    if(code.includes("operation-not-allowed")) return "Email/Password login is not enabled in this Firebase project. Contact the school administrator.";
+    return isRegister ? "Could not create your account. Please try again." : (role==="teacher"?"Teacher login failed. Check your assigned email and password.":"Login failed. Please check your details and try again.");
+  }
+
   window.submitAuthForm = async function() {
-    let email = document.getElementById("email").value.trim();
-    let password = document.getElementById("password").value.trim();
-    
-    if (!email || !password) {
-      alert("Please enter Email and Password");
-      return;
-    }
-
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const submitBtn=document.getElementById("submitBtnText");
+    if(!email || !password){showAuthToast("Please enter your email and password.","error","Missing details");return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showAuthToast("Please enter a valid email address.","error","Invalid email");return;}
+    if(password.length<6){showAuthToast("Password must contain at least 6 characters.","error","Check password");return;}
+    const oldText=submitBtn.textContent; submitBtn.disabled=true; submitBtn.textContent=activeLoginRole==="teacher"?"Checking teacher login…":(isRegister?"Creating account…":"Signing in…");
     try {
-      if (isRegister) {
-        let name = document.getElementById("name").value.trim();
-        let branch = document.getElementById("branch").value;
-        let mobile = document.getElementById("mobile").value.trim();
-        
-        if (!name || !mobile) {
-          alert("Please fill all details");
-          return;
-        }
-
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(db, "users/" + cred.user.uid), { 
-          name, email, branch, mobile, coins: 0,
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
-        });
+      if(activeLoginRole === "teacher") {
+        // Teacher registration is intentionally unavailable in the app.
+        const result=await signInWithEmailAndPassword(teacherAuth,email,password);
+        teacherSession=result.user;
+        showAuthToast("Teacher login successful.","success","Welcome, Teacher");
+        // Teacher credentials are validated against lalaramadmin. Keep the role session separate from student accounts.
+        localStorage.setItem("schoolTeacherSession","true");
+        syncTeacherAdminNav();
+        document.getElementById("authPage").style.display="none";
+        document.getElementById("app").style.display="block";
+        currentUserData={name:result.user.displayName||"Teacher",email:result.user.email||email,branch:"Teacher",profilePic:result.user.photoURL||"",coins:0,streak:{}};
+        updateProfileUI(currentUserData);
+        renderPageUI(defaultPage);
+        loadNewsData();
+      } else if(isRegister) {
+        localStorage.removeItem("schoolTeacherSession");
+        syncTeacherAdminNav();
+        const name=document.getElementById("name").value.trim();
+        const branch=document.getElementById("branch").value;
+        const mobile=document.getElementById("mobile").value.trim();
+        if(!name){showAuthToast("Please enter the student's full name.","error","Name required");return;}
+        const cred=await createUserWithEmailAndPassword(auth,email,password);
+        await set(ref(db,"users/"+cred.user.uid),{name,email,branch,mobile,role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:"",createdAt:Date.now()});
+        showAuthToast("Your student account has been created successfully.","success","Account created");
       } else {
-        // App authentication is the only login step. Admin access is then
-        // verified separately by EXACT EMAIL against the Admin Firebase
-        // public access registry. Password/name are NOT compared.
-        await signInWithEmailAndPassword(auth, email, password);
-        setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
+        await signInWithEmailAndPassword(auth,email,password);
+        localStorage.removeItem("schoolTeacherSession");
+        syncTeacherAdminNav();
       }
-    } catch (e) {
-      alert("Auth Error: " + e.message);
-    }
+    } catch(e) {
+      showAuthToast(authErrorMessage(e,isRegister,activeLoginRole),"error",e?.code?.includes("email-already-in-use")?"Account already exists":(activeLoginRole==="teacher"?"Teacher login failed":"Authentication error"));
+    } finally {submitBtn.disabled=false;submitBtn.textContent=oldText;}
   };
 
   window.googleLogin = async function() {
+    if(activeLoginRole!=="student") return;
     try {
-      const result = await signInWithPopup(auth, provider);
-      const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
-      if (!snapshot.exists()) {
-        await set(ref(db, "users/" + result.user.uid), {
-          name: result.user.displayName || "Google User",
-          email: result.user.email,
-          branch: "Civil Engineering",
-          mobile: "N/A", coins: 0,
-          college: "", enrollment: "", address: "", semester: "", profilePic: ""
-        });
-      }
-    } catch (e) {
-      alert("Google Login Error: " + e.message);
-    }
+      const result=await signInWithPopup(auth,provider);
+      const snapshot=await get(child(ref(db),`users/${result.user.uid}`));
+      if(!snapshot.exists()) await set(ref(db,"users/"+result.user.uid),{name:result.user.displayName||"Student",email:result.user.email,branch:"KG",mobile:"",role:"student",coins:0,college:"लालाराम नत्थो कुँवारि इण्टर कॉलेज",enrollment:"",address:"",semester:"",profilePic:result.user.photoURL||"",createdAt:Date.now()});
+    } catch(e) {showAuthToast(authErrorMessage(e,false,"student"),"error","Google login failed");}
   };
+
+  onAuthStateChanged(teacherAuth, (user)=>{
+    syncTeacherAdminNav();
+    if(user && localStorage.getItem("schoolTeacherSession")==="true" && !auth.currentUser){
+      teacherSession=user;
+      currentUserData={name:user.displayName||"Teacher",email:user.email||"",branch:"Teacher",profilePic:user.photoURL||"",coins:0,streak:{}};
+      document.getElementById("authPage").style.display="none";
+      document.getElementById("app").style.display="block";
+      updateProfileUI(currentUserData);
+      renderPageUI(defaultPage);
+    } else if(!user && localStorage.getItem("schoolTeacherSession")==="true") {
+      localStorage.removeItem("schoolTeacherSession");
+    }
+  });
 
   window.logoutFirebase = async function() {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
@@ -4870,7 +4958,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if(switchBtn) switchBtn.style.display = "none";
     const box = document.getElementById("profileAdminAccess");
     if(box) box.hidden = true;
-    signOut(auth);
+    localStorage.removeItem("schoolTeacherSession");
+    syncTeacherAdminNav();
+    teacherSession = null;
+    await Promise.allSettled([signOut(auth), signOut(teacherAuth)]);
+    document.getElementById("app").style.display="none";
+    document.getElementById("authPage").style.display="flex";
   };
 
   let userProfileListener = null;
@@ -4878,6 +4971,8 @@ window.addEventListener('DOMContentLoaded', () => {
   onAuthStateChanged(auth, async (user) => {
     try {
       if (user) {
+        localStorage.removeItem("schoolTeacherSession");
+        syncTeacherAdminNav();
         // Always create a usable profile immediately from Firebase Auth.
         // This keeps Profile/Leaderboard working even if the profile node is
         // temporarily empty while the Realtime Database listener starts.
@@ -4944,6 +5039,10 @@ window.addEventListener('DOMContentLoaded', () => {
           userProfileListener = null;
         }
         if (usageTimerInterval) clearInterval(usageTimerInterval);
+        // Do not hide an already-restored teacher session when the student auth is empty.
+        if (teacherAuth.currentUser && localStorage.getItem("schoolTeacherSession") === "true") {
+          return;
+        }
         currentUserData = {};
         document.getElementById("app").style.display = "none";
         document.getElementById("authPage").style.display = "flex";

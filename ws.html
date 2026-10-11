@@ -5706,19 +5706,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 4200);
   }
 
-  const demoFeedbackPool = [
-    { name: "Ravi", branch: "Civil Engineering", rating: 5, message: "😍😍😍🥰🥰", createdAt: Date.now() - 1000 * 60 * 60 * 8 },
-    { name: "Ravi", branch: "Civil Engineering", rating: 5, message: "Notes aur PYQ ek hi jagah milne se padhai easy ho gayi.", createdAt: Date.now() - 1000 * 60 * 60 * 14 },
-    { name: "Abhiyadav", branch: "Electrical Engineering", rating: 5, message: "App ka interface simple aur easy to use hai. Notes, PYQ aur revision material sab ek jagah mil jata hai.", createdAt: Date.now() - 1000 * 60 * 60 * 18 },
-    { name: "Ankit", branch: "Computer Science Engineering", rating: 5, message: "Students ke liye useful platform hai. Study material aur updates achhe milte hain.", createdAt: Date.now() - 1000 * 60 * 60 * 26 },
-    { name: "Priya", branch: "Mechanical Engineering", rating: 5, message: "PYQ section aur notes dono bahut helpful hain. Thank you लालाराम नत्थो कुँवारि इण्टर कॉलेज!", createdAt: Date.now() - 1000 * 60 * 60 * 32 },
-    { name: "Saurabh", branch: "Civil Engineering", rating: 5, message: "Sabhi important resources ek app me mil jate hain. Interface bhi bahut smooth hai.", createdAt: Date.now() - 1000 * 60 * 60 * 40 }
-  ];
-
-  function shuffledDemoFeedbacks(count) {
-    const shuffled = [...demoFeedbackPool].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count).map((item, index) => ({ ...item, id: "demo-" + index, demo: true }));
-  }
+  // Comments/feedback are loaded only from lalaram-d42df -> feedback. No demo comments are used.
 
   function renderRecentFeedback(snapshot) {
     const track = document.getElementById("feedbackTrack");
@@ -5838,6 +5826,7 @@ window.addEventListener('DOMContentLoaded', () => {
     feedbackListenerStarted = true;
     updateFeedbackFormAvailability();
 
+    // Student comments are read ONLY from the student app project lalaram-d42df.
     const feedbackRef = ref(db, "feedback");
     onValue(feedbackRef, snapshot => {
       renderRecentFeedback(snapshot);
@@ -9886,7 +9875,8 @@ function renderHomeTestSlider(data){
  slider.querySelectorAll('[data-home-test]').forEach(b=>b.addEventListener('click',()=>{window.__pendingTestId=b.dataset.homeTest;if(typeof window.navigateTo==='function')window.navigateTo('testRunnerPage')}));
 }
 function loadAdminPublishedTests(){
- onValue(ref(schoolDb,'schoolContent/testSeries'),snap=>{
+ // Show only published tests uploaded from Admin Panel (lalaramadmin).
+onValue(ref(schoolDb,'schoolContent/testSeries'),snap=>{
   const obj=snap.val()||{};
   // Normalize from the exact admin node; drafts/deleted/inactive tests are never shown.
   testCache=Object.entries(obj).map(([id,t])=>({...t,id})).filter(isAdminPublishedTest).sort((a,b)=>testTimestamp(b)-testTimestamp(a));

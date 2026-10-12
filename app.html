@@ -5391,55 +5391,16 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function checkDualProjectRegistration(user){
-    if(!topAdminSwitch){ return false; }
-    topAdminSwitch.style.display = "none";
-    if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "none";
-    if(sessionStorage.getItem("de_login_role") !== "admin" || !user?.email){ return false; }
-
-    const email = String(user.email).trim().toLowerCase();
-    const emailKey = encodeURIComponent(email);
-
-    try{
-      // PRIMARY CHECK: Admin Firebase publishes a tiny adminAccess record
-      // specifically so the main App can verify an admin without reading the
-      // protected adminProfiles collection.
-      const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
-      if(accessSnap.exists()){
-        const access = accessSnap.val() || {};
-        const accessEmail = String(access.email || "").trim().toLowerCase();
-        if(accessEmail === email && access.enabled !== false){
-          topAdminSwitch.style.display = "inline-flex";
-          if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "flex";
-          return true;
-        }
-      }
-    }catch(err){
-      console.warn("Admin access-record check failed; trying adminProfiles:", err);
-    }
-
-    try{
-      // FALLBACK: exact email match in Admin Firebase adminProfiles.
-      const snap = await get(ref(newsDb, "adminProfiles"));
-      if(snap.exists()){
-        const profiles = orderContentAdminProfiles(snap.val() || {});
-        for(const profile of Object.values(profiles)){
-          const profileEmail = String(profile?.email || "").trim().toLowerCase();
-          if(profileEmail === email){
-            topAdminSwitch.style.display = "inline-flex";
-            if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "flex";
-            return true;
-          }
-        }
-      }
-    }catch(err){
-      console.warn("Admin profile check failed:", err);
-    }
-
-    return false;
+    // Admin entry is shown only after explicit Admin Login AND an active
+    // adminAccess record in diplomaengineers-869df. No adminProfiles fallback.
+    hideAllAdminEntryPoints();
+    if(sessionStorage.getItem("de_login_role") !== "admin" || !user?.email) return false;
+    return await refreshAdminAccess(user);
   }
 
   if(topAdminSwitch){
     topAdminSwitch.addEventListener("click", ()=>{
+      if(sessionStorage.getItem("de_login_role") !== "admin"){ hideAllAdminEntryPoints(); return; }
       const user = auth.currentUser;
       if(!user?.email){ return; }
       const url = new URL("admin.html", document.baseURI);
@@ -5462,50 +5423,46 @@ window.addEventListener('DOMContentLoaded', () => {
   const adminAccessText = document.getElementById("profileAdminAccessText");
 
   async function refreshAdminAccess(user){
-    if(!adminAccessBox) return false;
-    if(sessionStorage.getItem("de_login_role") !== "admin"){
-      hideAllAdminEntryPoints();
-      return false;
-    }
+    hideAllAdminEntryPoints();
+    if(sessionStorage.getItem("de_login_role") !== "admin" || !user?.email) return false;
 
-    // Always start hidden. The button is revealed only after an exact
-    // lower-case email match in Admin Firebase's public adminAccess registry.
-    adminAccessBox.hidden = true;
-    if(adminAccessBtn){
-      adminAccessBtn.disabled = true;
-      adminAccessBtn.style.display = 'none';
-    }
-
-    const email = String(user?.email || '').trim().toLowerCase();
+    const email = String(user.email).trim().toLowerCase();
     if(!email) return false;
 
     try{
+      // The Admin Access registry lives in project diplomaengineers-869df.
+      // Key format: encodeURIComponent(lowercase email).
       const key = encodeURIComponent(email);
       const accessSnap = await get(ref(newsDb, `adminAccess/${key}`));
-      const access = accessSnap.exists() ? (accessSnap.val() || {}) : null;
-      const registeredEmail = String(access?.email || '').trim().toLowerCase();
-
-      // EMAIL ONLY: name, App UID and Admin UID are deliberately ignored.
-      const verified = !!access && registeredEmail === email && access.enabled !== false;
-      if(verified){
-        adminAccessBox.hidden = false;
-        if(adminAccessBtn){
-          adminAccessBtn.disabled = false;
-          adminAccessBtn.style.display = 'inline-flex';
-          adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
-        }
-        if(adminAccessText) adminAccessText.textContent = 'Admin email verified • ' + user.email;
-        if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = 'flex';
-        if(topAdminSwitch) topAdminSwitch.style.display = 'inline-flex';
-        console.log('[Admin Access] VERIFIED BY EXACT EMAIL:', email);
-        return true;
+      if(!accessSnap.exists()){
+        console.info('[Admin Access] No registry record for', email);
+        return false;
       }
 
-      console.log('[Admin Access] HIDDEN — no enabled adminAccess record for:', email);
-      return false;
+      const access = accessSnap.val() || {};
+      const registeredEmail = String(access.email || '').trim().toLowerCase();
+      // Fail closed: record must match exact email and be explicitly enabled.
+      const verified = registeredEmail === email && access.enabled === true;
+      if(!verified){
+        console.info('[Admin Access] Registry record inactive or mismatched for', email);
+        return false;
+      }
+
+      if(adminAccessBox) adminAccessBox.hidden = false;
+      if(adminAccessBtn){
+        adminAccessBtn.disabled = false;
+        adminAccessBtn.style.display = 'inline-flex';
+        adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
+      }
+      if(adminAccessText) adminAccessText.textContent = 'Admin verified • ' + user.email;
+      if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = 'flex';
+      if(topAdminSwitch) topAdminSwitch.style.display = 'inline-flex';
+      console.log('[Admin Access] VERIFIED:', email);
+      return true;
     }catch(err){
       console.error('[Admin Access] Registry read failed:', err?.code || err?.message || err);
       if(adminAccessText) adminAccessText.textContent = 'Admin access could not be verified.';
+      hideAllAdminEntryPoints();
       return false;
     }
   }

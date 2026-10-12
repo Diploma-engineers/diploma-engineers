@@ -7437,7 +7437,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
  function closeModal(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';}
  $('deUploadCancel').addEventListener('click',closeModal);overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('open'))closeModal()});
  function putInModal(el){if(!el)return;body.appendChild(el);}
- function setupSection(id,kind,formEl,heading,icon){const sec=$(id);if(!sec)return;let h=sec.querySelector('.de-folder-head');if(!h){h=document.createElement('div');h.className='de-folder-head';h.innerHTML=`<div><h2><i class="fa-solid ${icon}"></i> ${heading}</h2><p>All uploads · Tap a title to open or edit</p></div><span class="de-folder-count" id="deCount-${kind}">Loading…</span>`;sec.insertBefore(h,sec.firstChild)}let list=sec.querySelector('.de-folder-list');if(!list){list=document.createElement('div');list.className='de-folder-list';list.id='deList-'+kind;h.after(list)}let search=sec.querySelector('.de-manager-search');if(!search){search=document.createElement('input');search.className='de-manager-search';search.placeholder='Search '+heading.toLowerCase()+'…';search.setAttribute('aria-label','Search '+heading);list.before(search);search.addEventListener('input',()=>render(kind))}let fab=sec.querySelector('.de-fab');if(!fab){fab=document.createElement('button');fab.className='de-fab';fab.type='button';fab.innerHTML='<i class="fa-solid fa-plus" aria-hidden="true"></i>';fab.setAttribute('aria-label','Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1)));fab.title='Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1));fab.dataset.deKind=kind;fab.addEventListener('click',()=>{openModal(kind);if(kind==='test'){const first=$('tsFolderName');if(first)first.focus()}else if(kind==='news')$('newsTitle')?.focus();else if(kind==='blog')$('blogTitle')?.focus();else $('bookAdminTitle')?.focus()});sec.appendChild(fab)}
+ function setupSection(id,kind,formEl,heading,icon){const sec=$(id);if(!sec)return;let h=sec.querySelector('.de-folder-head');if(!h){h=document.createElement('div');h.className='de-folder-head';h.innerHTML=`<div><h2><i class="fa-solid ${icon}"></i> ${heading}</h2><p>All uploads · Tap a title to open or edit</p></div><span class="de-folder-count" id="deCount-${kind}">Loading…</span>`;sec.insertBefore(h,sec.firstChild)}let list=sec.querySelector('.de-folder-list');if(!list){list=document.createElement('div');list.className='de-folder-list';list.id='deList-'+kind;h.after(list)}let search=sec.querySelector('.de-manager-search');if(!search){search=document.createElement('input');search.className='de-manager-search';search.placeholder='Search '+heading.toLowerCase()+'…';search.setAttribute('aria-label','Search '+heading);list.before(search);search.addEventListener('input',()=>render(kind))}let fab=sec.querySelector('.de-fab');if(!fab){fab=document.createElement('button');fab.className='de-fab';fab.type='button';fab.innerHTML='<i class="fa-solid '+({news:'fa-newspaper',blog:'fa-pen-nib',book:'fa-book-open',test:'fa-clipboard-question'}[kind]||'fa-file-circle-plus')+'" aria-hidden="true"></i>';fab.setAttribute('aria-label','Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1)));fab.title='Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1));fab.dataset.deKind=kind;fab.addEventListener('click',()=>{openModal(kind);if(kind==='test'){const first=$('tsFolderName');if(first)first.focus()}else if(kind==='news')$('newsTitle')?.focus();else if(kind==='blog')$('blogTitle')?.focus();else $('bookAdminTitle')?.focus()});sec.appendChild(fab)}
  if(formEl){formEl.classList.add('de-modal-form');putInModal(formEl)}
  }
  // Move existing forms into a shared modal without rebuilding them, preserving Firebase handlers and IDs.
@@ -8908,5 +8908,88 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
  // Cancel always closes without submitting or altering the Firebase record.
  const cancel=$('deUploadCancel');if(cancel)cancel.addEventListener('click',()=>{body.querySelectorAll('.de-current-form').forEach(el=>el.classList.remove('de-current-form'));},{capture:true});
  tagForms();
+})();
+</script>
+
+<style id="de-app-like-final-polish">
+/* Per-section circular action button, floating just above bottom navigation. */
+.de-fab{position:fixed!important;right:20px!important;bottom:calc(88px + env(safe-area-inset-bottom, 0px))!important;width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;padding:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important;font-size:0!important;line-height:1!important;z-index:7000!important;box-shadow:0 8px 24px rgba(37,99,235,.34)!important}
+.de-fab i{font-size:24px!important;line-height:1!important;margin:0!important}
+.admin-mode-section:not(.active) .de-fab{display:none!important}
+@media(max-width:600px){.de-fab{right:16px!important;bottom:calc(82px + env(safe-area-inset-bottom, 0px))!important;width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important}.de-fab i{font-size:22px!important}}
+</style>
+<script id="de-section-icon-and-form-guard">
+(function(){
+ const iconByKind={news:'fa-newspaper',blog:'fa-pen-nib',book:'fa-book-open',test:'fa-clipboard-question'};
+ function refreshSectionButtons(){
+   document.querySelectorAll('.de-fab[data-de-kind]').forEach(function(button){
+     const kind=button.dataset.deKind;
+     const icon=iconByKind[kind]||'fa-file-lines';
+     button.innerHTML='<i class="fa-solid '+icon+'" aria-hidden="true"></i>';
+     const label=kind==='test'?'Test Series':kind==='book'?'Book':kind.charAt(0).toUpperCase()+kind.slice(1);
+     button.setAttribute('aria-label','Create '+label);
+     button.title='Create '+label;
+   });
+ }
+ refreshSectionButtons();
+ const observer=new MutationObserver(refreshSectionButtons);
+ observer.observe(document.body,{childList:true,subtree:true});
+ // Keep the shared upload modal section-specific; create/edit controls never show another section's form.
+ document.addEventListener('click',function(event){
+   const fab=event.target.closest('.de-fab[data-de-kind]');
+   if(!fab)return;
+   const kind=fab.dataset.deKind;
+   const body=document.getElementById('deUploadBody');
+   if(!body)return;
+   setTimeout(function(){
+     const wanted=[...body.children].find(function(el){return el.dataset.deFormKind===kind || (kind==='test' && el.id==='deTestFormWrap');});
+     [...body.children].forEach(function(el){el.classList.toggle('de-current-form',el===wanted);});
+     if(!wanted)console.warn('Upload form missing for section:',kind);
+   },0);
+ },true);
+})();
+</script>
+
+
+<style id="de-equal-bottom-nav-and-flaticon-add">
+/* Equal-width bottom navigation items, matching the uploaded reference */
+.mobile-bottom-nav#mobileBottomNav{
+  display:flex!important;justify-content:space-between!important;align-items:stretch!important;
+  gap:0!important;padding:7px 0 5px!important;box-sizing:border-box!important;
+  width:100%!important;left:0!important;right:0!important;
+}
+.mobile-bottom-nav#mobileBottomNav>button{
+  flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;
+  margin:0!important;padding:4px 0!important;display:flex!important;
+  flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  gap:3px!important;box-sizing:border-box!important;
+}
+.mobile-bottom-nav#mobileBottomNav .nav-icon{margin:0!important}
+@media(min-width:721px){
+ .mobile-bottom-nav#mobileBottomNav{display:flex!important}
+}
+.de-fab{
+  width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;
+  padding:0!important;border-radius:50%!important;display:flex!important;
+  align-items:center!important;justify-content:center!important;gap:0!important;
+  right:22px!important;bottom:calc(86px + env(safe-area-inset-bottom, 0px))!important;
+}
+.de-fab img.de-flaticon-add{display:block!important;width:27px!important;height:27px!important;object-fit:contain!important;filter:brightness(0) invert(1)!important}
+.de-fab i{display:none!important}
+@media(max-width:600px){.de-fab{right:16px!important;bottom:calc(82px + env(safe-area-inset-bottom, 0px))!important;width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important}}
+</style>
+<script id="de-use-flaticon-add-icon">
+(function(){
+  function setAddIcon(){
+    document.querySelectorAll('.de-fab[data-de-kind]').forEach(function(button){
+      if(button.querySelector('img.de-flaticon-add')) return;
+      button.innerHTML='<img class="de-flaticon-add" src="https://cdn-icons-png.flaticon.com/512/992/992482.png" alt="" aria-hidden="true">';
+      button.setAttribute('aria-label','Create new item');
+      button.setAttribute('title','Create new item');
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setAddIcon);
+  else setAddIcon();
+  new MutationObserver(setAddIcon).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>

@@ -4291,7 +4291,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   /* LOADER TIMEOUT & ANIMATION */
@@ -4372,6 +4372,7 @@ const firebaseConfig = {
   const provider = new GoogleAuthProvider();
 
   const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
+  const newsAuth = getAuth(newsApp);
   const newsDb = getDatabase(newsApp);
 
   let isRegister = false;
@@ -4862,11 +4863,21 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
-        // App authentication is the only login step. Admin access is then
-        // verified separately by EXACT EMAIL against the Admin Firebase
-        // public access registry. Password/name are NOT compared.
+        // Sign in to the student app as usual, then independently verify the
+        // same credentials against the Admin Firebase project. Failure on the
+        // Admin project must NOT block normal student-app login.
         await signInWithEmailAndPassword(auth, email, password);
-        setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
+        try {
+          const adminUser = newsAuth.currentUser;
+          if (!adminUser || String(adminUser.email || '').toLowerCase() !== email.toLowerCase()) {
+            if (adminUser) await signOut(newsAuth);
+            await signInWithEmailAndPassword(newsAuth, email, password);
+          }
+        } catch (adminLoginError) {
+          console.info('[Admin Access] No Admin-project session for this account:', adminLoginError?.code || adminLoginError?.message || adminLoginError);
+          try { await signOut(newsAuth); } catch (_) {}
+        }
+        if (auth.currentUser) await refreshAdminAccess(auth.currentUser);
       }
     } catch (e) {
       const code = String(e?.code || "");
@@ -4889,6 +4900,18 @@ window.addEventListener('DOMContentLoaded', () => {
   window.googleLogin = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
+      try {
+        const googleCredential = GoogleAuthProvider.credentialFromResult(result);
+        if (googleCredential) {
+          if (newsAuth.currentUser && String(newsAuth.currentUser.email || '').toLowerCase() !== String(result.user.email || '').toLowerCase()) {
+            await signOut(newsAuth);
+          }
+          if (!newsAuth.currentUser) await signInWithCredential(newsAuth, googleCredential);
+        }
+      } catch (adminLoginError) {
+        console.info('[Admin Access] Google account could not be verified in Admin project:', adminLoginError?.code || adminLoginError?.message || adminLoginError);
+        try { await signOut(newsAuth); } catch (_) {}
+      }
       const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
       if (!snapshot.exists()) {
         await set(ref(db, "users/" + result.user.uid), {
@@ -4912,7 +4935,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if(adminMenuSection) adminMenuSection.style.display = "none";
     const box = document.getElementById("profileAdminAccess");
     if(box) box.hidden = true;
-    signOut(auth);
+    await signOut(auth);
+    try { await signOut(newsAuth); } catch (_) {}
   };
 
   let userProfileListener = null;
@@ -5328,10 +5352,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /* =========================================================
      TOP APP -> ADMIN SWITCH
-     The switch is hidden by default and is enabled only when the
-     currently logged-in App email also has an Admin Firebase profile.
-     App Firebase: diploma-app-9a378
-     Admin Firebase: diplomaengineers-869df
+     UID-based registry check, aligned with adminAccess/{uid} rules.
+     Admin access is granted only when UID, normalized email and
+     status="active" all match. Any error keeps the switch hidden.
   ========================================================= */
   const topAdminSwitch = document.getElementById("topAdminSwitch");
 
@@ -5339,21 +5362,22 @@ window.addEventListener('DOMContentLoaded', () => {
     const adminMenuSection = document.getElementById("adminMenuSection");
     if(topAdminSwitch) topAdminSwitch.style.display = "none";
     if(adminMenuSection) adminMenuSection.style.display = "none";
-    if(!user?.email){ return false; }
+    const adminUser = newsAuth.currentUser;
+    if(!user?.uid || !user?.email || !adminUser?.uid || !adminUser?.email) return false;
+    if(String(adminUser.email).trim().toLowerCase() !== String(user.email).trim().toLowerCase()) return false;
 
-    const email = String(user.email).trim().toLowerCase();
-    const emailKey = encodeURIComponent(email);
+    const uid = String(adminUser.uid).trim();
+    const email = String(adminUser.email).trim().toLowerCase();
 
     try{
-      // Admin eligibility is checked ONLY against the adminAccess registry
-      // in diplomaengineers-869df. Student registration remains on diploma-app-9a378.
-      // A matching enabled record must be added in the Admin project by an authorized admin.
-      const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
+      const accessSnap = await get(ref(newsDb, `adminAccess/${uid}`));
       if(!accessSnap.exists()) return false;
 
       const access = accessSnap.val() || {};
+      const accessUid = String(access.uid || "").trim();
       const accessEmail = String(access.email || "").trim().toLowerCase();
-      if(accessEmail !== email || access.enabled === false) return false;
+      const verified = accessUid === uid && accessEmail === email && access.status === "active";
+      if(!verified) return false;
 
       if(topAdminSwitch) topAdminSwitch.style.display = "inline-flex";
       if(adminMenuSection) adminMenuSection.style.display = "block";
@@ -5362,8 +5386,6 @@ window.addEventListener('DOMContentLoaded', () => {
       console.warn("Admin Firebase verification failed; Admin Panel remains hidden:", err);
       return false;
     }
-
-    return false;
   }
 
   if(topAdminSwitch){
@@ -5380,9 +5402,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /* =========================================================
      APP -> ADMIN SWITCH
-     The app keeps the existing Firebase login. Because Admin uses
-     a separate Firebase project, the Admin page performs the final
-     same-email/admin-account verification.
+     Requires an active adminAccess/{uid} record with matching UID/email.
+     Fail closed: hide the Admin button unless every check succeeds.
   ========================================================= */
   const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
   const adminAccessBox = document.getElementById("profileAdminAccess");
@@ -5392,45 +5413,56 @@ window.addEventListener('DOMContentLoaded', () => {
   async function refreshAdminAccess(user){
     if(!adminAccessBox) return false;
 
-    // Always start hidden. The button is revealed only after an exact
-    // lower-case email match in Admin Firebase's public adminAccess registry.
     adminAccessBox.hidden = true;
     if(adminAccessBtn){
       adminAccessBtn.disabled = true;
-      adminAccessBtn.style.display = 'none';
+      adminAccessBtn.style.display = "none";
     }
 
-    const email = String(user?.email || '').trim().toLowerCase();
-    if(!email) return false;
+    const adminUser = newsAuth.currentUser;
+    const appEmail = String(user?.email || "").trim().toLowerCase();
+    const uid = String(adminUser?.uid || "").trim();
+    const email = String(adminUser?.email || "").trim().toLowerCase();
+    if(!uid || !email || !appEmail || email !== appEmail) return false;
 
     try{
-      const key = encodeURIComponent(email);
-      const accessSnap = await get(ref(newsDb, `adminAccess/${key}`));
+      const accessSnap = await get(ref(newsDb, `adminAccess/${uid}`));
       const access = accessSnap.exists() ? (accessSnap.val() || {}) : null;
-      const registeredEmail = String(access?.email || '').trim().toLowerCase();
+      const registeredUid = String(access?.uid || "").trim();
+      const registeredEmail = String(access?.email || "").trim().toLowerCase();
+      const verified = !!access && registeredUid === uid && registeredEmail === email && access.status === "active";
 
-      // EMAIL ONLY: name, App UID and Admin UID are deliberately ignored.
-      const verified = !!access && registeredEmail === email && access.enabled !== false;
       if(verified){
         adminAccessBox.hidden = false;
         if(adminAccessBtn){
           adminAccessBtn.disabled = false;
-          adminAccessBtn.style.display = 'inline-flex';
+          adminAccessBtn.style.display = "inline-flex";
           adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
         }
-        if(adminAccessText) adminAccessText.textContent = 'Admin email verified • ' + user.email;
-        console.log('[Admin Access] VERIFIED BY EXACT EMAIL:', email);
+        if(adminAccessText) adminAccessText.textContent = "Admin access verified • " + user.email;
+        console.log("[Admin Access] VERIFIED: active UID and email match");
         return true;
       }
 
-      console.log('[Admin Access] HIDDEN — no enabled adminAccess record for:', email);
+      console.log("[Admin Access] HIDDEN — missing, inactive, or mismatched adminAccess record");
       return false;
     }catch(err){
-      console.error('[Admin Access] Registry read failed:', err?.code || err?.message || err);
-      if(adminAccessText) adminAccessText.textContent = 'Admin access could not be verified.';
+      console.error("[Admin Access] Registry read failed:", err?.code || err?.message || err);
+      if(adminAccessText) adminAccessText.textContent = "Admin access could not be verified.";
       return false;
     }
   }
+
+  // Firebase restores each project's session independently. Re-check when the
+  // Admin-project session becomes available so refresh/reopen does not leave
+  // authorized buttons hidden just because the app session restored first.
+  onAuthStateChanged(newsAuth, () => {
+    const appUser = auth.currentUser;
+    if (appUser) {
+      checkDualProjectRegistration(appUser);
+      refreshAdminAccess(appUser);
+    }
+  });
 
   if(adminAccessBtn){
     adminAccessBtn.addEventListener("click", ()=>{

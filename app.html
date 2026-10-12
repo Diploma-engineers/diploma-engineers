@@ -2747,8 +2747,10 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="drawer-item" onclick="drawerNavigate('communityPage')"><i class="fas fa-users"></i><span>Community</span></button>
       <div class="drawer-section-title">Settings</div>
       <div class="drawer-theme-row"><div class="drawer-theme-info"><i class="fas fa-circle-half-stroke"></i><span>Light / Dark Mode</span></div><button class="theme-switch" id="drawerThemeSwitch" type="button" onclick="toggleAppTheme()" aria-label="Toggle theme"></button></div>
-      <div class="drawer-section-title">Admin</div>
-      <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
+      <div id="adminMenuSection" style="display:none">
+        <div class="drawer-section-title">Admin</div>
+        <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
+      </div>
     </div>
   </aside>
   <div class="navbar">
@@ -4359,7 +4361,7 @@ const firebaseConfig = {
     authDomain: "diplomaengineers-869df.firebaseapp.com",
     databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
     projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.appspot.com",
+    storageBucket: "diplomaengineers-869df.firebasestorage.app",
     messagingSenderId: "356779436080",
     appId: "1:356779436080:web:4b28da380e547420d0e5f5"
   };
@@ -4906,6 +4908,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (usageTimerInterval) clearInterval(usageTimerInterval);
     const switchBtn = document.getElementById("topAdminSwitch");
     if(switchBtn) switchBtn.style.display = "none";
+    const adminMenuSection = document.getElementById("adminMenuSection");
+    if(adminMenuSection) adminMenuSection.style.display = "none";
     const box = document.getElementById("profileAdminAccess");
     if(box) box.hidden = true;
     signOut(auth);
@@ -5332,45 +5336,31 @@ window.addEventListener('DOMContentLoaded', () => {
   const topAdminSwitch = document.getElementById("topAdminSwitch");
 
   async function checkDualProjectRegistration(user){
-    if(!topAdminSwitch){ return false; }
-    topAdminSwitch.style.display = "none";
+    const adminMenuSection = document.getElementById("adminMenuSection");
+    if(topAdminSwitch) topAdminSwitch.style.display = "none";
+    if(adminMenuSection) adminMenuSection.style.display = "none";
     if(!user?.email){ return false; }
 
     const email = String(user.email).trim().toLowerCase();
     const emailKey = encodeURIComponent(email);
 
     try{
-      // PRIMARY CHECK: Admin Firebase publishes a tiny adminAccess record
-      // specifically so the main App can verify an admin without reading the
-      // protected adminProfiles collection.
+      // Admin eligibility is checked ONLY against the adminAccess registry
+      // in diplomaengineers-869df. Student registration remains on diploma-app-9a378.
+      // A matching enabled record must be added in the Admin project by an authorized admin.
       const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
-      if(accessSnap.exists()){
-        const access = accessSnap.val() || {};
-        const accessEmail = String(access.email || "").trim().toLowerCase();
-        if(accessEmail === email && access.enabled !== false){
-          topAdminSwitch.style.display = "inline-flex";
-          return true;
-        }
-      }
-    }catch(err){
-      console.warn("Admin access-record check failed; trying adminProfiles:", err);
-    }
+      if(!accessSnap.exists()) return false;
 
-    try{
-      // FALLBACK: exact email match in Admin Firebase adminProfiles.
-      const snap = await get(ref(newsDb, "adminProfiles"));
-      if(snap.exists()){
-        const profiles = orderContentAdminProfiles(snap.val() || {});
-        for(const profile of Object.values(profiles)){
-          const profileEmail = String(profile?.email || "").trim().toLowerCase();
-          if(profileEmail === email){
-            topAdminSwitch.style.display = "inline-flex";
-            return true;
-          }
-        }
-      }
+      const access = accessSnap.val() || {};
+      const accessEmail = String(access.email || "").trim().toLowerCase();
+      if(accessEmail !== email || access.enabled === false) return false;
+
+      if(topAdminSwitch) topAdminSwitch.style.display = "inline-flex";
+      if(adminMenuSection) adminMenuSection.style.display = "block";
+      return true;
     }catch(err){
-      console.warn("Admin profile check failed:", err);
+      console.warn("Admin Firebase verification failed; Admin Panel remains hidden:", err);
+      return false;
     }
 
     return false;

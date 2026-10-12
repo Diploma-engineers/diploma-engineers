@@ -189,6 +189,11 @@ body {
       color: var(--muted-text);
       margin: 0;
     }
+/* Student/Admin login selector */
+.auth-role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;margin:0 0 14px}
+.auth-role-tab{min-height:44px;border:0;border-radius:12px;background:transparent;color:#64748b;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .18s,color .18s,box-shadow .18s}
+.auth-role-tab.active{background:#2563eb;color:#fff;box-shadow:0 3px 9px rgba(37,99,235,.2)}
+.auth-role-hint{text-align:center;color:#64748b;font-size:12px;margin:-3px 0 12px}
 /* AUTH PAGE */
 #authPage {
   min-height: 100vh;
@@ -2693,6 +2698,11 @@ html,body{max-width:100%;overflow-x:hidden}
 <div id="authPage" style="display:none;">
   <div class="auth-box">
     <div class="logo">Diploma <span>Engineers</span></div>
+    <div class="auth-role-tabs" role="tablist" aria-label="Choose login type">
+      <button type="button" class="auth-role-tab active" id="studentLoginTab" onclick="setAuthRole('student')"><i class="fas fa-user-graduate"></i> Student Login</button>
+      <button type="button" class="auth-role-tab" id="adminLoginTab" onclick="setAuthRole('admin')"><i class="fas fa-user-shield"></i> Admin Login</button>
+    </div>
+    <div id="authRoleHint" class="auth-role-hint">Login to continue learning</div>
     <h2 id="formTitle">Login</h2>
     
     <div id="registerFields" style="display:none;">
@@ -2722,7 +2732,7 @@ html,body{max-width:100%;overflow-x:hidden}
       <input type="password" id="password" placeholder="Password">
     </div>
     
-    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login</button>
+    <button class="btn-main" onclick="submitAuthForm()" id="submitBtnText">Login as Student</button>
     
     <button class="btn-google" onclick="googleLogin()">
       <i class="fab fa-google" style="color: #ea4335;"></i> Continue with Google
@@ -2747,10 +2757,8 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="drawer-item" onclick="drawerNavigate('communityPage')"><i class="fas fa-users"></i><span>Community</span></button>
       <div class="drawer-section-title">Settings</div>
       <div class="drawer-theme-row"><div class="drawer-theme-info"><i class="fas fa-circle-half-stroke"></i><span>Light / Dark Mode</span></div><button class="theme-switch" id="drawerThemeSwitch" type="button" onclick="toggleAppTheme()" aria-label="Toggle theme"></button></div>
-      <div id="adminMenuSection" style="display:none">
-        <div class="drawer-section-title">Admin</div>
-        <button class="drawer-item admin-item" type="button" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
-      </div>
+      <div class="drawer-section-title">Admin</div>
+      <button class="drawer-item admin-item" id="drawerAdminPanelBtn" type="button" style="display:none" onclick="openAdminFromDrawer()"><i class="fas fa-gauge-high"></i><span>Go to Admin Panel</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:12px"></i></button>
     </div>
   </aside>
   <div class="navbar">
@@ -4291,7 +4299,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <!-- FIREBASE & CORE APPLICATION SCRIPT -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, set, get, update, child, onValue, runTransaction, push, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   /* LOADER TIMEOUT & ANIMATION */
@@ -4361,7 +4369,7 @@ const firebaseConfig = {
     authDomain: "diplomaengineers-869df.firebaseapp.com",
     databaseURL: "https://diplomaengineers-869df-default-rtdb.firebaseio.com",
     projectId: "diplomaengineers-869df",
-    storageBucket: "diplomaengineers-869df.firebasestorage.app",
+    storageBucket: "diplomaengineers-869df.appspot.com",
     messagingSenderId: "356779436080",
     appId: "1:356779436080:web:4b28da380e547420d0e5f5"
   };
@@ -4372,7 +4380,6 @@ const firebaseConfig = {
   const provider = new GoogleAuthProvider();
 
   const newsApp = initializeApp(newsFirebaseConfig, "newsApp");
-  const newsAuth = getAuth(newsApp);
   const newsDb = getDatabase(newsApp);
 
   let isRegister = false;
@@ -4836,6 +4843,26 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("switchText").innerText = isRegister ? "Already Have Account? Login" : "New User? Register Here";
   };
 
+  let selectedAuthRole = "student";
+  window.setAuthRole = function(role) {
+    selectedAuthRole = role === "admin" ? "admin" : "student";
+    const studentTab = document.getElementById("studentLoginTab");
+    const adminTab = document.getElementById("adminLoginTab");
+    if(studentTab) studentTab.classList.toggle("active", selectedAuthRole === "student");
+    if(adminTab) adminTab.classList.toggle("active", selectedAuthRole === "admin");
+    const hint = document.getElementById("authRoleHint");
+    if(hint) hint.textContent = selectedAuthRole === "admin"
+      ? "Authorized administrators only"
+      : "Login to continue learning";
+    const submit = document.getElementById("submitBtnText");
+    if(submit && !isRegister) submit.textContent = selectedAuthRole === "admin" ? "Login as Admin" : "Login as Student";
+    const google = document.querySelector("#authPage .btn-google");
+    if(google) google.style.display = selectedAuthRole === "admin" ? "none" : "flex";
+    const switchText = document.getElementById("switchText");
+    if(switchText) switchText.style.display = selectedAuthRole === "admin" ? "none" : "block";
+    if(selectedAuthRole === "admin" && isRegister) window.toggleForm();
+  };
+
   window.submitAuthForm = async function() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
@@ -4863,10 +4890,23 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
-        // Student App login. Admin eligibility is checked against the
-        // read-only email registry in the Admin project's Realtime Database.
-        await signInWithEmailAndPassword(auth, email, password);
-        if (auth.currentUser) await refreshAdminAccess(auth.currentUser);
+        // Store the selected login mode for this browser session. Admin UI is
+        // hidden unless the user explicitly completes Admin Login and verifies.
+        if (selectedAuthRole === "admin") sessionStorage.setItem("de_login_role", "admin");
+        else sessionStorage.setItem("de_login_role", "student");
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        if (selectedAuthRole === "admin") {
+          const allowed = await refreshAdminAccess(credential.user);
+          if (!allowed) {
+            sessionStorage.removeItem("de_login_role");
+            await signOut(auth);
+            showAuthNotice("This account is not authorized for Admin Panel. Ask the site administrator to add this email to the Admin Access registry.", "error", "Admin access denied");
+            return;
+          }
+          showAuthNotice("Admin verified. Your Admin Panel button is now available in your profile/menu.", "success", "Admin login successful");
+        } else {
+          hideAllAdminEntryPoints();
+        }
       }
     } catch (e) {
       const code = String(e?.code || "");
@@ -4889,8 +4929,6 @@ window.addEventListener('DOMContentLoaded', () => {
   window.googleLogin = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
-      // Admin button visibility is checked from the email registry below;
-      // no second Firebase Authentication session is required.
       const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
       if (!snapshot.exists()) {
         await set(ref(db, "users/" + result.user.uid), {
@@ -4907,15 +4945,14 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.logoutFirebase = async function() {
+    sessionStorage.removeItem("de_login_role");
+    hideAllAdminEntryPoints();
     if (usageTimerInterval) clearInterval(usageTimerInterval);
     const switchBtn = document.getElementById("topAdminSwitch");
     if(switchBtn) switchBtn.style.display = "none";
-    const adminMenuSection = document.getElementById("adminMenuSection");
-    if(adminMenuSection) adminMenuSection.style.display = "none";
     const box = document.getElementById("profileAdminAccess");
     if(box) box.hidden = true;
-    await signOut(auth);
-    try { await signOut(newsAuth); } catch (_) {}
+    signOut(auth);
   };
 
   let userProfileListener = null;
@@ -4968,7 +5005,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "block";
-        await refreshAdminAccess(user);
+        if (sessionStorage.getItem("de_login_role") === "admin") {
+          await refreshAdminAccess(user);
+          await checkDualProjectRegistration(user);
+        } else {
+          hideAllAdminEntryPoints();
+        }
 
         const targetPage = defaultPage;
         if (externalBranches.includes(targetPage)) loadPortalFromFile(targetPage);
@@ -5330,87 +5372,142 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   /* =========================================================
-     APP -> ADMIN SWITCH
-     Email registry in diplomaengineers-869df.
-     A logged-in App user is authorized only if the exact normalized
-     email has an active record at adminAccessByEmail/{emailKey}.
-     This does NOT query Firebase Authentication's private user list.
+     TOP APP -> ADMIN SWITCH
+     The switch is hidden by default and is enabled only when the
+     currently logged-in App email also has an Admin Firebase profile.
+     App Firebase: diploma-app-9a378
+     Admin Firebase: diplomaengineers-869df
   ========================================================= */
   const topAdminSwitch = document.getElementById("topAdminSwitch");
-  const adminMenuSection = document.getElementById("adminMenuSection");
-  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
-  const adminAccessBox = document.getElementById("profileAdminAccess");
-  const adminAccessBtn = document.getElementById("openAdminPanelBtn");
-  const adminAccessText = document.getElementById("profileAdminAccessText");
+  const drawerAdminPanelBtn = document.getElementById("drawerAdminPanelBtn");
 
-  function adminEmailKey(email){
-    return String(email || "").trim().toLowerCase().replace(/[.#$\/\[\]]/g, "_");
-  }
-
-  function hideAdminControls(){
+  function hideAllAdminEntryPoints(){
     if(topAdminSwitch) topAdminSwitch.style.display = "none";
-    if(adminMenuSection) adminMenuSection.style.display = "none";
-    if(adminAccessBox) adminAccessBox.hidden = true;
-    if(adminAccessBtn){ adminAccessBtn.disabled = true; adminAccessBtn.style.display = "none"; }
-  }
-
-  async function verifyAdminEmail(user){
-    hideAdminControls();
-    const email = String(user?.email || "").trim().toLowerCase();
-    if(!email) return false;
-    const key = adminEmailKey(email);
-    try{
-      // This child path is intentionally read-only in the Admin project's RTDB rules.
-      const snap = await get(ref(newsDb, `adminAccessByEmail/${key}`));
-      if(!snap.exists()){
-        console.info("[Admin Access] No email registry record for", email);
-        if(adminAccessText) adminAccessText.textContent = "No active Admin access is registered for this email.";
-        return false;
-      }
-      const record = snap.val() || {};
-      const registeredEmail = String(record.email || "").trim().toLowerCase();
-      const active = record.status === "active" && registeredEmail === email;
-      if(!active){
-        console.info("[Admin Access] Registry record inactive or email mismatch.");
-        if(adminAccessText) adminAccessText.textContent = "Admin access is inactive or could not be verified.";
-        return false;
-      }
-      if(topAdminSwitch) topAdminSwitch.style.display = "inline-flex";
-      if(adminMenuSection) adminMenuSection.style.display = "block";
-      if(adminAccessBox) adminAccessBox.hidden = false;
-      if(adminAccessBtn){
-        adminAccessBtn.disabled = false;
-        adminAccessBtn.style.display = "inline-flex";
-        adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
-      }
-      if(adminAccessText) adminAccessText.textContent = "Admin access verified • " + email;
-      console.info("[Admin Access] VERIFIED for", email);
-      return true;
-    }catch(err){
-      console.error("[Admin Access] Could not read email registry:", err?.code || err?.message || err);
-      if(adminAccessText) adminAccessText.textContent = "Admin verification failed. Check Firebase Rules and network.";
-      return false;
-    }
+    if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "none";
+    const box = document.getElementById("profileAdminAccess");
+    if(box) box.hidden = true;
+    const btn = document.getElementById("openAdminPanelBtn");
+    if(btn){ btn.style.display = "none"; btn.disabled = true; }
   }
 
   async function checkDualProjectRegistration(user){
-    return verifyAdminEmail(user);
-  }
+    if(!topAdminSwitch){ return false; }
+    topAdminSwitch.style.display = "none";
+    if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "none";
+    if(sessionStorage.getItem("de_login_role") !== "admin" || !user?.email){ return false; }
 
-  async function refreshAdminAccess(user){
-    return verifyAdminEmail(user);
+    const email = String(user.email).trim().toLowerCase();
+    const emailKey = encodeURIComponent(email);
+
+    try{
+      // PRIMARY CHECK: Admin Firebase publishes a tiny adminAccess record
+      // specifically so the main App can verify an admin without reading the
+      // protected adminProfiles collection.
+      const accessSnap = await get(ref(newsDb, `adminAccess/${emailKey}`));
+      if(accessSnap.exists()){
+        const access = accessSnap.val() || {};
+        const accessEmail = String(access.email || "").trim().toLowerCase();
+        if(accessEmail === email && access.enabled !== false){
+          topAdminSwitch.style.display = "inline-flex";
+          if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "flex";
+          return true;
+        }
+      }
+    }catch(err){
+      console.warn("Admin access-record check failed; trying adminProfiles:", err);
+    }
+
+    try{
+      // FALLBACK: exact email match in Admin Firebase adminProfiles.
+      const snap = await get(ref(newsDb, "adminProfiles"));
+      if(snap.exists()){
+        const profiles = orderContentAdminProfiles(snap.val() || {});
+        for(const profile of Object.values(profiles)){
+          const profileEmail = String(profile?.email || "").trim().toLowerCase();
+          if(profileEmail === email){
+            topAdminSwitch.style.display = "inline-flex";
+            if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = "flex";
+            return true;
+          }
+        }
+      }
+    }catch(err){
+      console.warn("Admin profile check failed:", err);
+    }
+
+    return false;
   }
 
   if(topAdminSwitch){
     topAdminSwitch.addEventListener("click", ()=>{
       const user = auth.currentUser;
-      if(!user?.email){ alert("Please login first."); return; }
-      const url = new URL(ADMIN_PANEL_URL);
+      if(!user?.email){ return; }
+      const url = new URL("admin.html", document.baseURI);
       url.searchParams.set("fromApp", "1");
       url.searchParams.set("adminEmail", user.email);
       url.searchParams.set("returnTo", window.location.href);
       window.location.assign(url.href);
     });
+  }
+
+  /* =========================================================
+     APP -> ADMIN SWITCH
+     The app keeps the existing Firebase login. Because Admin uses
+     a separate Firebase project, the Admin page performs the final
+     same-email/admin-account verification.
+  ========================================================= */
+  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
+  const adminAccessBox = document.getElementById("profileAdminAccess");
+  const adminAccessBtn = document.getElementById("openAdminPanelBtn");
+  const adminAccessText = document.getElementById("profileAdminAccessText");
+
+  async function refreshAdminAccess(user){
+    if(!adminAccessBox) return false;
+    if(sessionStorage.getItem("de_login_role") !== "admin"){
+      hideAllAdminEntryPoints();
+      return false;
+    }
+
+    // Always start hidden. The button is revealed only after an exact
+    // lower-case email match in Admin Firebase's public adminAccess registry.
+    adminAccessBox.hidden = true;
+    if(adminAccessBtn){
+      adminAccessBtn.disabled = true;
+      adminAccessBtn.style.display = 'none';
+    }
+
+    const email = String(user?.email || '').trim().toLowerCase();
+    if(!email) return false;
+
+    try{
+      const key = encodeURIComponent(email);
+      const accessSnap = await get(ref(newsDb, `adminAccess/${key}`));
+      const access = accessSnap.exists() ? (accessSnap.val() || {}) : null;
+      const registeredEmail = String(access?.email || '').trim().toLowerCase();
+
+      // EMAIL ONLY: name, App UID and Admin UID are deliberately ignored.
+      const verified = !!access && registeredEmail === email && access.enabled !== false;
+      if(verified){
+        adminAccessBox.hidden = false;
+        if(adminAccessBtn){
+          adminAccessBtn.disabled = false;
+          adminAccessBtn.style.display = 'inline-flex';
+          adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
+        }
+        if(adminAccessText) adminAccessText.textContent = 'Admin email verified • ' + user.email;
+        if(drawerAdminPanelBtn) drawerAdminPanelBtn.style.display = 'flex';
+        if(topAdminSwitch) topAdminSwitch.style.display = 'inline-flex';
+        console.log('[Admin Access] VERIFIED BY EXACT EMAIL:', email);
+        return true;
+      }
+
+      console.log('[Admin Access] HIDDEN — no enabled adminAccess record for:', email);
+      return false;
+    }catch(err){
+      console.error('[Admin Access] Registry read failed:', err?.code || err?.message || err);
+      if(adminAccessText) adminAccessText.textContent = 'Admin access could not be verified.';
+      return false;
+    }
   }
 
   if(adminAccessBtn){
@@ -5424,12 +5521,6 @@ window.addEventListener('DOMContentLoaded', () => {
       window.location.assign(url.href);
     });
   }
-
-  // Hide controls immediately on logout and verify whenever the App session changes.
-  onAuthStateChanged(auth, (user)=>{
-    if(user) verifyAdminEmail(user);
-    else hideAdminControls();
-  });
 
   function updateProfileUI(data) {
     data = data || {};
@@ -8912,7 +9003,7 @@ document.addEventListener("DOMContentLoaded",()=>{const slider=document.getEleme
 window.openAppDrawer=function(){document.getElementById('appSideDrawer')?.classList.add('open');document.getElementById('appDrawerBackdrop')?.classList.add('open');document.getElementById('appSideDrawer')?.setAttribute('aria-hidden','false');document.body.classList.add('drawer-open')};
 window.closeAppDrawer=function(){document.getElementById('appSideDrawer')?.classList.remove('open');document.getElementById('appDrawerBackdrop')?.classList.remove('open');document.getElementById('appSideDrawer')?.setAttribute('aria-hidden','true');document.body.classList.remove('drawer-open')};
 window.drawerNavigate=function(page){closeAppDrawer();if(typeof navigateTo==='function')navigateTo(page)};
-window.openAdminFromDrawer=function(){closeAppDrawer();window.location.href='admin.html'};
+window.openAdminFromDrawer=function(){ if(sessionStorage.getItem('de_login_role')!=='admin'){ alert('Please login using Admin Login first.'); hideAllAdminEntryPoints(); return; } const b=document.getElementById('drawerAdminPanelBtn'); if(!b || b.style.display==='none'){ alert('Admin access is not verified for this account.'); return; } closeAppDrawer(); const u=new URL('admin.html',document.baseURI); if(auth.currentUser?.email) u.searchParams.set('adminEmail',auth.currentUser.email); u.searchParams.set('fromApp','1'); u.searchParams.set('returnTo',window.location.href); window.location.assign(u.href); };
 window.toggleAppTheme=function(){document.body.classList.toggle('dark-mode');localStorage.setItem('de_theme',document.body.classList.contains('dark-mode')?'dark':'light')};
 (function(){if(localStorage.getItem('de_theme')==='dark')document.body.classList.add('dark-mode');})();
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppDrawer()});

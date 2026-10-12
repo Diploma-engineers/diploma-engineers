@@ -2679,6 +2679,16 @@ html,body{max-width:100%;overflow-x:hidden}
     </div>
 </div>
 
+<style>
+/* Login/Register card notifications */
+#authToastHost{position:fixed;top:18px;right:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 28px));pointer-events:none}
+.auth-toast{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;padding:15px 16px;background:#fff;border:1px solid #e5eaf2;border-left:5px solid #2563eb;border-radius:14px;box-shadow:0 12px 35px rgba(15,35,75,.18);color:#15233d;font:500 14px/1.45 Inter,Arial,sans-serif;animation:authToastIn .25s ease-out}
+.auth-toast.error{border-left-color:#dc2626}.auth-toast.success{border-left-color:#16a34a}.auth-toast .auth-toast-icon{font-size:20px;line-height:1.2;color:#2563eb}.auth-toast.error .auth-toast-icon{color:#dc2626}.auth-toast.success .auth-toast-icon{color:#16a34a}.auth-toast strong{display:block;font-size:14px;margin-bottom:3px}.auth-toast p{margin:0;color:#536179}.auth-toast button{margin-left:auto;border:0;background:transparent;color:#7b8798;font-size:19px;line-height:1;cursor:pointer;padding:0 0 0 4px}
+@keyframes authToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){#authToastHost{top:10px;right:10px;width:calc(100vw - 20px)}}
+</style>
+<div id="authToastHost" aria-live="polite" aria-atomic="false"></div>
+
 <!-- AUTH PAGE -->
 <div id="authPage" style="display:none;">
   <div class="auth-box">
@@ -4034,25 +4044,7 @@ html,body{max-width:100%;overflow-x:hidden}
       </div>
     </section>
 
-    <!-- ADMIN ACCESS: shown only when the logged-in app email is registered as an admin -->
-    <section class="profile-admin-access" id="profileAdminAccess" hidden>
-      <div class="profile-admin-title"><i class="fas fa-user-shield"></i> Admin Access</div>
-      <div class="profile-admin-card">
-        <div>
-          <strong>Admin Panel</strong>
-          <span id="profileAdminAccessText">Your account has admin access.</span>
-        </div>
-        <button type="button" class="profile-admin-btn" id="openAdminPanelBtn">
-          <i class="fas fa-gauge-high"></i> Admin Panel
-        </button>
-      </div>
-    </section>
 
-    <!-- DIRECT ADMIN.HTML BUTTON -->
-    <a class="profile-admin-direct-btn" href="admin.html" aria-label="Open Admin Panel">
-      <i class="fas fa-user-shield"></i>
-      <span>Admin Panel</span>
-    </a>
   </div>
 
   <!-- COMMUNITY PAGE -->
@@ -4813,6 +4805,26 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tab) tab.classList.add('active');
   }
 
+  window.showAuthNotice = function(message, type = "error", title = "") {
+    const host = document.getElementById("authToastHost");
+    if (!host) return;
+    const success = type === "success";
+    const heading = title || (success ? "Success" : "Please check");
+    const card = document.createElement("div");
+    card.className = `auth-toast ${type}`;
+    const icon = success ? "fa-circle-check" : (type === "info" ? "fa-circle-info" : "fa-circle-exclamation");
+    const iconWrap = document.createElement("span"); iconWrap.className = "auth-toast-icon";
+    iconWrap.innerHTML = `<i class="fas ${icon}"></i>`;
+    const body = document.createElement("div");
+    const strong = document.createElement("strong"); strong.textContent = heading;
+    const para = document.createElement("p"); para.textContent = message;
+    body.append(strong, para);
+    const close = document.createElement("button"); close.type = "button"; close.setAttribute("aria-label", "Close notification"); close.innerHTML = "&times;";
+    close.onclick = () => card.remove();
+    card.append(iconWrap, body, close); host.appendChild(card);
+    setTimeout(() => { if (card.isConnected) card.remove(); }, 5000);
+  };
+
   window.toggleForm = function() {
     isRegister = !isRegister;
     document.getElementById("formTitle").innerText = isRegister ? "Register Account" : "Login";
@@ -4826,7 +4838,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let password = document.getElementById("password").value.trim();
     
     if (!email || !password) {
-      alert("Please enter Email and Password");
+      showAuthNotice("Please enter your email address and password.", "error", "Details required");
       return;
     }
 
@@ -4837,7 +4849,7 @@ window.addEventListener('DOMContentLoaded', () => {
         let mobile = document.getElementById("mobile").value.trim();
         
         if (!name || !mobile) {
-          alert("Please fill all details");
+          showAuthNotice("Please fill in your full name and mobile number.", "error", "Details required");
           return;
         }
 
@@ -4846,6 +4858,7 @@ window.addEventListener('DOMContentLoaded', () => {
           name, email, branch, mobile, coins: 0,
           college: "", enrollment: "", address: "", semester: "", profilePic: "" 
         });
+        showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
         // App authentication is the only login step. Admin access is then
         // verified separately by EXACT EMAIL against the Admin Firebase
@@ -4854,7 +4867,20 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
       }
     } catch (e) {
-      alert("Auth Error: " + e.message);
+      const code = String(e?.code || "");
+      if (code.includes("auth/email-already-in-use")) {
+        showAuthNotice("This email is already registered. Please log in instead.", "error", "Account already exists");
+      } else if (code.includes("auth/invalid-credential") || code.includes("auth/wrong-password") || code.includes("auth/user-not-found")) {
+        showAuthNotice("Wrong email or password. Check your details and try again.", "error", "Login failed");
+      } else if (code.includes("auth/invalid-email")) {
+        showAuthNotice("Please enter a valid email address.", "error", "Invalid email");
+      } else if (code.includes("auth/weak-password")) {
+        showAuthNotice("Please use a stronger password (at least 6 characters).", "error", "Weak password");
+      } else if (code.includes("auth/network-request-failed")) {
+        showAuthNotice("Network problem. Check your internet connection and try again.", "error", "Connection problem");
+      } else {
+        showAuthNotice(e?.message || "Please try again.", "error", isRegister ? "Registration failed" : "Login failed");
+      }
     }
   };
 
@@ -4872,7 +4898,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
       }
     } catch (e) {
-      alert("Google Login Error: " + e.message);
+      showAuthNotice(e?.message || "Google sign-in failed. Please try again.", "error", "Google Login failed");
     }
   };
 

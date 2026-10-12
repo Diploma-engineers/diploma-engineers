@@ -4863,20 +4863,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
-        // Sign in to the student app as usual, then independently verify the
-        // same credentials against the Admin Firebase project. Failure on the
-        // Admin project must NOT block normal student-app login.
+        // Student App login. Admin eligibility is checked against the
+        // read-only email registry in the Admin project's Realtime Database.
         await signInWithEmailAndPassword(auth, email, password);
-        try {
-          const adminUser = newsAuth.currentUser;
-          if (!adminUser || String(adminUser.email || '').toLowerCase() !== email.toLowerCase()) {
-            if (adminUser) await signOut(newsAuth);
-            await signInWithEmailAndPassword(newsAuth, email, password);
-          }
-        } catch (adminLoginError) {
-          console.info('[Admin Access] No Admin-project session for this account:', adminLoginError?.code || adminLoginError?.message || adminLoginError);
-          try { await signOut(newsAuth); } catch (_) {}
-        }
         if (auth.currentUser) await refreshAdminAccess(auth.currentUser);
       }
     } catch (e) {
@@ -4900,18 +4889,8 @@ window.addEventListener('DOMContentLoaded', () => {
   window.googleLogin = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
-      try {
-        const googleCredential = GoogleAuthProvider.credentialFromResult(result);
-        if (googleCredential) {
-          if (newsAuth.currentUser && String(newsAuth.currentUser.email || '').toLowerCase() !== String(result.user.email || '').toLowerCase()) {
-            await signOut(newsAuth);
-          }
-          if (!newsAuth.currentUser) await signInWithCredential(newsAuth, googleCredential);
-        }
-      } catch (adminLoginError) {
-        console.info('[Admin Access] Google account could not be verified in Admin project:', adminLoginError?.code || adminLoginError?.message || adminLoginError);
-        try { await signOut(newsAuth); } catch (_) {}
-      }
+      // Admin button visibility is checked from the email registry below;
+      // no second Firebase Authentication session is required.
       const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
       if (!snapshot.exists()) {
         await set(ref(db, "users/" + result.user.uid), {
@@ -5351,118 +5330,88 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   /* =========================================================
-     TOP APP -> ADMIN SWITCH
-     UID-based registry check, aligned with adminAccess/{uid} rules.
-     Admin access is granted only when UID, normalized email and
-     status="active" all match. Any error keeps the switch hidden.
+     APP -> ADMIN SWITCH
+     Email registry in diplomaengineers-869df.
+     A logged-in App user is authorized only if the exact normalized
+     email has an active record at adminAccessByEmail/{emailKey}.
+     This does NOT query Firebase Authentication's private user list.
   ========================================================= */
   const topAdminSwitch = document.getElementById("topAdminSwitch");
+  const adminMenuSection = document.getElementById("adminMenuSection");
+  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
+  const adminAccessBox = document.getElementById("profileAdminAccess");
+  const adminAccessBtn = document.getElementById("openAdminPanelBtn");
+  const adminAccessText = document.getElementById("profileAdminAccessText");
 
-  async function checkDualProjectRegistration(user){
-    const adminMenuSection = document.getElementById("adminMenuSection");
+  function adminEmailKey(email){
+    return String(email || "").trim().toLowerCase().replace(/[.#$\/\[\]]/g, "_");
+  }
+
+  function hideAdminControls(){
     if(topAdminSwitch) topAdminSwitch.style.display = "none";
     if(adminMenuSection) adminMenuSection.style.display = "none";
-    const adminUser = newsAuth.currentUser;
-    if(!user?.uid || !user?.email || !adminUser?.uid || !adminUser?.email) return false;
-    if(String(adminUser.email).trim().toLowerCase() !== String(user.email).trim().toLowerCase()) return false;
+    if(adminAccessBox) adminAccessBox.hidden = true;
+    if(adminAccessBtn){ adminAccessBtn.disabled = true; adminAccessBtn.style.display = "none"; }
+  }
 
-    const uid = String(adminUser.uid).trim();
-    const email = String(adminUser.email).trim().toLowerCase();
-
+  async function verifyAdminEmail(user){
+    hideAdminControls();
+    const email = String(user?.email || "").trim().toLowerCase();
+    if(!email) return false;
+    const key = adminEmailKey(email);
     try{
-      const accessSnap = await get(ref(newsDb, `adminAccess/${uid}`));
-      if(!accessSnap.exists()) return false;
-
-      const access = accessSnap.val() || {};
-      const accessUid = String(access.uid || "").trim();
-      const accessEmail = String(access.email || "").trim().toLowerCase();
-      const verified = accessUid === uid && accessEmail === email && access.status === "active";
-      if(!verified) return false;
-
+      // This child path is intentionally read-only in the Admin project's RTDB rules.
+      const snap = await get(ref(newsDb, `adminAccessByEmail/${key}`));
+      if(!snap.exists()){
+        console.info("[Admin Access] No email registry record for", email);
+        if(adminAccessText) adminAccessText.textContent = "No active Admin access is registered for this email.";
+        return false;
+      }
+      const record = snap.val() || {};
+      const registeredEmail = String(record.email || "").trim().toLowerCase();
+      const active = record.status === "active" && registeredEmail === email;
+      if(!active){
+        console.info("[Admin Access] Registry record inactive or email mismatch.");
+        if(adminAccessText) adminAccessText.textContent = "Admin access is inactive or could not be verified.";
+        return false;
+      }
       if(topAdminSwitch) topAdminSwitch.style.display = "inline-flex";
       if(adminMenuSection) adminMenuSection.style.display = "block";
+      if(adminAccessBox) adminAccessBox.hidden = false;
+      if(adminAccessBtn){
+        adminAccessBtn.disabled = false;
+        adminAccessBtn.style.display = "inline-flex";
+        adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
+      }
+      if(adminAccessText) adminAccessText.textContent = "Admin access verified • " + email;
+      console.info("[Admin Access] VERIFIED for", email);
       return true;
     }catch(err){
-      console.warn("Admin Firebase verification failed; Admin Panel remains hidden:", err);
+      console.error("[Admin Access] Could not read email registry:", err?.code || err?.message || err);
+      if(adminAccessText) adminAccessText.textContent = "Admin verification failed. Check Firebase Rules and network.";
       return false;
     }
+  }
+
+  async function checkDualProjectRegistration(user){
+    return verifyAdminEmail(user);
+  }
+
+  async function refreshAdminAccess(user){
+    return verifyAdminEmail(user);
   }
 
   if(topAdminSwitch){
     topAdminSwitch.addEventListener("click", ()=>{
       const user = auth.currentUser;
-      if(!user?.email){ return; }
-      const url = new URL("admin.html", document.baseURI);
+      if(!user?.email){ alert("Please login first."); return; }
+      const url = new URL(ADMIN_PANEL_URL);
       url.searchParams.set("fromApp", "1");
       url.searchParams.set("adminEmail", user.email);
       url.searchParams.set("returnTo", window.location.href);
       window.location.assign(url.href);
     });
   }
-
-  /* =========================================================
-     APP -> ADMIN SWITCH
-     Requires an active adminAccess/{uid} record with matching UID/email.
-     Fail closed: hide the Admin button unless every check succeeds.
-  ========================================================= */
-  const ADMIN_PANEL_URL = new URL("admin.html", document.baseURI).href;
-  const adminAccessBox = document.getElementById("profileAdminAccess");
-  const adminAccessBtn = document.getElementById("openAdminPanelBtn");
-  const adminAccessText = document.getElementById("profileAdminAccessText");
-
-  async function refreshAdminAccess(user){
-    if(!adminAccessBox) return false;
-
-    adminAccessBox.hidden = true;
-    if(adminAccessBtn){
-      adminAccessBtn.disabled = true;
-      adminAccessBtn.style.display = "none";
-    }
-
-    const adminUser = newsAuth.currentUser;
-    const appEmail = String(user?.email || "").trim().toLowerCase();
-    const uid = String(adminUser?.uid || "").trim();
-    const email = String(adminUser?.email || "").trim().toLowerCase();
-    if(!uid || !email || !appEmail || email !== appEmail) return false;
-
-    try{
-      const accessSnap = await get(ref(newsDb, `adminAccess/${uid}`));
-      const access = accessSnap.exists() ? (accessSnap.val() || {}) : null;
-      const registeredUid = String(access?.uid || "").trim();
-      const registeredEmail = String(access?.email || "").trim().toLowerCase();
-      const verified = !!access && registeredUid === uid && registeredEmail === email && access.status === "active";
-
-      if(verified){
-        adminAccessBox.hidden = false;
-        if(adminAccessBtn){
-          adminAccessBtn.disabled = false;
-          adminAccessBtn.style.display = "inline-flex";
-          adminAccessBtn.innerHTML = '<i class="fas fa-gauge-high"></i> Admin Panel';
-        }
-        if(adminAccessText) adminAccessText.textContent = "Admin access verified • " + user.email;
-        console.log("[Admin Access] VERIFIED: active UID and email match");
-        return true;
-      }
-
-      console.log("[Admin Access] HIDDEN — missing, inactive, or mismatched adminAccess record");
-      return false;
-    }catch(err){
-      console.error("[Admin Access] Registry read failed:", err?.code || err?.message || err);
-      if(adminAccessText) adminAccessText.textContent = "Admin access could not be verified.";
-      return false;
-    }
-  }
-
-  // Firebase restores each project's session independently. Re-check when the
-  // Admin-project session becomes available so refresh/reopen does not leave
-  // authorized buttons hidden just because the app session restored first.
-  onAuthStateChanged(newsAuth, () => {
-    const appUser = auth.currentUser;
-    if (appUser) {
-      checkDualProjectRegistration(appUser);
-      refreshAdminAccess(appUser);
-    }
-  });
 
   if(adminAccessBtn){
     adminAccessBtn.addEventListener("click", ()=>{
@@ -5475,6 +5424,12 @@ window.addEventListener('DOMContentLoaded', () => {
       window.location.assign(url.href);
     });
   }
+
+  // Hide controls immediately on logout and verify whenever the App session changes.
+  onAuthStateChanged(auth, (user)=>{
+    if(user) verifyAdminEmail(user);
+    else hideAdminControls();
+  });
 
   function updateProfileUI(data) {
     data = data || {};

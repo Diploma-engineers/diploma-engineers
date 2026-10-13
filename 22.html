@@ -2097,25 +2097,8 @@ body.campus-hiring-open{overflow:hidden!important;}
       </div>
     </div>
 
-    <div class="home-section-head upload-heading">
-      <div><h2><i class="fa-solid fa-globe" style="color:#2563eb"></i> Latest All Uploads</h2><span id="allUploadCount">Latest 5 from News, Blogs & Books</span></div>
-      <button type="button" class="see-all-uploads" data-upload-list="all">See All <i class="fa-solid fa-arrow-right"></i></button>
-    </div>
+    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div>
     <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading uploaded content...</div></div>
-
-    <div class="home-section-head upload-heading">
-      <div><h2><i class="fa-solid fa-cloud-arrow-up" style="color:#0f9f6e"></i> Yours Uploading</h2><span id="myUploadCount">Your latest 5 uploads</span></div>
-      <button type="button" class="see-all-uploads" data-upload-list="mine">See All <i class="fa-solid fa-arrow-right"></i></button>
-    </div>
-    <div class="upload-slider" id="myHomeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading your uploads...</div></div>
-
-    <div class="upload-list-modal" id="uploadListModal" aria-hidden="true">
-      <div class="upload-list-panel" role="dialog" aria-modal="true" aria-labelledby="uploadListTitle">
-        <div class="upload-list-head"><div><h2 id="uploadListTitle">All Uploads</h2><p id="uploadListSubtitle">Browse all uploaded content</p></div><button type="button" id="uploadListClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
-        <input id="uploadListSearch" class="upload-list-search" type="search" placeholder="Search title, category or uploader...">
-        <div id="uploadListItems" class="upload-list-items"></div>
-      </div>
-    </div>
 
     <div class="home-section-head"><h2>Manage Content</h2><span>Quick access</span></div>
     <div class="home-grid manage-content-grid">
@@ -3971,7 +3954,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     if (user) {
-        // Render the authenticated shell promptly; keep the protected dashboard hidden until access checks pass.
         const registered = await isRegisteredAdmin(user);
         if(!registered){
             try { await signOut(auth); } catch (_) {}
@@ -3989,18 +3971,14 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
-        // Access checks are complete. Show the existing authenticated session immediately,
-        // and start the uploads read before slower profile/team bookkeeping finishes.
+        await ensureAdminProfileAndTeam(user);
+        await publishAdminAccessRecord(user);
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
         document.body.classList.add("admin-logged-in");
         applyCourseVisibility();
-        loadHomeUploads();
         loadAdminProfile();
-        await Promise.allSettled([
-          ensureAdminProfileAndTeam(user),
-          publishAdminAccessRecord(user)
-        ]);
+        loadHomeUploads();
         checkAndApplyAdminActivityPolicy(user,{render:true});
         startAdminActivityWatcher(user);
         getAdminIdentityInfo(user.uid,{}).then(info=>{window.__currentAdminIdentity=info;}).catch(()=>{});
@@ -4426,7 +4404,7 @@ function editBlog(id){
     if(blogEditor)blogEditor.innerHTML=item.html||item.text||"";
     document.getElementById("blogImageFile").value="";
     if(typeof window.setBlogEditMode === "function") window.setBlogEditMode(true);
-    const form=document.querySelector("#blogAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); if(window.__openCreateEditor) window.__openCreateEditor("blog","edit"); else form.scrollIntoView({behavior:"smooth",block:"start"});}
+    const form=document.querySelector("#blogAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed");form.scrollIntoView({behavior:"smooth",block:"start"});}
 }
 
 function deleteBlog(id){
@@ -4583,7 +4561,7 @@ function editNews(id){
     document.getElementById("pdfFile").value=""; document.getElementById("imageFile").value="";
     const ed=document.getElementById("newsEditor"); if(ed) ed.innerHTML=item.html||item.text||"";
     if(typeof window.setNewsEditMode === "function") window.setNewsEditMode(true);
-    const form=document.querySelector("#newsAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); if(window.__openCreateEditor) window.__openCreateEditor("news","edit"); else form.scrollIntoView({behavior:"smooth",block:"start"});}
+    const form=document.querySelector("#newsAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); form.scrollIntoView({behavior:"smooth",block:"start"});}
 }
 
 async function deleteNews(id) {
@@ -5736,31 +5714,37 @@ async function loadHomeUploads(force=false){
 }
 
 function renderHomeUploads(uploads,countEl,box,currentUid){
-  // Share the already-fetched Firebase results with the See All page.
-  window.__latestUploadCache = Array.isArray(uploads) ? uploads : [];
-  window.__latestUploadUid = currentUid || "";
-  const all = [...window.__latestUploadCache].sort((a,b)=>(Number(b.timestamp)||0)-(Number(a.timestamp)||0));
-  const mine = all.filter(x => x.ownerUid === currentUid);
-  const allBox = document.getElementById("homeUploads");
-  const myBox = document.getElementById("myHomeUploads");
-  const allCount = document.getElementById("allUploadCount");
-  const myCount = document.getElementById("myUploadCount");
-  if(countEl) countEl.textContent = all.length + " uploads";
-  if(allCount) allCount.textContent = all.length + " total uploads · latest 5 shown";
-  if(myCount) myCount.textContent = mine.length + " of your uploads · latest 5 shown";
+  if(countEl)countEl.textContent=uploads.length+" upload"+(uploads.length===1?"":"s");
 
-  const card = x => {
-    const file = x.type === "News" ? "news-reader.html" : x.type === "Blog" ? "blog-reader.html" : "book-reader.html";
-    const readUrl = file + "?id=" + encodeURIComponent(x.id) + "&key=" + encodeURIComponent(x.id) + "&type=" + encodeURIComponent(String(x.type||"").toLowerCase());
-    return `<article class="upload-card reveal">
-      <div class="upload-card-cover"><img src="${escapeHTML(x.image||DEFAULT_PROFILE_IMAGE)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div>
-      <div class="upload-card-body"><span class="upload-type"><i class="fa-solid ${escapeHTML(x.icon||"fa-file")}"></i> ${escapeHTML(x.type||"Upload")}</span>
-      <h3 title="${escapeHTML(x.title||"Untitled")}">${escapeHTML(x.title||"Untitled")}</h3>
-      <p>${escapeHTML(x.category||x.type||"")}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:""}</p>
-      <a class="upload-read-link" href="${readUrl}"><i class="fa-solid fa-book-open-reader"></i> Click & Read</a></div></article>`;
-  };
-  if(allBox) allBox.innerHTML = all.length ? all.slice(0,5).map(card).join("") : '<div class="home-empty">No uploaded content found yet.</div>';
-  if(myBox) myBox.innerHTML = mine.length ? mine.slice(0,5).map(card).join("") : '<div class="home-empty">You have no uploads yet.</div>';
+  const myUploads=uploads.filter(x=>x.ownerUid===currentUid);
+  const reminder=myUploads.length===0 ? `
+    <div class="home-upload-reminder">
+      <div class="home-upload-reminder-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="home-upload-reminder-content">
+        <strong>⚠️ Aapne abhi tak kuch upload nahi kiya hai</strong>
+        <p>News, Blog ya Book upload karo. Regular contribution rakho, warna aapki admin activity/rank par effect pad sakta hai.</p>
+        <div class="home-upload-reminder-actions">
+          <button type="button" onclick="showAdminMode('news')"><i class="fa-solid fa-newspaper"></i> Upload News</button>
+          <button type="button" onclick="showAdminMode('blog')"><i class="fa-solid fa-pen-nib"></i> Upload Blog</button>
+          <button type="button" onclick="showAdminMode('books')"><i class="fa-solid fa-book"></i> Upload Book</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  if(!uploads.length){
+    box.innerHTML=reminder || '<div class="home-empty">No uploaded content found yet.</div>';
+    return;
+  }
+
+  box.innerHTML=reminder + uploads.map(x=>`<article class="upload-card reveal">
+    <div class="upload-card-cover"><img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div>
+    <div class="upload-card-body">
+      <span class="upload-type"><i class="fa-solid ${x.icon}"></i> ${escapeHTML(x.type)}</span>
+      <h3 title="${escapeHTML(x.title)}">${escapeHTML(x.title)}</h3>
+      <p>${escapeHTML(x.category)}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:''}</p>
+      ${x.link?`<a href="${escapeHTML(x.link)}" target="_blank" rel="noopener">📂 Open <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:""}
+    </div>
+  </article>`).join('');
   initHomeReveal();
 }
 
@@ -6284,10 +6268,8 @@ C) Ampere
 D) Watt
 **Answer: A) Ohm**`;
 
-let tsEditingTestId = null;
 function tsFillForm(t){
   if(!t)return;
-  tsEditingTestId = t.id || null;
   TS("tsFolderName").value=t.folderName||"";TS("tsTestTitle").value=t.title||"";TS("tsBranch").value=t.branch||t.category||"Common";TS("tsSemester").value=t.semester||"";TS("tsSubject").value=t.subject||"";TS("tsTopic").value=t.topic||"";
   TS("tsDuration").value=t.durationMinutes??30;TS("tsMarks").value=t.marksPerQuestion??1;TS("tsNegative").value=t.negativeMark??0;TS("tsPassPercentage").value=t.passPercentage??40;TS("tsDescription").value=t.description||"";TS("tsInstructions").value=t.instructions||"";
   if(t.multiUnit&&Array.isArray(t.units)){
@@ -6305,48 +6287,42 @@ async function tsSaveTest(status){
   if(!tsGetValue("tsSubject")||!tsGetValue("tsSemester")||!tsGetValue("tsBranch")){tsToast("Category, Semester और Subject भरना जरूरी है.");return;}
   const hasUnitHeadings=tsGeneratedTests.some(g=>/^UNIT\s*[-–:]?\s*\d+/i.test(g.unitTitle||""));
   if(!hasUnitHeadings&&(!tsGetValue("tsTestTitle")||!tsGetValue("tsTopic"))){tsToast("Single unit के लिए Test Title और Unit/Topic Title भरें.");(!tsGetValue("tsTestTitle")?TS("tsTestTitle"):TS("tsTopic")).focus();return;}
-  const editorId=tsEditingTestId;
-  const existing=editorId?tsAllTests[editorId]:null;
-  if(editorId && !existing){tsToast("This test could not be found. Refresh and try again.");return;}
-  if(existing && !isMasterAdmin() && existing.createdBy!==auth.currentUser.uid){tsToast("You can edit only the Test Series uploaded by your own account.");return;}
   try{
     const saved=[];
-    for(let i=0;i<tsGeneratedTests.length;i++){
-      const g=tsGeneratedTests[i],now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
-      const data={folderName:tsGetValue("tsFolderName")||tsGetValue("tsSubject")||"General",category:selectedCategory,branch:selectedCategory,availableToAllBranches:selectedCategory==="Common",semester:tsGetValue("tsSemester"),subject:tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:existing?.createdAt||now,updatedAt:now,createdBy:existing?.createdBy||auth.currentUser.uid||"",createdByEmail:existing?.createdByEmail||auth.currentUser.email||"",updatedBy:auth.currentUser.uid||"",updatedByEmail:auth.currentUser.email||""};
-      if(editorId){data.id=editorId;data.slug=existing.slug||tsSlugify(data.title)+"-"+editorId.slice(-5);if(status==="published")data.publishedAt=existing.publishedAt||now;await update(ref(db,"testSeries/"+editorId),data);saved.push(data);break;}
+    for(const g of tsGeneratedTests){
+      const now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
+      const data={folderName:tsGetValue("tsFolderName")||tsGetValue("tsSubject")||"General",category:selectedCategory,branch:selectedCategory,availableToAllBranches:selectedCategory==="Common",semester:tsGetValue("tsSemester"),subject:tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:now,updatedAt:now,createdBy:auth.currentUser.uid||"",createdByEmail:auth.currentUser.email||""};
       const newRef=push(ref(db,"testSeries"));data.id=newRef.key;data.slug=tsSlugify(data.title)+"-"+newRef.key.slice(-5);if(status==="published")data.publishedAt=now;
       await set(newRef,data);saved.push(data);
     }
-    tsEditingTestId=null;
     TS("tsGeneratedCode").textContent=JSON.stringify({savedCount:saved.length,tests:saved},null,2);
-    tsToast(`${saved.length} test(s) ${editorId?"updated":status==="published"?"published":"draft में save"} हुए।`);await loadTestSeries(true);
+    tsToast(`${saved.length} unit test(s) ${status==="published"?"published":"draft में save"} हुए।`);await loadTestSeries(true);
   }catch(e){console.error("Test Series save error:",e);tsToast(tsDbError(e));}
 }
 async function loadTestSeries(force=false){
   if(!auth.currentUser)return;
   if(tsLoadedOnce&&!force){tsRenderList();return;}
   TS("tsTestsList").innerHTML='<div class="ts-empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading tests...</div>';
-  try{const snap=await get(ref(db,"testSeries"));tsAllTests=snap.val()||{};window.__allTestsCache=tsAllTests;tsLoadedOnce=true;tsRenderList();}
+  try{const snap=await get(ref(db,"testSeries"));tsAllTests=snap.val()||{};tsLoadedOnce=true;tsRenderList();}
   catch(e){console.error("Test Series read error:",e);TS("tsTestsList").innerHTML=`<div class="ts-empty">${tsEscape(tsDbError(e))}</div>`;}
 }
 function tsRenderList(){
   const entries=Object.entries(tsAllTests).sort((a,b)=>Number(b[1]?.createdAt||0)-Number(a[1]?.createdAt||0)),published=entries.filter(([,t])=>t.status==="published"&&t.active!==false).length;
   TS("tsTestCountInfo").innerHTML=`<b>${entries.length}</b> total · <b>${published}</b> published · <b>${entries.length-published}</b> draft`;
   if(!entries.length){TS("tsTestsList").innerHTML='<div class="ts-empty">No Test Series found.</div>';return;}
-  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>{const own=isMasterAdmin()||t.createdBy===auth.currentUser?.uid;return `<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}<br>${own?"Your upload / Founder access":"Uploaded by another admin"}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0">${own?`<button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}" title="Edit"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}" title="Publish / hide"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}" title="Delete"><i class="fa-solid fa-trash"></i></button>`:`<span class="ts-hint">Read only</span>`}</div></td></tr>`}).join("")}</tbody></table></div>`;
+  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>`<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0"><button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function tsOpenConfirm(title,msg,action){TS("tsModalTitle").textContent=title;TS("tsModalText").textContent=msg;window.__tsConfirmAction=action;TS("tsConfirmModal").classList.add("show");}
 function tsCloseConfirm(){window.__tsConfirmAction=null;TS("tsConfirmModal").classList.remove("show");}
 async function tsTogglePublish(id){
-  const t=tsAllTests[id];if(!t)return;if(!isMasterAdmin()&&t.createdBy!==auth.currentUser?.uid){tsToast("You can update only tests uploaded by your own account.");return;}const publishing=t.status!=="published";
+  const t=tsAllTests[id];if(!t)return;const publishing=t.status!=="published";
   tsOpenConfirm(publishing?"Publish Test?":"Unpublish Test?",publishing?"This test will become visible to students.":"This test will be hidden from students.",async()=>{
     try{await update(ref(db,"testSeries/"+id),{status:publishing?"published":"draft",active:publishing,updatedAt:Date.now(),...(publishing?{publishedAt:Date.now()}: {})});tsToast(publishing?"Test published.":"Test unpublished.");await loadTestSeries(true);}
     catch(e){tsToast(tsDbError(e));}
   });
 }
 async function tsDeleteTest(id){
-  const t=tsAllTests[id];if(!t)return;if(!isMasterAdmin()&&t.createdBy!==auth.currentUser?.uid){tsToast("You can delete only tests uploaded by your own account.");return;}
+  const t=tsAllTests[id];if(!t)return;
   tsOpenConfirm("Delete Test?",`"${t.title||"Untitled"}" permanently delete हो जाएगा. यह action वापस नहीं किया जा सकता।`,async()=>{
     try{await remove(ref(db,"testSeries/"+id));tsToast("Test deleted.");await loadTestSeries(true);}catch(e){tsToast(tsDbError(e));}
   });
@@ -6356,8 +6332,8 @@ function tsResetForm(){
   if(TS("tsBranch"))TS("tsBranch").value="Common";if(TS("tsSemester"))TS("tsSemester").value="";
   TS("tsDuration").value=30;TS("tsMarks").value=1;TS("tsNegative").value=0;TS("tsPassPercentage").value=40;tsGeneratedTest=null;tsGeneratedTests=[];TS("tsStats").classList.add("hidden");TS("tsPreview").innerHTML='<div class="ts-empty"><i class="fa-regular fa-rectangle-list"></i><p>Questions will appear here after Auto Create.</p></div>';TS("tsGeneratedCode").textContent="No test generated yet.";
 }
-TS("tsSampleBtn")?.addEventListener("click",()=>{tsEditingTestId=null;TS("tsMcqInput").value=TS_SAMPLE;if(!tsGetValue("tsTestTitle"))TS("tsTestTitle").value="Physics MCQ – 10 Questions";if(!tsGetValue("tsFolderName"))TS("tsFolderName").value="Physics";if(!tsGetValue("tsSubject"))TS("tsSubject").value="Physics";if(!tsGetValue("tsTopic"))TS("tsTopic").value="Basic Physics";tsParseAndPreview();});
-TS("tsParseBtn")?.addEventListener("click",tsParseAndPreview);TS("tsClearBtn")?.addEventListener("click",()=>{tsEditingTestId=null;tsResetForm();});TS("tsDraftBtn")?.addEventListener("click",()=>tsSaveTest("draft"));TS("tsPublishBtn")?.addEventListener("click",()=>tsSaveTest("published"));TS("tsRefreshBtn")?.addEventListener("click",()=>loadTestSeries(true));TS("tsRefreshTop")?.addEventListener("click",()=>loadTestSeries(true));
+TS("tsSampleBtn")?.addEventListener("click",()=>{TS("tsMcqInput").value=TS_SAMPLE;if(!tsGetValue("tsTestTitle"))TS("tsTestTitle").value="Physics MCQ – 10 Questions";if(!tsGetValue("tsFolderName"))TS("tsFolderName").value="Physics";if(!tsGetValue("tsSubject"))TS("tsSubject").value="Physics";if(!tsGetValue("tsTopic"))TS("tsTopic").value="Basic Physics";tsParseAndPreview();});
+TS("tsParseBtn")?.addEventListener("click",tsParseAndPreview);TS("tsClearBtn")?.addEventListener("click",tsResetForm);TS("tsDraftBtn")?.addEventListener("click",()=>tsSaveTest("draft"));TS("tsPublishBtn")?.addEventListener("click",()=>tsSaveTest("published"));TS("tsRefreshBtn")?.addEventListener("click",()=>loadTestSeries(true));TS("tsRefreshTop")?.addEventListener("click",()=>loadTestSeries(true));
 TS("tsCopyCodeBtn")?.addEventListener("click",async()=>{const text=TS("tsGeneratedCode").textContent;if(!text||text==="No test generated yet.")return tsToast("Generate a test first.");try{await navigator.clipboard.writeText(text);tsToast("Test data copied.");}catch(e){tsToast("Copy failed.");}});
 TS("tsDownloadCodeBtn")?.addEventListener("click",()=>{const text=TS("tsGeneratedCode").textContent;if(!text||text==="No test generated yet.")return tsToast("Generate a test first.");const blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=(tsSlugify(tsGetValue("tsTestTitle"))||"test-series")+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);});
 TS("tsLoadJsonBtn")?.addEventListener("click",()=>TS("tsJsonFileInput").click());TS("tsJsonFileInput")?.addEventListener("change",async e=>{const file=e.target.files?.[0];if(!file)return;try{tsFillForm(JSON.parse(await file.text()));tsToast("JSON test loaded successfully.");}catch(err){console.error(err);tsToast("Invalid JSON file.");}finally{e.target.value="";}});
@@ -6377,19 +6353,19 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   function allowed(){return typeof isCourseAllowed==="function"&&isCourseAllowed()&&!!courseAuth.currentUser;}
   function uploadFile(file,kind){return new Promise((resolve,reject)=>{if(!file)return resolve("");const data=new FormData();data.append("file",file);data.append("upload_preset",UPLOAD_PRESET);const endpoint=`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${kind==="image"?"image":"auto"}/upload`;fetch(endpoint,{method:"POST",body:data}).then(async r=>{const d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||"Upload failed. Check Cloudinary upload preset.");resolve(d.secure_url);}).catch(reject);});}
   function addItem(data={}){const idx=items.length;items.push({id:data.id||("item_"+Date.now()+"_"+idx),folderName:data.folderName||"",subject:data.subject||"",title:data.title||"",description:data.description||"",semester:data.semester||$("courseSemester").value||"All",type:data.type||"video",videoUrl:data.videoUrl||data.url||"",pdfCategory:data.pdfCategory||"notes",fileUrl:data.fileUrl||data.pdfUrl||"",fileName:data.fileName||""});renderItems();}
-  function renderItems(){const box=$("courseItemsEditor");if(!box)return;if(!items.length){box.innerHTML='<div class="course-catalog-empty">No content items added yet. Click “Add Upload Item” to add a video or PDF.</div>';return;}box.innerHTML=items.map((it,i)=>`<div class="course-item-card" data-item-index="${i}"><div class="course-item-top"><b>Upload Item ${i+1}</b><button type="button" class="course-item-remove" data-remove-item="${i}"><i class="fa-solid fa-trash"></i> Remove</button></div><label class="item-label">Item Type<select data-field="type"><option value="video" ${it.type==="video"?"selected":""}>Video Link</option><option value="pdf" ${it.type==="pdf"?"selected":""}>PDF / File Upload</option></select></label><label class="item-label">Folder Name / Module<input data-field="folderName" value="${escapeHTML(it.folderName)}" placeholder="e.g. Unit 1 / Chapter 1"></label><label class="item-label">Subject<input data-field="subject" value="${escapeHTML(it.subject)}" placeholder="Subject name"></label><label class="item-label">Item Title *<input data-field="title" value="${escapeHTML(it.title)}" placeholder="Lecture / Notes title"></label><label class="item-label">Semester<select data-field="semester"><option ${it.semester==="All"?"selected":""}>All</option>${[1,2,3,4,5,6].map(n=>`<option ${it.semester===n+"th Semester"?"selected":""}>${n+"th Semester"}</option>`).join("")}</select></label>${it.type==="video"?`<label class="item-label item-wide">Video Link (YouTube etc.)<input data-field="videoUrl" value="${escapeHTML(it.videoUrl)}" placeholder="https://..."></label>`:`<label class="item-label">PDF Category<select data-field="pdfCategory">${[["notes","Notes"],["imp_questions","Important Questions"],["pyq","Previous Year Questions"],["assignment","Assignment"],["syllabus","Syllabus"],["other","Other"]].map(([v,t])=>`<option value="${v}" ${it.pdfCategory===v?"selected":""}>${t}</option>`).join("")}</select></label><label class="item-label">Upload PDF<input type="file" data-file-field="pdf" accept="application/pdf,.pdf"><small>${it.fileName?"Current file: "+escapeHTML(it.fileName):it.fileUrl?"Existing PDF uploaded":"Choose a PDF file"}</small></label>`}<label class="item-label item-wide">Item Description<textarea data-field="description" rows="2" placeholder="Short description">${escapeHTML(it.description)}</textarea></label></div>`).join("");}
+  function renderItems(){const box=$("courseItemsEditor");if(!box)return;if(!items.length){box.innerHTML='<div class="course-catalog-empty">No content items added yet. Click “Add Upload Item” to add a video or PDF.</div>';return;}box.innerHTML=items.map((it,i)=>`<div class="course-item-card" data-item-index="${i}"><div class="course-item-top"><b>Upload Item ${i+1}</b><button type="button" class="course-item-remove" data-remove-item="${i}"><i class="fa-solid fa-trash"></i> Remove</button></div><label class="item-label">Item Type<select data-field="type"><option value="video" ${it.type==="video"?"selected":""}>Video Link</option><option value="pdf" ${it.type==="pdf"?"selected":""}>PDF / File Upload</option></select></label><label class="item-label">Folder Name / Module<input data-field="folderName" value="${esc(it.folderName)}" placeholder="e.g. Unit 1 / Chapter 1"></label><label class="item-label">Subject<input data-field="subject" value="${esc(it.subject)}" placeholder="Subject name"></label><label class="item-label">Item Title *<input data-field="title" value="${esc(it.title)}" placeholder="Lecture / Notes title"></label><label class="item-label">Semester<select data-field="semester"><option ${it.semester==="All"?"selected":""}>All</option>${[1,2,3,4,5,6].map(n=>`<option ${it.semester===n+"th Semester"?"selected":""}>${n+"th Semester"}</option>`).join("")}</select></label>${it.type==="video"?`<label class="item-label item-wide">Video Link (YouTube etc.)<input data-field="videoUrl" value="${esc(it.videoUrl)}" placeholder="https://..."></label>`:`<label class="item-label">PDF Category<select data-field="pdfCategory">${[["notes","Notes"],["imp_questions","Important Questions"],["pyq","Previous Year Questions"],["assignment","Assignment"],["syllabus","Syllabus"],["other","Other"]].map(([v,t])=>`<option value="${v}" ${it.pdfCategory===v?"selected":""}>${t}</option>`).join("")}</select></label><label class="item-label">Upload PDF<input type="file" data-file-field="pdf" accept="application/pdf,.pdf"><small>${it.fileName?"Current file: "+esc(it.fileName):it.fileUrl?"Existing PDF uploaded":"Choose a PDF file"}</small></label>`}<label class="item-label item-wide">Item Description<textarea data-field="description" rows="2" placeholder="Short description">${esc(it.description)}</textarea></label></div>`).join("");}
   function readItemsFromUI(){document.querySelectorAll("#courseItemsEditor .course-item-card").forEach(card=>{const i=Number(card.dataset.itemIndex);if(!items[i])return;card.querySelectorAll("[data-field]").forEach(el=>items[i][el.dataset.field]=el.value.trim());});}
   async function saveCourse(status){if(!allowed()){notice("Only the authorized Course Admin account can create or approve courses.","err");return;}const title=$("courseTitle").value.trim(),description=$("courseDescription").value.trim();if(!title||!description||!$("courseCategory").value){notice("Course title, category and description are required.","err");return;}readItemsFromUI();for(const [i,it] of items.entries()){if(!it.title){notice(`Upload Item ${i+1}: item title is required.`,"err");return;}if(it.type==="video"&&!it.videoUrl){notice(`Upload Item ${i+1}: add a video link.`,"err");return;}if(it.type==="pdf"&&!it.fileUrl&&!document.querySelector(`#courseItemsEditor [data-item-index="${i}"] input[type=file]`)?.files?.[0]){notice(`Upload Item ${i+1}: upload a PDF file.`,"err");return;}}const saveBtn=$("courseSaveBtn");saveBtn.disabled=true;try{notice("Uploading selected images/PDFs…");const newBanner=$("courseBannerFile").files[0];if(newBanner)bannerUrl=await uploadFile(newBanner,"image");for(let i=0;i<items.length;i++){const file=document.querySelector(`#courseItemsEditor [data-item-index="${i}"] input[type=file]`)?.files?.[0];if(file){if(file.type&&file.type!=="application/pdf")throw new Error("Only PDF files are accepted for PDF items.");items[i].fileUrl=await uploadFile(file,"raw");items[i].fileName=file.name;}}const oldId=$("courseEditId").value;const id=oldId||push(root()).key;const old=catalog[id]||{};const record={id,title,description,category:$("courseCategory").value,branch:$("courseCategory").value,semester:$("courseSemester").value,price:Number($("coursePrice").value)||0,thumbnail:bannerUrl,items:items.map((it,i)=>({...it,order:i+1})),status:status==="approved"?(old.status==="approved"?"approved":"pending"):status,approved:status==="approved"||old.status==="approved",createdAt:old.createdAt||Date.now(),updatedAt:Date.now(),createdBy:old.createdBy||courseAuth.currentUser.uid,updatedBy:courseAuth.currentUser.uid};if(status==="approved"){record.status="approved";record.approved=true;record.approvedAt=Date.now();}await set(ref(courseDb,"courseCatalog/"+id),record);notice(status==="draft"?"Course draft saved successfully.":"Course saved and sent for approval. Use Approvals to publish it to students.","ok");resetForm(false);activateTab("manage");}catch(e){console.error(e);notice("Save failed: "+(e.message||"Firebase/Cloudinary error"),"err");}finally{saveBtn.disabled=false;}}
   function resetForm(clearNotice=true){$("courseCreateForm")?.reset();$("courseEditId").value="";bannerUrl="";items=[];renderItems();const preview=$("courseBannerPreview");preview.hidden=true;preview.removeAttribute("src");editing=false;$("courseSaveBtn").innerHTML='<i class="fa-solid fa-cloud-arrow-up"></i> Save Course for Approval';if(clearNotice)notice("Form reset. Add course details and content items.");}
   function editCourse(id){const c=catalog[id];if(!c)return;resetForm(false);$("courseEditId").value=id;$("courseTitle").value=c.title||"";$("courseDescription").value=c.description||"";$("courseCategory").value=c.category||c.branch||"Common";$("courseSemester").value=c.semester||"All";$("coursePrice").value=c.price??0;bannerUrl=c.thumbnail||c.bannerUrl||"";if(bannerUrl){$("courseBannerPreview").src=bannerUrl;$("courseBannerPreview").hidden=false;}items=Array.isArray(c.items)?c.items.map(x=>({...x})):[];renderItems();$("courseSaveBtn").innerHTML='<i class="fa-solid fa-floppy-disk"></i> Update Course';activateTab("create");window.scrollTo({top:$("courseBuilder").offsetTop-80,behavior:"smooth"});notice("Editing course. Changes will be saved to the existing course ID.");}
-  function card(id,c,approval=false){const status=c.status|| (c.approved?"approved":"pending");return `<article class="course-catalog-card">${c.thumbnail||c.bannerUrl?`<img src="${escapeHTML(c.thumbnail||c.bannerUrl)}" alt="Course banner" loading="lazy">`:""}<div class="course-catalog-body"><span class="course-status ${status==="approved"?"approved":status==="rejected"?"rejected":"pending"}">${escapeHTML(status.toUpperCase())}</span><h3>${escapeHTML(c.title||"Untitled Course")}</h3><p>${escapeHTML(c.description||"")}</p><div class="course-catalog-meta"><span>${escapeHTML(c.category||c.branch||"Common")}</span><span>${escapeHTML(c.semester||"All Semesters")}</span><span>${Array.isArray(c.items)?c.items.length:0} items</span><span>₹${Number(c.price)||0}</span></div><div class="course-card-actions"><button data-course-open="${escapeHTML(id)}" class="course-open-btn"><i class="fa-solid fa-folder-open"></i> Open Course</button><button data-course-edit="${escapeHTML(id)}" style="background:#dbeafe;color:#1d4ed8"><i class="fa-solid fa-pen"></i> Edit</button>${status!=="approved"?`<button data-course-approve="${escapeHTML(id)}" style="background:#dcfce7;color:#166534"><i class="fa-solid fa-check"></i> Approve</button>`:""}${status!=="rejected"?`<button data-course-reject="${escapeHTML(id)}" style="background:#fee2e2;color:#991b1b">Reject</button>`:""}<button data-course-delete="${escapeHTML(id)}" style="background:#f1f5f9;color:#475569">Delete</button></div></div></article>`;}
+  function card(id,c,approval=false){const status=c.status|| (c.approved?"approved":"pending");return `<article class="course-catalog-card">${c.thumbnail||c.bannerUrl?`<img src="${esc(c.thumbnail||c.bannerUrl)}" alt="Course banner" loading="lazy">`:""}<div class="course-catalog-body"><span class="course-status ${status==="approved"?"approved":status==="rejected"?"rejected":"pending"}">${esc(status.toUpperCase())}</span><h3>${esc(c.title||"Untitled Course")}</h3><p>${esc(c.description||"")}</p><div class="course-catalog-meta"><span>${esc(c.category||c.branch||"Common")}</span><span>${esc(c.semester||"All Semesters")}</span><span>${Array.isArray(c.items)?c.items.length:0} items</span><span>₹${Number(c.price)||0}</span></div><div class="course-card-actions"><button data-course-open="${esc(id)}" class="course-open-btn"><i class="fa-solid fa-folder-open"></i> Open Course</button><button data-course-edit="${esc(id)}" style="background:#dbeafe;color:#1d4ed8"><i class="fa-solid fa-pen"></i> Edit</button>${status!=="approved"?`<button data-course-approve="${esc(id)}" style="background:#dcfce7;color:#166534"><i class="fa-solid fa-check"></i> Approve</button>`:""}${status!=="rejected"?`<button data-course-reject="${esc(id)}" style="background:#fee2e2;color:#991b1b">Reject</button>`:""}<button data-course-delete="${esc(id)}" style="background:#f1f5f9;color:#475569">Delete</button></div></div></article>`;}
   function renderCatalog(){const q=($("courseCatalogSearch")?.value||"").toLowerCase();const entries=Object.entries(catalog).filter(([id,c])=>[c.title,c.category,c.branch,c.description].join(" ").toLowerCase().includes(q));$("courseCatalogCount").textContent=String(Object.keys(catalog).length);$("courseCatalogList").innerHTML=entries.length?entries.map(([id,c])=>card(id,c)).join(""):'<div class="course-catalog-empty">No courses found. Create your first course.</div>';const pending=Object.entries(catalog).filter(([id,c])=>(c.status|| (c.approved?"approved":"pending"))!=="approved");$("courseApprovalList").innerHTML=pending.length?pending.map(([id,c])=>card(id,c,true)).join(""):'<div class="course-catalog-empty">No pending courses. All course approvals are up to date.</div>'; }
   function activateTab(name){document.querySelectorAll(".course-builder-tab").forEach(b=>b.classList.toggle("active",b.dataset.courseTab===name));document.querySelectorAll(".course-builder-panel").forEach(p=>p.classList.toggle("active",p.id==={create:"courseCreatePanel",manage:"courseManagePanel",approvals:"courseApprovalsPanel"}[name]));}
   function listen(){if(!allowed())return;if(listener)return;listener=onValue(root(),snap=>{catalog=snap.val()||{};renderCatalog();},err=>notice("Course catalog Firebase error: "+err.message,"err"));}
   let detailCourseId=null;
   function detailNotice(message,type=""){const el=$("courseDetailNotice");if(!el)return;el.textContent=message;el.className="course-detail-notice show "+type;}
   function openCourseDetail(id){const c=catalog[id];if(!c)return;detailCourseId=id;$("courseBuilder").style.display="none";$("courseDetailPage").classList.add("open");$("courseDetailName").textContent=c.title||"Course Content";$("courseDetailMeta").textContent=[c.category||c.branch||"Common",c.semester||"All Semesters",(c.status|| (c.approved?"approved":"pending")).toUpperCase()].join(" • ");$("detailFolderName").value="";$("detailContentTitle").value="";$("detailContentUrl").value="";renderCourseDetail();window.scrollTo({top:0,behavior:"smooth"});}
-  function renderCourseDetail(){const c=catalog[detailCourseId];if(!c)return;const all=Array.isArray(c.items)?c.items:[];$("courseDetailCount").textContent=all.length+" resources";const folders={};all.forEach((it,i)=>{const name=(it.folderName||"General").trim()||"General";(folders[name]||(folders[name]=[])).push({...it,_index:i});});const names=Object.keys(folders);$("courseDetailFolders").innerHTML=names.length?names.map(name=>`<section class="course-folder"><div class="course-folder-head"><span><i class="fa-solid fa-folder"></i> ${escapeHTML(name)}</span><span>${folders[name].length} item${folders[name].length===1?"":"s"}</span></div><div class="course-folder-items">${folders[name].map(it=>{const video=it.type==="video";const url=video?(it.videoUrl||it.url||""):(it.fileUrl||it.pdfUrl||it.url||"");return `<div class="course-resource-row"><div><div class="course-resource-name"><i class="fa-solid ${video?"fa-circle-play":"fa-file-pdf"}" style="color:${video?"#2563eb":"#dc2626"};margin-right:6px"></i>${escapeHTML(it.title||it.fileName||(video?"Untitled Video":"Untitled PDF"))}</div><div class="course-resource-type">${video?"VIDEO":"PDF / DOCUMENT"}${it.subject?" • "+escapeHTML(it.subject):""}</div></div><div class="course-resource-actions">${url?`<a class="course-resource-open" href="${escapeHTML(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>`:""}<button type="button" class="course-resource-delete" data-detail-delete="${it._index}"><i class="fa-solid fa-trash"></i> Remove</button></div></div>`}).join("")}</div></section>`).join(""):'<div class="course-detail-empty"><i class="fa-regular fa-folder-open" style="font-size:26px;display:block;margin-bottom:8px"></i>No folders or content yet. Use the form above to add your first video or PDF.</div>'; }
+  function renderCourseDetail(){const c=catalog[detailCourseId];if(!c)return;const all=Array.isArray(c.items)?c.items:[];$("courseDetailCount").textContent=all.length+" resources";const folders={};all.forEach((it,i)=>{const name=(it.folderName||"General").trim()||"General";(folders[name]||(folders[name]=[])).push({...it,_index:i});});const names=Object.keys(folders);$("courseDetailFolders").innerHTML=names.length?names.map(name=>`<section class="course-folder"><div class="course-folder-head"><span><i class="fa-solid fa-folder"></i> ${esc(name)}</span><span>${folders[name].length} item${folders[name].length===1?"":"s"}</span></div><div class="course-folder-items">${folders[name].map(it=>{const video=it.type==="video";const url=video?(it.videoUrl||it.url||""):(it.fileUrl||it.pdfUrl||it.url||"");return `<div class="course-resource-row"><div><div class="course-resource-name"><i class="fa-solid ${video?"fa-circle-play":"fa-file-pdf"}" style="color:${video?"#2563eb":"#dc2626"};margin-right:6px"></i>${esc(it.title||it.fileName||(video?"Untitled Video":"Untitled PDF"))}</div><div class="course-resource-type">${video?"VIDEO":"PDF / DOCUMENT"}${it.subject?" • "+esc(it.subject):""}</div></div><div class="course-resource-actions">${url?`<a class="course-resource-open" href="${esc(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>`:""}<button type="button" class="course-resource-delete" data-detail-delete="${it._index}"><i class="fa-solid fa-trash"></i> Remove</button></div></div>`}).join("")}</div></section>`).join(""):'<div class="course-detail-empty"><i class="fa-regular fa-folder-open" style="font-size:26px;display:block;margin-bottom:8px"></i>No folders or content yet. Use the form above to add your first video or PDF.</div>'; }
   async function addCourseDetailItem(){if(!allowed()){detailNotice("Only the authorized Course Admin account can update course content.","err");return;}const folder=$("detailFolderName").value.trim(),type=$("detailContentType").value,title=$("detailContentTitle").value.trim(),url=$("detailContentUrl").value.trim();if(!detailCourseId||!folder||!title||!url){detailNotice("Please enter folder name, title and link.","err");return;}try{const btn=$("courseDetailAddBtn");btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving…';const c=catalog[detailCourseId]||{};const all=Array.isArray(c.items)?[...c.items]:[];all.push({id:"item_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),folderName:folder,type,title,semester:c.semester||"All",description:"",...(type==="video"?{videoUrl:url}:{fileUrl:url,pdfUrl:url,pdfCategory:"notes"}),order:all.length+1,createdAt:Date.now(),createdBy:courseAuth.currentUser.uid});await update(ref(courseDb,"courseCatalog/"+detailCourseId),{items:all,updatedAt:Date.now(),updatedBy:courseAuth.currentUser.uid});catalog[detailCourseId]={...c,items:all,updatedAt:Date.now()};$("detailContentTitle").value="";$("detailContentUrl").value="";detailNotice("Saved successfully. You can add more items to this or another folder.","");renderCourseDetail();renderCatalog();}catch(err){console.error(err);detailNotice("Could not save content: "+(err.message||"Firebase error"),"err");}finally{const btn=$("courseDetailAddBtn");btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-plus"></i> Add to Course';}}
   $("courseDetailAddBtn")?.addEventListener("click",addCourseDetailItem);
   $("courseDetailBack")?.addEventListener("click",()=>{$("courseDetailPage").classList.remove("open");$("courseBuilder").style.display="";detailCourseId=null;window.scrollTo({top:0,behavior:"smooth"});});
@@ -6776,7 +6752,6 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
     modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
     window.scrollTo(0,0);
   }
-  window.__openCreateEditor = function(type, mode){ openCreate(type); if(mode==='edit'){ if(title) title.innerHTML='<i class="fa-solid fa-pen-to-square"></i> Edit '+({news:'News',blog:'Blog',books:'Book'}[type]||'Content'); if(sub) sub.textContent='Update the selected item and save your changes.'; } };
   function closeCreate(){
     if(moved && placeholder && placeholder.parentNode){
       placeholder.parentNode.insertBefore(moved,placeholder);
@@ -7323,375 +7298,69 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
 
 
 
-<style id="LATEST_UPLOADS_READER_PATCH">
-#homeAdminSection #homeUploads,#homeAdminSection #myHomeUploads{display:flex!important;flex-wrap:nowrap!important;grid-template-columns:none!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x mandatory!important;-webkit-overflow-scrolling:touch!important;}
-#homeAdminSection #homeUploads>.upload-card,#homeAdminSection #myHomeUploads>.upload-card{flex:0 0 245px!important;min-width:245px!important;max-width:245px!important;scroll-snap-align:start!important;}
-
-.upload-heading{align-items:center!important;margin-top:24px!important}
-.upload-heading>div{min-width:0}.upload-heading h2{font-size:18px;margin:0 0 4px}.upload-heading span{font-size:11px;color:#64748b}
-.see-all-uploads{flex:none;border:1px solid #dbeafe;background:#eff6ff;color:#2563eb;border-radius:11px;padding:9px 12px;font:800 11px Poppins,Arial,sans-serif;cursor:pointer}
-.see-all-uploads:hover{background:#dbeafe}
-#homeUploads .upload-card,#myHomeUploads .upload-card{min-width:245px;max-width:245px}
-.upload-card .upload-read-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 10px;border-radius:9px;background:#2563eb;color:#fff!important;text-decoration:none;font-size:10px;font-weight:800}
-.upload-list-modal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.58);padding:18px;align-items:center;justify-content:center}
-.upload-list-modal.open{display:flex}.upload-list-panel{width:min(850px,100%);max-height:90vh;overflow:auto;background:#f8fafc;border-radius:22px;padding:18px;box-shadow:0 25px 80px rgba(15,23,42,.28)}
-.upload-list-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.upload-list-head h2{font-size:20px;margin:0;color:#0f172a}.upload-list-head p{font-size:11px;color:#64748b;margin:4px 0 0}
-#uploadListClose{width:38px;height:38px;border:0;border-radius:12px;background:#e2e8f0;color:#334155;font-size:18px;cursor:pointer}
-.upload-list-search{width:100%;padding:12px 14px;border:1px solid #dbe2ea;border-radius:12px;margin-bottom:12px;background:#fff;font:13px Poppins,Arial,sans-serif}
-.upload-list-items{display:grid;gap:10px}.upload-list-row{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:13px;align-items:center;background:#fff;border:1px solid #e5eaf1;border-radius:15px;padding:10px}
-.upload-list-row img{width:88px;height:70px;object-fit:cover;border-radius:10px;background:#f1f5f9}.upload-list-row h3{font-size:13px;margin:0 0 4px;color:#0f172a}.upload-list-row p{font-size:10px;color:#64748b;margin:0;line-height:1.5}
-.upload-list-row a{display:inline-flex;white-space:nowrap;text-decoration:none;background:#eff6ff;color:#2563eb;padding:8px 10px;border-radius:9px;font-size:10px;font-weight:800}
-@media(max-width:560px){.upload-heading h2{font-size:15px}.see-all-uploads{padding:8px 9px;font-size:10px}.upload-list-modal{padding:8px}.upload-list-panel{padding:12px;border-radius:17px}.upload-list-row{grid-template-columns:62px minmax(0,1fr);gap:9px}.upload-list-row img{width:62px;height:62px}.upload-list-row a{grid-column:2;justify-self:start}.upload-list-row h3{font-size:12px}}
+<!-- ADMIN INNER-PAGE / CREATE FLOW PATCH: keeps the existing bottom navigation unchanged -->
+<style id="DE_FULL_PAGE_CREATE_FLOW">
+/* Keep the original bottom navigation design/position; only improve create/edit workspaces. */
+#mobileBottomNav{z-index:10050!important}
+.de-full-workspace{position:fixed!important;inset:42px 0 0!important;z-index:10040!important;background:#f7f9fc!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;padding:0 0 18px!important;animation:deWorkspaceIn .18s ease-out!important}
+.de-full-workspace .de-workspace-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid #e5eaf2;box-shadow:0 3px 12px #0f172a0a}
+.de-full-workspace .de-back-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 13px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#1e293b;font-weight:800;cursor:pointer}
+.de-full-workspace .de-workspace-brand{font-weight:850;color:#14233b;font-size:15px}
+.de-full-workspace .de-workspace-content{max-width:1000px;margin:0 auto;padding:14px}
+.de-full-workspace input,.de-full-workspace select,.de-full-workspace textarea{max-width:100%;box-sizing:border-box}
+@keyframes deWorkspaceIn{from{transform:translateX(14px);opacity:.75}to{transform:translateX(0);opacity:1}}
+@media(max-width:600px){.de-full-workspace{inset:42px 0 0!important}.de-full-workspace .de-workspace-head{padding:10px 12px}.de-full-workspace .de-workspace-content{padding:10px}}
+/* Existing modal forms become full-page workspaces rather than small cards. */
+.de-upload-overlay.open,.de-upload-overlay[style*="display: flex"],.de-upload-overlay[style*="display:flex"],.modal-overlay.open,.modal-backdrop.open{z-index:10030!important}
+.de-upload-overlay .de-upload-dialog{width:min(100%,1000px)!important;max-width:1000px!important;max-height:calc(100dvh - 54px)!important;border-radius:18px!important;overflow:auto!important}
+@media(max-width:600px){.de-upload-overlay .de-upload-dialog{width:100%!important;max-width:none!important;max-height:calc(100dvh - 48px)!important;border-radius:0 0 16px 16px!important}}
 </style>
-<style id="UPLOADS_SEE_ALL_FULLSCREEN">
-/* See All opens a full-screen page-style view */
-.upload-list-modal{padding:0!important;align-items:stretch!important;justify-content:stretch!important;background:#f1f5f9!important}
-.upload-list-panel{width:100%!important;height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;border-radius:0!important;padding:0!important;display:flex!important;flex-direction:column!important;box-shadow:none!important}
-.upload-list-head{flex:none!important;position:sticky!important;top:0!important;z-index:2!important;padding:18px clamp(16px,4vw,44px)!important;margin:0!important;background:#fff!important;border-bottom:1px solid #e2e8f0!important}
-.upload-list-head h2{font-size:clamp(20px,3vw,28px)!important}
-#uploadListClose{width:42px!important;height:42px!important;flex:none!important}
-.upload-list-search{flex:none!important;width:calc(100% - clamp(32px,8vw,88px))!important;max-width:900px!important;margin:16px auto!important;display:block!important}
-.upload-list-items{width:calc(100% - clamp(32px,8vw,88px))!important;max-width:1100px!important;margin:0 auto!important;padding:0 0 28px!important;overflow-y:auto!important;flex:1!important;align-content:start!important;grid-auto-rows:max-content!important}
-.upload-list-row{grid-template-columns:100px minmax(0,1fr) auto!important;padding:14px!important}
-.upload-list-row img{width:100px!important;height:78px!important}
-@media(max-width:560px){.upload-list-head{padding:14px 16px!important}.upload-list-search{width:calc(100% - 32px)!important;margin:12px auto!important}.upload-list-items{width:calc(100% - 24px)!important;padding-bottom:20px!important}.upload-list-row{grid-template-columns:66px minmax(0,1fr)!important;padding:10px!important}.upload-list-row img{width:66px!important;height:66px!important}.upload-list-row a{grid-column:2!important}}
-</style>
-<script id="LATEST_UPLOADS_READER_PATCH_JS">
-(function(){
-  const $=id=>document.getElementById(id);
-  const esc=value=>String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
-  const modal=$('uploadListModal'), items=$('uploadListItems'), search=$('uploadListSearch');
-  let listMode='all';
-  function readerUrl(x){
-    const file=x.type==='News'?'news-reader.html':x.type==='Blog'?'blog-reader.html':'book-reader.html';
-    return file+'?id='+encodeURIComponent(x.id)+'&key='+encodeURIComponent(x.id)+'&type='+encodeURIComponent(x.type.toLowerCase());
-  }
-  function cardMarkup(x){
-    const image=x.image||'';
-    return `<article class="upload-card">
-      <div class="upload-card-cover"><img src="${esc(image)}" alt="" loading="lazy" onerror="this.style.display='none'"></div>
-      <div class="upload-card-body"><span class="upload-type"><i class="fa-solid ${esc(x.icon||'fa-file')}"></i> ${esc(x.type)}</span>
-      <h3 title="${esc(x.title)}">${esc(x.title)}</h3>
-      <p>${esc(x.category||x.type)}${x.ownerName?' • '+esc(x.ownerName):''}</p>
-      <a class="upload-read-link" href="${readerUrl(x)}"><i class="fa-solid fa-book-open-reader"></i> Click & Read</a></div></article>`;
-  }
-  function rowMarkup(x){
-    return `<article class="upload-list-row"><img src="${esc(x.image||'')}" alt="" loading="lazy" onerror="this.style.display='none'">
-      <div><h3>${esc(x.title||'Untitled')}</h3><p>${esc(x.type||'Content')} • ${esc(x.category||'')}<br>${esc(x.ownerName||'Admin')}${x.timestamp?' • '+new Date(x.timestamp).toLocaleDateString():''}</p></div>
-      <a href="${readerUrl(x)}"><i class="fa-solid fa-book-open-reader"></i> Read</a></article>`;
-  }
-  function renderBoth(uploads,currentUid){
-    const allBox=$('homeUploads'),myBox=$('myHomeUploads');
-    const allCount=$('allUploadCount'),myCount=$('myUploadCount');
-    const all=[...uploads].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    const mine=all.filter(x=>x.ownerUid===currentUid);
-    if(allCount)allCount.textContent=all.length+' total upload'+(all.length===1?'':'s')+' · latest 5 shown';
-    if(myCount)myCount.textContent=mine.length+' of your upload'+(mine.length===1?'':'s')+' · latest 5 shown';
-    if(allBox)allBox.innerHTML=all.length?all.slice(0,5).map(cardMarkup).join(''):'<div class="home-empty">No uploads found yet.</div>';
-    if(myBox)myBox.innerHTML=mine.length?mine.slice(0,5).map(cardMarkup).join(''):'<div class="home-empty">You have no uploads yet. Upload News, Blog or Book to see them here.</div>';
-  }
-  function openList(mode){
-    listMode=mode; const all=window.__latestUploadCache||[];
-    const uid=window.__latestUploadUid||'';
-    const data=mode==='mine'?all.filter(x=>x.ownerUid===uid):all;
-    $('uploadListTitle').textContent=mode==='mine'?'Your Uploads':'All Uploads';
-    $('uploadListSubtitle').textContent=data.length+' items · newest first';
-    if(search)search.value='';
-    if(items)items.innerHTML=data.length?data.map(rowMarkup).join(''):'<div class="home-empty">No uploads to show.</div>';
-    modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
-  }
-  function filterList(){
-    const q=(search?.value||'').trim().toLowerCase(), all=window.__latestUploadCache||[],uid=window.__latestUploadUid||'';
-    const data=(listMode==='mine'?all.filter(x=>x.ownerUid===uid):all).filter(x=>[x.title,x.type,x.category,x.ownerName].join(' ').toLowerCase().includes(q));
-    items.innerHTML=data.length?data.map(rowMarkup).join(''):'<div class="home-empty">No matching uploads found.</div>';
-  }
-  // The Firebase module publishes the current upload cache from its renderer.
-  document.addEventListener('click',e=>{
-    const b=e.target.closest('[data-upload-list]');
-    if(b){e.preventDefault();openList(b.dataset.uploadList);}
-  });
-  $('uploadListClose')?.addEventListener('click',()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';});
-  modal?.addEventListener('click',e=>{if(e.target===modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}});
-  search?.addEventListener('input',filterList);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal?.classList.contains('open')){$('uploadListClose').click();}});
-})();
-</script>
-
-
-
-<!-- APP-LIKE CONTENT FOLDERS / FLOATING CREATE FORMS -->
-<style id="app-like-content-manager">
-.admin-mode-section{position:relative}
-#newsAdminSection .welcome,#newsAdminSection .app-summary,#newsAdminSection .cards,#newsAdminSection #dataList,#newsAdminSection .box:has(#dataList){display:none!important}
-#newsAdminSection .dashboard{padding-top:10px!important}
-.de-folder-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 16px;padding:16px 17px;background:var(--card-bg,#fff);border:1px solid #e5eaf2;border-radius:18px;box-shadow:0 5px 18px #0f172a08}
-.de-folder-head h2{font-size:20px;margin:0;color:var(--text-color,#0f172a);font-weight:850}.de-folder-head p{font-size:12px;color:#64748b;margin:5px 0 0}.de-folder-count{font-size:11px;font-weight:800;padding:6px 10px;background:#eff6ff;color:#2563eb;border-radius:999px;white-space:nowrap}
-.de-folder-list{display:flex;flex-direction:column;gap:9px;padding-bottom:95px}
-.de-folder-row{display:flex;align-items:center;gap:13px;width:100%;padding:10px 13px;background:var(--card-bg,#fff);border:1px solid #e7ebf2;border-radius:15px;text-align:left;cursor:pointer;transition:transform .15s,border-color .15s;min-height:82px;color:inherit}
-.de-folder-row:hover{border-color:#93b4ff;transform:translateY(-1px)}.de-folder-thumb{width:76px;height:62px;flex:0 0 76px;object-fit:cover;border-radius:10px;background:#eef2f7;display:grid;place-items:center;color:#2563eb;font-size:22px;overflow:hidden}.de-folder-thumb img{width:100%;height:100%;object-fit:cover}.de-folder-info{min-width:0;flex:1}.de-folder-title{font-size:14px;font-weight:800;line-height:1.35;color:var(--text-color,#111827);display:block;overflow-wrap:anywhere}.de-folder-meta{font-size:11px;color:#64748b;margin-top:6px;display:block}.de-folder-edit{font-size:12px;font-weight:800;color:#2563eb;background:#eff6ff;border:0;border-radius:9px;padding:8px 10px;flex-shrink:0}.de-folder-empty{padding:28px 15px;border:1px dashed #cbd5e1;border-radius:15px;text-align:center;color:#64748b;background:#fff;font-size:13px}
-.de-fab{position:fixed;right:23px;bottom:27px;z-index:5000;display:flex;align-items:center;gap:10px;border:0;border-radius:999px;background:#2563eb;color:white;padding:15px 21px;font-size:14px;font-weight:850;box-shadow:0 12px 30px #2563eb55;cursor:pointer}.de-fab i{font-size:18px}.de-fab:hover{background:#1d4ed8;transform:translateY(-2px)}
-.de-upload-overlay{position:fixed;inset:0;z-index:9000;background:#071225a8;backdrop-filter:blur(5px);display:none;align-items:flex-start;justify-content:center;padding:20px;overflow:auto}.de-upload-overlay.open{display:flex}.de-upload-dialog{position:relative;width:min(850px,100%);max-height:none;margin:auto;background:#f8fafc;border-radius:22px;padding:20px;box-shadow:0 25px 80px #0003}.de-upload-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-20px;background:#f8fafc;padding:4px 0 14px;z-index:3;border-bottom:1px solid #e2e8f0;margin-bottom:15px}.de-upload-top h2{font-size:19px;font-weight:900;margin:0;color:#0f172a}.de-upload-cancel{border:1px solid #fecaca;color:#b91c1c;background:#fff1f2;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;white-space:nowrap}.de-upload-body .box,.de-upload-body .blog-editor-card,.de-upload-body .panel,.de-upload-body .ts-card{margin:0 0 12px!important;box-shadow:none!important}.de-upload-body .blog-admin-grid{display:block!important}.de-upload-body .blog-editor-card{width:100%!important}.de-upload-body .ts-card{padding:16px!important}.de-upload-body .ts-actions{flex-wrap:wrap}.de-manager-search{width:100%;max-width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #dbe3ef;border-radius:12px;margin-bottom:13px;font:inherit;background:#fff;color:#0f172a}
-/* Books table becomes a vertical, app-style folder list. */
-#booksAdminSection .wrap>.top{display:none!important}#booksAdminSection .wrap>.panel:first-of-type{display:none!important}#booksAdminSection .wrap{padding-top:8px!important}#booksAdminSection .wrap>.panel:last-of-type{border:0!important;box-shadow:none!important;padding:0!important;background:transparent!important}#booksAdminSection .wrap>.panel:last-of-type>h2{display:none!important}#booksAdminSection .table{overflow:visible!important}#booksAdminSection table,#booksAdminSection tbody{display:block!important;width:100%!important}#booksAdminSection thead{display:none!important}#booksAdminSection tbody tr{display:flex!important;align-items:center!important;gap:12px!important;padding:10px 12px!important;margin:0 0 9px!important;border:1px solid #e7ebf2!important;border-radius:15px!important;background:#fff!important;box-shadow:none!important}#booksAdminSection tbody td{display:none!important;border:0!important;padding:0!important}#booksAdminSection tbody td:first-child{display:block!important;flex:0 0 70px!important}#booksAdminSection tbody td:first-child img{width:70px!important;height:62px!important;object-fit:cover!important;border-radius:10px!important}#booksAdminSection tbody td:nth-child(2){display:block!important;flex:1!important;min-width:0!important;font-size:14px!important;overflow-wrap:anywhere}#booksAdminSection tbody td:nth-child(3){display:block!important;position:absolute!important;margin:39px 0 0 82px!important;font-size:10px!important;color:#64748b!important}#booksAdminSection tbody td:last-child{display:block!important;flex:0 0 auto!important}#booksAdminSection .book-actions-wrap{display:flex!important;flex-direction:column!important;gap:5px!important}#booksAdminSection .book-actions-wrap button{font-size:10px!important;padding:6px 8px!important}
-#blogAdminSection .welcome,#blogAdminSection .cards{display:none!important}#blogAdminSection .dashboard{padding-top:8px!important}#blogAdminSection .blog-admin-grid{display:block!important}#blogAdminSection .blog-admin-grid>.blog-editor-card:first-child{display:none!important}#blogAdminSection .blog-admin-grid>.blog-editor-card:last-child{padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important}#blogAdminSection .blog-admin-grid>.blog-editor-card:last-child>div:first-child{display:none!important}#blogAdminSection .blog-list{display:flex!important;flex-direction:column!important;gap:9px!important;padding-bottom:90px!important}#blogAdminSection .blog-admin-card{display:flex!important;align-items:center!important;gap:13px!important;padding:10px 13px!important;border:1px solid #e7ebf2!important;border-radius:15px!important;background:#fff!important;box-shadow:none!important}#blogAdminSection .blog-admin-thumb{width:76px!important;height:62px!important;flex:0 0 76px!important;border-radius:10px!important}#blogAdminSection .blog-admin-content{min-width:0!important;flex:1!important}#blogAdminSection .blog-admin-content h3{font-size:14px!important;margin:0!important;line-height:1.35!important}#blogAdminSection .blog-admin-meta,#blogAdminSection .blog-admin-excerpt{font-size:10px!important;margin-top:5px!important}#blogAdminSection .blog-actions{margin-top:7px!important;gap:5px!important}#blogAdminSection .blog-actions button{padding:6px 8px!important;font-size:10px!important}
-#testAdminSection .test-page-head{padding:10px 0 15px!important}#testAdminSection .test-page-head h1{font-size:21px!important}#testAdminSection .test-page-head p{font-size:12px!important}#testAdminSection .test-admin-shell>.ts-card:not(:last-child){display:none!important}#testAdminSection .test-admin-shell>.ts-card:last-child{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}#testAdminSection .test-admin-shell>.ts-card:last-child .ts-list-head{padding:13px;background:#fff;border:1px solid #e5eaf2;border-radius:15px;margin-bottom:12px}#testAdminSection #tsTestsList .ts-table-wrap{background:#fff;border:1px solid #e7ebf2;border-radius:15px;overflow-x:auto}#testAdminSection #tsTestsList .ts-table{min-width:590px}#testAdminSection #tsTestsList .ts-table tbody tr{cursor:pointer}
-@media(max-width:600px){.de-fab{right:16px;bottom:18px;padding:14px 17px;font-size:13px}.de-upload-overlay{padding:8px}.de-upload-dialog{padding:14px;border-radius:18px}.de-upload-top{top:-14px}.de-folder-row{gap:10px;padding:9px}.de-folder-thumb{width:65px;height:58px;flex-basis:65px}.de-folder-title{font-size:13px}.de-folder-edit{padding:7px 8px}.de-folder-head{padding:13px}.de-folder-head h2{font-size:17px}}
-</style>
-<div id="deUploadOverlay" class="de-upload-overlay" aria-hidden="true"><div class="de-upload-dialog"><div class="de-upload-top"><h2 id="deUploadTitle">Create Upload</h2><button class="de-upload-cancel" type="button" id="deUploadCancel"><i class="fa-solid fa-xmark"></i> Cancel</button></div><div class="de-upload-body" id="deUploadBody"></div></div></div>
-<script id="app-like-content-manager-js">
-(function(){
- const $=id=>document.getElementById(id); let currentKind='';
- const overlay=$('deUploadOverlay'), body=$('deUploadBody'), title=$('deUploadTitle');
- function openModal(kind){currentKind=kind;title.textContent=({news:'Create / Edit News',blog:'Create / Edit Blog',book:'Create / Edit Book',test:'Create Test Series'})[kind]||'Create Upload';overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
- function closeModal(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';}
- $('deUploadCancel').addEventListener('click',closeModal);overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('open'))closeModal()});
- function putInModal(el){if(!el)return;body.appendChild(el);}
- function setupSection(id,kind,formEl,heading,icon){const sec=$(id);if(!sec)return;let h=sec.querySelector('.de-folder-head');if(!h){h=document.createElement('div');h.className='de-folder-head';h.innerHTML=`<div><h2><i class="fa-solid ${icon}"></i> ${heading}</h2><p>All uploads · Tap a title to open or edit</p></div><span class="de-folder-count" id="deCount-${kind}">Loading…</span>`;sec.insertBefore(h,sec.firstChild)}let list=sec.querySelector('.de-folder-list');if(!list){list=document.createElement('div');list.className='de-folder-list';list.id='deList-'+kind;h.after(list)}let search=sec.querySelector('.de-manager-search');if(!search){search=document.createElement('input');search.className='de-manager-search';search.placeholder='Search '+heading.toLowerCase()+'…';search.setAttribute('aria-label','Search '+heading);list.before(search);search.addEventListener('input',()=>render(kind))}let fab=sec.querySelector('.de-fab');if(!fab){fab=document.createElement('button');fab.className='de-fab';fab.type='button';fab.innerHTML='<i class="fa-solid '+({news:'fa-newspaper',blog:'fa-pen-nib',book:'fa-book-open',test:'fa-clipboard-question'}[kind]||'fa-file-circle-plus')+'" aria-hidden="true"></i>';fab.setAttribute('aria-label','Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1)));fab.title='Create '+(kind==='test'?'Test Series':kind[0].toUpperCase()+kind.slice(1));fab.dataset.deKind=kind;fab.addEventListener('click',()=>{openModal(kind);if(kind==='test'){const first=$('tsFolderName');if(first)first.focus()}else if(kind==='news')$('newsTitle')?.focus();else if(kind==='blog')$('blogTitle')?.focus();else $('bookAdminTitle')?.focus()});sec.appendChild(fab)}
- if(formEl){formEl.classList.add('de-modal-form');putInModal(formEl)}
- }
- // Move existing forms into a shared modal without rebuilding them, preserving Firebase handlers and IDs.
- const newsForm=document.querySelector('#newsAdminSection .box'); if(newsForm)putInModal(newsForm);
- const blogForm=document.querySelector('#blogAdminSection .blog-admin-grid>.blog-editor-card:first-child');if(blogForm)putInModal(blogForm);
- const bookForm=document.querySelector('#booksAdminSection .wrap>.panel:first-of-type');if(bookForm)putInModal(bookForm);
- const testSec=$('testAdminSection');if(testSec){const shell=testSec.querySelector('.test-admin-shell');if(shell){const cards=[...shell.querySelectorAll(':scope > .ts-card')];const formWrap=document.createElement('div');formWrap.id='deTestFormWrap';cards.slice(0,-1).forEach(c=>formWrap.appendChild(c));putInModal(formWrap)}}
- setupSection('newsAdminSection','news',newsForm,'News','fa-newspaper');setupSection('blogAdminSection','blog',blogForm,'Blog','fa-pen-nib');setupSection('booksAdminSection','book',bookForm,'Books','fa-book');setupSection('testAdminSection','test',null,'Test Series','fa-clipboard-question');
- // Keep the original Firebase listeners and edit/delete handlers; render their current caches as clean rows.
- const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function stamp(x){const n=Number(x.timestamp||x.createdAt||x.updatedAt||0);return x.date|| (n?new Date(n).toLocaleDateString(): 'Uploaded material')}
- function row(item,kind){const image=item.thumb||item.image||item.thumbnail||item.ownerPhoto||'';const name=item.title||item.name||'Untitled '+kind;const cat=item.cat||item.category||item.branch||kind;const owner=item.authorName||item.ownerName||item.uploaderName||item.createdByName||item.displayName||item.email||'Admin';const thumb=image?`<span class="de-folder-thumb"><img loading="lazy" src="${safe(image)}" alt="" onerror="this.parentElement.innerHTML='<i class=\'fa-solid fa-folder-open\'></i>'"></span>`:`<span class="de-folder-thumb"><i class="fa-solid ${kind==='news'?'fa-newspaper':kind==='blog'?'fa-pen-nib':kind==='book'?'fa-book':'fa-clipboard-question'}"></i></span>`;let action='';if(kind==='news')action=`<button class="de-folder-edit" type="button" data-de-edit="news" data-id="${safe(item.id)}">Edit <i class="fa-solid fa-pen"></i></button>`;if(kind==='blog')action=`<button class="de-folder-edit" type="button" data-de-edit="blog" data-id="${safe(item.id)}">Edit <i class="fa-solid fa-pen"></i></button>`;if(kind==='book')action=`<button class="de-folder-edit" type="button" data-de-edit="book" data-id="${safe(item.id)}">Edit <i class="fa-solid fa-pen"></i></button>`;return `<div class="de-folder-row" role="group">${thumb}<span class="de-folder-info"><span class="de-folder-title" data-de-edit="${kind}" data-id="${safe(item.id)}" role="button" tabindex="0">${safe(name)}</span><span class="de-folder-meta">${safe(cat)} · ${safe(owner)} · ${safe(stamp(item))}</span></span>${action}</div>`}
- function itemsFor(kind){if(kind==='news')return window.__adminNewsCache||[];if(kind==='blog')return window.__allBlogsCache||window.__adminBlogCache||[];if(kind==='book')return window.__allBooksCache||[];return Object.entries(window.tsAllTests||{}).map(([id,v])=>({id,...v}))}
- function render(kind){const list=$('deList-'+kind);if(!list)return;let items=itemsFor(kind).slice();items.sort((a,b)=>Number(b.timestamp||b.createdAt||b.updatedAt||0)-Number(a.timestamp||a.createdAt||a.updatedAt||0));const count=$('deCount-'+kind);if(count)count.textContent=items.length+' item'+(items.length===1?'':'s');const q=(document.querySelector('#'+({news:'newsAdminSection',blog:'blogAdminSection',book:'booksAdminSection',test:'testAdminSection'}[kind])+' .de-manager-search')?.value||'').trim().toLowerCase();if(q)items=items.filter(x=>(x.title||x.name||'').toLowerCase().includes(q)||(x.category||x.cat||'').toLowerCase().includes(q));list.innerHTML=items.length?items.map(x=>row(x,kind)).join(''):`<div class="de-folder-empty"><i class="fa-regular fa-folder-open"></i><br>No ${kind==='test'?'tests':kind+'s'} found.</div>`}
- window.deRenderContentFolders=()=>['news','blog','book','test'].forEach(render);
- document.addEventListener('click',e=>{const b=e.target.closest('[data-de-edit]');if(!b)return;const kind=b.dataset.deEdit,id=b.dataset.id;if(!id)return;try{if(kind==='news'&&typeof window.editNews==='function')window.editNews(id);else if(kind==='blog'&&typeof window.editBlog==='function')window.editBlog(id);else if(kind==='book'&&typeof window.editBookEntry==='function')window.editBookEntry(id);else if(kind==='test'){const edit=document.querySelector(`#tsTestsList [data-ts-action="edit"][data-ts-id="${CSS.escape(id)}"]`);if(edit)edit.click();openModal('test')}openModal(kind)}catch(err){console.error('Open editor failed',err);openModal(kind)}});
- // Edit actions can call scrollIntoView before the modal opens; keep the form visible after opening.
- const oldNews=window.editNews;if(typeof oldNews==='function')window.editNews=function(id){oldNews(id);openModal('news')};
- const oldBlog=window.editBlog;if(typeof oldBlog==='function')window.editBlog=function(id){oldBlog(id);openModal('blog')};
- const oldBook=window.editBookEntry;if(typeof oldBook==='function')window.editBookEntry=function(id){oldBook(id);openModal('book')};
- // Listen for Firebase render updates; render uses caches populated by the original listeners.
- ['newsList','blogList','bookRows','tsTestsList'].forEach(id=>{const el=$(id);if(el)new MutationObserver(()=>{const map={newsList:'news',blogList:'blog',bookRows:'book',tsTestsList:'test'};render(map[id])}).observe(el,{childList:true,subtree:true})});
- // When an upload is saved, close modal after the existing success handler has run only if user clicks Cancel; no risky interception of Firebase writes.
- const existingNewsList=$('newsList');if(existingNewsList)existingNewsList.style.display='none';const existingBlogList=$('blogList');if(existingBlogList)existingBlogList.style.display='none';
- // Keep edit fields within the modal and use Cancel to dismiss without changing Firebase.
- document.addEventListener('click',e=>{if(e.target.closest('#clearBtn,#clearBlogBtn,#bookCancel,#tsClearBtn')){setTimeout(()=>{if(currentKind)openModal(currentKind)},0)}});
- setTimeout(()=>{window.deRenderContentFolders();},400);
-})();
-</script>
-
-<style id="de-mobile-form-and-login-notification-fix">
-/* Mobile modal: keep the whole form inside the viewport and let the form body scroll. */
-#deUploadOverlay{position:fixed!important;inset:0!important;z-index:99999!important;display:none;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;overscroll-behavior:contain;padding:12px!important;box-sizing:border-box!important}
-#deUploadOverlay.open{display:flex!important}
-#deUploadOverlay .de-upload-dialog{width:min(760px,100%)!important;max-width:100%!important;max-height:calc(100dvh - 24px)!important;height:auto!important;margin:auto!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;box-sizing:border-box!important;padding:14px!important;border-radius:18px!important}
-#deUploadOverlay .de-upload-top{position:relative!important;top:auto!important;flex:0 0 auto!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;padding:5px 0 12px!important;margin:0 0 10px!important;background:#f8fafc!important}
-#deUploadOverlay .de-upload-body{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;padding:0 2px 14px!important;box-sizing:border-box!important;width:100%!important}
-#deUploadBody>*{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
-#deUploadBody input,#deUploadBody textarea,#deUploadBody select,#deUploadBody button{max-width:100%;box-sizing:border-box}
-#deUploadBody .ts-grid{grid-template-columns:minmax(0,1fr)!important}
-#deUploadBody .ts-field,#deUploadBody .ts-card,#deUploadBody .box,#deUploadBody .panel,#deUploadBody .blog-editor-card{min-width:0!important;width:100%!important;box-sizing:border-box!important}
-#deUploadBody textarea{min-height:110px;height:auto;max-height:35vh}
-#deUploadBody .ts-actions{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
-#deUploadBody .ts-actions .ts-btn{flex:1 1 130px!important;min-width:0!important;white-space:normal!important}
-#error{display:none;margin-top:14px;padding:12px 14px;border:1px solid #fecaca;border-radius:13px;background:#fff1f2;color:#b91c1c;font-size:13px;font-weight:650;line-height:1.45;text-align:left;overflow-wrap:anywhere}
-#error:not(:empty){display:block;animation:deNoticeIn .18s ease-out}
-@keyframes deNoticeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:600px){#loginPage{padding:14px!important;min-height:100svh!important;box-sizing:border-box} .login-box{padding:24px 18px!important;border-radius:20px!important}#deUploadOverlay{padding:7px!important}#deUploadOverlay .de-upload-dialog{max-height:calc(100dvh - 14px)!important;padding:11px!important;border-radius:15px!important}#deUploadOverlay .de-upload-top h2{font-size:17px!important}#deUploadOverlay .de-upload-cancel{padding:8px 10px!important}#deUploadBody .ts-table-wrap{overflow-x:auto!important}#deUploadBody .ts-table{min-width:550px}}
-</style>
-<script id="de-login-friendly-notifications">
-(function(){
- const box=document.getElementById('error'),email=document.getElementById('email'),password=document.getElementById('password');
- if(!box)return;
- function pretty(message){let m=String(message||'Login failed.');if(/invalid-credential|invalid-login-credentials|wrong email|password/i.test(m))return 'Invalid email or password. Please check your details and try again.';if(/user-not-found/i.test(m))return 'No admin account was found for this email in the connected Firebase project.';if(/too-many-requests/i.test(m))return 'Too many login attempts. Please wait a few minutes and try again.';if(/network-request-failed/i.test(m))return 'Network error. Check your internet connection and try again.';if(/ADMIN_ACTIVITY_DEACTIVATED/.test(m))return 'This admin account is currently disabled. Contact the Founder.';return m;}
- const observer=new MutationObserver(()=>{if(box.textContent.trim()){box.textContent=pretty(box.textContent);box.setAttribute('role','alert');box.setAttribute('aria-live','assertive');}});observer.observe(box,{childList:true,characterData:true,subtree:true});
- [email,password].forEach(el=>el?.addEventListener('input',()=>{if(box.textContent.trim())box.textContent='';}));
-})();
-</script>
-
-
-<!-- Independent loader failsafe: does not depend on Firebase module imports -->
-<script>
-(function () {
-  function releasePageLoader() {
-    var loader = document.getElementById('page-loader');
-    if (loader) {
-      loader.classList.add('hide');
-      loader.style.opacity = '0';
-      loader.style.visibility = 'hidden';
-      loader.style.pointerEvents = 'none';
-      loader.setAttribute('aria-hidden', 'true');
-    }
-    if (document.body) document.body.style.overflow = '';
-  }
-  // This classic script still runs if the Firebase ES module fails to download.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(releasePageLoader, 900);
-    }, { once: true });
-  } else {
-    setTimeout(releasePageLoader, 900);
-  }
-  window.addEventListener('load', releasePageLoader, { once: true });
-  // Absolute failsafe for slow/blocked Firebase or CDN module imports.
-  setTimeout(releasePageLoader, 2500);
-})();
-</script>
-
-
-<!-- DIPLOMA ENGINEERS • RESPONSIVE ADMIN THEME V2 -->
-<style id="de-admin-theme-v2">
-:root{--de-blue:#2563eb;--de-blue-dark:#1d4ed8;--de-ink:#17233b;--de-muted:#64748b;--de-line:#e3eaf4;--de-bg:#f4f7fc;--de-card:#fff;--de-radius:20px;--de-shadow:0 8px 28px rgba(24,48,88,.07)}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{background:var(--de-bg)!important;color:var(--de-ink)!important;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important}button,input,select,textarea{font:inherit}button{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}button:active{transform:scale(.98)}
-.navbar{position:sticky!important;top:0!important;z-index:5000!important;background:rgba(255,255,255,.94)!important;backdrop-filter:blur(16px);border-bottom:1px solid var(--de-line)!important;box-shadow:0 3px 16px rgba(28,47,78,.04)!important;min-height:64px!important;padding-top:8px!important;padding-bottom:8px!important}
-.navbar h1,.navbar .brand,.app-nav-inner h1{color:var(--de-ink)!important;font-weight:850!important;letter-spacing:-.5px}
-.app-shell-nav{background:#fff!important;border-bottom:1px solid var(--de-line)!important;box-shadow:0 4px 16px rgba(20,40,70,.035)!important;position:sticky!important;top:64px!important;z-index:4000!important}
-.app-nav-inner{max-width:1500px!important;margin:auto!important;padding:8px 18px!important;min-height:54px!important}.app-nav-links{gap:6px!important}.app-nav-link{border-radius:12px!important;color:#5c6b83!important;padding:10px 13px!important;font-weight:700!important;transition:all .2s ease!important}.app-nav-link:hover{background:#f1f5ff!important;color:var(--de-blue)!important}.app-nav-link.active{background:#eaf1ff!important;color:var(--de-blue)!important;box-shadow:inset 0 0 0 1px #dbe7ff!important}
-main,.admin-main,.app-main,.dashboard-content{max-width:1500px;margin-inline:auto}.admin-mode-section,.admin-profiles-section,.profile-page-section,.course-detail-page{padding:clamp(14px,2.5vw,30px)!important}.admin-mode-section>h1,.admin-mode-section>h2,.admin-mode-section .section-title{letter-spacing:-.5px}
-.home-section-head,.home-grid,.home-admin-card,.manage-content-grid,.upload-card,.content-card,.news-card,.blog-card,.book-card,.course-card,.admin-card,.stat-card,.dashboard-card{border-radius:var(--de-radius)!important}.home-section-head{margin-bottom:18px!important}.home-grid,.manage-content-grid{gap:16px!important}.manage-content-grid>*{border:1px solid var(--de-line)!important;background:#fff!important;box-shadow:var(--de-shadow)!important;border-radius:18px!important;transition:transform .2s ease,box-shadow .2s ease!important}.manage-content-grid>*:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(24,48,88,.1)!important}
-/* Content lists: clean card rows, like the supplied reference */
-#newsList>*,#newsAdminList>*,.news-list>*,.blog-list>*,.books-list>*,#booksList>*,#blogList>*{border:1px solid var(--de-line)!important;border-radius:19px!important;background:var(--de-card)!important;box-shadow:0 3px 12px rgba(24,48,88,.035)!important;margin-bottom:12px!important;overflow:hidden}
-button.primary-btn,button.publish-btn,.primary-btn,.ts-btn-blue{background:var(--de-blue)!important;color:#fff!important;border:0!important;border-radius:13px!important;box-shadow:0 6px 16px rgba(37,99,235,.16)!important}button.primary-btn:hover,.primary-btn:hover,.ts-btn-blue:hover{background:var(--de-blue-dark)!important}
-input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{max-width:100%;border-radius:12px!important;border:1px solid #dbe4f0!important;background:#fff!important;min-height:43px;padding:10px 12px!important;outline:none!important}textarea{min-height:110px}input:focus,select:focus,textarea:focus{border-color:#80a8ff!important;box-shadow:0 0 0 3px rgba(37,99,235,.11)!important}
-.content-create-modal,.content-create-page,.de-upload-dialog,.ts-modal-content{border-radius:22px!important;box-shadow:0 24px 80px rgba(15,30,55,.22)!important}.content-create-footer,.btn-row,.actions,.ts-actions{display:flex;flex-wrap:wrap;gap:10px!important}.content-create-footer button,.btn-row button,.actions button,.ts-actions button{min-height:42px;border-radius:12px!important;flex:1 1 120px}
-/* Mobile bottom bar */
-#mobileBottomNav.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:100%!important;display:flex!important;justify-content:space-around!important;align-items:stretch!important;gap:2px!important;padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;z-index:6000!important;background:rgba(255,255,255,.97)!important;backdrop-filter:blur(18px)!important;border-top:1px solid var(--de-line)!important;box-shadow:0 -8px 26px rgba(20,40,70,.07)!important;overflow:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button{flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:none!important;min-height:52px!important;height:auto!important;margin:0!important;padding:5px 2px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;border:0!important;border-radius:13px!important;background:transparent!important;color:#718096!important;box-sizing:border-box!important;white-space:normal!important;overflow:hidden!important;line-height:1.15!important;font-size:10px!important;font-weight:700!important}
-#mobileBottomNav.mobile-bottom-nav>button.active,#mobileBottomNav.mobile-bottom-nav>button[aria-current="page"]{color:var(--de-blue)!important;background:#edf3ff!important}#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;min-width:0!important;line-height:1!important}#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg,#mobileBottomNav.mobile-bottom-nav>button .nav-icon i{display:block!important;max-width:22px!important;max-height:22px!important;font-size:19px!important;line-height:1!important}#mobileBottomNav.mobile-bottom-nav>button span:not(.nav-icon):not(.nav-books-circle):not(.nav-test-circle){max-width:100%!important;overflow-wrap:normal!important;word-break:normal!important;text-align:center!important;white-space:nowrap!important}
-body:has(#mobileBottomNav) main,body:has(#mobileBottomNav) .admin-main,body:has(#mobileBottomNav) .app-main,body:has(#mobileBottomNav) .admin-mode-section{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
-@media(min-width:900px){#mobileBottomNav.mobile-bottom-nav{display:none!important}.app-shell-nav{top:64px!important}.admin-mode-section,.admin-profiles-section,.profile-page-section,.course-detail-page{padding:28px 34px!important}.home-grid,.manage-content-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important}.admin-mode-section{min-height:calc(100vh - 125px)}}
-@media(max-width:899px){.app-shell-nav{position:sticky!important;top:62px!important;overflow-x:auto!important}.app-nav-inner{padding:6px 10px!important;min-width:0!important}.app-nav-links{gap:3px!important}.app-nav-link{padding:9px 10px!important;font-size:12px!important;white-space:nowrap!important}.admin-mode-section,.admin-profiles-section,.profile-page-section,.course-detail-page{padding:14px 12px!important}.home-grid,.manage-content-grid{grid-template-columns:minmax(0,1fr)!important}.home-section-head{gap:10px!important;flex-wrap:wrap!important}.home-section-head h2{font-size:19px!important}.content-create-modal,.de-upload-dialog,.ts-modal-content{width:min(100%,620px)!important;max-height:calc(100dvh - 20px)!important;overflow-y:auto!important}.content-create-footer{position:sticky;bottom:0;background:#fff;padding-top:10px;z-index:2}.de-upload-overlay{padding:10px!important;align-items:flex-start!important}.de-upload-dialog{margin:auto!important}}
-@media(max-width:380px){#mobileBottomNav.mobile-bottom-nav>button{font-size:9px!important;padding-inline:1px!important;gap:3px!important}#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg,#mobileBottomNav.mobile-bottom-nav>button .nav-icon i{font-size:17px!important}.app-nav-link{padding:8px 7px!important}.content-create-footer button,.btn-row button,.actions button,.ts-actions button{flex-basis:100%}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
-</style>
-<script id="de-admin-navigation-safety-v2">
-(()=>{'use strict';
-const closeForms=()=>{
- document.querySelectorAll('.de-upload-overlay.open,.de-upload-overlay[aria-hidden="false"]').forEach(el=>{el.classList.remove('open');el.setAttribute('aria-hidden','true')});
- document.querySelectorAll('.content-create-modal.open,.content-create-modal.active,.modal.open,.modal.show').forEach(el=>{if(el.id==='contentCreateModal'||el.classList.contains('content-create-modal')){el.classList.remove('open','active','show');el.style.display='none'}});
- document.querySelectorAll('form[data-unsaved="true"]').forEach(el=>el.removeAttribute('data-unsaved'));
- document.body.style.overflow='';
-};
- document.addEventListener('click',e=>{const nav=e.target.closest('#mobileBottomNav button,.app-nav-link,[data-section],[data-target-section],.sidebar a,.sidebar button,.admin-sidebar a,.admin-sidebar button');if(!nav)return;const label=(nav.innerText||nav.getAttribute('aria-label')||'').trim().toLowerCase();if(label){closeForms();}},{capture:true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape')closeForms()});
-})();
-</script>
-
-
-<style id="de-four-tab-dashboard-theme">
-/* Four-tab app-like navigation + dashboard grid */
-#mobileBottomNav.mobile-bottom-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:8000!important;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom))!important;background:rgba(255,255,255,.97)!important;backdrop-filter:blur(18px)!important;border-top:1px solid #e4eaf4!important;box-shadow:0 -8px 28px rgba(15,23,42,.08)!important;min-height:66px!important;box-sizing:border-box!important}
-#mobileBottomNav.mobile-bottom-nav>button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;min-height:48px!important;padding:5px 2px!important;border:0!important;border-radius:13px!important;background:transparent!important;color:#718096!important;font:600 11px/1.15 Inter,Poppins,Arial,sans-serif!important;box-shadow:none!important;white-space:nowrap!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important;width:28px!important;height:25px!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg{width:22px!important;height:22px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-#mobileBottomNav.mobile-bottom-nav>button.active{color:#2563eb!important;background:#eef4ff!important}
-#mobileBottomNav .nav-books-circle,#mobileBottomNav .nav-test-circle{display:none!important}
-body{padding-bottom:86px!important}
-.de-home-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 22px}
-.de-home-quick-card{appearance:none;display:flex;align-items:center;gap:14px;min-height:112px;width:100%;padding:18px;text-align:left;border:1px solid #e5ebf5;border-radius:22px;background:linear-gradient(145deg,#fff,#f7faff);box-shadow:0 8px 24px rgba(15,23,42,.055);cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;color:#14213d}
-.de-home-quick-card:hover{transform:translateY(-3px);border-color:#bfdbfe;box-shadow:0 14px 30px rgba(37,99,235,.11)}
-.de-home-quick-icon{flex:0 0 52px;width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:#eaf2ff;color:#2563eb;font-size:22px}
-.de-home-quick-card strong{display:block;font-size:15px;font-weight:800;line-height:1.3}
-.de-home-quick-card small{display:block;margin-top:5px;color:#718096;font-size:12px;line-height:1.35}
-.de-home-quick-arrow{margin-left:auto;color:#94a3b8;font-size:14px}
-@media(min-width:900px){#mobileBottomNav.mobile-bottom-nav{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(620px,calc(100% - 40px))!important;border:1px solid #e5eaf3!important;border-bottom:0!important;border-radius:20px 20px 0 0!important}.de-home-quick-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.de-home-quick-card{align-items:flex-start;flex-direction:column;min-height:155px}.de-home-quick-arrow{margin-left:0}}
-@media(max-width:420px){.de-home-quick-grid{gap:10px}.de-home-quick-card{padding:13px;gap:10px;min-height:100px;border-radius:17px}.de-home-quick-icon{width:42px;height:42px;flex-basis:42px;border-radius:13px;font-size:18px}.de-home-quick-card strong{font-size:13px}.de-home-quick-card small{font-size:11px}}
-</style>
-<script id="de-four-tab-dashboard-behavior">
-(function(){
- 'use strict';
+<script id="DE_CREATE_BACK_FLOW">
+(()=>{
+ if(window.__DE_CREATE_BACK_FLOW__)return;window.__DE_CREATE_BACK_FLOW__=true;
  const nav=document.getElementById('mobileBottomNav');
- if(nav){
-   nav.innerHTML=''+
-    '<button type="button" class="active" data-app-target="home" aria-label="Home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/></svg></span><span>Home</span></button>'+ 
-    '<button type="button" data-app-target="reader" aria-label="Reader"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5.5c3.2-1.4 6-.8 8 1.1v13c-2-1.9-4.8-2.5-8-1.1zM20 5.5c-3.2-1.4-6-.8-8 1.1v13c2-1.9 4.8-2.5 8-1.1z"/><path d="M7 9h2M7 12h2M15 9h2M15 12h2"/></svg></span><span>Reader</span></button>'+ 
-    '<button type="button" data-app-target="news" aria-label="News"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4.5h16v15H4z"/><path d="M7 8h10M7 12h10M7 16h6"/></svg></span><span>News</span></button>'+ 
-    '<button type="button" data-app-target="profile" aria-label="Profile"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c.8-4 3.3-6 7.5-6s6.7 2 7.5 6"/></svg></span><span>Profile</span></button>';
-   nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.appTarget==='reader'){window.__deReaderTab=true; if(typeof window.appGo==='function')window.appGo('books'); else document.querySelector('[data-app-target="books"]')?.click();} else {window.__deReaderTab=false; if(typeof window.appGo==='function')window.appGo(b.dataset.appTarget); } }));
+ let lastFocus=null;
+ const isVisible=el=>!!(el && (el.offsetWidth||el.offsetHeight||el.getClientRects().length));
+ function getOpenForm(){
+  const selectors=['.de-upload-overlay.open','.de-upload-overlay[style*="display: flex"]','.de-upload-overlay[style*="display:flex"]','.modal-overlay.open','.modal-backdrop.open','.course-detail-page.open','.blog-editor-modal.open'];
+  for(const sel of selectors){const el=document.querySelector(sel);if(el&&isVisible(el))return el;}
+  return null;
  }
- function addHomeGrid(){
-   const home=document.getElementById('homeAdminSection'); if(!home||home.querySelector('.de-home-quick-grid'))return;
-   const shell=home.querySelector('.home-shell')||home;
-   const grid=document.createElement('div');grid.className='de-home-quick-grid';grid.setAttribute('aria-label','Admin quick sections');
-   const items=[
-    ['news','fa-newspaper','News Upload','Create and manage news'],
-    ['books','fa-book-open','Books','Manage books and PDFs'],
-    ['course','fa-graduation-cap','Courses','Manage courses and series'],
-    ['blog','fa-pen-nib','Blog','Write and manage blogs']
-   ];
-   items.forEach(([target,icon,label,desc])=>{const b=document.createElement('button');b.type='button';b.className='de-home-quick-card';b.innerHTML='<span class="de-home-quick-icon"><i class="fa-solid '+icon+'"></i></span><span><strong>'+label+'</strong><small>'+desc+'</small></span><i class="fa-solid fa-arrow-up-right-from-square de-home-quick-arrow"></i>';b.addEventListener('click',()=>{if(typeof window.appGo==='function')window.appGo(target);else document.querySelector('[data-app-target="'+target+'"]').click();});grid.appendChild(b);});
-   const anchor=shell.querySelector('.home-top-actions')||shell.firstElementChild;
-   if(anchor)anchor.insertAdjacentElement('afterend',grid);else shell.prepend(grid);
+ function addBackToWorkspace(form){
+  if(!form||form.dataset.deBackReady==='1')return;
+  const dialog=form.querySelector('.de-upload-dialog,.modal-content,.modal-dialog,.course-detail-page,.blog-editor-modal')||form;
+  if(!dialog)return;
+  form.dataset.deBackReady='1';lastFocus=document.activeElement;
+  let head=document.createElement('div');head.className='de-workspace-head';
+  const back=document.createElement('button');back.type='button';back.className='de-back-btn';back.innerHTML='<span aria-hidden="true" style="font-size:21px;line-height:1">←</span><span>Back</span>';
+  back.addEventListener('click',()=>{
+    const close=form.querySelector('[aria-label*="close" i],[title*="close" i],.close,.modal-close,.de-upload-close,[data-dismiss="modal"]');
+    if(close)close.click();else {form.classList.remove('open');form.style.display='none';form.setAttribute('aria-hidden','true');}
+    form.dataset.deBackReady='0';if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  });
+  const brand=document.createElement('div');brand.className='de-workspace-brand';brand.textContent='Admin Panel';
+  head.append(back,brand);
+  dialog.insertBefore(head,dialog.firstChild);
+  dialog.classList.add('de-full-workspace');
+  const content=document.createElement('div');content.className='de-workspace-content';
+  while(head.nextSibling){content.appendChild(head.nextSibling)}
+  dialog.appendChild(content);
+  // Keep the established bottom navigation visible and untouched.
+  if(nav && document.body.classList.contains('admin-logged-in')){nav.style.zIndex='10050';}
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addHomeGrid);else addHomeGrid();
- setTimeout(addHomeGrid,800);setTimeout(addHomeGrid,1800);
- // Reader tab is a friendly entry to the existing Books/reading-material manager.
- const original=window.appGo;
- if(typeof original==='function'&&!original.__deFourTabWrapped){const wrapped=function(mode){if(mode==='reader')mode='books';return original.call(this,mode)};wrapped.__deFourTabWrapped=true;window.appGo=wrapped;}
+ const observer=new MutationObserver(()=>{const f=getOpenForm();if(f)addBackToWorkspace(f);});
+ observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','aria-hidden']});
+ document.addEventListener('click',e=>{
+   const target=e.target.closest('button,a,[role="button"]');if(!target)return;
+   const label=(target.innerText||target.getAttribute('aria-label')||target.title||'').trim().toLowerCase();
+   // Any explicit Create/Add/Upload action opens its existing form; leave its original handler intact.
+   if(/^(create|add new|new|upload|\+|create news|create blog|create book|create course|create test series)/i.test(label)){
+     setTimeout(()=>{const f=getOpenForm();if(f)addBackToWorkspace(f);},80);
+   }
+ },true);
 })();
 </script>
 
-
-<style id="de-admin-editor-polish-v3">
-/* Full-page create/edit screen: no card overlay look */
-#contentCreateModal{position:fixed!important;inset:0!important;z-index:99999!important;display:none;align-items:stretch!important;justify-content:stretch!important;padding:0!important;background:#f5f7fb!important;backdrop-filter:none!important}
-#contentCreateModal.show{display:flex!important}
-#contentCreateModal .content-create-page{width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;margin:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;box-shadow:none!important;background:#fff!important}
-#contentCreateModal .content-create-head{min-height:62px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:10px 18px!important;gap:12px!important;flex-shrink:0!important}
-#contentCreateModal .content-create-head h2{font-size:17px!important;font-weight:800!important}
-#contentCreateModal .content-create-body{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;padding:20px clamp(12px,3vw,36px) 28px!important}
-#contentCreateModal .content-create-footer{flex-shrink:0!important;justify-content:flex-end!important;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))!important}
-#contentCreateModal .content-create-close{font-size:0!important;width:auto!important;min-width:42px!important;height:42px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
-#contentCreateModal .content-create-close:before{content:'←';font-size:24px!important;line-height:1!important}
-#contentCreateModal .content-create-close:after{content:'Back';font-size:12px!important;font-weight:800!important}
-#contentCreateModal .content-create-footer .content-cancel{display:none!important}
-#contentCreateModal input,#contentCreateModal select,#contentCreateModal textarea{max-width:100%!important;box-sizing:border-box!important}
-#contentCreateModal .admin-upload-form{width:100%!important;max-width:1100px!important;margin:0 auto!important}
-#contentCreateModal .content-create-head p{display:none!important}
-@media(max-width:600px){#contentCreateModal .content-create-head{min-height:56px!important;padding:8px 12px!important}#contentCreateModal .content-create-body{padding:14px 12px 22px!important}#contentCreateModal .content-create-footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))!important}}
-/* If external icon CDN is blocked, retain readable fallbacks. */
-.fa-solid,.fa-regular,.fa-brands{font-style:normal!important}
-</style>
-<script id="de-admin-header-icon-fix-v3">
-(function(){
- const modal=document.getElementById('contentCreateModal');
- function repairIcons(){
-   document.querySelectorAll('.mobile-bottom-nav button').forEach(btn=>{
-     const icon=btn.querySelector('i'); if(icon && !icon.textContent.trim() && getComputedStyle(icon).fontFamily.toLowerCase().indexOf('awesome')===-1){
-       const label=(btn.innerText||'').toLowerCase();
-       const glyph=label.includes('home')?'⌂':label.includes('reader')?'▤':label.includes('news')?'▣':label.includes('profile')?'●':'';
-       if(glyph){icon.textContent=glyph;icon.style.fontFamily='Arial,sans-serif';icon.style.fontSize='21px';}
-     }
-   });
- }
- document.addEventListener('DOMContentLoaded',repairIcons); setTimeout(repairIcons,900);
- // Clear previous values only when creating new content, not when opening edit.
- document.addEventListener('click',e=>{const b=e.target.closest('.admin-create-btn'); if(!b)return; setTimeout(()=>{const h=document.getElementById('contentCreateTitle');if(h && /Create/.test(h.textContent)){const sec=b.closest('.admin-mode-section'); if(sec?.id==='blogAdminSection' && typeof window.setBlogEditMode==='function')window.setBlogEditMode(false); if(sec?.id==='newsAdminSection' && typeof window.setNewsEditMode==='function')window.setNewsEditMode(false);}},50)},true);
-})();
-</script>
-
-<script id="de-edit-prefill-repair-v1">
-(function(){
- const $=id=>document.getElementById(id);
- function set(id,value){const el=$(id);if(el && value!==undefined && value!==null){el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}
- function fill(kind,id){
-  const arr=kind==='news'?(window.__adminNewsCache||[]):kind==='blog'?(window.__adminBlogCache||window.__allBlogsCache||[]):(window.__allBooksCache||window.bookItems||[]);
-  const item=arr.find(x=>String(x.id)===String(id)); if(!item)return;
-  if(kind==='news'){
-   set('newsTitle',item.title||'');set('newsText',item.text||item.desc||'');set('newsCategory',item.cat||item.category||'News');set('externalLink',item.link||'');set('imageUrlInput',item.thumb||item.image||'');
-   const ed=$('newsEditor');if(ed)ed.innerHTML=item.html||item.text||item.desc||'';
-   const head=$('contentCreateTitle');if(head)head.textContent='Edit News';const save=$('publishBtn')||$('newsSaveBtn');if(save)save.textContent='Update News';
-  } else if(kind==='blog'){
-   set('blogTitle',item.title||'');set('blogCategory',item.category||item.cat||'Education');set('blogExternalLink',item.link||'');set('blogImageUrl',item.image||item.thumb||'');set('blogHtmlCode',item.html||'');
-   const ed=$('blogEditor');if(ed)ed.innerHTML=item.html||item.text||'';
-   const head=$('contentCreateTitle');if(head)head.textContent='Edit Blog';const save=$('publishBlogBtn')||$('blogSaveBtn');if(save)save.textContent='Update Blog';
-  } else {
-   set('bookAdminTitle',item.title||item.name||'');set('bookAdminCategory',item.category||'Book PDF');set('bookAdminPdf',item.pdf||item.link||'');set('bookAdminImageUrl',item.image||'');
-   const head=$('formTitle');if(head)head.textContent='Edit Book';const save=$('bookSaveBtn');if(save)save.textContent='Update Book';
-  }
-  document.body.dataset.deEditingKind=kind;document.body.dataset.deEditingId=String(id);
- }
- document.addEventListener('click',function(e){const b=e.target.closest('[data-de-edit]');if(!b)return;const kind=b.dataset.deEdit,id=b.dataset.id;if(!id||!['news','blog','book'].includes(kind))return;setTimeout(()=>fill(kind,id),80);setTimeout(()=>fill(kind,id),300);},true);
- // Keep the original record ID handlers and save logic; only restore values after editor/modal transitions.
-})();
-</script>
 </body>
 
 <style id="profile-full-width-final">
@@ -9085,512 +8754,3 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   window.refreshDECertificate=()=>{const r=seedCurrentRecord();if(r)paintRecord(r);};
 })();
 </script>
-
-
-<style id="de-final-circle-fab-and-kind-form">
-/* Circular floating create button, raised above the app bottom navigation. */
-.de-fab{position:fixed!important;right:20px!important;bottom:calc(88px + env(safe-area-inset-bottom, 0px))!important;width:58px!important;height:58px!important;min-width:58px!important;padding:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important;background:#2563eb!important;color:#fff!important;box-shadow:0 8px 24px #2563eb55!important;z-index:7000!important;font-size:0!important;line-height:1!important}
-.de-fab i{font-size:25px!important;margin:0!important}.de-fab:hover{transform:translateY(-3px)!important;background:#1d4ed8!important}
-.de-fab:focus-visible{outline:3px solid #93c5fd;outline-offset:4px}
-/* Only show the FAB belonging to the currently visible section. */
-.admin-mode-section:not(.active) .de-fab{display:none!important}
-/* A shared modal must show only the form belonging to the selected section. */
-#deUploadBody>.de-modal-form,#deUploadBody>#deTestFormWrap{display:none!important}
-#deUploadBody>.de-modal-form.de-current-form,#deUploadBody>#deTestFormWrap.de-current-form{display:block!important}
-@media(max-width:600px){.de-fab{right:16px!important;bottom:calc(82px + env(safe-area-inset-bottom, 0px))!important;width:54px!important;height:54px!important;min-width:54px!important}.de-fab i{font-size:23px!important}}
-</style>
-<script id="de-final-kind-form-fix">
-(function(){
- const $=id=>document.getElementById(id);
- const body=$('deUploadBody'), overlay=$('deUploadOverlay'), title=$('deUploadTitle');
- if(!body||!overlay)return;
- function tagForms(){
-   [...body.children].forEach(el=>{
-     if(el.id==='deTestFormWrap'){el.dataset.deFormKind='test';el.classList.add('de-modal-form');return;}
-     if(el.querySelector('#newsTitle'))el.dataset.deFormKind='news';
-     else if(el.querySelector('#blogTitle')||el.querySelector('[name="blogTitle"]')||el.classList.contains('blog-editor-card'))el.dataset.deFormKind='blog';
-     else if(el.querySelector('#bookAdminTitle')||el.querySelector('[name="bookTitle"]'))el.dataset.deFormKind='book';
-   });
- }
- function showKind(kind,mode){
-   tagForms();
-   [...body.children].forEach(el=>el.classList.toggle('de-current-form',el.dataset.deFormKind===kind));
-   const names={news:'News',blog:'Blog',book:'Book',test:'Test Series'};
-   if(title)title.textContent=(mode==='edit'?'Edit ':'Create ')+(names[kind]||'Upload');
-   // Prevent a previous section's form from remaining visible if the expected form is missing.
-   const found=[...body.children].some(el=>el.dataset.deFormKind===kind);
-   if(!found)console.warn('No upload form was found for section:',kind);
- }
- document.addEventListener('click',function(e){
-   const fab=e.target.closest('.de-fab');
-   if(fab){const kind=fab.dataset.deKind;setTimeout(()=>showKind(kind,'create'),0);return;}
-   const edit=e.target.closest('[data-de-edit]');
-   if(edit){const kind=edit.dataset.deEdit;setTimeout(()=>showKind(kind,'edit'),20);return;}
-   const legacyEdit=e.target.closest('#newsAdminSection .edit-news-btn,#blogAdminSection .blog-edit-btn,#booksAdminSection [data-book-edit],#booksAdminSection .book-edit-btn,#testAdminSection [data-ts-action="edit"]');
-   if(legacyEdit){let kind='news';if(legacyEdit.closest('#blogAdminSection'))kind='blog';else if(legacyEdit.closest('#booksAdminSection'))kind='book';else if(legacyEdit.closest('#testAdminSection'))kind='test';setTimeout(()=>showKind(kind,'edit'),20);}
- },true);
- // If any form submit succeeds and the existing handler resets it, keep the modal available until user closes it.
- // Cancel always closes without submitting or altering the Firebase record.
- const cancel=$('deUploadCancel');if(cancel)cancel.addEventListener('click',()=>{body.querySelectorAll('.de-current-form').forEach(el=>el.classList.remove('de-current-form'));},{capture:true});
- tagForms();
-})();
-</script>
-
-<style id="de-app-like-final-polish">
-/* Per-section circular action button, floating just above bottom navigation. */
-.de-fab{position:fixed!important;right:20px!important;bottom:calc(88px + env(safe-area-inset-bottom, 0px))!important;width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;padding:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important;font-size:0!important;line-height:1!important;z-index:7000!important;box-shadow:0 8px 24px rgba(37,99,235,.34)!important}
-.de-fab i{font-size:24px!important;line-height:1!important;margin:0!important}
-.admin-mode-section:not(.active) .de-fab{display:none!important}
-@media(max-width:600px){.de-fab{right:16px!important;bottom:calc(82px + env(safe-area-inset-bottom, 0px))!important;width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important}.de-fab i{font-size:22px!important}}
-</style>
-<script id="de-section-icon-and-form-guard-fixed">
-/* Removed a self-triggering MutationObserver that continuously rewrote button icons and froze page loading. The Flaticon icon updater below handles icons safely. */
-</script>
-
-
-<style id="de-equal-bottom-nav-and-flaticon-add">
-/* Equal-width bottom navigation items, matching the uploaded reference */
-.mobile-bottom-nav#mobileBottomNav{
-  display:flex!important;justify-content:space-between!important;align-items:stretch!important;
-  gap:0!important;padding:7px 0 5px!important;box-sizing:border-box!important;
-  width:100%!important;left:0!important;right:0!important;
-}
-.mobile-bottom-nav#mobileBottomNav>button{
-  flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;
-  margin:0!important;padding:4px 0!important;display:flex!important;
-  flex-direction:column!important;align-items:center!important;justify-content:center!important;
-  gap:3px!important;box-sizing:border-box!important;
-}
-.mobile-bottom-nav#mobileBottomNav .nav-icon{margin:0!important}
-@media(min-width:721px){
- .mobile-bottom-nav#mobileBottomNav{display:flex!important}
-}
-.de-fab{
-  width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;
-  padding:0!important;border-radius:50%!important;display:flex!important;
-  align-items:center!important;justify-content:center!important;gap:0!important;
-  right:22px!important;bottom:calc(86px + env(safe-area-inset-bottom, 0px))!important;
-}
-.de-fab img.de-flaticon-add{display:block!important;width:27px!important;height:27px!important;object-fit:contain!important;filter:brightness(0) invert(1)!important}
-.de-fab i{display:none!important}
-@media(max-width:600px){.de-fab{right:16px!important;bottom:calc(82px + env(safe-area-inset-bottom, 0px))!important;width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important}}
-</style>
-<script id="de-use-flaticon-add-icon">
-(function(){
-  function setAddIcon(){
-    document.querySelectorAll('.de-fab[data-de-kind]').forEach(function(button){
-      if(button.querySelector('img.de-flaticon-add')) return;
-      button.innerHTML='<img class="de-flaticon-add" src="https://cdn-icons-png.flaticon.com/512/992/992482.png" alt="" aria-hidden="true">';
-      button.setAttribute('aria-label','Create new item');
-      button.setAttribute('title','Create new item');
-    });
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setAddIcon);
-  else setAddIcon();
-  new MutationObserver(setAddIcon).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
-<style id="de-final-form-overlap-and-button-fit-fix">
-/* Compact upload editor: keep every form card inside the dialog without overlap. */
-.de-upload-overlay{align-items:center!important;justify-content:center!important;padding:12px!important;overflow-y:auto!important;overscroll-behavior:contain}
-.de-upload-dialog{width:min(680px,100%)!important;max-height:calc(100dvh - 24px)!important;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;margin:auto!important;padding:16px!important;border-radius:18px!important;box-sizing:border-box!important;overscroll-behavior:contain}
-.de-upload-top{position:sticky!important;top:-16px!important;margin:-2px 0 12px!important;padding:7px 0 11px!important;background:#f8fafc!important;flex-wrap:wrap!important}
-.de-upload-top h2{font-size:17px!important;line-height:1.3!important;min-width:0!important}
-.de-upload-body{min-width:0!important;width:100%!important;box-sizing:border-box!important;overflow:visible!important}
-.de-upload-body *{box-sizing:border-box}
-.de-upload-body .box,.de-upload-body .blog-editor-card,.de-upload-body .panel,.de-upload-body .ts-card{width:100%!important;max-width:100%!important;min-width:0!important;padding:13px!important;border-radius:14px!important;overflow-wrap:anywhere!important}
-.de-upload-body input:not([type="checkbox"]):not([type="radio"]),.de-upload-body select,.de-upload-body textarea{width:100%!important;max-width:100%!important;min-width:0!important;font-size:16px!important}
-.de-upload-body textarea{min-height:88px!important;height:auto}
-.de-upload-body .file-box{padding:10px!important;max-width:100%!important;overflow:hidden!important}
-.de-upload-body input[type="file"]{width:100%!important;max-width:100%!important;font-size:12px!important}
-.de-upload-body .btn-row,.de-upload-body .actions,.de-upload-body .ts-actions,.de-upload-body .profile-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;margin-top:12px!important;align-items:stretch!important}
-.de-upload-body .btn-row button,.de-upload-body .actions button,.de-upload-body .ts-actions button,.de-upload-body .profile-actions button{width:100%!important;min-width:0!important;max-width:100%!important;min-height:42px!important;padding:10px 8px!important;margin:0!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:12px!important;line-height:1.3!important;flex:none!important}
-.de-upload-body .btn-row button:only-child,.de-upload-body .actions button:only-child,.de-upload-body .ts-actions button:only-child{grid-column:1/-1!important}
-@media(max-width:600px){
- .de-upload-overlay{padding:8px!important;align-items:flex-start!important}
- .de-upload-dialog{width:100%!important;max-height:calc(100dvh - 16px)!important;padding:12px!important;border-radius:15px!important;margin:auto!important}
- .de-upload-top{top:-12px!important;gap:8px!important}
- .de-upload-top h2{font-size:15px!important}
- .de-upload-cancel{padding:8px 10px!important;font-size:12px!important}
- .de-upload-body .box,.de-upload-body .blog-editor-card,.de-upload-body .panel,.de-upload-body .ts-card{padding:11px!important;margin-bottom:10px!important}
- .de-upload-body .btn-row,.de-upload-body .actions,.de-upload-body .ts-actions,.de-upload-body .profile-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
- .de-upload-body .btn-row button,.de-upload-body .actions button,.de-upload-body .ts-actions button,.de-upload-body .profile-actions button{min-height:42px!important;padding:9px 6px!important;font-size:11px!important}
-}
-@media(max-width:360px){
- .de-upload-dialog{padding:9px!important}
- .de-upload-body .btn-row,.de-upload-body .actions,.de-upload-body .ts-actions,.de-upload-body .profile-actions{grid-template-columns:minmax(0,1fr)!important}
- .de-upload-body .btn-row button,.de-upload-body .actions button,.de-upload-body .ts-actions button,.de-upload-body .profile-actions button{grid-column:1!important}
-}
-@media(prefers-reduced-motion:reduce){.de-upload-dialog,.de-upload-cancel,.de-fab{scroll-behavior:auto!important;transition:none!important}}
-</style>
-
-<script id="de-close-upload-form-on-section-change">
-(function(){
-  'use strict';
-  const overlay=document.getElementById('deUploadOverlay');
-  const body=document.getElementById('deUploadBody');
-  if(!overlay) return;
-  function closeUploadForm(){
-    if(!overlay.classList.contains('open')) return;
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
-    if(body) body.querySelectorAll('.de-current-form').forEach(el=>el.classList.remove('de-current-form'));
-  }
-  function activeSection(){
-    const active=document.querySelector('#adminPanel > .admin-mode-section.active');
-    return active ? (active.id || active.className) : '';
-  }
-  let previousSection=activeSection();
-  // Close immediately when a navigation control is used.
-  document.addEventListener('click',function(event){
-    const nav=event.target.closest('#mobileBottomNav button, .mobile-bottom-nav button, [data-section], [data-target-section], .sidebar a, .sidebar button, .admin-sidebar a, .admin-sidebar button, .admin-nav a, .admin-nav button');
-    if(!nav) return;
-    setTimeout(function(){
-      const next=activeSection();
-      if(next && next!==previousSection){ closeUploadForm(); previousSection=next; }
-    },0);
-  },true);
-  // Also handle section changes triggered by existing JavaScript rather than a click.
-  const panel=document.getElementById('adminPanel');
-  if(panel && window.MutationObserver){
-    new MutationObserver(function(){
-      const next=activeSection();
-      if(next && next!==previousSection){ closeUploadForm(); previousSection=next; }
-    }).observe(panel,{subtree:true,attributes:true,attributeFilter:['class']});
-  }
-  // Keep Escape/backdrop/cancel behavior consistent.
-  document.addEventListener('keydown',function(event){if(event.key==='Escape')closeUploadForm();});
-})();
-</script>
-
-<style id="de-final-section-close-cancel-label-and-bottom-buttons">
-/* Keep the Cancel icon AND its readable label visible. */
-#deUploadCancel.de-upload-cancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;flex:0 0 auto!important;width:auto!important;min-width:88px!important;min-height:40px!important;padding:9px 13px!important;font-size:13px!important;line-height:1.2!important;white-space:nowrap!important;overflow:visible!important;opacity:1!important;visibility:visible!important}
-#deUploadCancel.de-upload-cancel i{display:inline-block!important;font-size:14px!important;line-height:1!important;flex:0 0 auto!important}
-.de-upload-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important}
-.de-upload-top h2{flex:1 1 auto!important;min-width:0!important;overflow-wrap:anywhere!important}
-/* Form action buttons: consistent sizing, no overlap, and safe-area spacing. */
-#deUploadBody .btn-row,#deUploadBody .actions,#deUploadBody .ts-actions,#deUploadBody .profile-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important;width:100%!important;margin:14px 0 5px!important;padding:0!important}
-#deUploadBody .btn-row button,#deUploadBody .actions button,#deUploadBody .ts-actions button,#deUploadBody .profile-actions button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-width:0!important;width:100%!important;min-height:44px!important;margin:0!important;padding:10px 12px!important;box-sizing:border-box!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.25!important;font-size:13px!important;border-radius:11px!important;cursor:pointer!important}
-#deUploadBody .btn-row button:only-child,#deUploadBody .actions button:only-child,#deUploadBody .ts-actions button:only-child,#deUploadBody .profile-actions button:only-child{grid-column:1/-1!important}
-/* The app's five bottom-navigation buttons get equal room and remain above safe-area. */
-#mobileBottomNav.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:100%!important;display:flex!important;justify-content:space-around!important;align-items:stretch!important;gap:0!important;padding:7px 3px calc(6px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;z-index:6000!important;overflow:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button{flex:1 1 0!important;width:20%!important;min-width:0!important;max-width:20%!important;min-height:52px!important;height:auto!important;margin:0!important;padding:5px 1px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;box-sizing:border-box!important;white-space:normal!important;overflow:visible!important;line-height:1.15!important;font-size:10px!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;min-width:0!important;line-height:1!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg,#mobileBottomNav.mobile-bottom-nav>button .nav-icon i{display:block!important;max-width:22px!important;max-height:22px!important;font-size:17px!important;line-height:1!important}
-#mobileBottomNav.mobile-bottom-nav>button span:not(.nav-icon):not(.nav-books-circle):not(.nav-test-circle){max-width:100%!important;overflow-wrap:anywhere!important;text-align:center!important}
-@media(max-width:600px){
- #deUploadCancel.de-upload-cancel{min-width:82px!important;min-height:38px!important;padding:8px 10px!important;font-size:12px!important}
- #deUploadBody .btn-row,#deUploadBody .actions,#deUploadBody .ts-actions,#deUploadBody .profile-actions{gap:8px!important}
- #deUploadBody .btn-row button,#deUploadBody .actions button,#deUploadBody .ts-actions button,#deUploadBody .profile-actions button{min-height:43px!important;padding:9px 7px!important;font-size:12px!important}
- #mobileBottomNav.mobile-bottom-nav>button{font-size:9px!important;min-height:49px!important;padding-left:0!important;padding-right:0!important}
- #mobileBottomNav.mobile-bottom-nav>button .nav-icon svg,#mobileBottomNav.mobile-bottom-nav>button .nav-icon i{font-size:16px!important}
-}
-@media(max-width:360px){#deUploadBody .btn-row,#deUploadBody .actions,#deUploadBody .ts-actions,#deUploadBody .profile-actions{grid-template-columns:minmax(0,1fr)!important}#deUploadBody .btn-row button,#deUploadBody .actions button,#deUploadBody .ts-actions button,#deUploadBody .profile-actions button{grid-column:1!important}#deUploadCancel.de-upload-cancel{min-width:76px!important;padding:7px 8px!important}}
-</style>
-<script id="de-reliable-close-form-on-every-section-switch">
-(function(){
- 'use strict';
- const overlay=document.getElementById('deUploadOverlay');
- const body=document.getElementById('deUploadBody');
- const panel=document.getElementById('adminPanel');
- if(!overlay)return;
- function closeForm(){
-   overlay.classList.remove('open');
-   overlay.setAttribute('aria-hidden','true');
-   document.body.style.overflow='';
-   if(body)body.querySelectorAll('.de-current-form').forEach(el=>el.classList.remove('de-current-form'));
- }
- function currentSection(){const el=document.querySelector('#adminPanel > .admin-mode-section.active');return el?(el.id||el.className):'';}
- let last=currentSection();
- // Close before switching pages, so the previous editor never remains on top of the new section.
- document.addEventListener('click',function(e){
-   const nav=e.target.closest('#mobileBottomNav button,.mobile-bottom-nav button,[data-section],[data-target-section],.sidebar a,.sidebar button,.admin-sidebar a,.admin-sidebar button,.admin-nav a,.admin-nav button');
-   if(!nav)return;
-   closeForm();
-   setTimeout(()=>{const next=currentSection();if(next)last=next;},0);
- },true);
- // Catch section changes made programmatically by the existing app code.
- if(panel&&window.MutationObserver){new MutationObserver(function(){const next=currentSection();if(next&&next!==last){closeForm();last=next;}}).observe(panel,{subtree:true,attributes:true,attributeFilter:['class']});}
- // Ensure the Cancel control is always icon + text, including after scripts update the header.
- function fixCancel(){const b=document.getElementById('deUploadCancel');if(!b)return;if(!b.querySelector('i'))b.insertAdjacentHTML('afterbegin','<i class="fa-solid fa-xmark" aria-hidden="true"></i>');const label=[...b.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('').trim();if(!label)b.appendChild(document.createTextNode(' Cancel'));}
- fixCancel();
- const top=document.querySelector('.de-upload-top');if(top&&window.MutationObserver)new MutationObserver(fixCancel).observe(top,{childList:true,subtree:true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape')closeForm();});
-})();
-</script>
-
-<!-- Full-page editor and balanced four-item navigation -->
-<style id="de-full-page-editor-v3">
-:root{--de-nav-height:72px;--de-ink:#14213d;--de-blue:#2864f0;--de-line:#e5eaf3}
-#mobileBottomNav.mobile-bottom-nav{display:flex!important;justify-content:space-between!important;align-items:stretch!important;gap:0!important;left:0!important;right:0!important;width:100%!important;padding:7px 10px calc(7px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important}
-#mobileBottomNav.mobile-bottom-nav>button{flex:1 1 25%!important;width:25%!important;min-width:0!important;max-width:25%!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:4px!important;overflow:hidden!important}
-#mobileBottomNav.mobile-bottom-nav>button:first-child{margin-right:auto!important}
-#mobileBottomNav.mobile-bottom-nav>button:last-child{margin-left:auto!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon img{width:25px!important;height:25px!important;object-fit:cover!important;border-radius:50%!important}
-/* While editing, turn the existing editor into a dedicated page: no dashboard header or bottom bar. */
-body.de-editor-page-open #mobileBottomNav,body.de-editor-page-open #appShellNav,body.de-editor-page-open header:not(.de-upload-top),body.de-editor-page-open .app-header{display:none!important}
-body.de-editor-page-open{overflow:hidden!important;background:#f4f7fc!important}
-body.de-editor-page-open #deUploadOverlay.de-upload-overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;padding:0!important;display:flex!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;background:#f4f7fc!important;backdrop-filter:none!important}
-body.de-editor-page-open #deUploadOverlay .de-upload-dialog{position:relative!important;width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;transform:none!important}
-body.de-editor-page-open #deUploadOverlay .de-upload-top{position:sticky!important;top:0!important;z-index:5!important;flex:0 0 auto!important;min-height:60px!important;padding:12px clamp(14px,3vw,30px)!important;background:#fff!important;border-bottom:1px solid var(--de-line)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
-body.de-editor-page-open #deUploadTitle{font-size:clamp(18px,2.5vw,25px)!important;font-weight:800!important;color:var(--de-ink)!important}
-body.de-editor-page-open #deUploadCancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:42px!important;padding:9px 15px!important;border-radius:12px!important;white-space:nowrap!important}
-body.de-editor-page-open #deUploadBody{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:auto!important;overscroll-behavior:contain!important;padding:clamp(14px,3vw,30px)!important;box-sizing:border-box!important;background:#f4f7fc!important}
-body.de-editor-page-open #deUploadBody>*{max-width:100%!important;box-sizing:border-box!important}
-body.de-editor-page-open #deUploadBody form{width:100%!important;max-width:1100px!important;margin:0 auto 18px!important}
-body.de-editor-page-open #deUploadBody input,body.de-editor-page-open #deUploadBody select,body.de-editor-page-open #deUploadBody textarea,body.de-editor-page-open #deUploadBody button{max-width:100%;box-sizing:border-box}
-body.de-editor-page-open #deUploadBody .btn-row,body.de-editor-page-open #deUploadBody .actions,body.de-editor-page-open #deUploadBody .ts-actions,body.de-editor-page-open #deUploadBody .profile-actions{display:flex!important;flex-wrap:wrap!important;gap:12px!important}
-body.de-editor-page-open #deUploadBody .btn-row button,body.de-editor-page-open #deUploadBody .actions button,body.de-editor-page-open #deUploadBody .ts-actions button,body.de-editor-page-open #deUploadBody .profile-actions button{flex:1 1 160px!important;min-height:46px!important}
-@media(max-width:600px){body.de-editor-page-open #deUploadOverlay .de-upload-top{min-height:56px!important;padding:10px 12px!important}body.de-editor-page-open #deUploadBody{padding:12px!important}body.de-editor-page-open #deUploadBody .btn-row button,body.de-editor-page-open #deUploadBody .actions button,body.de-editor-page-open #deUploadBody .ts-actions button,body.de-editor-page-open #deUploadBody .profile-actions button{flex:1 1 100%!important}}
-@media(min-width:900px){body.de-editor-page-open #deUploadBody{padding:26px 4vw!important}body.de-editor-page-open #deUploadBody form{max-width:1180px!important}}
-</style>
-<script id="de-full-page-editor-v3-js">
-(function(){
- 'use strict';
- const overlay=document.getElementById('deUploadOverlay');
- if(!overlay)return;
- const body=document.getElementById('deUploadBody');
- const close=document.getElementById('deUploadCancel');
- function isOpen(){return overlay.classList.contains('open')||getComputedStyle(overlay).display!=='none'&&overlay.getAttribute('aria-hidden')!=='true';}
- function sync(){const open=isOpen();document.body.classList.toggle('de-editor-page-open',open);if(open){document.body.style.overflow='hidden';if(body)body.scrollTop=0;}}
- const mo=new MutationObserver(sync);mo.observe(overlay,{attributes:true,attributeFilter:['class','style','aria-hidden']});
- document.addEventListener('click',function(e){
-   const create=e.target.closest('button,a,[role="button"]');
-   if(!create)return;
-   const txt=(create.innerText||create.getAttribute('aria-label')||create.title||'').trim().toLowerCase();
-   if(/^(create|add new|new blog|new news|upload|\+)$/.test(txt)||/\b(create|add new|new blog|new news|upload)\b/.test(txt)){
-     setTimeout(sync,30);setTimeout(sync,180);
-   }
-   if(create===close||create.closest('#deUploadCancel')){setTimeout(()=>{document.body.classList.remove('de-editor-page-open');document.body.style.overflow='';},0);}
- },true);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen()){setTimeout(()=>{document.body.classList.remove('de-editor-page-open');document.body.style.overflow='';},0);}});
- // When the existing save handler closes the editor after a successful save, return to the list page.
- sync();
-})();
-</script>
-
-
-<!-- Header behavior requested: dashboard keeps the full top bar; inner/create pages use Admin Panel + back icon only. -->
-<style id="de-inner-page-header-v4">
-body.de-editor-page-open #deUploadOverlay .de-upload-top{justify-content:space-between!important;}
-body.de-editor-page-open #deUploadTitle{font-size:0!important;}
-body.de-editor-page-open #deUploadTitle::after{content:"Admin Panel";font-size:clamp(18px,2.5vw,25px)!important;font-weight:800!important;color:var(--de-ink)!important;}
-body.de-editor-page-open #deUploadCancel{font-size:0!important;min-width:44px!important;width:44px!important;height:44px!important;padding:0!important;border-radius:50%!important;background:#f3f6fc!important;border:1px solid #dce4f2!important;color:#14213d!important;}
-body.de-editor-page-open #deUploadCancel i{font-size:0!important;}
-body.de-editor-page-open #deUploadCancel i::before{content:"\\f060";font-family:"Font Awesome 6 Free";font-weight:900;font-size:17px!important;}
-body.de-editor-page-open #deUploadCancel{gap:0!important;}
-</style>
-<script id="de-inner-page-header-v4-js">
-(function(){
- const title=document.getElementById('deUploadTitle');
- const back=document.getElementById('deUploadCancel');
- if(!title||!back)return;
- function setBack(){
-   if(!back.dataset.deBackReady){
-     back.dataset.deBackReady='1';
-     back.setAttribute('aria-label','Back');
-     back.setAttribute('title','Back');
-     back.innerHTML='<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';
-   }
-   title.textContent='Admin Panel';
- }
- const overlay=document.getElementById('deUploadOverlay');
- if(overlay){new MutationObserver(()=>{if(document.body.classList.contains('de-editor-page-open')||overlay.classList.contains('open'))setBack();}).observe(overlay,{attributes:true,attributeFilter:['class','style','aria-hidden']});}
- document.addEventListener('click',e=>{if(e.target.closest('#deUploadCancel')){setTimeout(()=>{back.innerHTML='<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';},0);}});
-})();
-</script>
-
-
-<!-- Robust icon + header visibility patch: works even if Font Awesome CDN is blocked. -->
-<style id="de-icon-header-fallback-v5">
-/* Keep icon glyphs visible and aligned in buttons even on file:// or restricted networks. */
-.admin-topbar,.admin-top-right{display:flex!important;align-items:center!important;visibility:visible!important;opacity:1!important}
-.admin-topbar{min-height:58px!important;position:sticky!important;top:0!important;z-index:99990!important;background:#fff!important}
-.admin-top-right{gap:8px!important}
-.admin-top-right button,.top-streak,.de-top-activity-btn,.top-profile-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;flex-shrink:0!important}
-.admin-top-right i,.home-module i,.btn-row i,.primary-btn i,.clear-btn i,.de-upload-top i{display:inline-block!important;visibility:visible!important;opacity:1!important;min-width:1em;text-align:center}
-/* CSS glyph fallback when the external icon font cannot load */
-.fa-solid::before,.fas::before{font-family:Arial,sans-serif!important;font-weight:700!important;line-height:1!important}
-.fa-house::before{content:"⌂"!important}.fa-home::before{content:"⌂"!important}
-.fa-book-open::before,.fa-book::before{content:"▤"!important}
-.fa-newspaper::before,.fa-file-lines::before{content:"▣"!important}
-.fa-user::before,.fa-user-circle::before,.fa-user-shield::before{content:"●"!important}
-.fa-plus::before,.fa-circle-plus::before{content:"＋"!important}
-.fa-arrow-left::before,.fa-chevron-left::before,.fa-left-long::before{content:"←"!important}
-.fa-arrow-right::before,.fa-chevron-right::before{content:"→"!important}
-.fa-pen::before,.fa-pen-to-square::before,.fa-edit::before{content:"✎"!important}
-.fa-upload::before,.fa-cloud-arrow-up::before,.fa-cloud-upload-alt::before{content:"↑"!important}
-.fa-certificate::before,.fa-award::before{content:"✪"!important}
-.fa-fire::before{content:"♨"!important}
-.fa-ranking-star::before,.fa-chart-column::before,.fa-chart-line::before{content:"▥"!important}
-.fa-right-from-bracket::before{content:"⇥"!important}.fa-xmark::before,.fa-times::before{content:"×"!important}
-.fa-floppy-disk::before,.fa-save::before{content:"▣"!important}.fa-trash::before{content:"⌫"!important}
-.fa-spinner::before{content:"◌"!important}.fa-folder::before,.fa-folder-open::before{content:"▰"!important}
-/* Top right rank, certificate and profile controls */
-#topRankBtn,#deTopActivityBtnTop,#topProfileBtn{min-width:42px!important;min-height:42px!important;border-radius:14px!important}
-#topRankBtn i,#deTopActivityBtnTop i{font-size:17px!important;line-height:1!important}
-#topRankValue{display:inline-block!important;visibility:visible!important;opacity:1!important;font-size:12px!important}
-#topProfileAvatar{display:block!important;visibility:visible!important;opacity:1!important;width:34px!important;height:34px!important;object-fit:cover!important;border-radius:50%!important}
-/* Inner editor: keep Admin Panel on the right and a visible back control on the left. */
-body.de-editor-page-open #deUploadOverlay .de-upload-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
-body.de-editor-page-open #deUploadCancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;min-width:44px!important;width:44px!important;height:44px!important;flex:0 0 44px!important;font-size:0!important}
-body.de-editor-page-open #deUploadCancel::before{content:"←"!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:700!important;line-height:1!important}
-body.de-editor-page-open #deUploadCancel i{display:none!important}
-body.de-editor-page-open #deUploadTitle{font-size:0!important;display:block!important;visibility:visible!important}
-body.de-editor-page-open #deUploadTitle::after{content:"Admin Panel";font-size:21px!important;font-weight:800!important;color:#172033!important}
-@media(max-width:600px){.admin-topbar{min-height:54px!important;padding:7px 10px!important}.admin-brand-top strong{font-size:18px!important}.admin-top-right{gap:5px!important}#topRankBtn,#deTopActivityBtnTop,#topProfileBtn{min-width:36px!important;min-height:36px!important}#topProfileAvatar{width:30px!important;height:30px!important}}
-</style>
-<script id="de-icon-fallback-js-v5">
-(function(){
- // Make important icon controls accessible even if a third-party icon font is blocked.
- const labels={topRankBtn:'Rank',deTopActivityBtnTop:'Certificate',topProfileBtn:'Profile'};
- Object.entries(labels).forEach(([id,label])=>{const b=document.getElementById(id);if(b){b.style.display='inline-flex';b.style.visibility='visible';b.style.opacity='1';if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',label);}});
- // Restore the editor back button icon independently of Font Awesome.
- const back=document.getElementById('deUploadCancel');
- if(back){back.setAttribute('aria-label','Back');back.setAttribute('title','Back');}
-})();
-</script>
-
-
-
-<!-- Consistent lightweight line-icon fallback inspired by the supplied icon reference. -->
-<style id="de-line-icon-system-v6">
-/* Keep Font Awesome markup, but draw a clean readable fallback glyph if its webfont/CDN is unavailable. */
-.fa,.fas,.far,.fab,.fa-solid,.fa-regular,.fa-brands,[class^="fa-"],[class*=" fa-"]{font-style:normal!important;}
-.fa-house::before,.fa-home::before{content:"⌂"!important;font-family:Arial,sans-serif!important;font-weight:400!important}
-.fa-user::before,.fa-user-circle::before,.fa-user-shield::before,.fa-circle-user::before{content:"♙"!important;font-family:Arial,sans-serif!important;font-weight:400!important}
-.fa-book::before,.fa-book-open::before,.fa-book-reader::before{content:"▤"!important;font-family:Arial,sans-serif!important}
-.fa-newspaper::before,.fa-file-lines::before,.fa-note-sticky::before{content:"▧"!important;font-family:Arial,sans-serif!important}
-.fa-plus::before,.fa-circle-plus::before{content:"＋"!important;font-family:Arial,sans-serif!important}
-.fa-upload::before,.fa-cloud-arrow-up::before,.fa-cloud-upload-alt::before{content:"⇧"!important;font-family:Arial,sans-serif!important}
-.fa-arrow-left::before,.fa-chevron-left::before,.fa-left-long::before,.fa-angle-left::before{content:"←"!important;font-family:Arial,sans-serif!important}
-.fa-arrow-right::before,.fa-chevron-right::before,.fa-angle-right::before{content:"→"!important;font-family:Arial,sans-serif!important}
-.fa-pen::before,.fa-pen-to-square::before,.fa-edit::before,.fa-pencil::before{content:"✎"!important;font-family:Arial,sans-serif!important}
-.fa-certificate::before,.fa-award::before,.fa-medal::before{content:"✧"!important;font-family:Arial,sans-serif!important}
-.fa-fire::before{content:"♨"!important;font-family:Arial,sans-serif!important}
-.fa-ranking-star::before,.fa-chart-column::before,.fa-chart-line::before,.fa-ranking::before{content:"▥"!important;font-family:Arial,sans-serif!important}
-.fa-floppy-disk::before,.fa-save::before{content:"▣"!important;font-family:Arial,sans-serif!important}
-.fa-folder::before,.fa-folder-open::before{content:"▰"!important;font-family:Arial,sans-serif!important}
-.fa-trash::before,.fa-trash-can::before{content:"⌫"!important;font-family:Arial,sans-serif!important}
-.fa-xmark::before,.fa-times::before,.fa-close::before{content:"×"!important;font-family:Arial,sans-serif!important}
-.fa-search::before,.fa-magnifying-glass::before{content:"⌕"!important;font-family:Arial,sans-serif!important}
-.fa-gear::before,.fa-cog::before,.fa-settings::before{content:"⚙"!important;font-family:Arial,sans-serif!important}
-.fa-calendar::before,.fa-calendar-days::before{content:"▦"!important;font-family:Arial,sans-serif!important}
-.fa-bell::before{content:"♧"!important;font-family:Arial,sans-serif!important}
-.fa-heart::before{content:"♡"!important;font-family:Arial,sans-serif!important}
-.fa-globe::before{content:"◎"!important;font-family:Arial,sans-serif!important}
-.fa-link::before{content:"↗"!important;font-family:Arial,sans-serif!important}
-.fa-image::before,.fa-image::before{content:"▧"!important;font-family:Arial,sans-serif!important}
-.fa-download::before{content:"⇩"!important;font-family:Arial,sans-serif!important}
-.fa-eye::before{content:"◎"!important;font-family:Arial,sans-serif!important}
-.fa-lock::before{content:"♙"!important;font-family:Arial,sans-serif!important}
-.fa-list::before,.fa-list-ul::before{content:"☷"!important;font-family:Arial,sans-serif!important}
-.fa-circle-check::before,.fa-check::before{content:"✓"!important;font-family:Arial,sans-serif!important}
-.fa-spinner::before{content:"◌"!important;font-family:Arial,sans-serif!important}
-/* Icon sizing/alignment like the reference sheet */
-.admin-top-right i,.home-module i,.btn-row i,.primary-btn i,.clear-btn i,.de-upload-top i,.bottom-nav i,.bottom-nav svg{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;min-width:1em;vertical-align:middle}
-.admin-top-right button i,.home-module i,.bottom-nav i{font-size:20px!important}
-#topRankBtn,#deTopActivityBtnTop,#topProfileBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;visibility:visible!important;opacity:1!important}
-#topRankBtn i,#deTopActivityBtnTop i{font-size:18px!important}
-#topRankValue{display:inline-block!important;visibility:visible!important;opacity:1!important}
-body.de-editor-page-open #deUploadCancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important}
-body.de-editor-page-open #deUploadCancel::before{content:"←"!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:400!important;line-height:1!important}
-body.de-editor-page-open #deUploadCancel i{display:none!important}
-</style>
-
-
-<!-- FINAL NAV ICON + EVEN SPACING FIX -->
-<style id="de-final-nav-icons-layout-fix">
-#mobileBottomNav.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;display:flex!important;flex-direction:row!important;justify-content:space-evenly!important;align-items:stretch!important;gap:0!important;margin:0!important;padding:7px 0 calc(7px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;background:rgba(255,255,255,.98)!important;border-top:1px solid #e4eaf3!important;z-index:99999!important;overflow:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button{position:relative!important;flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;margin:0!important;padding:5px 0!important;height:auto!important;min-height:55px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;overflow:visible!important;box-sizing:border-box!important;text-align:center!important;border:0!important;background:transparent!important;white-space:normal!important}
-#mobileBottomNav .nav-icon{display:flex!important;width:26px!important;height:25px!important;flex:0 0 25px!important;align-items:center!important;justify-content:center!important;margin:0 auto!important;visibility:visible!important;opacity:1!important;color:#526477!important}
-#mobileBottomNav .nav-icon svg,#mobileBottomNav .nav-books-circle svg,#mobileBottomNav .nav-test-circle svg{display:block!important;width:23px!important;height:23px!important;min-width:23px!important;min-height:23px!important;max-width:23px!important;max-height:23px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;opacity:1!important;visibility:visible!important}
-#mobileBottomNav .nav-books-circle,#mobileBottomNav .nav-test-circle{display:flex!important;align-items:center!important;justify-content:center!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;flex:0 0 28px!important;margin:0 auto!important;border-radius:50%!important;background:#edf3ff!important;color:#2864f0!important;box-shadow:none!important}
-#mobileBottomNav>button>span:last-child{display:block!important;max-width:100%!important;width:100%!important;margin:0!important;padding:0 1px!important;overflow:visible!important;visibility:visible!important;opacity:1!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:10px!important;line-height:1.15!important;color:#64748b!important}
-#mobileBottomNav>button.active>span:last-child,#mobileBottomNav>button.active .nav-icon{color:#2563eb!important;font-weight:700!important}
-#mobileBottomNav>button.nav-books-center,#mobileBottomNav>button.nav-test-center{transform:none!important;top:auto!important}
-body{padding-bottom:calc(75px + env(safe-area-inset-bottom,0px))!important}
-@media(min-width:700px){#mobileBottomNav.mobile-bottom-nav{padding-left:max(12px,calc((100vw - 1200px)/2))!important;padding-right:max(12px,calc((100vw - 1200px)/2))!important}#mobileBottomNav.mobile-bottom-nav>button{min-height:60px!important}#mobileBottomNav>button>span:last-child{font-size:11px!important}}
-</style>
-<script id="de-force-inline-nav-icons">
-(function(){
- const svg={
- home:'<path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/>',
- reader:'<path d="M4 5.5c3-1.2 5.7-.8 8 1.1v13c-2.3-1.9-5-2.3-8-1.1z"/><path d="M20 5.5c-3-1.2-5.7-.8-8 1.1v13c2.3-1.9 5-2.3 8-1.1z"/>',
- news:'<path d="M4 4.5h16v15H4z"/><path d="M7 8h10M7 12h10M7 16h6"/>',
- profile:'<circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>',
- books:'<path d="M5 4.5h11a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M8 4.5v12.8A2.7 2.7 0 0 0 10.7 20M8 8h7M8 11h7"/>',
- test:'<rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h5M8 16h7"/>'};
- function apply(){const nav=document.querySelector('#mobileBottomNav');if(!nav)return;
- nav.querySelectorAll(':scope > button').forEach(btn=>{let label=(btn.innerText||btn.getAttribute('aria-label')||'').toLowerCase();let key=btn.dataset.appTarget||'';if(!key){if(label.includes('home'))key='home';else if(label.includes('reader'))key='reader';else if(label.includes('news'))key='news';else if(label.includes('profile'))key='profile';else if(label.includes('book'))key='books';else if(label.includes('test'))key='test';}
- let icon=btn.querySelector('.nav-icon,.nav-books-circle,.nav-test-circle');if(!icon){icon=document.createElement('span');icon.className='nav-icon';icon.setAttribute('aria-hidden','true');btn.insertBefore(icon,btn.firstChild);}
- if(key && svg[key] && !icon.querySelector('svg'))icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+svg[key]+'</svg>';
- });}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
- new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
-
-<!-- Reference-matched bottom navigation: four icon-only controls at equal quarter points -->
-<style id="de-reference-four-icon-nav">
-#mobileBottomNav.mobile-bottom-nav{position:fixed!important;inset:auto 0 0 0!important;width:100%!important;max-width:none!important;display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;gap:0!important;padding:5px 0 calc(5px + env(safe-area-inset-bottom,0px))!important;margin:0!important;box-sizing:border-box!important;background:#fff!important;border-top:1px solid #e2e8f0!important;box-shadow:0 -3px 12px rgba(15,23,42,.04)!important;z-index:999999!important;overflow:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button{flex:0 0 25%!important;width:25%!important;min-width:25%!important;max-width:25%!important;height:48px!important;min-height:48px!important;margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;position:relative!important;overflow:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:0 0 40px!important;margin:0 auto!important;color:#71839c!important;opacity:1!important;visibility:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg{display:block!important;width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;max-width:24px!important;max-height:24px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;opacity:1!important;visibility:visible!important}
-#mobileBottomNav.mobile-bottom-nav>button>span:not(.nav-icon):not(.nav-books-circle):not(.nav-test-circle){display:none!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-books-circle,#mobileBottomNav.mobile-bottom-nav>button .nav-test-circle{display:none!important}
-#mobileBottomNav.mobile-bottom-nav>button.active .nav-icon{color:#2563eb!important;background:#edf4ff!important;border-radius:14px!important}
-#mobileBottomNav.mobile-bottom-nav>button:focus-visible{outline:2px solid #2563eb!important;outline-offset:-3px!important}
-body{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))!important}
-@media(min-width:700px){#mobileBottomNav.mobile-bottom-nav{max-width:100%!important;padding-left:0!important;padding-right:0!important}#mobileBottomNav.mobile-bottom-nav>button{height:54px!important;min-height:54px!important}}
-</style>
-<script id="de-restore-five-section-nav">
-(function(){
- const wanted=['home','news','books','test','course'];
- const icons={
-  home:'<path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/>',
-  news:'<rect x="4" y="4.5" width="16" height="15" rx="1.5"/><path d="M7 8h10M7 12h10M7 16h6"/>',
-  books:'<path d="M5 4.5h11a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M8 4.5v12.8A2.7 2.7 0 0 0 10.7 20M8 8h7M8 11h7"/>',
-  test:'<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 3.5v-1M15 3.5v-1M8 9h8M8 13h5M8 17h6"/>',
-  course:'<path d="M3 9.5 12 5l9 4.5L12 14z"/><path d="M6 12.5V17c3.5 2.5 8.5 2.5 12 0v-4.5M21 10v5"/>'
- };
- function apply(){
-  const nav=document.querySelector('#mobileBottomNav'); if(!nav)return;
-  const buttons=[...nav.querySelectorAll(':scope > button')];
-  const byTarget={}; buttons.forEach(b=>{const t=(b.dataset.appTarget||'').toLowerCase(); if(t&&!byTarget[t])byTarget[t]=b;});
-  // Reuse the existing buttons so original appGo navigation handlers remain intact.
-  const chosen=wanted.map(k=>byTarget[k]).filter(Boolean);
-  buttons.forEach(b=>{b.style.display=chosen.includes(b)?'flex':'none';});
-  chosen.forEach(b=>{
-    const key=(b.dataset.appTarget||'').toLowerCase();
-    let wrap=b.querySelector('.nav-icon');
-    if(!wrap){wrap=document.createElement('span');wrap.className='nav-icon';b.insertBefore(wrap,b.firstChild);}
-    wrap.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(icons[key]||icons.home)+'</svg>';
-    const label={home:'Home',news:'News',books:'Books',test:'Test Series',course:'Course'}[key]||key;
-    let textSpan=b.querySelector(':scope > span:not(.nav-icon):not(.nav-books-circle):not(.nav-test-circle)');
-    if(!textSpan){textSpan=document.createElement('span');b.appendChild(textSpan);} textSpan.textContent=label;
-    textSpan.style.display='block'; b.setAttribute('aria-label',label);b.setAttribute('title',label);
-  });
-  nav.dataset.navCount=String(chosen.length);
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
- // Run once more after any app-rendered navigation mutations; do not continuously fight user state.
- setTimeout(apply,250);setTimeout(apply,900);
-})();
-</script>
-
-<style id="de-five-bottom-buttons-final">
-#mobileBottomNav.mobile-bottom-nav{display:flex!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;justify-content:space-between!important;align-items:stretch!important;gap:0!important;padding:5px 0 calc(5px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;background:#fff!important;border-top:1px solid #e2e8f0!important;z-index:999999!important}
-#mobileBottomNav.mobile-bottom-nav>button{flex:1 1 20%!important;width:20%!important;min-width:0!important;max-width:20%!important;height:54px!important;min-height:54px!important;margin:0!important;padding:3px 0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;box-sizing:border-box!important;overflow:visible!important;border:0!important;background:transparent!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;width:28px!important;height:28px!important;align-items:center!important;justify-content:center!important;color:#71839c!important}
-#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg{display:block!important;width:23px!important;height:23px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-#mobileBottomNav.mobile-bottom-nav>button>span:not(.nav-icon){display:block!important;width:100%!important;text-align:center!important;font-size:10px!important;line-height:1.15!important;color:#64748b!important;white-space:nowrap!important}
-#mobileBottomNav.mobile-bottom-nav>button.active .nav-icon{color:#2563eb!important;background:#edf4ff!important;border-radius:10px!important}
-#mobileBottomNav.mobile-bottom-nav>button.active>span:not(.nav-icon){color:#2563eb!important;font-weight:700!important}
-body{padding-bottom:70px!important}
-</style>

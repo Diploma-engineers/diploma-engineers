@@ -7534,6 +7534,205 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
 })();
 </script>
 
+
+
+<!-- FINAL REQUESTED WORKFLOW: full-page create forms, simple back control, inset bottom navigation -->
+<style id="de-full-page-create-workflow">
+  /* Create editors behave like a dedicated page, not a centered popup/card. */
+  #contentCreateModal.content-create-modal,
+  #deUploadOverlay.de-upload-overlay{
+    position:fixed!important;inset:0!important;z-index:12000!important;
+    display:none!important;align-items:stretch!important;justify-content:stretch!important;
+    padding:0!important;margin:0!important;background:#f5f7fb!important;
+    backdrop-filter:none!important;overflow-y:auto!important;overflow-x:hidden!important;
+  }
+  #contentCreateModal.content-create-modal.show,
+  #deUploadOverlay.de-upload-overlay.open{display:flex!important}
+  #contentCreateModal .content-create-page{
+    width:100%!important;max-width:none!important;min-height:100dvh!important;
+    max-height:none!important;margin:0!important;border-radius:0!important;
+    padding:0 0 calc(100px + env(safe-area-inset-bottom,0px))!important;
+    overflow:visible!important;background:#f5f7fb!important;box-shadow:none!important;
+  }
+  #contentCreateModal .content-create-head{
+    position:sticky!important;top:0!important;z-index:5!important;
+    display:flex!important;align-items:center!important;gap:12px!important;
+    padding:12px clamp(14px,3vw,28px)!important;background:#fff!important;
+    border-bottom:1px solid #e5eaf2!important;box-shadow:0 3px 14px rgba(15,23,42,.04)!important;
+  }
+  #contentCreateModal .content-create-head h2{font-size:17px!important;margin:0!important;color:#172033!important}
+  #contentCreateModal .content-create-head p{font-size:11px!important;margin:3px 0 0!important;color:#64748b!important}
+  #contentCreateModal #contentCreateClose{display:none!important}
+  #contentCreateModal .content-create-body{
+    width:min(100%,1100px)!important;margin:0 auto!important;padding:14px clamp(12px,3vw,26px)!important;
+    overflow:visible!important;
+  }
+  #contentCreateModal .content-create-body>.admin-upload-form,
+  #contentCreateModal .content-create-body>.blog-editor-card,
+  #contentCreateModal .content-create-body>.panel,
+  #contentCreateModal .content-create-body>.box{
+    display:block!important;width:100%!important;max-width:none!important;margin:0 0 14px!important;
+    border-radius:18px!important;box-sizing:border-box!important;
+  }
+  #contentCreateModal .content-create-footer{
+    position:fixed!important;top:0!important;left:0!important;z-index:12010!important;
+    display:flex!important;justify-content:flex-start!important;align-items:center!important;
+    width:auto!important;padding:8px 10px!important;border:0!important;background:transparent!important;
+    pointer-events:none!important;
+  }
+  #contentCreateModal .content-create-footer .content-cancel{
+    pointer-events:auto!important;display:inline-flex!important;align-items:center!important;gap:7px!important;
+    padding:9px 12px!important;border:1px solid #e2e8f0!important;border-radius:11px!important;
+    background:#fff!important;color:#1d4ed8!important;font-size:12px!important;
+    box-shadow:0 3px 12px rgba(15,23,42,.07)!important;
+  }
+  /* Test Series' existing uploader is also a full page with a back-only header. */
+  #deUploadOverlay.de-upload-overlay{z-index:12000!important}
+  #deUploadOverlay .de-upload-dialog{
+    width:100%!important;max-width:none!important;min-height:100dvh!important;
+    max-height:none!important;margin:0!important;border-radius:0!important;padding:0 0 100px!important;
+    background:#f5f7fb!important;box-shadow:none!important;
+  }
+  #deUploadOverlay .de-upload-top{
+    top:0!important;position:sticky!important;padding:12px 14px!important;margin:0 0 12px!important;
+    background:#fff!important;border-bottom:1px solid #e5eaf2!important;
+  }
+  #deUploadOverlay .de-upload-top h2{font-size:16px!important;padding-left:68px!important}
+  #deUploadOverlay .de-upload-cancel{position:absolute!important;left:12px!important;top:10px!important;
+    padding:9px 11px!important;background:#fff!important;border:1px solid #e2e8f0!important;color:#1d4ed8!important}
+  #deUploadOverlay .de-upload-body{padding:12px!important}
+  /* Keep the six requested tabs, inset from the mobile screen edges so none is clipped. */
+  #mobileBottomNav.mobile-bottom-nav{
+    left:12px!important;right:12px!important;bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;
+    transform:none!important;width:auto!important;max-width:760px!important;margin:0 auto!important;
+    box-sizing:border-box!important;padding:6px 5px!important;gap:3px!important;
+  }
+  #mobileBottomNav>button{flex:1 1 0!important;min-width:0!important;width:auto!important;padding-left:1px!important;padding-right:1px!important}
+  #mobileBottomNav>button>span:last-child{white-space:nowrap!important;font-size:clamp(7px,2.1vw,10px)!important}
+  body.de-create-page-open{overflow:hidden!important}
+  @media(max-width:380px){
+    #mobileBottomNav.mobile-bottom-nav{left:9px!important;right:9px!important;padding:5px 3px!important}
+    #mobileBottomNav>button>span:last-child{font-size:7px!important}
+    #mobileBottomNav .nav-test-circle,#mobileBottomNav .nav-books-circle{width:32px!important;height:32px!important}
+  }
+</style>
+<script id="de-full-page-create-workflow-js">
+(function(){
+  const modal=document.getElementById('contentCreateModal');
+  const back=document.getElementById('contentCreateCancel');
+  const body=document.getElementById('contentCreateBody');
+  const nav=document.getElementById('mobileBottomNav');
+  function markOpen(on){
+    document.body.classList.toggle('de-create-page-open',!!on);
+    if(nav) nav.style.zIndex=on?'5000':'';
+  }
+  if(modal){
+    const mo=new MutationObserver(()=>markOpen(modal.classList.contains('show')));
+    mo.observe(modal,{attributes:true,attributeFilter:['class']});
+    if(back){
+      back.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back';
+      back.addEventListener('click',()=>markOpen(false),true);
+    }
+    // On a successful upload, existing handlers commonly reset the form or show a success notice.
+    if(body){
+      const successObserver=new MutationObserver(()=>{
+        const text=(body.innerText||'').toLowerCase();
+        const success=/(published successfully|uploaded successfully|saved successfully|successfully published|news published|book uploaded|blog published|upload complete)/.test(text);
+        if(success && modal.classList.contains('show')){
+          setTimeout(()=>{
+            if(modal.classList.contains('show') && /(published successfully|uploaded successfully|saved successfully|successfully published|news published|book uploaded|blog published|upload complete)/.test((body.innerText||'').toLowerCase())){
+              if(typeof window.__closeCreateEditor==='function')window.__closeCreateEditor();
+              markOpen(false);
+            }
+          },900);
+        }
+      });
+      successObserver.observe(body,{childList:true,subtree:true,characterData:true});
+    }
+  }
+  const testOverlay=document.getElementById('deUploadOverlay');
+  if(testOverlay){
+    const mo=new MutationObserver(()=>markOpen(testOverlay.classList.contains('open')));
+    mo.observe(testOverlay,{attributes:true,attributeFilter:['class']});
+    const cancel=testOverlay.querySelector('.de-upload-cancel');
+    if(cancel){cancel.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back';}
+  }
+  // On entry into any section, make the existing six-item bottom navigation stay inside the viewport.
+  document.addEventListener('click',e=>{
+    const tab=e.target.closest('#mobileBottomNav [data-app-target]');
+    if(tab){
+      document.querySelectorAll('#mobileBottomNav [data-app-target]').forEach(b=>b.classList.toggle('active',b===tab));
+    }
+  });
+})();
+</script>
+
+
+<style id="DE_HOME_ONLY_TOPBAR_AND_PAGE_FORMS_V2">
+/* Top bar matches reference: full controls on Home; compact back + title elsewhere */
+#adminTopBar{display:flex!important;align-items:center!important;gap:10px!important;padding:0 18px!important;box-sizing:border-box!important;background:#fff!important;border-bottom:1px solid #e5e7eb!important;flex-shrink:0!important;}
+#adminTopBar .de-section-back{display:none;align-items:center;justify-content:center;width:36px;height:34px;flex:0 0 36px;border:1px solid #e5e7eb;border-radius:11px;background:#fff;color:#172554;font-size:22px;cursor:pointer;}
+#adminTopBar.de-subpage .de-section-back{display:inline-flex!important;}
+#adminTopBar.de-subpage .admin-brand-top{margin-right:auto!important;}
+#adminTopBar.de-subpage .admin-brand-top strong{font-size:16px!important;}
+#adminTopBar.de-subpage .top-actions,#adminTopBar.de-subpage .admin-top-actions,#adminTopBar.de-subpage .top-right-actions,#adminTopBar.de-subpage .top-profile-icon,#adminTopBar.de-subpage #appNavProfile,#adminTopBar.de-subpage .top-icon-btn,#adminTopBar.de-subpage button:not(.de-section-back){display:none!important;}
+#contentCreateModal.de-fullpage-form,#deUploadOverlay.de-fullpage-form{position:fixed!important;inset:0!important;z-index:200000!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border-radius:0!important;overflow-y:auto!important;overflow-x:hidden!important;background:#f8fafc!important;box-sizing:border-box!important;}
+#contentCreateModal.de-fullpage-form .modal-content,#contentCreateModal.de-fullpage-form .modal-dialog,#deUploadOverlay.de-fullpage-form .modal-content{width:100%!important;max-width:900px!important;margin:64px auto 30px!important;box-sizing:border-box!important;}
+#contentCreateModal.de-fullpage-form .de-form-page-back,#deUploadOverlay.de-fullpage-form .de-form-page-back{position:fixed!important;top:12px!important;left:14px!important;z-index:200010!important;}
+@media(max-width:600px){#adminTopBar{padding:0 12px!important;gap:8px!important;}#adminTopBar.de-subpage .admin-brand-top strong{font-size:15px!important;}#contentCreateModal.de-fullpage-form .modal-content,#contentCreateModal.de-fullpage-form .modal-dialog,#deUploadOverlay.de-fullpage-form .modal-content{margin:58px 10px 20px!important;width:calc(100% - 20px)!important;max-width:none!important;}#mobileBottomNav{left:10px!important;right:10px!important;width:auto!important;box-sizing:border-box!important;}}
+</style>
+<script id="DE_HOME_ONLY_TOPBAR_AND_PAGE_FORMS_V2_JS">
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+function activeSection(){return [...document.querySelectorAll('#adminPanel>.admin-mode-section')].find(e=>e.classList.contains('active'))||$('homeAdminSection');}
+function updateBar(){const bar=$('adminTopBar');if(!bar)return;const section=activeSection();const isHome=!section||section.id==='homeAdminSection';bar.classList.toggle('de-subpage',!isHome);let back=bar.querySelector('.de-section-back');if(!back){back=document.createElement('button');back.type='button';back.className='de-section-back';back.setAttribute('aria-label','Back to Home');back.innerHTML='‹';back.addEventListener('click',()=>{closeForms();const home=$('homeAdminSection');if(home){document.querySelectorAll('#adminPanel>.admin-mode-section').forEach(x=>x.classList.remove('active'));home.classList.add('active');}updateBar();});bar.insertBefore(back,bar.firstChild);} }
+function closeForms(){['contentCreateModal','deUploadOverlay'].forEach(id=>{const el=$(id);if(!el)return;el.classList.remove('active','show','open','de-fullpage-form');el.style.display='none';el.setAttribute('aria-hidden','true');});document.body.classList.remove('modal-open');document.querySelectorAll('.modal-backdrop').forEach(x=>x.remove());}
+function decorateForms(){const create=$('contentCreateModal'),upload=$('deUploadOverlay');[create,upload].forEach(el=>{if(!el)return;const visible=el.classList.contains('show')||el.classList.contains('active')||el.style.display==='block'||el.style.display==='flex';if(visible){el.classList.add('de-fullpage-form');el.setAttribute('aria-hidden','false');if(!el.querySelector('.de-form-page-back')){const b=document.createElement('button');b.className='de-form-page-back btn btn-light';b.type='button';b.textContent='‹ Back';b.addEventListener('click',closeForms);el.prepend(b);}}});}
+// Any section navigation cancels an unfinished create/edit form before switching.
+document.addEventListener('click',e=>{const nav=e.target.closest('#mobileBottomNav button, [data-section], .admin-nav button, .app-shell-nav button');if(nav){setTimeout(()=>{closeForms();updateBar();},0);}},true);
+const root=$('adminPanel');if(root)new MutationObserver(()=>{updateBar();decorateForms();}).observe(root,{subtree:true,attributes:true,attributeFilter:['class','style','aria-hidden']});
+new MutationObserver(()=>{updateBar();decorateForms();}).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('resize',()=>{updateBar();decorateForms();});document.addEventListener('DOMContentLoaded',()=>{updateBar();decorateForms();});setTimeout(()=>{updateBar();decorateForms();},250);setTimeout(()=>{updateBar();decorateForms();},1000);
+})();
+</script>
+
+<style id="de-edit-form-page-and-overlap-fix">
+/* Form editor is a true full-page layer; it sits above all section headers/nav without collisions. */
+#deUploadOverlay.de-upload-overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;display:none!important;align-items:stretch!important;justify-content:center!important;overflow:auto!important;padding:0!important;margin:0!important;box-sizing:border-box!important;background:#f4f7fb!important}
+#deUploadOverlay.de-upload-overlay.open{display:flex!important}
+#deUploadOverlay .de-upload-dialog{position:relative!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;min-height:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;background:#fff!important;box-sizing:border-box!important}
+#deUploadOverlay .de-upload-top{position:relative!important;z-index:2!important;top:auto!important;left:auto!important;right:auto!important;flex:0 0 auto!important;min-height:66px!important;margin:0!important;padding:12px 18px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;box-sizing:border-box!important;background:#fff!important;border-bottom:1px solid #e2e8f0!important}
+#deUploadOverlay .de-upload-top h2{margin:0!important;padding:0!important;line-height:1.3!important;min-width:0!important;overflow-wrap:anywhere!important}
+#deUploadOverlay .de-upload-body{flex:1 1 auto!important;min-height:0!important;max-height:none!important;width:100%!important;overflow:auto!important;overflow-x:hidden!important;padding:18px!important;margin:0!important;box-sizing:border-box!important;background:#f8fafc!important}
+#deUploadOverlay .de-upload-body>*{max-width:100%!important;box-sizing:border-box!important}
+#deUploadOverlay input,#deUploadOverlay select,#deUploadOverlay textarea{max-width:100%!important;box-sizing:border-box!important}
+#deUploadOverlay .de-upload-cancel{flex:0 0 auto!important;white-space:nowrap!important}
+body.de-form-page-open{overflow:hidden!important}
+@media(max-width:600px){#deUploadOverlay .de-upload-top{min-height:60px!important;padding:10px 12px!important;gap:8px!important}#deUploadOverlay .de-upload-top h2{font-size:17px!important}#deUploadOverlay .de-upload-body{padding:12px!important}#deUploadOverlay .de-upload-cancel{font-size:13px!important;padding:8px 10px!important}}
+/* Remove legacy header offsets that caused the black strip/header overlap in the screenshot. */
+#deUploadOverlay .de-upload-dialog,#deUploadOverlay .de-upload-top{transform:none!important}
+</style>
+<script id="de-edit-form-page-open-fix">
+(function(){
+ const overlay=document.getElementById('deUploadOverlay');
+ if(!overlay)return;
+ function openPage(){overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.classList.add('de-form-page-open');document.body.style.overflow='hidden';}
+ function closePage(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.classList.remove('de-form-page-open');document.body.style.overflow='';}
+ // Editing any listed item opens the dedicated full-page editor after the existing edit handler loads the record.
+ document.addEventListener('click',function(e){
+   const edit=e.target.closest('[data-de-edit],.edit-news-btn,.blog-edit-btn,[data-book-edit],.book-edit-btn,[data-ts-action="edit"]');
+   if(!edit)return;
+   setTimeout(openPage,0);
+   setTimeout(openPage,80);
+ },true);
+ // Create buttons also use the same full-page form surface.
+ document.addEventListener('click',function(e){if(e.target.closest('.de-fab'))setTimeout(openPage,0);},true);
+ const cancel=document.getElementById('deUploadCancel');if(cancel)cancel.addEventListener('click',closePage);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)closePage()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('open'))closePage()});
+})();
+</script>
+
 </body>
 
 <style id="profile-full-width-final">
@@ -9032,3 +9231,313 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   new MutationObserver(setAddIcon).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="de-mobile-bottom-nav-safe-inset">
+/* Keep the first and last bottom-navigation buttons comfortably inside mobile edges. */
+.mobile-bottom-nav#mobileBottomNav{
+  left:8px!important;
+  right:8px!important;
+  width:calc(100% - 16px)!important;
+  max-width:calc(100% - 16px)!important;
+  box-sizing:border-box!important;
+  border-radius:14px 14px 0 0!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+  overflow:visible!important;
+}
+.mobile-bottom-nav#mobileBottomNav > button{
+  min-width:0!important;
+  flex:1 1 0!important;
+}
+@media(max-width:420px){
+  .mobile-bottom-nav#mobileBottomNav{
+    left:6px!important;
+    right:6px!important;
+    width:calc(100% - 12px)!important;
+    max-width:calc(100% - 12px)!important;
+    padding-left:3px!important;
+    padding-right:3px!important;
+  }
+}
+</style>
+
+<!-- Final mobile/desktop bottom-navigation layout fix -->
+<style id="de-bottom-nav-final-fix">
+#mobileBottomNav.mobile-bottom-nav{
+  position:fixed!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:5px!important;
+  width:auto!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:space-around!important;
+  gap:2px!important;
+  height:68px!important;
+  min-height:68px!important;
+  padding:5px 4px 3px!important;
+  overflow:visible!important;
+  z-index:9998!important;
+  border-radius:16px!important;
+}
+#mobileBottomNav.mobile-bottom-nav > button{
+  position:relative!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:58px!important;
+  min-height:58px!important;
+  margin:0!important;
+  padding:5px 1px 3px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:3px!important;
+  line-height:1.1!important;
+  overflow:visible!important;
+  white-space:normal!important;
+}
+#mobileBottomNav .nav-icon,
+#mobileBottomNav svg{
+  flex:0 0 auto!important;
+  max-width:22px!important;
+  max-height:22px!important;
+}
+#mobileBottomNav .nav-books-center{
+  justify-content:flex-end!important;
+  padding-top:0!important;
+  padding-bottom:2px!important;
+}
+#mobileBottomNav .nav-books-circle{
+  width:46px!important;height:46px!important;
+  min-width:46px!important;min-height:46px!important;
+  flex:0 0 46px!important;
+  margin-top:-18px!important;
+  margin-bottom:0!important;
+}
+#mobileBottomNav .nav-books-label,
+#mobileBottomNav button span,
+#mobileBottomNav button small{
+  display:block!important;
+  position:static!important;
+  max-width:100%!important;
+  font-size:10px!important;
+  line-height:12px!important;
+  text-align:center!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+body{padding-bottom:84px!important;}
+@media(max-width:480px){
+  #mobileBottomNav.mobile-bottom-nav{
+    left:7px!important;right:7px!important;bottom:4px!important;
+    height:66px!important;min-height:66px!important;
+    padding:4px 2px 2px!important;gap:0!important;
+  }
+  #mobileBottomNav.mobile-bottom-nav > button{
+    height:57px!important;min-height:57px!important;
+    padding:4px 0 3px!important;gap:3px!important;
+  }
+  #mobileBottomNav .nav-books-circle{
+    width:42px!important;height:42px!important;
+    min-width:42px!important;min-height:42px!important;
+    flex-basis:42px!important;margin-top:-15px!important;
+  }
+  #mobileBottomNav .nav-books-label,
+  #mobileBottomNav button span,
+  #mobileBottomNav button small{font-size:9px!important;line-height:11px!important;}
+}
+@media(max-width:340px){
+  #mobileBottomNav.mobile-bottom-nav{left:4px!important;right:4px!important;}
+  #mobileBottomNav .nav-books-circle{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;flex-basis:38px!important;}
+  #mobileBottomNav .nav-books-label,
+  #mobileBottomNav button span,
+  #mobileBottomNav button small{font-size:8px!important;}
+}
+</style>
+
+<!-- Final responsive navigation inset + left-aligned form-page header -->
+<style id="de-final-nav-inset-and-form-header">
+/* Keep the first and last nav items visibly away from screen edges. */
+#mobileBottomNav.mobile-bottom-nav{
+  left:18px!important; right:18px!important;
+  width:auto!important; max-width:none!important;
+  padding-left:5px!important; padding-right:5px!important;
+  box-sizing:border-box!important;
+}
+#mobileBottomNav.mobile-bottom-nav > button{min-width:0!important; flex:1 1 0!important;}
+@media(max-width:480px){
+  #mobileBottomNav.mobile-bottom-nav{left:16px!important;right:16px!important;width:auto!important;padding-left:3px!important;padding-right:3px!important;}
+}
+@media(max-width:360px){
+  #mobileBottomNav.mobile-bottom-nav{left:13px!important;right:13px!important;}
+}
+/* Create/edit form is a real page: align Back and section title on the left, no overlap. */
+#contentCreateModal .modal-header,
+#contentCreateModal .de-modal-header,
+#contentCreateModal .form-page-header,
+#deUploadOverlay .modal-header,
+#deUploadOverlay .de-modal-header,
+#deUploadOverlay .form-page-header{
+  display:flex!important; flex-direction:row!important;
+  align-items:center!important; justify-content:flex-start!important;
+  gap:12px!important; text-align:left!important;
+  padding:12px 16px!important; box-sizing:border-box!important;
+  width:100%!important; min-width:0!important;
+  margin:0!important;
+}
+#contentCreateModal .modal-header > *,
+#contentCreateModal .de-modal-header > *,
+#contentCreateModal .form-page-header > *,
+#deUploadOverlay .modal-header > *,
+#deUploadOverlay .de-modal-header > *,
+#deUploadOverlay .form-page-header > *{min-width:0!important;}
+#contentCreateModal .modal-header h1,
+#contentCreateModal .modal-header h2,
+#contentCreateModal .modal-header h3,
+#contentCreateModal .de-modal-header h1,
+#contentCreateModal .de-modal-header h2,
+#contentCreateModal .de-modal-header h3,
+#contentCreateModal .form-page-header h1,
+#contentCreateModal .form-page-header h2,
+#contentCreateModal .form-page-header h3,
+#deUploadOverlay .modal-header h1,
+#deUploadOverlay .modal-header h2,
+#deUploadOverlay .modal-header h3,
+#deUploadOverlay .de-modal-header h1,
+#deUploadOverlay .de-modal-header h2,
+#deUploadOverlay .de-modal-header h3,
+#deUploadOverlay .form-page-header h1,
+#deUploadOverlay .form-page-header h2,
+#deUploadOverlay .form-page-header h3{
+  margin:0!important; text-align:left!important; flex:1 1 auto!important;
+  overflow-wrap:anywhere!important; line-height:1.25!important;
+}
+#contentCreateModal button[aria-label*="Back"],
+#contentCreateModal button[title*="Back"],
+#contentCreateModal .back-btn,
+#contentCreateModal .form-back-btn,
+#deUploadOverlay button[aria-label*="Back"],
+#deUploadOverlay button[title*="Back"],
+#deUploadOverlay .back-btn,
+#deUploadOverlay .form-back-btn{
+  flex:0 0 auto!important; margin:0!important; position:static!important;
+  align-self:center!important; order:0!important;
+}
+@media(max-width:480px){
+ #contentCreateModal .modal-header,#contentCreateModal .de-modal-header,#contentCreateModal .form-page-header,
+ #deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{padding:10px 12px!important;gap:9px!important;}
+}
+</style>
+
+
+<style id="de-edit-filled-form-layout-fix">
+/* Edit page layout: keep the section form full-page and prevent content from being covered. */
+#deUploadOverlay.de-page-open,#contentCreateModal.de-page-open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:100dvh!important;overflow:auto!important;z-index:99999!important;margin:0!important;border-radius:0!important;box-sizing:border-box!important;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important}
+#deUploadOverlay .de-current-form,#contentCreateModal .de-current-form{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#deUploadOverlay input,#deUploadOverlay select,#deUploadOverlay textarea,#contentCreateModal input,#contentCreateModal select,#contentCreateModal textarea{max-width:100%!important;box-sizing:border-box!important}
+#deUploadTitle{min-width:0!important;text-align:left!important;overflow-wrap:anywhere!important}
+@media(max-width:600px){#deUploadOverlay,#contentCreateModal{padding-left:12px!important;padding-right:12px!important}#deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{justify-content:flex-start!important;text-align:left!important}}
+</style>
+<script id="de-edit-existing-record-open-form-fix">
+(function(){
+ const $=id=>document.getElementById(id);
+ const overlay=$('deUploadOverlay'), body=$('deUploadBody'), title=$('deUploadTitle');
+ if(!overlay||!body)return;
+ const names={news:'News',blog:'Blog',book:'Book',test:'Test Series'};
+ function markAndShow(kind){
+   [...body.children].forEach(el=>{
+     const k=el.dataset.deFormKind || (el.id==='deTestFormWrap'?'test':el.querySelector('#newsTitle')?'news':(el.querySelector('#blogTitle')||el.querySelector('[name="blogTitle"]')||el.classList.contains('blog-editor-card'))?'blog':(el.querySelector('#bookAdminTitle')||el.querySelector('[name="bookTitle"]'))?'book':'');
+     if(k)el.dataset.deFormKind=k;
+     el.classList.toggle('de-current-form',k===kind);
+   });
+   if(title)title.textContent='Edit '+(names[kind]||'Item');
+   overlay.classList.add('de-page-open');
+   overlay.style.display='block'; overlay.setAttribute('aria-hidden','false');
+   document.body.classList.add('de-form-page-open');
+ }
+ document.addEventListener('click',function(e){
+   const b=e.target.closest('[data-de-edit],#newsAdminSection .edit-news-btn,#blogAdminSection .blog-edit-btn,#booksAdminSection [data-book-edit],#booksAdminSection .book-edit-btn,#testAdminSection [data-ts-action="edit"]');
+   if(!b)return;
+   let kind=b.dataset.deEdit||'';
+   if(!kind){if(b.closest('#newsAdminSection'))kind='news';else if(b.closest('#blogAdminSection'))kind='blog';else if(b.closest('#booksAdminSection'))kind='book';else if(b.closest('#testAdminSection')||b.dataset.tsAction==='edit')kind='test';}
+   if(!kind)return;
+   // Existing section handlers load the selected record into the inputs; reveal the form after they run.
+   setTimeout(()=>markAndShow(kind),80);
+ },false);
+ const close=()=>{overlay.classList.remove('de-page-open');document.body.classList.remove('de-form-page-open');};
+ const cancel=$('deUploadCancel'); if(cancel)cancel.addEventListener('click',()=>setTimeout(close,0));
+ document.addEventListener('click',e=>{if(e.target.closest('#deUploadCancel'))close();});
+})();
+</script>
+
+
+<!-- Final six-tab navigation and edit form usability patch -->
+<style id="de-six-tabs-final-layout">
+#mobileBottomNav.mobile-bottom-nav{
+  left:clamp(12px,2.2vw,24px)!important;
+  right:clamp(12px,2.2vw,24px)!important;
+  width:auto!important;max-width:none!important;
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  align-items:stretch!important;justify-content:stretch!important;
+  gap:0!important;padding:5px 2px 3px!important;
+  box-sizing:border-box!important;overflow:visible!important;
+}
+#mobileBottomNav.mobile-bottom-nav > button{
+  width:100%!important;min-width:0!important;max-width:none!important;
+  flex:none!important;margin:0!important;padding:4px 1px 3px!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:flex-end!important;
+  gap:3px!important;box-sizing:border-box!important;
+}
+#mobileBottomNav.mobile-bottom-nav > button > span:last-child,
+#mobileBottomNav .nav-books-label,#mobileBottomNav .nav-test-label{
+  display:block!important;max-width:100%!important;width:100%!important;
+  white-space:nowrap!important;text-align:center!important;
+  overflow:hidden!important;text-overflow:clip!important;
+  font-size:10px!important;line-height:12px!important;
+}
+#mobileBottomNav .nav-icon,#mobileBottomNav svg{flex:0 0 auto!important;max-width:21px!important;max-height:21px!important}
+#mobileBottomNav .nav-books-circle,#mobileBottomNav .nav-test-circle{
+  flex:0 0 42px!important;width:42px!important;height:42px!important;
+  min-width:42px!important;min-height:42px!important;margin-top:-16px!important;
+}
+@media(max-width:480px){
+ #mobileBottomNav.mobile-bottom-nav{left:14px!important;right:14px!important;padding-left:1px!important;padding-right:1px!important}
+ #mobileBottomNav.mobile-bottom-nav > button{padding-left:0!important;padding-right:0!important}
+ #mobileBottomNav.mobile-bottom-nav > button > span:last-child,
+ #mobileBottomNav .nav-books-label,#mobileBottomNav .nav-test-label{font-size:9px!important;line-height:11px!important;letter-spacing:-.15px!important}
+ #mobileBottomNav .nav-books-circle,#mobileBottomNav .nav-test-circle{flex-basis:38px!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;margin-top:-12px!important}
+}
+@media(max-width:360px){
+ #mobileBottomNav.mobile-bottom-nav{left:10px!important;right:10px!important}
+ #mobileBottomNav.mobile-bottom-nav > button > span:last-child,
+ #mobileBottomNav .nav-books-label,#mobileBottomNav .nav-test-label{font-size:8px!important;letter-spacing:-.25px!important}
+ #mobileBottomNav .nav-books-circle,#mobileBottomNav .nav-test-circle{flex-basis:34px!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
+}
+/* Dedicated create/edit page header: Back at far left, section title immediately beside it. */
+#contentCreateModal .modal-header,#contentCreateModal .de-modal-header,#contentCreateModal .form-page-header,
+#deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{
+ display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;
+ gap:10px!important;text-align:left!important;padding:12px 16px!important;margin:0!important;
+ width:100%!important;box-sizing:border-box!important;min-width:0!important;
+}
+#contentCreateModal .modal-header h1,#contentCreateModal .modal-header h2,#contentCreateModal .modal-header h3,
+#contentCreateModal .de-modal-header h1,#contentCreateModal .de-modal-header h2,#contentCreateModal .de-modal-header h3,
+#contentCreateModal .form-page-header h1,#contentCreateModal .form-page-header h2,#contentCreateModal .form-page-header h3,
+#deUploadOverlay .modal-header h1,#deUploadOverlay .modal-header h2,#deUploadOverlay .modal-header h3,
+#deUploadOverlay .de-modal-header h1,#deUploadOverlay .de-modal-header h2,#deUploadOverlay .de-modal-header h3,
+#deUploadOverlay .form-page-header h1,#deUploadOverlay .form-page-header h2,#deUploadOverlay .form-page-header h3,
+#deUploadTitle{margin:0!important;flex:0 1 auto!important;min-width:0!important;text-align:left!important;overflow-wrap:anywhere!important;line-height:1.25!important}
+#contentCreateModal button[aria-label*="Back"],#contentCreateModal button[title*="Back"],#contentCreateModal .back-btn,#contentCreateModal .form-back-btn,
+#deUploadOverlay button[aria-label*="Back"],#deUploadOverlay button[title*="Back"],#deUploadOverlay .back-btn,#deUploadOverlay .form-back-btn{
+ order:0!important;position:static!important;float:none!important;flex:0 0 auto!important;margin:0!important;align-self:center!important
+}
+#contentCreateModal.de-page-open,#deUploadOverlay.de-page-open{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important}
+#contentCreateModal input,#contentCreateModal select,#contentCreateModal textarea,#deUploadOverlay input,#deUploadOverlay select,#deUploadOverlay textarea{width:100%;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+@media(max-width:480px){#contentCreateModal .modal-header,#contentCreateModal .de-modal-header,#contentCreateModal .form-page-header,#deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{padding:10px 12px!important;gap:8px!important}}
+</style>

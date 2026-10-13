@@ -4426,7 +4426,7 @@ function editBlog(id){
     if(blogEditor)blogEditor.innerHTML=item.html||item.text||"";
     document.getElementById("blogImageFile").value="";
     if(typeof window.setBlogEditMode === "function") window.setBlogEditMode(true);
-    const form=document.querySelector("#blogAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed");form.scrollIntoView({behavior:"smooth",block:"start"});}
+    const form=document.querySelector("#blogAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); if(window.__openCreateEditor) window.__openCreateEditor("blog","edit"); else form.scrollIntoView({behavior:"smooth",block:"start"});}
 }
 
 function deleteBlog(id){
@@ -4583,7 +4583,7 @@ function editNews(id){
     document.getElementById("pdfFile").value=""; document.getElementById("imageFile").value="";
     const ed=document.getElementById("newsEditor"); if(ed) ed.innerHTML=item.html||item.text||"";
     if(typeof window.setNewsEditMode === "function") window.setNewsEditMode(true);
-    const form=document.querySelector("#newsAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); form.scrollIntoView({behavior:"smooth",block:"start"});}
+    const form=document.querySelector("#newsAdminSection .admin-upload-form"); if(form){form.classList.remove("is-collapsed"); if(window.__openCreateEditor) window.__openCreateEditor("news","edit"); else form.scrollIntoView({behavior:"smooth",block:"start"});}
 }
 
 async function deleteNews(id) {
@@ -6776,6 +6776,7 @@ document.getElementById('mobileProfile')?.addEventListener('click',()=>appGo('pr
     modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
     window.scrollTo(0,0);
   }
+  window.__openCreateEditor = function(type, mode){ openCreate(type); if(mode==='edit'){ if(title) title.innerHTML='<i class="fa-solid fa-pen-to-square"></i> Edit '+({news:'News',blog:'Blog',books:'Book'}[type]||'Content'); if(sub) sub.textContent='Update the selected item and save your changes.'; } };
   function closeCreate(){
     if(moved && placeholder && placeholder.parentNode){
       placeholder.parentNode.insertBefore(moved,placeholder);
@@ -7624,6 +7625,45 @@ body{padding-bottom:86px!important}
  // Reader tab is a friendly entry to the existing Books/reading-material manager.
  const original=window.appGo;
  if(typeof original==='function'&&!original.__deFourTabWrapped){const wrapped=function(mode){if(mode==='reader')mode='books';return original.call(this,mode)};wrapped.__deFourTabWrapped=true;window.appGo=wrapped;}
+})();
+</script>
+
+
+<style id="de-admin-editor-polish-v3">
+/* Full-page create/edit screen: no card overlay look */
+#contentCreateModal{position:fixed!important;inset:0!important;z-index:99999!important;display:none;align-items:stretch!important;justify-content:stretch!important;padding:0!important;background:#f5f7fb!important;backdrop-filter:none!important}
+#contentCreateModal.show{display:flex!important}
+#contentCreateModal .content-create-page{width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;margin:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;box-shadow:none!important;background:#fff!important}
+#contentCreateModal .content-create-head{min-height:62px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:10px 18px!important;gap:12px!important;flex-shrink:0!important}
+#contentCreateModal .content-create-head h2{font-size:17px!important;font-weight:800!important}
+#contentCreateModal .content-create-body{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;padding:20px clamp(12px,3vw,36px) 28px!important}
+#contentCreateModal .content-create-footer{flex-shrink:0!important;justify-content:flex-end!important;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))!important}
+#contentCreateModal .content-create-close{font-size:0!important;width:auto!important;min-width:42px!important;height:42px!important;padding:0 13px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+#contentCreateModal .content-create-close:before{content:'←';font-size:24px!important;line-height:1!important}
+#contentCreateModal .content-create-close:after{content:'Back';font-size:12px!important;font-weight:800!important}
+#contentCreateModal .content-create-footer .content-cancel{display:none!important}
+#contentCreateModal input,#contentCreateModal select,#contentCreateModal textarea{max-width:100%!important;box-sizing:border-box!important}
+#contentCreateModal .admin-upload-form{width:100%!important;max-width:1100px!important;margin:0 auto!important}
+#contentCreateModal .content-create-head p{display:none!important}
+@media(max-width:600px){#contentCreateModal .content-create-head{min-height:56px!important;padding:8px 12px!important}#contentCreateModal .content-create-body{padding:14px 12px 22px!important}#contentCreateModal .content-create-footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))!important}}
+/* If external icon CDN is blocked, retain readable fallbacks. */
+.fa-solid,.fa-regular,.fa-brands{font-style:normal!important}
+</style>
+<script id="de-admin-header-icon-fix-v3">
+(function(){
+ const modal=document.getElementById('contentCreateModal');
+ function repairIcons(){
+   document.querySelectorAll('.mobile-bottom-nav button').forEach(btn=>{
+     const icon=btn.querySelector('i'); if(icon && !icon.textContent.trim() && getComputedStyle(icon).fontFamily.toLowerCase().indexOf('awesome')===-1){
+       const label=(btn.innerText||'').toLowerCase();
+       const glyph=label.includes('home')?'⌂':label.includes('reader')?'▤':label.includes('news')?'▣':label.includes('profile')?'●':'';
+       if(glyph){icon.textContent=glyph;icon.style.fontFamily='Arial,sans-serif';icon.style.fontSize='21px';}
+     }
+   });
+ }
+ document.addEventListener('DOMContentLoaded',repairIcons); setTimeout(repairIcons,900);
+ // Clear previous values only when creating new content, not when opening edit.
+ document.addEventListener('click',e=>{const b=e.target.closest('.admin-create-btn'); if(!b)return; setTimeout(()=>{const h=document.getElementById('contentCreateTitle');if(h && /Create/.test(h.textContent)){const sec=b.closest('.admin-mode-section'); if(sec?.id==='blogAdminSection' && typeof window.setBlogEditMode==='function')window.setBlogEditMode(false); if(sec?.id==='newsAdminSection' && typeof window.setNewsEditMode==='function')window.setNewsEditMode(false);}},50)},true);
 })();
 </script>
 
@@ -9336,5 +9376,56 @@ body.de-editor-page-open #deUploadCancel{gap:0!important;}
  const overlay=document.getElementById('deUploadOverlay');
  if(overlay){new MutationObserver(()=>{if(document.body.classList.contains('de-editor-page-open')||overlay.classList.contains('open'))setBack();}).observe(overlay,{attributes:true,attributeFilter:['class','style','aria-hidden']});}
  document.addEventListener('click',e=>{if(e.target.closest('#deUploadCancel')){setTimeout(()=>{back.innerHTML='<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';},0);}});
+})();
+</script>
+
+
+<!-- Robust icon + header visibility patch: works even if Font Awesome CDN is blocked. -->
+<style id="de-icon-header-fallback-v5">
+/* Keep icon glyphs visible and aligned in buttons even on file:// or restricted networks. */
+.admin-topbar,.admin-top-right{display:flex!important;align-items:center!important;visibility:visible!important;opacity:1!important}
+.admin-topbar{min-height:58px!important;position:sticky!important;top:0!important;z-index:99990!important;background:#fff!important}
+.admin-top-right{gap:8px!important}
+.admin-top-right button,.top-streak,.de-top-activity-btn,.top-profile-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;flex-shrink:0!important}
+.admin-top-right i,.home-module i,.btn-row i,.primary-btn i,.clear-btn i,.de-upload-top i{display:inline-block!important;visibility:visible!important;opacity:1!important;min-width:1em;text-align:center}
+/* CSS glyph fallback when the external icon font cannot load */
+.fa-solid::before,.fas::before{font-family:Arial,sans-serif!important;font-weight:700!important;line-height:1!important}
+.fa-house::before{content:"⌂"!important}.fa-home::before{content:"⌂"!important}
+.fa-book-open::before,.fa-book::before{content:"▤"!important}
+.fa-newspaper::before,.fa-file-lines::before{content:"▣"!important}
+.fa-user::before,.fa-user-circle::before,.fa-user-shield::before{content:"●"!important}
+.fa-plus::before,.fa-circle-plus::before{content:"＋"!important}
+.fa-arrow-left::before,.fa-chevron-left::before,.fa-left-long::before{content:"←"!important}
+.fa-arrow-right::before,.fa-chevron-right::before{content:"→"!important}
+.fa-pen::before,.fa-pen-to-square::before,.fa-edit::before{content:"✎"!important}
+.fa-upload::before,.fa-cloud-arrow-up::before,.fa-cloud-upload-alt::before{content:"↑"!important}
+.fa-certificate::before,.fa-award::before{content:"✪"!important}
+.fa-fire::before{content:"♨"!important}
+.fa-ranking-star::before,.fa-chart-column::before,.fa-chart-line::before{content:"▥"!important}
+.fa-right-from-bracket::before{content:"⇥"!important}.fa-xmark::before,.fa-times::before{content:"×"!important}
+.fa-floppy-disk::before,.fa-save::before{content:"▣"!important}.fa-trash::before{content:"⌫"!important}
+.fa-spinner::before{content:"◌"!important}.fa-folder::before,.fa-folder-open::before{content:"▰"!important}
+/* Top right rank, certificate and profile controls */
+#topRankBtn,#deTopActivityBtnTop,#topProfileBtn{min-width:42px!important;min-height:42px!important;border-radius:14px!important}
+#topRankBtn i,#deTopActivityBtnTop i{font-size:17px!important;line-height:1!important}
+#topRankValue{display:inline-block!important;visibility:visible!important;opacity:1!important;font-size:12px!important}
+#topProfileAvatar{display:block!important;visibility:visible!important;opacity:1!important;width:34px!important;height:34px!important;object-fit:cover!important;border-radius:50%!important}
+/* Inner editor: keep Admin Panel on the right and a visible back control on the left. */
+body.de-editor-page-open #deUploadOverlay .de-upload-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+body.de-editor-page-open #deUploadCancel{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;min-width:44px!important;width:44px!important;height:44px!important;flex:0 0 44px!important;font-size:0!important}
+body.de-editor-page-open #deUploadCancel::before{content:"←"!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:700!important;line-height:1!important}
+body.de-editor-page-open #deUploadCancel i{display:none!important}
+body.de-editor-page-open #deUploadTitle{font-size:0!important;display:block!important;visibility:visible!important}
+body.de-editor-page-open #deUploadTitle::after{content:"Admin Panel";font-size:21px!important;font-weight:800!important;color:#172033!important}
+@media(max-width:600px){.admin-topbar{min-height:54px!important;padding:7px 10px!important}.admin-brand-top strong{font-size:18px!important}.admin-top-right{gap:5px!important}#topRankBtn,#deTopActivityBtnTop,#topProfileBtn{min-width:36px!important;min-height:36px!important}#topProfileAvatar{width:30px!important;height:30px!important}}
+</style>
+<script id="de-icon-fallback-js-v5">
+(function(){
+ // Make important icon controls accessible even if a third-party icon font is blocked.
+ const labels={topRankBtn:'Rank',deTopActivityBtnTop:'Certificate',topProfileBtn:'Profile'};
+ Object.entries(labels).forEach(([id,label])=>{const b=document.getElementById(id);if(b){b.style.display='inline-flex';b.style.visibility='visible';b.style.opacity='1';if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',label);}});
+ // Restore the editor back button icon independently of Font Awesome.
+ const back=document.getElementById('deUploadCancel');
+ if(back){back.setAttribute('aria-label','Back');back.setAttribute('title','Back');}
 })();
 </script>

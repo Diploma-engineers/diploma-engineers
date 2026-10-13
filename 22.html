@@ -9433,3 +9433,44 @@ body{padding-bottom:84px!important;}
  #deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{padding:10px 12px!important;gap:9px!important;}
 }
 </style>
+
+
+<style id="de-edit-filled-form-layout-fix">
+/* Edit page layout: keep the section form full-page and prevent content from being covered. */
+#deUploadOverlay.de-page-open,#contentCreateModal.de-page-open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:100dvh!important;overflow:auto!important;z-index:99999!important;margin:0!important;border-radius:0!important;box-sizing:border-box!important;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important}
+#deUploadOverlay .de-current-form,#contentCreateModal .de-current-form{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#deUploadOverlay input,#deUploadOverlay select,#deUploadOverlay textarea,#contentCreateModal input,#contentCreateModal select,#contentCreateModal textarea{max-width:100%!important;box-sizing:border-box!important}
+#deUploadTitle{min-width:0!important;text-align:left!important;overflow-wrap:anywhere!important}
+@media(max-width:600px){#deUploadOverlay,#contentCreateModal{padding-left:12px!important;padding-right:12px!important}#deUploadOverlay .modal-header,#deUploadOverlay .de-modal-header,#deUploadOverlay .form-page-header{justify-content:flex-start!important;text-align:left!important}}
+</style>
+<script id="de-edit-existing-record-open-form-fix">
+(function(){
+ const $=id=>document.getElementById(id);
+ const overlay=$('deUploadOverlay'), body=$('deUploadBody'), title=$('deUploadTitle');
+ if(!overlay||!body)return;
+ const names={news:'News',blog:'Blog',book:'Book',test:'Test Series'};
+ function markAndShow(kind){
+   [...body.children].forEach(el=>{
+     const k=el.dataset.deFormKind || (el.id==='deTestFormWrap'?'test':el.querySelector('#newsTitle')?'news':(el.querySelector('#blogTitle')||el.querySelector('[name="blogTitle"]')||el.classList.contains('blog-editor-card'))?'blog':(el.querySelector('#bookAdminTitle')||el.querySelector('[name="bookTitle"]'))?'book':'');
+     if(k)el.dataset.deFormKind=k;
+     el.classList.toggle('de-current-form',k===kind);
+   });
+   if(title)title.textContent='Edit '+(names[kind]||'Item');
+   overlay.classList.add('de-page-open');
+   overlay.style.display='block'; overlay.setAttribute('aria-hidden','false');
+   document.body.classList.add('de-form-page-open');
+ }
+ document.addEventListener('click',function(e){
+   const b=e.target.closest('[data-de-edit],#newsAdminSection .edit-news-btn,#blogAdminSection .blog-edit-btn,#booksAdminSection [data-book-edit],#booksAdminSection .book-edit-btn,#testAdminSection [data-ts-action="edit"]');
+   if(!b)return;
+   let kind=b.dataset.deEdit||'';
+   if(!kind){if(b.closest('#newsAdminSection'))kind='news';else if(b.closest('#blogAdminSection'))kind='blog';else if(b.closest('#booksAdminSection'))kind='book';else if(b.closest('#testAdminSection')||b.dataset.tsAction==='edit')kind='test';}
+   if(!kind)return;
+   // Existing section handlers load the selected record into the inputs; reveal the form after they run.
+   setTimeout(()=>markAndShow(kind),80);
+ },false);
+ const close=()=>{overlay.classList.remove('de-page-open');document.body.classList.remove('de-form-page-open');};
+ const cancel=$('deUploadCancel'); if(cancel)cancel.addEventListener('click',()=>setTimeout(close,0));
+ document.addEventListener('click',e=>{if(e.target.closest('#deUploadCancel'))close();});
+})();
+</script>

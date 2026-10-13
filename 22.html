@@ -7667,6 +7667,31 @@ body{padding-bottom:86px!important}
 })();
 </script>
 
+<script id="de-edit-prefill-repair-v1">
+(function(){
+ const $=id=>document.getElementById(id);
+ function set(id,value){const el=$(id);if(el && value!==undefined && value!==null){el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}
+ function fill(kind,id){
+  const arr=kind==='news'?(window.__adminNewsCache||[]):kind==='blog'?(window.__adminBlogCache||window.__allBlogsCache||[]):(window.__allBooksCache||window.bookItems||[]);
+  const item=arr.find(x=>String(x.id)===String(id)); if(!item)return;
+  if(kind==='news'){
+   set('newsTitle',item.title||'');set('newsText',item.text||item.desc||'');set('newsCategory',item.cat||item.category||'News');set('externalLink',item.link||'');set('imageUrlInput',item.thumb||item.image||'');
+   const ed=$('newsEditor');if(ed)ed.innerHTML=item.html||item.text||item.desc||'';
+   const head=$('contentCreateTitle');if(head)head.textContent='Edit News';const save=$('publishBtn')||$('newsSaveBtn');if(save)save.textContent='Update News';
+  } else if(kind==='blog'){
+   set('blogTitle',item.title||'');set('blogCategory',item.category||item.cat||'Education');set('blogExternalLink',item.link||'');set('blogImageUrl',item.image||item.thumb||'');set('blogHtmlCode',item.html||'');
+   const ed=$('blogEditor');if(ed)ed.innerHTML=item.html||item.text||'';
+   const head=$('contentCreateTitle');if(head)head.textContent='Edit Blog';const save=$('publishBlogBtn')||$('blogSaveBtn');if(save)save.textContent='Update Blog';
+  } else {
+   set('bookAdminTitle',item.title||item.name||'');set('bookAdminCategory',item.category||'Book PDF');set('bookAdminPdf',item.pdf||item.link||'');set('bookAdminImageUrl',item.image||'');
+   const head=$('formTitle');if(head)head.textContent='Edit Book';const save=$('bookSaveBtn');if(save)save.textContent='Update Book';
+  }
+  document.body.dataset.deEditingKind=kind;document.body.dataset.deEditingId=String(id);
+ }
+ document.addEventListener('click',function(e){const b=e.target.closest('[data-de-edit]');if(!b)return;const kind=b.dataset.deEdit,id=b.dataset.id;if(!id||!['news','blog','book'].includes(kind))return;setTimeout(()=>fill(kind,id),80);setTimeout(()=>fill(kind,id),300);},true);
+ // Keep the original record ID handlers and save logic; only restore values after editor/modal transitions.
+})();
+</script>
 </body>
 
 <style id="profile-full-width-final">

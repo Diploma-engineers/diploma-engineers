@@ -9534,3 +9534,39 @@ body{padding-bottom:calc(75px + env(safe-area-inset-bottom,0px))!important}
  new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+<!-- Reference-matched bottom navigation: four icon-only controls at equal quarter points -->
+<style id="de-reference-four-icon-nav">
+#mobileBottomNav.mobile-bottom-nav{position:fixed!important;inset:auto 0 0 0!important;width:100%!important;max-width:none!important;display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;gap:0!important;padding:5px 0 calc(5px + env(safe-area-inset-bottom,0px))!important;margin:0!important;box-sizing:border-box!important;background:#fff!important;border-top:1px solid #e2e8f0!important;box-shadow:0 -3px 12px rgba(15,23,42,.04)!important;z-index:999999!important;overflow:visible!important}
+#mobileBottomNav.mobile-bottom-nav>button{flex:0 0 25%!important;width:25%!important;min-width:25%!important;max-width:25%!important;height:48px!important;min-height:48px!important;margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;position:relative!important;overflow:visible!important}
+#mobileBottomNav.mobile-bottom-nav>button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:0 0 40px!important;margin:0 auto!important;color:#71839c!important;opacity:1!important;visibility:visible!important}
+#mobileBottomNav.mobile-bottom-nav>button .nav-icon svg{display:block!important;width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;max-width:24px!important;max-height:24px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;opacity:1!important;visibility:visible!important}
+#mobileBottomNav.mobile-bottom-nav>button>span:not(.nav-icon):not(.nav-books-circle):not(.nav-test-circle){display:none!important}
+#mobileBottomNav.mobile-bottom-nav>button .nav-books-circle,#mobileBottomNav.mobile-bottom-nav>button .nav-test-circle{display:none!important}
+#mobileBottomNav.mobile-bottom-nav>button.active .nav-icon{color:#2563eb!important;background:#edf4ff!important;border-radius:14px!important}
+#mobileBottomNav.mobile-bottom-nav>button:focus-visible{outline:2px solid #2563eb!important;outline-offset:-3px!important}
+body{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))!important}
+@media(min-width:700px){#mobileBottomNav.mobile-bottom-nav{max-width:100%!important;padding-left:0!important;padding-right:0!important}#mobileBottomNav.mobile-bottom-nav>button{height:54px!important;min-height:54px!important}}
+</style>
+<script id="de-reference-nav-four-buttons">
+(function(){
+ const iconPaths={
+  home:'<path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/>',
+  reader:'<path d="M4 5.5c3-1.2 5.7-.8 8 1.1v13c-2.3-1.9-5-2.3-8-1.1z"/><path d="M20 5.5c-3-1.2-5.7-.8-8 1.1v13c2.3-1.9 5-2.3 8-1.1z"/>',
+  news:'<rect x="4" y="4.5" width="16" height="15" rx="1.5"/><path d="M7 8h10M7 12h10M7 16h6"/>',
+  profile:'<circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>'
+ };
+ function apply(){const nav=document.querySelector('#mobileBottomNav');if(!nav)return;const buttons=[...nav.querySelectorAll(':scope > button')];
+  const targets={home:[],reader:[],news:[],profile:[]};
+  buttons.forEach(b=>{const t=((b.innerText||'')+' '+(b.getAttribute('aria-label')||'')+' '+(b.dataset.appTarget||'')).toLowerCase();let k='';if(t.includes('home'))k='home';else if(t.includes('reader'))k='reader';else if(t.includes('news'))k='news';else if(t.includes('profile')||t.includes('account'))k='profile';if(k&&!targets[k].length)targets[k].push(b);});
+  // Fallback to first four actual nav buttons only if labels/data attributes are unavailable.
+  let chosen=['home','reader','news','profile'].map(k=>targets[k][0]).filter(Boolean);
+  if(chosen.length!==4 && buttons.length>=4)chosen=buttons.slice(0,4);
+  buttons.forEach(b=>{b.style.display=chosen.includes(b)?'flex':'none';});
+  chosen.forEach((b,i)=>{const key=['home','reader','news','profile'][i];let wrap=b.querySelector('.nav-icon');if(!wrap){wrap=document.createElement('span');wrap.className='nav-icon';b.insertBefore(wrap,b.firstChild);}wrap.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+iconPaths[key]+'</svg>';b.setAttribute('aria-label',key[0].toUpperCase()+key.slice(1));b.setAttribute('title',key[0].toUpperCase()+key.slice(1));});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+ let queued=false;new MutationObserver(()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;apply();});}}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>

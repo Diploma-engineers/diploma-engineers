@@ -7361,6 +7361,112 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
 })();
 </script>
 
+
+<!-- Diploma Engineers: folder-style section workflow + latest uploads -->
+<style id="de-folder-workflow-v4">
+#mobileBottomNav{display:flex!important;justify-content:space-between!important;align-items:stretch!important;gap:3px!important;padding:7px 5px!important}
+#mobileBottomNav button{flex:1 1 0!important;min-width:0!important;max-width:none!important}
+#mobileBottomNav button .nav-books-circle,#mobileBottomNav button .nav-test-circle{width:31px!important;height:31px!important;display:grid!important;place-items:center!important;border-radius:10px!important}
+#mobileBottomNav .nav-icon svg,#mobileBottomNav .nav-books-circle svg,#mobileBottomNav .nav-test-circle svg{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+#mobileBottomNav button span:last-child{white-space:nowrap!important;font-size:9px!important}
+.content-create-modal.show{display:flex!important;position:fixed!important;inset:0!important;z-index:100000!important;align-items:stretch!important;justify-content:center!important;background:#f7f9fc!important;backdrop-filter:none!important}
+.content-create-page{width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+.content-create-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:14px 18px!important;border-bottom:1px solid #e5eaf1!important;flex-shrink:0!important}
+.content-create-head h2{font-size:19px!important;margin:0!important}
+.content-create-body{flex:1 1 auto!important;overflow:auto!important;padding:14px!important;overscroll-behavior:contain!important}
+.content-create-footer{flex-shrink:0!important;padding:10px 14px calc(10px + env(safe-area-inset-bottom))!important;border-top:1px solid #e5eaf1!important;background:#fff!important}
+.content-create-close{display:none!important}
+.content-create-footer .content-cancel{display:inline-flex!important;align-items:center!important;gap:8px!important}
+.de-latest-wrap{margin:14px 0 18px!important;padding:0!important}
+.de-latest-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 2px!important}
+.de-latest-head h2{font-size:16px;margin:0;color:#172033}
+.de-latest-track{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 12px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.de-latest-card{flex:0 0 min(310px,78vw);min-height:106px;background:#fff;border:1px solid #e4eaf3;border-radius:17px;padding:13px;display:flex;gap:11px;align-items:center;box-shadow:0 6px 18px rgba(15,23,42,.045);scroll-snap-align:start;cursor:pointer}
+.de-latest-card img{width:64px;height:64px;object-fit:cover;border-radius:12px;background:#eef2f7;flex-shrink:0}
+.de-latest-card .de-latest-placeholder{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;background:#eff6ff;color:#2563eb;font-size:22px;flex-shrink:0}
+.de-latest-card strong{display:block;font-size:13px;line-height:1.35;color:#172033;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.de-latest-card small{display:block;color:#718096;font-size:10px;margin-top:6px}
+.de-folder-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;margin:0 0 12px;background:#fff;border:1px solid #e5eaf1;border-radius:16px}
+.de-folder-head h2{margin:0;font-size:17px;color:#172033}
+.de-folder-head p{margin:4px 0 0;font-size:11px;color:#718096}
+.de-folder-create{border:0;border-radius:13px;background:#2563eb;color:#fff;min-height:42px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;box-shadow:0 6px 16px #2563eb25;cursor:pointer;white-space:nowrap}
+.de-folder-create svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+@media(max-width:600px){.content-create-head{padding:12px!important}.content-create-body{padding:10px!important}.de-folder-head{padding:11px!important}.de-folder-head h2{font-size:15px}.de-folder-create{min-height:39px;padding:0 11px;font-size:11px}.de-latest-card{flex-basis:78vw}}
+</style>
+<script id="de-folder-workflow-v4-js">
+(function(){
+ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+ const svgPlus='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+ const modeMap={news:{id:'newsAdminSection',label:'News',icon:'▤'},blog:{id:'blogAdminSection',label:'Blog',icon:'✎'},books:{id:'booksAdminSection',label:'Books',icon:'▣'},test:{id:'testAdminSection',label:'Test Series',icon:'☷'},course:{id:'courseAdminSection',label:'Course',icon:'◇'}};
+ function makeFullPageCreate(mode){
+   const cfg=modeMap[mode]; if(!cfg)return;
+   const sec=document.getElementById(cfg.id); if(!sec)return;
+   let form=null;
+   if(mode==='news') form=$('#newsAdminSection .admin-upload-form')||$('#newsAdminSection .box');
+   if(mode==='blog') form=$('#blogAdminSection .admin-upload-form')||$('#blogAdminSection .blog-editor-card');
+   if(mode==='books') form=$('#bookAdminForm')?.closest('.panel')||$('#booksAdminSection .admin-upload-form');
+   if(mode==='test') form=$('#testAdminSection form')||$('#testAdminSection .ts-form')||$('#testAdminSection .test-form')||$('#testAdminSection .panel');
+   if(mode==='course') form=$('#courseAdminSection form')||$('#courseAdminSection .panel')||$('#courseAdminSection .course-admin-form');
+   if(mode==='test'||mode==='course'){
+     // Existing section has its own form; expose it on a dedicated full-screen editor page.
+     if(!form){const candidates=$$('[id*="ts"], [class*="test"], [class*="course"]',sec).filter(x=>x.matches('form,.panel,.box,.card')&&!x.closest('.de-folder-head'));form=candidates[0]||sec.firstElementChild;}
+     if(!form)return;
+     openNativeFullPage(mode,form);return;
+   }
+   if(!form)return;
+   if(typeof window.__openContentCreateEditor==='function'){window.__openContentCreateEditor(mode);return;}
+   openNativeFullPage(mode,form);
+ }
+ function openNativeFullPage(mode,form){
+   if(document.querySelector('.de-native-create-page'))return;
+   const oldParent=form.parentNode,placeholder=document.createComment('de-form-placeholder');oldParent.insertBefore(placeholder,form);
+   const page=document.createElement('section');page.className='de-native-create-page';
+   Object.assign(page.style,{position:'fixed',inset:'0',zIndex:'100001',background:'#f7f9fc',display:'flex',flexDirection:'column',height:'100dvh',overflow:'hidden'});
+   const head=document.createElement('header');Object.assign(head.style,{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',padding:'13px 16px',background:'#fff',borderBottom:'1px solid #e5eaf1'});
+   head.innerHTML='<button type="button" class="de-native-back" style="border:0;background:#eff6ff;color:#1d4ed8;border-radius:12px;padding:10px 13px;font-weight:800;display:flex;gap:7px;align-items:center"><span style="font-size:21px;line-height:1">←</span> Back</button><strong style="font-size:16px;color:#172033">Admin Panel · '+modeMap[mode].label+'</strong>';
+   const body=document.createElement('div');Object.assign(body.style,{padding:'14px',overflow:'auto',flex:'1',minHeight:'0'});body.appendChild(form);form.classList.remove('is-collapsed');
+   page.append(head,body);document.body.appendChild(page);document.body.style.overflow='hidden';
+   head.querySelector('button').onclick=()=>{placeholder.parentNode.insertBefore(form,placeholder);placeholder.remove();page.remove();document.body.style.overflow='';};
+   // If the existing form is submitted successfully and its own success handler fires, return to section.
+   form.addEventListener('submit',function(){setTimeout(()=>{const msg=(form.innerText||'')+' '+(secText(form)||'');if(/success|saved|published|updated/i.test(msg)){head.querySelector('button')?.click();}},900);},{once:true});
+ }
+ function secText(el){return el.closest('.admin-mode-section')?.innerText||'';}
+ function ensureSectionHead(mode){
+   const cfg=modeMap[mode],sec=document.getElementById(cfg.id);if(!sec||sec.querySelector(':scope > .de-folder-head'))return;
+   const h=document.createElement('div');h.className='de-folder-head';h.innerHTML='<div><h2>'+cfg.icon+' '+cfg.label+' folders</h2><p>Browse uploaded '+cfg.label.toLowerCase()+' and create a new item.</p></div><button class="de-folder-create" type="button" aria-label="Create '+cfg.label+'">'+svgPlus+' Create</button>';
+   sec.insertBefore(h,sec.firstChild);h.querySelector('button').addEventListener('click',()=>makeFullPageCreate(mode));
+ }
+ function makeLatestSlider(){
+   const home=document.getElementById('homeAdminSection');if(!home||home.querySelector('#deLatestSlider'))return;
+   const wrap=document.createElement('section');wrap.id='deLatestSlider';wrap.className='de-latest-wrap';
+   wrap.innerHTML='<div class="de-latest-head"><h2>Latest 5 Posts</h2><span style="font-size:11px;color:#718096">Swipe to explore</span></div><div class="de-latest-track" id="deLatestPosts"><div class="de-latest-card"><div class="de-latest-placeholder">↻</div><div><strong>Loading latest posts…</strong><small>News · Blog · Books · Test Series</small></div></div></div><div class="de-latest-head"><h2>Latest Uploaded Files</h2><span style="font-size:11px;color:#718096">Recently added</span></div><div class="de-latest-track" id="deLatestFiles"><div class="de-latest-card"><div class="de-latest-placeholder">▣</div><div><strong>Loading uploaded files…</strong><small>Books and course materials</small></div></div></div>';
+   const grid=home.querySelector('.manage-content-grid')||home.querySelector('.home-grid');if(grid)grid.parentNode.insertBefore(wrap,grid);else home.appendChild(wrap);
+   const fill=()=>{
+     const posts=[];
+     $$('#newsList .news-card, #newsList .news-item, #blogList .blog-card, #blogList .blog-item, #booksAdminSection tbody tr, #booksAdminSection .book-card, #testAdminSection .ts-test-card, #testAdminSection .test-card').forEach(el=>{
+       if(el.closest('#deLatestSlider'))return;const title=(el.querySelector('h3,h4,strong,.news-title,.blog-title,td')?.textContent||el.textContent||'').trim().replace(/\s+/g,' ');if(!title||title.length<3)return;
+       const img=el.querySelector('img')?.src||'';const time=el.querySelector('time,.date,.meta,small')?.textContent?.trim()||'';const type=el.closest('#newsAdminSection')?'News':el.closest('#blogAdminSection')?'Blog':el.closest('#booksAdminSection')?'Book':el.closest('#testAdminSection')?'Test Series':'Upload';posts.push({title:title.slice(0,100),img,time,type,el});
+     });
+     const unique=posts.filter((x,i,a)=>a.findIndex(y=>y.title===x.title)===i).slice(0,5);
+     const render=(target,items,empty)=>{const box=document.getElementById(target);if(!box)return;box.innerHTML='';if(!items.length){box.innerHTML='<div class="de-latest-card"><div class="de-latest-placeholder">＋</div><div><strong>'+empty+'</strong><small>Items appear here after they load in their section.</small></div></div>';return;}items.forEach(x=>{const c=document.createElement('article');c.className='de-latest-card';c.innerHTML=(x.img?'<img alt="" src="'+x.img.replace(/"/g,'&quot;')+'">':'<div class="de-latest-placeholder">'+(x.type==='News'?'▤':x.type==='Blog'?'✎':'▣')+'</div>')+'<div><strong></strong><small></small></div>';c.querySelector('strong').textContent=x.title;c.querySelector('small').textContent=x.type+(x.time?' · '+x.time:'');c.addEventListener('click',()=>{if(x.el?.closest('#newsAdminSection'))window.appGo?.('news');else if(x.el?.closest('#blogAdminSection'))window.appGo?.('blog');else if(x.el?.closest('#booksAdminSection'))window.appGo?.('books');else if(x.el?.closest('#testAdminSection'))window.appGo?.('test');});box.appendChild(c);});};
+     render('deLatestPosts',unique,'No posts loaded yet');
+     const files=[];$$('#booksAdminSection a[href],#booksAdminSection [data-pdf],#courseAdminSection a[href],#testAdminSection a[href]').forEach(el=>{const href=el.href||el.dataset.pdf||'';if(!href||href==='#'||/^javascript:/i.test(href))return;const title=(el.textContent||el.getAttribute('title')||'Uploaded file').trim();files.push({title:title.slice(0,100),href,type:el.closest('#booksAdminSection')?'Book':el.closest('#courseAdminSection')?'Course':'Test Series'});});
+     const fbox=document.getElementById('deLatestFiles');if(fbox){fbox.innerHTML='';if(!files.length){fbox.innerHTML='<div class="de-latest-card"><div class="de-latest-placeholder">⇩</div><div><strong>No uploaded file detected yet</strong><small>Open Books, Course or Test Series to load files.</small></div></div>';}else files.slice(-5).reverse().forEach(f=>{const c=document.createElement('a');c.className='de-latest-card';c.href=f.href;c.target='_blank';c.rel='noopener';c.innerHTML='<div class="de-latest-placeholder">⇩</div><div><strong></strong><small></small></div>';c.querySelector('strong').textContent=f.title;c.querySelector('small').textContent=f.type+' · Open file';fbox.appendChild(c);});}
+   };
+   const obs=new MutationObserver(()=>setTimeout(fill,350));obs.observe(home,{childList:true,subtree:true});setTimeout(fill,1200);setTimeout(fill,3500);
+ }
+ function patchBottomNav(){
+   const nav=document.getElementById('mobileBottomNav');if(!nav)return;
+   const wanted=[['home','Home'],['news','News'],['books','Books'],['test','Test Series'],['course','Course'],['blog','Blog']];
+   wanted.forEach(([key,label])=>{let b=nav.querySelector('[data-app-target="'+key+'"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.appTarget=key;b.innerHTML='<span class="nav-icon" aria-hidden="true"></span><span>'+label+'</span>';b.addEventListener('click',()=>window.appGo?.(key));nav.appendChild(b);}b.querySelector('span:last-child').textContent=label;});
+   nav.innerHTML='';wanted.forEach(([key,label])=>{const b=document.createElement('button');b.type='button';b.dataset.appTarget=key;const paths={home:'M3 10.8 12 3l9 7.8v9.2h-6v-6h-6v6H3z',news:'M5 3h14v18H5z M8 8h8 M8 12h8 M8 16h5',books:'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z M8 4v13',test:'M6 3h12v18H6z M9 8h6 M9 12h6 M9 16h4',course:'M3 9l9-5 9 5-9 5z M6 12v5c4 3 8 3 12 0v-5',blog:'M14 4l6 6-11 11-5 1 1-5z M12 6l6 6'};b.innerHTML='<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="'+paths[key]+'"/></svg></span><span>'+label+'</span>';b.addEventListener('click',()=>window.appGo?.(key));nav.appendChild(b);});
+ }
+ document.addEventListener('DOMContentLoaded',()=>{patchBottomNav();Object.keys(modeMap).forEach(ensureSectionHead);makeLatestSlider();setTimeout(()=>{Object.keys(modeMap).forEach(ensureSectionHead);patchBottomNav();makeLatestSlider();},900);});
+ // Rebuild latest carousel after the app switches sections and their Firebase lists render.
+ const oldGo=window.appGo;if(typeof oldGo==='function'&&!oldGo.__deV4){const wrapped=function(mode){const r=oldGo.apply(this,arguments);setTimeout(()=>{Object.keys(modeMap).forEach(ensureSectionHead);makeLatestSlider();},500);return r;};wrapped.__deV4=true;window.appGo=wrapped;}
+})();
+</script>
+
 </body>
 
 <style id="profile-full-width-final">

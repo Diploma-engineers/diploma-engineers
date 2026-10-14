@@ -9867,7 +9867,8 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 const courseAdminConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
 const existing=getApps().find(a=>a.name==="studentCourseCatalog");
 const catalogApp=existing||initializeApp(courseAdminConfig,"studentCourseCatalog");
@@ -9876,15 +9877,84 @@ const escCourse=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 const courseSlug=id=>String(id).replace(/[^a-zA-Z0-9_-]/g,"_");
 function renderAdminCourses(data){
  const grid=document.getElementById("adminUploadedCourseGrid");if(!grid)return;
+ window.__deAdminCourseCatalog=data||{};
  const entries=Object.entries(data||{}).filter(([id,c])=>c&&typeof c==="object"&&c.status==="approved"&&c.title);
  if(!entries.length){grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1">No published courses yet. Courses approved/published by Admin will appear here.</div>';return;}
  grid.innerHTML=entries.map(([id,c])=>{
   const title=escCourse(c.title||"Course"),branch=escCourse(c.branch||c.category||"Diploma Engineering"),desc=escCourse(c.description||"Video lectures, PDF notes and study resources."),img=String(c.thumbnail||c.bannerUrl||c.thumbnailUrl||c.imageUrl||"").replace(/"/g,"&quot;"),price=Number(c.price||c.amount||99),sid=escCourse(id),search=escCourse([c.title,c.branch,c.category,c.description].join(" ").toLowerCase());
   return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> Admin uploaded course content</li><li><i class="fa-solid fa-circle-check"></i> Lectures and PDF resources</li></ul><button type="button" class="action-btn" data-admin-course-buy="${sid}"><i class="fa-solid fa-lock"></i> Get This Course ₹${price}</button></div></article>`;
  }).join("");
- grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");}));
+ grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");openApprovedCourse(id);}));
+ grid.querySelectorAll(".admin-uploaded-course").forEach(card=>card.addEventListener("click",e=>{if(e.target.closest("button"))return;openApprovedCourse(card.getAttribute("data-paid-course"));}));
  if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
 }
+
+const browser=document.getElementById("deAdminCourseBrowser");
+const cb={course:null,semester:"",folder:""};
+const primaryApp=getApps().find(a=>a.name==="[DEFAULT]")||getApps()[0];
+const primaryDb=primaryApp?getDatabase(primaryApp):null;
+const primaryAuth=primaryApp?getAuth(primaryApp):null;
+let signedUser=null;
+if(primaryAuth)onAuthStateChanged(primaryAuth,u=>signedUser=u);
+const normSem=v=>String(v||"").trim()||"All Semesters";
+const itemSem=i=>normSem(i.semester||i.sem||i.year);
+const semOrder=v=>{const m=String(v).match(/(\d+)/);return m?Number(m[1]):999;};
+function getItems(c){return Array.isArray(c?.items)?c.items:Object.values(c?.items||{});}
+function itemFolder(i){return String(i.folderName||i.subject||i.folder||i.category||"General Resources").trim()||"General Resources";}
+function safeUrl(u){try{const x=new URL(String(u||""),location.href);return ["http:","https:"].includes(x.protocol)?x.href:"";}catch(_){return"";}}
+function itemLink(i){return safeUrl(i.videoUrl||i.fileUrl||i.pdfUrl||i.url||i.link||i.contentUrl||"");}
+function isVideo(i){return /video|youtube|lecture/i.test(String(i.type||""))||!!i.videoUrl;}
+function isPdf(i){return /pdf|file|document/i.test(String(i.type||""))||!!(i.fileUrl||i.pdfUrl);}
+async function openApprovedCourse(id){
+ const c=window.__deAdminCourseCatalog?.[id]||null;
+ if(!c){if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);return;}
+ if(!signedUser){alert("Please sign in to open this course.");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);return;}
+ let allowed=false;
+ try{if(primaryDb){const a=await get(ref(primaryDb,`courseAccess/${signedUser.uid}/${id}`));const v=a.exists()?a.val():null;allowed=!!v&&(v.verified===true||String(v.status||"").toLowerCase()==="verified"||String(v.status||"").toLowerCase()==="approved");}}catch(err){console.warn("Course access check failed",err);}
+ if(!allowed){if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("This course requires approval first.");return;}
+ showAdminCourseBrowser(id,c);
+}
+window.openApprovedAdminCourse=openApprovedCourse;
+function showAdminCourseBrowser(id,c){
+ cb.course={id,...c};cb.semester="";cb.folder="";
+ browser.classList.add("open");browser.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+ document.getElementById("deCbTopTitle").textContent=c.title||"Course Content";
+ document.getElementById("deCbHeroTitle").textContent=c.title||"Course";
+ document.getElementById("deCbHeroDesc").textContent=c.description||"Choose a semester, then open a subject folder to view its lectures, PDFs and links.";
+ const items=getItems(c);
+ const sems=[...new Set([...(c.semester?[normSem(c.semester)]:[]),...items.map(itemSem)])].sort((a,b)=>semOrder(a)-semOrder(b));
+ if(!sems.length)sems.push("All Semesters");
+ const track=document.getElementById("deCbSemesterTrack");
+ track.innerHTML=sems.map((sem,i)=>`<button type="button" class="de-cb-sem ${i===0?"active":""}" data-cb-sem="${escCourse(sem)}">${escCourse(sem)}</button>`).join("");
+ cb.semester=sems[0];renderCourseFolders();
+ document.getElementById("deCbFolderView").style.display="block";document.getElementById("deCbContentView").classList.remove("active");
+}
+function renderCourseFolders(){
+ const items=getItems(cb.course).filter(i=>itemSem(i)===cb.semester||itemSem(i)==="All Semesters"||itemSem(i)==="All");
+ const groups={};items.forEach(i=>(groups[itemFolder(i)]??=[]).push(i));
+ const names=Object.keys(groups);
+ const holder=document.getElementById("deCbFolders");
+ holder.innerHTML=names.length?names.map(name=>`<button type="button" class="de-cb-folder" data-cb-folder="${escCourse(name)}"><span class="de-cb-folder-icon"><i class="fa-solid fa-book-open"></i></span><span><strong>${escCourse(name)}</strong><small>${groups[name].length} ${groups[name].length===1?"resource":"resources"} · ${groups[name].filter(isVideo).length} videos / ${groups[name].filter(isPdf).length} PDFs</small></span><span style="margin-left:auto;color:#94a3b8">›</span></button>`).join(""):'<div class="de-cb-empty">No subjects or folders have been added for this semester yet.</div>';
+ document.getElementById("deCbFolderView").style.display="block";document.getElementById("deCbContentView").classList.remove("active");
+}
+function openCourseFolder(name){
+ cb.folder=name;
+ const items=getItems(cb.course).filter(i=>(itemSem(i)===cb.semester||itemSem(i)==="All Semesters"||itemSem(i)==="All")&&itemFolder(i)===name).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+ document.getElementById("deCbFolderTitle").textContent=name;
+ const holder=document.getElementById("deCbItems");
+ holder.innerHTML=items.length?items.map(i=>{const link=itemLink(i),video=isVideo(i),pdf=isPdf(i),icon=video?"fa-circle-play":pdf?"fa-file-pdf":"fa-link",label=video?"Play video":pdf?"Open PDF":"Open link";return `<article class="de-cb-item"><span class="de-cb-item-icon"><i class="fa-solid ${icon}"></i></span><span class="de-cb-item-copy"><strong>${escCourse(i.title||i.name||"Study resource")}</strong><small>${escCourse(i.type|| (video?"Video":pdf?"PDF":"Resource"))}${i.description?" · "+escCourse(i.description):""}</small></span>${link?`<button class="de-cb-open" type="button" data-cb-open-url="${link.replace(/"/g,"&quot;")}" data-cb-video="${video?"1":"0"}">${label}</button>`:'<span style="font-size:11px;color:#64748b">No link</span>'}</article>`}).join(""):'<div class="de-cb-empty">No content found in this folder.</div>';
+ document.getElementById("deCbFolderView").style.display="none";document.getElementById("deCbContentView").classList.add("active");
+}
+function closeCourseBrowser(){browser.classList.remove("open");browser.setAttribute("aria-hidden","true");document.body.style.overflow="";}
+document.getElementById("deCbBack").addEventListener("click",()=>{if(document.getElementById("deCbContentView").classList.contains("active")){document.getElementById("deCbContentView").classList.remove("active");document.getElementById("deCbFolderView").style.display="block";}else closeCourseBrowser();});
+document.getElementById("deCbContentBack").addEventListener("click",()=>{document.getElementById("deCbContentView").classList.remove("active");document.getElementById("deCbFolderView").style.display="block";});
+document.getElementById("deCbSemesterTrack").addEventListener("click",e=>{const b=e.target.closest("[data-cb-sem]");if(!b)return;cb.semester=b.dataset.cbSem;document.querySelectorAll(".de-cb-sem").forEach(x=>x.classList.toggle("active",x===b));renderCourseFolders();});
+document.getElementById("deCbFolders").addEventListener("click",e=>{const b=e.target.closest("[data-cb-folder]");if(b)openCourseFolder(b.dataset.cbFolder);});
+document.getElementById("deCbItems").addEventListener("click",e=>{const b=e.target.closest("[data-cb-open-url]");if(!b)return;const url=safeUrl(b.dataset.cbOpenUrl);if(!url)return;if(b.dataset.cbVideo==="1"&&/youtube\.com|youtu\.be/.test(url)){window.open(url,"_blank","noopener,noreferrer");}else window.open(url,"_blank","noopener,noreferrer");});
+document.getElementById("deCbSemPrev").addEventListener("click",()=>document.getElementById("deCbSemesterTrack").scrollBy({left:-240,behavior:"smooth"}));
+document.getElementById("deCbSemNext").addEventListener("click",()=>document.getElementById("deCbSemesterTrack").scrollBy({left:240,behavior:"smooth"}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&browser.classList.contains("open"))closeCourseBrowser();});
+
 onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=>{const grid=document.getElementById("adminUploadedCourseGrid");if(grid)grid.innerHTML='<div class="course-no-results show" style="display:block">Could not load courses. Check Firebase Database Rules and courseCatalog access.</div>';console.error("Admin course catalog load failed",err);});
 </script>
 

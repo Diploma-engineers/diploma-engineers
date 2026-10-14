@@ -2807,6 +2807,7 @@ const studentFirebaseConfig = {
   appId: "1:160233059797:web:be38130ed64f8bd0afb95c"
 };
 const studentApp = initializeApp(studentFirebaseConfig, "studentPurchaseAdmin");
+const studentAuth = getAuth(studentApp);
 const studentDb = getDatabase(studentApp);
 
 const CLOUD_NAME = "ub0qgzwa";
@@ -3883,6 +3884,20 @@ loginBtn.addEventListener("click", async () => {
             12000,
             "Main Firebase login timed out. Check your internet connection and Firebase Authentication."
         );
+
+        // Authenticate against the student project too, because purchase requests
+        // and courseAccess live in diploma-app-9a378. Without this session,
+        // its Realtime Database Rules correctly reject /utrPurchases reads.
+        try {
+            await withTimeout(
+                signInWithEmailAndPassword(studentAuth, email, password),
+                10000,
+                "Student Purchase Firebase login timed out"
+            );
+        } catch (studentAuthError) {
+            console.error("Student Purchase Firebase login failed:", studentAuthError?.code || studentAuthError?.message);
+            throw new Error("Purchase approval login failed in diploma-app-9a378. Create/enable this same admin email in that project's Firebase Authentication and grant admin access in its Database Rules.");
+        }
 
         // COURSE Firebase is available ONLY to the dedicated course-admin UID.
         // Other admins are never signed into the Course Firebase account.

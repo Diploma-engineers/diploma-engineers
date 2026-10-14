@@ -7282,12 +7282,27 @@ function showTrackingOnCard(courseId){
 
 function setPaidCardState(courseId,state){
   const card=getCourseCard(courseId); if(!card)return;
-  const btn=card.querySelector('button'); if(!btn)return;
   const previousState=card.dataset.paidState||'';
   card.dataset.paidCourse=courseId;
   card.dataset.paidState=state;
   card.classList.add('paid-course-card');
   const badge=card.querySelector('.free-badge');
+  const isFirebaseCourse=card.classList.contains('admin-uploaded-course');
+  if(isFirebaseCourse){
+    const buy=card.querySelector('[data-admin-course-buy]');
+    const explore=card.querySelector('[data-admin-course-explore]');
+    if(badge){badge.textContent=state==='approved'?'✓ ACCESS GRANTED':`₹${getCoursePrice(courseId)} • UPI`;badge.classList.add('paid-badge');}
+    if(previousState!==state)removeTrackingCard(card);
+    if(explore){explore.innerHTML='<i class="fa-solid fa-compass"></i> Explore';explore.onclick=e=>{e.preventDefault();e.stopPropagation();openCourse(courseId);};}
+    if(buy){
+      buy.style.display=state==='approved'?'none':'inline-flex';
+      buy.innerHTML=state==='pending'?'<i class="fa-solid fa-clock"></i> Approval Pending':'<i class="fa-solid fa-qrcode"></i> Buy';
+      buy.onclick=e=>{e.preventDefault();e.stopPropagation();if(state==='pending')showTrackingOnCard(courseId);else openPayment(courseId);};
+    }
+    card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;openCourse(courseId);};
+    return;
+  }
+  const btn=card.querySelector('button'); if(!btn)return;
   if(badge){badge.textContent='₹99 • UPI';badge.classList.add('paid-badge');}
   if(previousState!==state) removeTrackingCard(card);
   if(state==='approved'){
@@ -7491,7 +7506,7 @@ async function submitPurchase(){
     if(isApproved(approved)){openCourse(currentCourse);return;}
 
     const p=push(root),now=Date.now();
-    await set(p,{
+    const purchaseDetails={
       purchaseId:p.key,uid:currentUid,courseId:currentCourse,
       courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,
       status:'pending',verified:false,submittedAt:now,
@@ -7499,7 +7514,34 @@ async function submitPurchase(){
       mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member'),
       college:String(currentProfile.college||''),semester:String(currentProfile.semester||''),
       profilePic:String(currentProfile.profilePic||'')
-    });
+    };
+    // Firebase remains the primary admin workflow. Also send a copy of the request to the owner's inbox via FormSubmit.
+    await set(p,purchaseDetails);
+    try{
+      const emailPayload={
+        _subject:'New Course Purchase / Approval Request - '+purchaseDetails.courseName,
+        _template:'table',_captcha:'false',_replyto:purchaseDetails.email||'astar22072006@gmail.com',
+        'Request Status':purchaseDetails.status,'Course Name':purchaseDetails.courseName,
+        'Course ID':purchaseDetails.courseId,'Course Price':'₹'+purchaseDetails.amount,
+        'Student Name':purchaseDetails.name,'Student Email':purchaseDetails.email||'Not provided',
+        'Student Mobile':purchaseDetails.mobile||'Not provided','Branch':purchaseDetails.branch||'Not provided',
+        'College':purchaseDetails.college||'Not provided','Semester':purchaseDetails.semester||'Not provided',
+        'UTR / Transaction ID':purchaseDetails.utr,'Firebase UID':purchaseDetails.uid,
+        'Firebase Purchase ID':purchaseDetails.purchaseId,
+        'Submitted At':new Date(purchaseDetails.submittedAt).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),
+        'Admin Action':'Please verify the transaction and approve/reject this request in the Diploma Engineers admin panel.'
+      };
+      const mailResponse=await fetch('https://formsubmit.co/ajax/astar22072006@gmail.com',{
+        method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify(emailPayload)
+      });
+      if(!mailResponse.ok)throw new Error('FormSubmit email request failed ('+mailResponse.status+')');
+      const mailResult=await mailResponse.json().catch(()=>({success:'unknown'}));
+      console.info('[Diploma Engineers] Purchase email copy submitted to FormSubmit.',mailResult);
+    }catch(mailError){
+      // Do not undo a valid Firebase request if email delivery is unavailable.
+      console.warn('[Diploma Engineers] Firebase request saved, but FormSubmit email copy could not be sent:',mailError);
+    }
 
     currentProfile={...currentProfile,name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member')};
     showVerifyTick();
@@ -9975,10 +10017,11 @@ function renderAdminCourses(data){
   const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
   const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
   const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> ${itemCount} lecture / PDF items</li><li><i class="fa-solid fa-circle-check"></i> Semester and subject-wise content</li></ul><button type="button" class="action-btn" data-admin-course-buy="${sid}"><i class="fa-solid fa-lock"></i> Get This Course ₹${price}</button></div></article>`;
+  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> ${itemCount} lecture / PDF items</li><li><i class="fa-solid fa-circle-check"></i> Semester and subject-wise content</li></ul><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy</button></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
  grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
+  grid.querySelectorAll("[data-admin-course-explore]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-explore");if(typeof window.openIntegratedCourse==="function")window.openIntegratedCourse(id);else window.__dePendingCourseId=id;});
  if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
  // Authentication/profile might finish loading before or after this catalog listener.
  setTimeout(()=>window.refreshUploadedCourseCards?.(),100);
@@ -10141,7 +10184,7 @@ onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=
       <div class="decr-layout">
         <article class="decr-player-card"><div class="decr-player-top"><div id="deCRPlayerKicker" class="decr-player-kicker">VIDEO LECTURE</div><h2 id="deCRPlayerTitle" class="decr-player-title">Select a resource</h2><p id="deCRPlayerDesc" class="decr-player-desc">Video lecture, PDF notes or other study material.</p></div><div id="deCRMedia" class="decr-media"><div class="decr-placeholder"><div class="big">📚</div><p>Select a lecture from the list to play it here.</p></div></div>
           <div class="decr-video-feedback"><div class="decr-feedback-row"><button type="button" id="deCRLikeBtn" class="decr-like-btn">♡ Like <span id="deCRLikeCount">0</span></button><button type="button" id="deCRRateBtn" class="decr-rate-btn">★ Rate this lesson</button><span id="deCRRatingSummary" class="decr-rating-note" style="margin:0">Rate this video or resource</span></div><p class="decr-rating-note">Your like is saved for this lesson. Ratings are saved for admin review; the video keeps playing while you rate.</p></div>
-          <div class="decr-credit"><strong>Educational Purpose &amp; Credit Notice:</strong> यह video students की educational help के उद्देश्य से share किया गया है। Original creator के knowledge और content का हम पूरा सम्मान करते हैं। यह notice हर video/resource के नीचे अपने-आप दिखता है। किसी भी copyright concern के लिए संपर्क करें: <a href="mailto:astar22072006@gmail.com">astar22072006@gmail.com</a></div>
+          <div id="deCRCreditNotice" class="decr-credit"><strong>Educational Purpose &amp; Credit Notice:</strong> यह video students की educational help के उद्देश्य से share किया गया है। Original creator के knowledge और content का हम पूरा सम्मान करते हैं। यह notice हर video/resource के नीचे अपने-आप दिखता है। किसी भी copyright concern के लिए संपर्क करें: <a href="mailto:astar22072006@gmail.com">astar22072006@gmail.com</a></div>
           <div id="deCRActions" class="decr-actions decr-hidden"></div><div class="decr-controls"><button type="button" id="deCRPrevious">← Previous</button><span class="decr-counter" id="deCRCounter">0 / 0</span><button type="button" id="deCRNext">Next →</button></div></article>
         <aside class="decr-playlist"><div class="decr-list-head"><strong id="deCRListTitle">Lectures & Resources</strong><small id="deCRListCount">Choose a lecture</small></div><div id="deCRList" class="decr-list"></div></aside>
       </div>
@@ -10186,12 +10229,26 @@ function semesters(){const items=getItems();const vals=items.map(itemSemester).f
 function showCourse(c){currentCourse=c;$('deCRCourseTitle').textContent=c.title||c.name||c.courseName||'Course';$('deCRCourseDescription').textContent=c.description||'Explore subject folders, video lectures and PDF notes for this course.';const items=getItems();const meta=[c.branch||c.category||'Diploma Engineering',normalizeSemester(c.semester),`${items.length} resource${items.length===1?'':'s'}`].filter(Boolean);$('deCRCourseMeta').innerHTML=meta.map(x=>`<span class="decr-pill">${esc(x)}</span>`).join('');currentSemester=semesters()[0]||'All Semesters';currentFolder='';$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();renderSemesters();renderFolders();}
 function renderSemesters(){const values=semesters();if(!values.includes(currentSemester))currentSemester=values[0]||'All Semesters';$('deCRSemesterTrack').innerHTML=values.map(v=>`<button type="button" class="decr-sem ${v===currentSemester?'active':''}" data-de-sem="${esc(v)}">${esc(v)}</button>`).join('');$('deCRSemesterTrack').querySelectorAll('[data-de-sem]').forEach(btn=>btn.addEventListener('click',()=>{currentSemester=btn.dataset.deSem;currentFolder='';renderSemesters();renderFolders();}));}
 function folderGroups(){const map=new Map();getItems().forEach((it,index)=>{if(itemSemester(it)!==currentSemester)return;const name=String(it.folderName||it.subject||it.module||it.unit||it.section||it.topic||it.folder||'General').trim()||'General';if(!map.has(name))map.set(name,[]);map.get(name).push({...it,__sourceIndex:index});});return [...map.entries()].map(([name,items])=>({name,items}));}
-function renderFolders(){const groups=folderGroups();$('deCRFolderGrid').innerHTML=groups.map(g=>`<button type="button" class="decr-folder" data-de-folder="${esc(g.name)}"><span class="decr-folder-icon">📁</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.items.length} resource${g.items.length===1?'':'s'} • ${g.items.some(x=>!isPdf(x,itemUrl(x)))?'Videos & notes':'Study resources'}</small></span><span class="decr-chevron">›</span></button>`).join('');$('deCRNoFolders').classList.toggle('decr-hidden',groups.length>0);$('deCRFolderGrid').querySelectorAll('[data-de-folder]').forEach(btn=>btn.addEventListener('click',()=>openFolder(btn.dataset.deFolder)));}
+function renderFolders(){const groups=folderGroups();$('deCRFolderGrid').innerHTML=groups.map(g=>`<button type="button" class="decr-folder is-locked" data-de-folder="${esc(g.name)}"><span class="decr-folder-icon">📁</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.items.length} resource${g.items.length===1?'':'s'} • ${g.items.some(x=>!isPdf(x,itemUrl(x)))?'Videos & notes':'Study resources'}</small></span><span class="decr-chevron">›</span></button>`).join('');$('deCRNoFolders').classList.toggle('decr-hidden',groups.length>0);$('deCRFolderGrid').querySelectorAll('[data-de-folder]').forEach(btn=>btn.addEventListener('click',()=>openFolder(btn.dataset.deFolder)));refreshReaderFolderLocks();}
+async function readerCourseUnlocked(){
+ if(!signedInUser||!studentDb||!currentCourseId)return false;
+ try{
+  const snap=await get(ref(studentDb,`courseAccess/${signedInUser.uid}/${currentCourseId}`));
+  if(snap.exists()&&validAccess(snap.val()))return true;
+  const ps=await get(ref(studentDb,`utrPurchases/${signedInUser.uid}/${currentCourseId}`));
+  if(ps.exists()){let yes=false;ps.forEach(x=>{if(validAccess(x.val()))yes=true;});if(yes)return true;}
+ }catch(e){console.warn('Course access check:',e);}
+ return false;
+}
+async function refreshReaderFolderLocks(){
+ const unlocked=await readerCourseUnlocked();
+ $('deCRFolderGrid')?.querySelectorAll('[data-de-folder]').forEach(btn=>btn.classList.toggle('is-locked',!unlocked));
+}
 function showBrowser(scrollTop=true){lastView='browser';$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRTopSub').textContent='';$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
 function openFolder(folder){const group=folderGroups().find(g=>g.name===folder);if(!group||!group.items.length)return;currentFolder=folder;currentFolderItems=group.items;currentLessonIndex=0;$('deCRTopTitle').textContent=folder;$('deCRActiveFolder').textContent=folder;$('deCRActiveFolderMeta').textContent='';$('deCRListTitle').textContent=`${folder} • Lectures`;renderPlaylist();renderLesson(0);lastView='player';$('deCRTopSub').textContent='';$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');hideMsg();shell.scrollTo({top:0,behavior:'smooth'});}
 function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} item${items.length===1?'':'s'} • Tap to play`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
 function safeLink(url){try{const u=new URL(url,location.href);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}}
-function renderLesson(index){if(index<0||index>=currentFolderItems.length)return;currentLessonIndex=index;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
+async function renderLesson(index){if(index<0||index>=currentFolderItems.length)return;currentLessonIndex=index;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';if(!(await readerCourseUnlocked())){$('deCRPlayerDesc').style.display='none';$('deCRPlayerKicker').style.display='none';$('deCRCreditNotice')?.style.setProperty('display','none','important');document.querySelector('.decr-video-feedback')?.style.setProperty('display','none','important');$('deCRMedia').classList.add('decr-locked-media');$('deCRList').style.filter='blur(7px)';$('deCRList').style.pointerEvents='none';$('deCRList').style.userSelect='none';media.innerHTML=`<div class="decr-lock-preview"><div class="decr-lock-symbol"><i class="fa-solid fa-lock"></i></div><h3>Course content locked</h3><p>You can explore every folder and see the lecture/PDF titles. Buy this course and get admin approval to unlock the actual videos and study files.</p><button type="button" id="deCRUnlockBtn"><i class="fa-solid fa-qrcode"></i> Buy Course</button></div>`;$('deCRUnlockBtn').onclick=()=>{if(typeof window.openCoursePayment==='function')window.openCoursePayment(currentCourseId);else alert('Please return to Courses and tap Buy.');};$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
 $('deCRActions').innerHTML='';
 $('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));const active=$('deCRList').querySelector('.decr-item.active');active?.scrollIntoView({block:'nearest',behavior:'smooth'});updateLikeUI();$('deCRRatingSummary').textContent='Rate this video or resource';}
 async function loadIntegratedCourse(courseId){const token=++loadingToken;currentCourseId=String(courseId||'');openShell();msg('Loading course…');if(!currentCourseId){msg('Course ID is missing. Return to Courses and open the course again.','error');return;}try{ensureStudentFirebase();const courseSnap=await get(ref(catalogDb,`courseCatalog/${currentCourseId}`));if(token!==loadingToken)return;if(!courseSnap.exists()){msg('Course not found. Check that the Admin Panel published it in diplomaengineers-869df → courseCatalog and that the App is passing the correct course ID.','error');return;}const course=courseSnap.val()||{};if(!coursePublished(course)){msg('This course is not published yet. Admin must set its status to Approved/Published.','error');return;}showCourse(course);}catch(err){console.error('[Diploma Engineers] Integrated course reader failed:',err);if(token===loadingToken)msg(`Could not load this course (${err?.code||err?.message||'Firebase error'}). Check public read access for courseCatalog in diplomaengineers-869df.`, 'error');}}
@@ -10211,6 +10268,21 @@ if(studentAuth)onAuthStateChanged(studentAuth,user=>{signedInUser=user;});
 if(window.__dePendingCourseId){const id=window.__dePendingCourseId;window.__dePendingCourseId='';loadIntegratedCourse(id);}
 </script>
 
+<style id="de-firebase-course-explore-buy-patch">
+.admin-course-actions{display:flex;gap:10px;margin-top:14px}
+.admin-course-actions .action-btn{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:7px;margin:0;padding:11px 10px;border-radius:12px;font-weight:800}
+.admin-course-actions .admin-course-explore{background:#eff6ff!important;color:#1d4ed8!important;border:1px solid #bfdbfe!important}
+.admin-course-actions .admin-course-buy{background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;color:#fff!important;border:1px solid #2563eb!important}
+.admin-course-actions .admin-course-buy[style*="display: none"]{display:none!important}
+.decr-folder.is-locked .decr-folder-icon{position:relative}
+.decr-folder.is-locked .decr-folder-icon:after{content:"🔒";font-size:12px;position:absolute;right:-8px;bottom:-5px;background:#fff;border-radius:50%;padding:1px}
+.decr-media.decr-locked-media{filter:none!important;position:relative}
+.decr-lock-preview{padding:28px 18px;text-align:center;display:grid;place-items:center;gap:10px;min-height:240px;background:linear-gradient(180deg,#f8fbff,#fff);color:#334155}
+.decr-lock-preview .decr-lock-symbol{width:62px;height:62px;border-radius:20px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:27px}
+.decr-lock-preview h3{margin:0;font-size:18px;font-weight:900;color:#0f172a}
+.decr-lock-preview p{margin:0;max-width:390px;font-size:13px;line-height:1.55;color:#64748b}
+.decr-lock-preview button{border:0;border-radius:12px;padding:11px 18px;background:#2563eb;color:#fff;font-weight:800}
+</style>
 </body>
 </html>
 

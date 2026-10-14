@@ -8188,31 +8188,67 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     const raw = Array.isArray(course?.items) ? course.items : Array.isArray(course?.content) ? course.content : Array.isArray(course?.materials) ? course.materials : [];
     return raw.filter(x => x && typeof x === "object");
   }
+  function firebaseItemSemester(item, course){
+    return String(item?.semester || item?.semesterName || item?.term || item?.yearSemester || item?.semesterTitle || course?.semester || course?.year || "All Semesters").trim() || "All Semesters";
+  }
   function firebaseFolderGroups(course){
     const groups = new Map();
+    const add = (semester, name, items) => {
+      const key = `${semester}|||${name}`;
+      if(!groups.has(key)) groups.set(key,{semester,name,items:[]});
+      if(Array.isArray(items)) groups.get(key).items.push(...items);
+    };
     firebaseCourseItems(course).forEach(item=>{
+      const semester = firebaseItemSemester(item,course);
       const folder = String(item.folderName || item.subject || item.module || item.unit || item.section || item.topic || item.folder || "General").trim() || "General";
-      if(!groups.has(folder)) groups.set(folder,[]);
-      groups.get(folder).push(item);
+      add(semester,folder,[item]);
     });
-    // Some admin course records store folders directly rather than an items array.
     if(!groups.size && Array.isArray(course?.folders)) course.folders.forEach(folder=>{
-      if(typeof folder === "string") groups.set(folder,[]);
-      else if(folder && typeof folder === "object") groups.set(String(folder.name || folder.title || folder.folderName || "Course Folder"), Array.isArray(folder.items) ? folder.items : []);
+      if(typeof folder === "string") add(course?.semester || course?.year || "All Semesters",folder,[]);
+      else if(folder && typeof folder === "object"){
+        const semester = firebaseItemSemester(folder,course);
+        add(semester,String(folder.name || folder.title || folder.folderName || "Course Folder"),Array.isArray(folder.items)?folder.items:[]);
+      }
     });
-    return [...groups.entries()].map(([name,items])=>({name,items}));
+    // Support admin data saved as semester -> folder -> resources objects.
+    if(!groups.size && course?.content && !Array.isArray(course.content) && typeof course.content === "object"){
+      Object.entries(course.content).forEach(([semester,folders])=>{
+        if(Array.isArray(folders)) folders.forEach((f,i)=>{
+          if(typeof f==="string") add(semester,f,[]);
+          else if(f && typeof f==="object") add(semester,String(f.name||f.title||f.folderName||f.subject||`Folder ${i+1}`),Array.isArray(f.items)?f.items:Array.isArray(f.resources)?f.resources:[]);
+        });
+        else if(folders && typeof folders==="object") Object.entries(folders).forEach(([folderName,resources])=>add(semester,folderName,Array.isArray(resources)?resources:[]));
+      });
+    }
+    return [...groups.values()];
+  }
+  let firebasePreviewSemester = "";
+  function showFirebaseFolderWarning(){
+    if(!paidMessage) { alert("🔒 Please buy this course first to open the folder."); return; }
+    paidMessage.textContent = "🔒 Please buy this course first to open the folder.";
+    paidMessage.classList.add("show");
+    clearTimeout(window.__deFirebaseFolderToastTimer);
+    window.__deFirebaseFolderToastTimer = setTimeout(()=>paidMessage.classList.remove("show"),2600);
   }
   function renderFirebaseFolderPreview(course, courseId){
     if(!firebaseFolderPreview) return;
     const groups = firebaseFolderGroups(course);
-    const rows = groups.map(group=>`<button type="button" class="de-content-row" data-firebase-folder="${escapeDetail(group.name)}" aria-label="Explore ${escapeDetail(group.name)}; purchase required"><span class="de-content-folder">📁</span><span class="de-content-info"><span class="de-content-name">${escapeDetail(group.name)}</span><span class="de-content-count">${group.items.length} learning material${group.items.length===1?'':'s'}</span></span><i class="fa-solid fa-lock de-content-lock"></i></button>`).join("");
-    firebaseFolderPreview.innerHTML = rows || '<div class="de-content-row"><span class="de-content-folder">📚</span><span class="de-content-info"><span class="de-content-name">Course materials</span><span class="de-content-count">Materials are managed by the course administrator.</span></span><i class="fa-solid fa-lock de-content-lock"></i></div>';
+    const semesters = [...new Set(groups.map(g=>g.semester))];
+    if(!semesters.length) semesters.push(String(course?.semester || course?.year || "All Semesters"));
+    if(!semesters.includes(firebasePreviewSemester)) firebasePreviewSemester = semesters[0];
+    const folders = groups.filter(g=>g.semester===firebasePreviewSemester);
+    const semesterTabs = `<div class="de-firebase-semester-tabs" role="tablist" aria-label="Course semesters">${semesters.map(sem=>`<button type="button" role="tab" aria-selected="${sem===firebasePreviewSemester}" class="de-firebase-semester ${sem===firebasePreviewSemester?'active':''}" data-firebase-semester="${escapeDetail(sem)}">${escapeDetail(sem)}</button>`).join("")}</div>`;
+    const rows = folders.map(group=>`<button type="button" class="de-content-row de-firebase-folder-card" data-firebase-folder="${escapeDetail(group.name)}" aria-label="${escapeDetail(group.name)} locked; buy course first"><span class="de-content-folder">📁</span><span class="de-content-info"><span class="de-content-name">${escapeDetail(group.name)}</span><span class="de-content-count">${group.items.length} resource${group.items.length===1?'':'s'} • Videos &amp; notes</span></span><i class="fa-solid fa-chevron-right de-content-lock" aria-hidden="true"></i></button>`).join("");
+    firebaseFolderPreview.innerHTML = semesterTabs + `<div class="de-firebase-folder-grid">${rows || '<div class="de-firebase-empty">No folders found for this semester.</div>'}</div><div class="de-firebase-content-foot">Diploma Engineers • Your trusted learning platform</div>`;
     firebaseFolderPreview.style.display = "block";
     document.getElementById("deCoursePreviewWrap").style.display = "none";
-    firebaseFolderPreview.querySelectorAll("[data-firebase-folder]").forEach(row=>row.addEventListener("click",()=>{
-      if(typeof window.openCoursePayment === "function") window.openCoursePayment(courseId);
-      else if(typeof window.navigateTo === "function") window.navigateTo(courseId);
-      else alert("Please sign in, then try again to purchase this course.");
+    firebaseFolderPreview.querySelectorAll("[data-firebase-semester]").forEach(tab=>tab.addEventListener("click",()=>{
+      firebasePreviewSemester = tab.dataset.firebaseSemester;
+      renderFirebaseFolderPreview(course,courseId);
+    }));
+    firebaseFolderPreview.querySelectorAll("[data-firebase-folder]").forEach(row=>row.addEventListener("click",e=>{
+      e.preventDefault();
+      showFirebaseFolderWarning();
     }));
   }
   window.openFirebaseCatalogCourseDetail = function(courseId){
@@ -8238,7 +8274,7 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
     detailGet.innerHTML = `<i class="fa-solid fa-lock"></i> Buy This Course ₹${price}`;
     detailGet.style.display = "none";
     if(firebaseDetailActions) firebaseDetailActions.style.display = "flex";
-    renderFirebaseFolderPreview(course, firebaseDetailCourseId);
+    firebasePreviewSemester = "";\n    renderFirebaseFolderPreview(course, firebaseDetailCourseId);
     document.querySelectorAll(".de-course-tab").forEach(x=>x.classList.toggle("active",x.dataset.detailTab==="overview"));
     document.querySelectorAll(".de-course-panel").forEach(x=>x.classList.toggle("active",x.id==="deDetailOverview"));
     detailOverlay.classList.add("show");
@@ -10295,7 +10331,8 @@ function semesters(){const items=getItems();const vals=items.map(itemSemester).f
 function showCourse(c){currentCourse=c;$('deCRCourseTitle').textContent=c.title||c.name||c.courseName||'Course';$('deCRCourseDescription').textContent=c.description||'Explore subject folders, video lectures and PDF notes for this course.';const items=getItems();const meta=[c.branch||c.category||'Diploma Engineering',normalizeSemester(c.semester),`${items.length} resource${items.length===1?'':'s'}`].filter(Boolean);$('deCRCourseMeta').innerHTML=meta.map(x=>`<span class="decr-pill">${esc(x)}</span>`).join('');currentSemester=semesters()[0]||'All Semesters';currentFolder='';$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();renderSemesters();renderFolders();}
 function renderSemesters(){const values=semesters();if(!values.includes(currentSemester))currentSemester=values[0]||'All Semesters';$('deCRSemesterTrack').innerHTML=values.map(v=>`<button type="button" class="decr-sem ${v===currentSemester?'active':''}" data-de-sem="${esc(v)}">${esc(v)}</button>`).join('');$('deCRSemesterTrack').querySelectorAll('[data-de-sem]').forEach(btn=>btn.addEventListener('click',()=>{currentSemester=btn.dataset.deSem;currentFolder='';renderSemesters();renderFolders();}));}
 function folderGroups(){const map=new Map();getItems().forEach((it,index)=>{if(itemSemester(it)!==currentSemester)return;const name=String(it.folderName||it.subject||it.module||it.unit||it.section||it.topic||it.folder||'General').trim()||'General';if(!map.has(name))map.set(name,[]);map.get(name).push({...it,__sourceIndex:index});});return [...map.entries()].map(([name,items])=>({name,items}));}
-function renderFolders(){const groups=folderGroups();$('deCRFolderGrid').innerHTML=groups.map(g=>`<button type="button" class="decr-folder" data-de-folder="${esc(g.name)}"><span class="decr-folder-icon">📁</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.items.length} resource${g.items.length===1?'':'s'} • ${g.items.some(x=>!isPdf(x,itemUrl(x)))?'Videos & notes':'Study resources'}</small></span><span class="decr-chevron">›</span></button>`).join('');$('deCRNoFolders').classList.toggle('decr-hidden',groups.length>0);$('deCRFolderGrid').querySelectorAll('[data-de-folder]').forEach(btn=>btn.addEventListener('click',()=>openFolder(btn.dataset.deFolder)));}
+function showLockedFolderNotice(){let toast=document.getElementById('deCRLockedToast');if(!toast){toast=document.createElement('div');toast.id='deCRLockedToast';toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');toast.textContent='🔒 Please buy this course first to open the folder.';document.body.appendChild(toast);}toast.classList.add('show');clearTimeout(window.__deCRLockedToastTimer);window.__deCRLockedToastTimer=setTimeout(()=>toast.classList.remove('show'),2600);}
+function renderFolders(){const groups=folderGroups();$('deCRFolderGrid').innerHTML=groups.map(g=>`<button type="button" class="decr-folder" data-de-folder="${esc(g.name)}" aria-label="${esc(g.name)} locked folder"><span class="decr-folder-icon">📁</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.items.length} resource${g.items.length===1?'':'s'} • ${g.items.some(x=>!isPdf(x,itemUrl(x)))?'Videos & notes':'Study resources'}</small></span><span class="decr-lock-icon" aria-hidden="true">🔒</span></button>`).join('');$('deCRNoFolders').classList.toggle('decr-hidden',groups.length>0);$('deCRFolderGrid').querySelectorAll('[data-de-folder]').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();showLockedFolderNotice();}));}
 function showBrowser(scrollTop=true){lastView='browser';$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRTopSub').textContent='';$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
 function openFolder(folder){const group=folderGroups().find(g=>g.name===folder);if(!group||!group.items.length)return;currentFolder=folder;currentFolderItems=group.items;currentLessonIndex=0;$('deCRTopTitle').textContent=folder;$('deCRActiveFolder').textContent=folder;$('deCRActiveFolderMeta').textContent='';$('deCRListTitle').textContent=`${folder} • Lectures`;renderPlaylist();renderLesson(0);lastView='player';$('deCRTopSub').textContent='';$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');hideMsg();shell.scrollTo({top:0,behavior:'smooth'});}
 function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} item${items.length===1?'':'s'} • Tap to play`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
@@ -10436,5 +10473,112 @@ if(window.__dePendingCourseId){const id=window.__dePendingCourseId;window.__dePe
   .nav-left{gap:2px!important;}
   .header-bell-btn{width:36px!important;height:36px!important;flex:0 0 36px!important;}
   .nav-right-box{gap:8px!important;}
+}
+</style>
+
+<style id="de-firebase-content-tab-screenshot-layout-fix">
+/* Keep the semester/folder browser visible inside the Course Details > CONTENT tab. */
+#deFirebaseCourseOverview [data-fco-panel="content"]{
+  background:#f3f6fc;
+  border-radius:14px;
+  padding:18px 16px 22px;
+  min-height:260px;
+  margin-top:0;
+}
+#deFirebaseCourseOverview .de-fco-semesters{
+  display:flex;align-items:center;gap:10px;overflow-x:auto;
+  padding:0 0 16px;margin:0 0 4px;scrollbar-width:thin;
+}
+#deFirebaseCourseOverview .de-fco-semester{
+  min-height:40px;padding:10px 17px;border-radius:12px;
+  background:#fff;border:1px solid #dbe5f2;color:#334155;
+  font-size:12px;font-weight:850;white-space:nowrap;
+}
+#deFirebaseCourseOverview .de-fco-semester.active{
+  background:#2563eb;color:#fff;border-color:#2563eb;
+}
+#deFirebaseCourseOverview .de-fco-folder-grid{
+  display:grid;grid-template-columns:minmax(0,520px);gap:10px;
+  align-content:start;min-height:0;border:0;border-radius:0;
+  padding:0;background:transparent;
+}
+#deFirebaseCourseOverview .de-fco-folder{
+  width:100%;min-height:84px;display:flex;align-items:center;gap:14px;
+  text-align:left;border:1px solid #bfdbfe;border-radius:17px;
+  background:#fff;padding:15px 17px;box-shadow:0 4px 14px #0f172a08;
+}
+#deFirebaseCourseOverview .de-fco-folder-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;background:#eaf2ff;border-radius:14px;font-size:25px}
+#deFirebaseCourseOverview .de-fco-folder strong{display:block;font-size:14px;color:#0f172a;overflow-wrap:anywhere}
+#deFirebaseCourseOverview .de-fco-folder small{display:block;color:#64748b;font-size:12px;margin-top:5px}
+#deFirebaseCourseOverview .de-fco-lock{margin-left:auto;color:#7c8da2;font-size:17px;flex:0 0 auto}
+#deFirebaseCourseOverview .de-fco-content-note{font-size:12px;color:#64748b;line-height:1.6;margin:14px 2px 0}
+@media(max-width:800px){
+ #deFirebaseCourseOverview [data-fco-panel="content"]{padding:14px 10px 18px;min-height:220px}
+ #deFirebaseCourseOverview .de-fco-folder-grid{grid-template-columns:minmax(0,1fr)}
+ #deFirebaseCourseOverview .de-fco-folder{min-height:76px;padding:12px}
+}
+</style>
+
+<style id="de-course-content-folder-visual-fix">
+/* Match the clean semester/folder preview layout from the reference screenshot. */
+#deCourseShell .decr-semtrack{display:flex!important;align-items:center!important;gap:10px!important;overflow-x:auto!important;padding:2px 0 14px!important;margin:0!important;scrollbar-width:thin!important;}
+#deCourseShell .decr-sem{min-height:40px!important;min-width:0!important;padding:10px 17px!important;border:1px solid #dbe5f2!important;border-radius:12px!important;background:#fff!important;color:#334155!important;font-size:12px!important;font-weight:850!important;box-shadow:0 3px 10px #0f172a08!important;white-space:nowrap!important;}
+#deCourseShell .decr-sem.active{background:#2563eb!important;color:#fff!important;border-color:#2563eb!important;}
+#deCourseShell .decr-folders{display:grid!important;grid-template-columns:minmax(0,520px)!important;gap:10px!important;align-content:start!important;width:100%!important;min-width:0!important;}
+#deCourseShell .decr-folder{appearance:none!important;-webkit-appearance:none!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:14px!important;width:100%!important;min-width:0!important;min-height:84px!important;margin:0!important;padding:15px 17px!important;text-align:left!important;border:1px solid #bfdbfe!important;border-radius:17px!important;background:#fff!important;color:#0f172a!important;box-shadow:0 4px 14px #0f172a08!important;outline:none!important;cursor:pointer!important;}
+#deCourseShell .decr-folder:hover{background:#fff!important;border-color:#93c5fd!important;transform:translateY(-1px)!important;}
+#deCourseShell .decr-folder-icon{width:48px!important;height:48px!important;flex:0 0 48px!important;display:grid!important;place-items:center!important;background:#eaf2ff!important;border-radius:14px!important;font-size:25px!important;color:#2563eb!important;}
+#deCourseShell .decr-folder-info{min-width:0!important;flex:1 1 auto!important;}
+#deCourseShell .decr-folder-info strong{display:block!important;font-size:14px!important;line-height:1.4!important;font-weight:700!important;color:#0f172a!important;overflow-wrap:anywhere!important;}
+#deCourseShell .decr-folder-info small{display:block!important;margin-top:5px!important;font-size:12px!important;line-height:1.4!important;color:#64748b!important;}
+#deCourseShell .decr-lock-icon{margin-left:auto!important;flex:0 0 auto!important;font-size:17px!important;opacity:.8!important;}
+#deCourseShell .decr-wrap{background:#f3f6fc!important;}
+#deCRLockedToast{position:fixed;left:50%;bottom:26px;z-index:2147483647;transform:translate(-50%,12px);opacity:0;pointer-events:none;max-width:calc(100vw - 28px);padding:13px 18px;border-radius:13px;background:#172033;color:#fff;box-shadow:0 12px 35px #0003;font-size:13px;font-weight:800;text-align:center;transition:opacity .2s,transform .2s;}
+#deCRLockedToast.show{opacity:1;transform:translate(-50%,0);}
+#deFirebaseCourseOverview .de-fco-folder-grid{grid-template-columns:minmax(0,520px)!important;width:100%!important;min-width:0!important;gap:10px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;}
+#deFirebaseCourseOverview .de-fco-folder{appearance:none!important;-webkit-appearance:none!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;min-height:84px!important;margin:0!important;padding:15px 17px!important;border:1px solid #bfdbfe!important;border-radius:17px!important;background:#fff!important;color:#0f172a!important;text-align:left!important;box-shadow:0 4px 14px #0f172a08!important;}
+#deFirebaseCourseOverview .de-fco-folder-icon{width:48px!important;height:48px!important;flex:0 0 48px!important;border-radius:14px!important;background:#eaf2ff!important;}
+@media(max-width:560px){#deCourseShell .decr-folders,#deFirebaseCourseOverview .de-fco-folder-grid{grid-template-columns:minmax(0,1fr)!important;}#deCourseShell .decr-folder,#deFirebaseCourseOverview .de-fco-folder{min-height:76px!important;padding:12px!important;}}
+</style>
+
+
+<style id="de-firebase-course-content-reference-fix">
+/* Firebase-loaded course Content tab: match the reference semester + folder card layout. */
+#deDetailContent #deFirebaseFolderPreview{
+  display:block!important;overflow:visible!important;border:0!important;border-radius:0!important;
+  background:#f3f6fc!important;padding:18px 16px 20px!important;min-height:250px!important;
+}
+#deDetailContent .de-firebase-semester-tabs{
+  display:flex;align-items:center;gap:10px;overflow-x:auto;white-space:nowrap;
+  padding:0 0 16px;margin:0;scrollbar-width:none;
+}
+#deDetailContent .de-firebase-semester-tabs::-webkit-scrollbar{display:none}
+#deDetailContent .de-firebase-semester{
+  appearance:none;flex:0 0 auto;border:1px solid #dbe5f2;background:#fff;color:#334155;
+  border-radius:12px;min-height:40px;padding:10px 17px;font-size:12px;font-weight:850;
+  box-shadow:0 3px 10px #0f172a08;cursor:pointer;
+}
+#deDetailContent .de-firebase-semester.active{background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 6px 16px #2563eb30}
+#deDetailContent .de-firebase-folder-grid{display:grid;grid-template-columns:minmax(0,520px);gap:10px;align-content:start;width:100%;min-width:0}
+#deDetailContent .de-content-row.de-firebase-folder-card{
+  box-sizing:border-box;display:flex;align-items:center;gap:14px;width:100%;min-width:0;min-height:84px;
+  margin:0;padding:15px 17px;text-align:left;border:1px solid #bfdbfe;border-radius:17px;
+  background:#fff;color:#0f172a;box-shadow:0 4px 14px #0f172a08;cursor:pointer;
+}
+#deDetailContent .de-content-row.de-firebase-folder-card:hover{background:#fff;border-color:#93c5fd}
+#deDetailContent .de-firebase-folder-card .de-content-folder{
+  width:48px;height:48px;flex:0 0 48px;margin:0;display:grid;place-items:center;
+  border-radius:14px;background:#eaf2ff;font-size:25px;
+}
+#deDetailContent .de-firebase-folder-card .de-content-info{min-width:0;flex:1}
+#deDetailContent .de-firebase-folder-card .de-content-name{display:block;font-size:14px;line-height:1.4;font-weight:700;color:#0f172a;overflow-wrap:anywhere;margin:0}
+#deDetailContent .de-firebase-folder-card .de-content-count{display:block;margin-top:5px;font-size:12px;line-height:1.4;color:#64748b}
+#deDetailContent .de-firebase-folder-card .de-content-lock{margin-left:auto;color:#7c8da2;font-size:17px;flex:0 0 auto}
+#deDetailContent .de-firebase-empty{padding:16px;color:#64748b;font-size:13px;background:#fff;border-radius:14px}
+#deDetailContent .de-firebase-content-foot{text-align:center;color:#94a3b8;font-size:11px;padding:28px 0 0}
+@media(max-width:560px){
+ #deDetailContent #deFirebaseFolderPreview{padding:14px 10px 18px!important}
+ #deDetailContent .de-firebase-folder-grid{grid-template-columns:minmax(0,1fr)}
+ #deDetailContent .de-content-row.de-firebase-folder-card{min-height:76px;padding:12px}
 }
 </style>

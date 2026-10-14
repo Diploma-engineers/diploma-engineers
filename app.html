@@ -7238,11 +7238,20 @@ return false;
 function showStatus(t,type='warn'){statusEl.textContent=t;statusEl.className='payment-status '+type;statusEl.style.display=t?'block':'none';}
 function closeTracking(){const o=document.getElementById('trackingOverlay');if(o){o.style.display='none';o.setAttribute('aria-hidden','true');}}
 function closePayment(){overlay.style.display='none';overlay.setAttribute('aria-hidden','true');closeTracking();if(accessUnsub){accessUnsub();accessUnsub=null;}currentCourse=null;}
-function openCourse(courseId){closePayment();if(typeof window.navigateTo==='function')window.navigateTo(courseId);}
+function openCourse(courseId){
+  closePayment();
+  // Admin-created catalog courses use the separate reader page; legacy built-in
+  // courses continue using the existing in-app navigation.
+  if(!paidCourseIds.includes(String(courseId))){
+    window.location.href='course-reader.html?course='+encodeURIComponent(String(courseId));
+    return;
+  }
+  if(typeof window.navigateTo==='function')window.navigateTo(courseId);
+}
 async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
-function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>{if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);}},err=>console.warn('Course access listener:',err));}
-async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||courseId;utrEl.value='';document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
-async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();}
+function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val())){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>openCourse(courseId),650);}},err=>console.warn('Course access listener:',err));}
+async function openPayment(courseId){if(!currentUid){alert('Please login first.');return;}const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}currentCourse=courseId;courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;utrEl.value='';document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;overlay.style.display='flex';overlay.setAttribute('aria-hidden','false');watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);}
+async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();setTimeout(()=>window.refreshUploadedCourseCards?.(),200);}
 function getCourseCard(courseId){
   return document.querySelector(`.course-card[data-paid-course="${CSS.escape(courseId)}"]`) ||
     Array.from(document.querySelectorAll('.course-card')).find(c=>c.querySelector(`button[onclick*="${courseId}"]`));
@@ -7293,7 +7302,7 @@ async function syncPaidCardState(courseId){
     if(previous==='pending' && card?.dataset.approvalOpened!=='1'){
       card.dataset.approvalOpened='1';
       showVerifyTick();
-      setTimeout(()=>{if(typeof window.navigateTo==='function')window.navigateTo(courseId);else openCourse(courseId);},650);
+      setTimeout(()=>openCourse(courseId),650);
     }
     return;
   }
@@ -7426,10 +7435,16 @@ async function refreshAllCourseTracking(){
   if(!currentUid)return;
   for(const id of paidCourseIds) await refreshCourseTracking(id);
 }
+// Called by the admin catalog listener whenever published course cards are rendered.
+window.refreshUploadedCourseCards=async function(){
+  if(!currentUid)return;
+  const ids=Object.keys(window.__deAdminCourseCatalog||{});
+  for(const id of ids){try{await syncPaidCardState(id);}catch(e){console.warn('Uploaded course state refresh failed:',id,e);}}
+};
 
 function getCourseDisplayName(courseId){
  const card=getCourseCard(courseId);
- const title=card?.querySelector('[data-course-title],.course-title,h2,h3,h4,.course-name,.card-title');
+ const title=card?.querySelector('[data-course-title],.course-title,h1,h2,h3,h4,.course-name,.card-title');
  return String(title?.textContent||card?.innerText||'').trim().split('\\n')[0].slice(0,180)||'Course';
 }
 function getCoursePrice(courseId){
@@ -9873,19 +9888,38 @@ const existing=getApps().find(a=>a.name==="studentCourseCatalog");
 const catalogApp=existing||initializeApp(courseAdminConfig,"studentCourseCatalog");
 const catalogDb=getDatabase(catalogApp);
 const escCourse=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const courseSlug=id=>String(id).replace(/[^a-zA-Z0-9_-]/g,"_");
+const normalStatus=c=>String(c?.status??"").trim().toLowerCase();
+const isPublishedCourse=c=>{
+ const st=normalStatus(c);
+ if(["rejected","draft","pending","unpublished","disabled","inactive"].includes(st))return false;
+ return ["approved","published","live","active"].includes(st)||c?.approved===true||c?.published===true;
+};
 function renderAdminCourses(data){
  const grid=document.getElementById("adminUploadedCourseGrid");if(!grid)return;
- const entries=Object.entries(data||{}).filter(([id,c])=>c&&typeof c==="object"&&c.status==="approved"&&c.title);
- if(!entries.length){grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1">No published courses yet. Courses approved/published by Admin will appear here.</div>';return;}
+ const entries=Object.entries(data||{}).filter(([id,c])=>id&&c&&typeof c==="object"&&isPublishedCourse(c)&&(c.title||c.name||c.courseName));
+ window.__deAdminCourseCatalog=Object.fromEntries(entries);
+ if(!entries.length){
+  grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1;padding:18px;border:1px dashed #cbd5e1;border-radius:12px;background:#fff;color:#64748b">No approved/published courses are available yet. In Admin Panel, set the course status to Approved/Published and save it.</div>';
+  return;
+ }
  grid.innerHTML=entries.map(([id,c])=>{
-  const title=escCourse(c.title||"Course"),branch=escCourse(c.branch||c.category||"Diploma Engineering"),desc=escCourse(c.description||"Video lectures, PDF notes and study resources."),img=String(c.thumbnail||c.bannerUrl||c.thumbnailUrl||c.imageUrl||"").replace(/"/g,"&quot;"),price=Number(c.price||c.amount||99),sid=escCourse(id),search=escCourse([c.title,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> Admin uploaded course content</li><li><i class="fa-solid fa-circle-check"></i> Lectures and PDF resources</li></ul><button type="button" class="action-btn" data-admin-course-buy="${sid}"><i class="fa-solid fa-lock"></i> Get This Course ₹${price}</button></div></article>`;
+  const title=escCourse(c.title||c.name||c.courseName||"Course"),branch=escCourse(c.branch||c.category||"Diploma Engineering"),desc=escCourse(c.description||"Video lectures, PDF notes and study resources."),img=String(c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+  const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
+  const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
+  const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
+  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> ${itemCount} lecture / PDF items</li><li><i class="fa-solid fa-circle-check"></i> Semester and subject-wise content</li></ul><button type="button" class="action-btn" data-admin-course-buy="${sid}"><i class="fa-solid fa-lock"></i> Get This Course ₹${price}</button></div></article>`;
  }).join("");
- grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");}));
+ // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
+ grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
  if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
+ // Authentication/profile might finish loading before or after this catalog listener.
+ setTimeout(()=>window.refreshUploadedCourseCards?.(),100);
 }
-onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=>{const grid=document.getElementById("adminUploadedCourseGrid");if(grid)grid.innerHTML='<div class="course-no-results show" style="display:block">Could not load courses. Check Firebase Database Rules and courseCatalog access.</div>';console.error("Admin course catalog load failed",err);});
+onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=>{
+ const grid=document.getElementById("adminUploadedCourseGrid");
+ if(grid)grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1;padding:18px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#b91c1c">Could not load published courses from Firebase. Check that diplomaengineers-869df Realtime Database Rules allow read access to /courseCatalog.</div>';
+ console.error("Admin course catalog load failed",err);
+});
 </script>
 
 <style id="de-full-logo-and-top20-patch">

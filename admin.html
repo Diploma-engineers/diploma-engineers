@@ -8696,7 +8696,16 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
     if(!record)return;paintRecord(record);$('deActivityModal')?.classList.add('open');$('deActivityModal')?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
   }
   function openForCurrentAdmin(){if(window.isMasterAdmin?.()){if(typeof window.openAdminCertificates==='function')window.openAdminCertificates();return;}openActivity();}
-  document.addEventListener('DOMContentLoade
+  document.addEventListener('DOMContentLoaded',()=>{
+    $('homeCertificateBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openForCurrentAdmin();});
+    $('homeCertificateReviewBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openForCurrentAdmin();});
+    $('deActivityClose')?.addEventListener('click',closeActivity);$('deActivityModal')?.addEventListener('click',e=>{if(e.target.id==='deActivityModal')closeActivity();});
+    $('deCertPreviewBtn')?.addEventListener('click',openCertificate);$('deCertificateClose')?.addEventListener('click',closeCertificate);$('deCertificateModal')?.addEventListener('click',e=>{if(e.target.id==='deCertificateModal')closeCertificate();});
+    $('deCertificatePrint')?.addEventListener('click',()=>downloadCertificatePDF().catch(()=>window.print()));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCertificate();closeActivity();}});
+  });
+  /* Founder certificate buttons open the complete Admin Directory.
+     Normal admins continue to get their own activity/certificate card. */
   window.openDEActivityHistory=()=>{
     if(isFounderViewer() && typeof window.openAdminCertificates === 'function'){
       window.openAdminCertificates();

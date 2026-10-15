@@ -10262,7 +10262,29 @@ function youtubeEmbed(url){try{const u=new URL(url);let id='';if(u.hostname.incl
 function vimeoEmbed(url){try{const u=new URL(url);if(!u.hostname.includes('vimeo.com'))return '';const id=u.pathname.split('/').filter(Boolean).pop();return id&&/^\d+$/.test(id)?`https://player.vimeo.com/video/${id}`:'';}catch{return '';}}
 function drivePreview(url){try{const u=new URL(url);if(!u.hostname.includes('drive.google.com'))return '';const m=u.pathname.match(/\/file\/d\/([^/]+)/);return m?`https://drive.google.com/file/d/${m[1]}/preview`:'';}catch{return '';}}
 function semesters(){const items=getItems();const vals=items.map(itemSemester).filter(Boolean);if(!vals.length)return [normalizeSemester(currentCourse?.semester)];const unique=[...new Set(vals)];const rank=s=>{const m=s.match(/^(\d+)/);return m?Number(m[1]):s==='All Semesters'?0:99;};return unique.sort((a,b)=>rank(a)-rank(b)||a.localeCompare(b));}
-function showCourse(c){currentCourse=c;$('deCRCourseTitle').textContent=c.title||c.name||c.courseName||'Course';$('deCRCourseDescription').textContent=c.description||'Explore subject folders, video lectures and PDF notes for this course.';const items=getItems();const meta=[c.branch||c.category||'Diploma Engineering',normalizeSemester(c.semester),`${items.length} resource${items.length===1?'':'s'}`].filter(Boolean);$('deCRCourseMeta').innerHTML=meta.map(x=>`<span class="decr-pill">${esc(x)}</span>`).join('');currentSemester=semesters()[0]||'All Semesters';currentFolder='';$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();renderSemesters();renderFolders();}
+function showCourse(c){currentCourse=c;$('deCRCourseTitle').textContent=c.title||c.name||c.courseName||'Course';$('deCRCourseDescription').textContent=c.description||'Explore subject folders, video lectures and PDF notes for this course.';const items=getItems();const meta=[c.branch||c.category||'Diploma Engineering',normalizeSemester(c.semester),`${items.length} resource${items.length===1?'':'s'}`].filter(Boolean);$('deCRCourseMeta').innerHTML=meta.map(x=>`<span class="decr-pill">${esc(x)}</span>`).join('');currentSemester=semesters()[0]||'All Semesters';currentFolder='';$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();renderSemesters();renderFolders();showCourseValidity(c);}
+async function showCourseValidity(c){
+  const metaEl=$('deCRCourseMeta'); if(!metaEl)return;
+  const courseId=String(c.id||c.courseId||c.key||currentCourseId||'');
+  const uid=auth?.currentUser?.uid;
+  if(!uid||!courseId||!db)return;
+  try{
+    const snap=await get(ref(db,`courseAccess/${uid}/${courseId}`));
+    if(!snap.exists()||currentCourse!==c)return;
+    const v=snap.val()||{};
+    let expiry=Number(v.expiresAt??v.expiryAt??v.validUntil??v.validityEnd??0)||0;
+    if(!expiry){
+      let approved=Number(v.approvedAt??v.approvalAt??v.verifiedAt??v.approvedOn??v.updatedAt??v.grantedAt??0)||0;
+      if(!approved)return;
+      expiry=approved+210*24*60*60*1000;
+    }
+    const expired=Date.now()>=expiry;
+    const date=new Date(expiry).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+    const remaining=Math.max(0,Math.ceil((expiry-Date.now())/86400000));
+    const label=expired?`Course Expired · ${date}`:`Valid ${remaining} day${remaining===1?'':'s'} · Until ${date}`;
+    metaEl.insertAdjacentHTML('beforeend',`<span class="decr-pill decr-validity-pill" style="background:${expired?'#fee2e2':'#dcfce7'};color:${expired?'#b91c1c':'#166534'};border-color:${expired?'#fecaca':'#bbf7d0'}">${esc(label)}</span>`);
+  }catch(e){console.warn('[Course validity display]',e);}
+}
 function renderSemesters(){const values=semesters();if(!values.includes(currentSemester))currentSemester=values[0]||'All Semesters';$('deCRSemesterTrack').innerHTML=values.map(v=>`<button type="button" class="decr-sem ${v===currentSemester?'active':''}" data-de-sem="${esc(v)}">${esc(v)}</button>`).join('');$('deCRSemesterTrack').querySelectorAll('[data-de-sem]').forEach(btn=>btn.addEventListener('click',()=>{currentSemester=btn.dataset.deSem;currentFolder='';renderSemesters();renderFolders();}));}
 function folderGroups(){const map=new Map();getItems().forEach((it,index)=>{if(itemSemester(it)!==currentSemester)return;const name=String(it.folderName||it.subject||it.module||it.unit||it.section||it.topic||it.folder||'General').trim()||'General';if(!map.has(name))map.set(name,[]);map.get(name).push({...it,__sourceIndex:index});});return [...map.entries()].map(([name,items])=>({name,items}));}
 function renderFolders(){const groups=folderGroups();$('deCRFolderGrid').innerHTML=groups.map(g=>`<button type="button" class="decr-folder is-locked" data-de-folder="${esc(g.name)}"><span class="decr-folder-icon">📁</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.items.length} resource${g.items.length===1?'':'s'} • ${g.items.some(x=>!isPdf(x,itemUrl(x)))?'Videos & notes':'Study resources'}</small></span><span class="decr-chevron">›</span></button>`).join('');$('deCRNoFolders').classList.toggle('decr-hidden',groups.length>0);$('deCRFolderGrid').querySelectorAll('[data-de-folder]').forEach(btn=>btn.addEventListener('click',()=>openFolder(btn.dataset.deFolder)));refreshReaderFolderLocks();}

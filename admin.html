@@ -2097,8 +2097,10 @@ body.campus-hiring-open{overflow:hidden!important;}
       </div>
     </div>
 
-    <div class="home-section-head"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> Your Uploads</h2><span id="homeUploadCount">Loading...</span></div>
+    <div class="home-section-head upload-section-heading"><h2><i class="fa-solid fa-cloud-arrow-up" style="color:#2563eb"></i> Your Uploaded</h2><div class="upload-heading-actions"><span id="homeUploadCount">Loading...</span><button type="button" class="see-all-uploads" data-see-all="homeUploads" aria-expanded="false">See All <i class="fa-solid fa-arrow-right"></i></button></div></div>
     <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading uploaded content...</div></div>
+    <div class="home-section-head upload-section-heading"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> All Uploaded</h2><div class="upload-heading-actions"><span id="allUploadCount">Loading...</span><button type="button" class="see-all-uploads" data-see-all="allHomeUploads" aria-expanded="false">See All <i class="fa-solid fa-arrow-right"></i></button></div></div>
+    <div class="upload-slider" id="allHomeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading all uploaded content...</div></div>
 
     <div class="home-section-head"><h2>Manage Content</h2><span>Quick access</span></div>
     <div class="home-grid manage-content-grid">
@@ -4503,7 +4505,7 @@ function loadBlogs(){
             meta.innerHTML=`${escapeHTML(item.category||item.cat||"Education")} • <b>Uploaded by: ${escapeHTML(owner)}</b> • ${escapeHTML(when)}`;
             const excerpt=document.createElement("p"); excerpt.className="blog-admin-excerpt"; excerpt.textContent=item.text||item.desc||"";
             const actions=document.createElement("div"); actions.className="blog-actions";
-            const read=document.createElement("button"); read.type="button"; read.className="blog-open"; read.dataset.adminRead='1'; read.dataset.adminReadType='Blog'; read.dataset.adminReadId=item.id; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; actions.appendChild(read);
+            const read=document.createElement("a"); read.className="blog-open"; read.href=adminReaderPage('Blog',item.id); read.target='_blank'; read.rel='noopener'; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; actions.appendChild(read);
             const ownUid=item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||item.uid||item.userId||item.userUid||item.adminUid||item.uploadedByUid||"";
             const canManage=isMasterAdmin() || (currentUid && ownUid===currentUid);
             if(canManage){
@@ -4574,12 +4576,11 @@ function loadNews() {
             const links = document.createElement("div");
             links.className = "links";
 
-            const readBtn = document.createElement("button");
-            readBtn.type = "button";
+            const readBtn = document.createElement("a");
             readBtn.className = "secondary";
-            readBtn.dataset.adminRead='1';
-            readBtn.dataset.adminReadType='News';
-            readBtn.dataset.adminReadId=item.id;
+            readBtn.href = adminReaderPage('News', item.id);
+            readBtn.target = "_blank";
+            readBtn.rel = "noopener";
             readBtn.innerHTML = '<i class="fa-solid fa-book-open"></i> Read';
             links.appendChild(readBtn);
 
@@ -4743,7 +4744,7 @@ function renderBookRows(){
             <td>${escapeHTML(category)}</td>
             <td>${escapeHTML(owner)}</td>
             <td>${escapeHTML(when)}</td>
-            <td>${pdf && pdf !== "#" ? `<button type="button" class="blog-open" data-admin-read="1" data-admin-read-type="Book" data-admin-read-id="${escapeHTML(b.id)}"><i class="fa-solid fa-book-open"></i> Read</button>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
+            <td>${pdf && pdf !== "#" ? `<a class="blog-open" href="${escapeHTML(adminReaderPage('Book',b.id))}" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Read</a>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
             <td class="book-actions-cell">
                 <div class="book-actions-wrap">
                 <button class="secondary" data-book-edit="${escapeHTML(b.id)}" ${canManage ? "" : "disabled title=\"No permission\""} style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:${canManage ? "pointer" : "not-allowed"};opacity:${canManage ? "1" : ".55"};">Edit</button>
@@ -5740,7 +5741,7 @@ async function loadHomeUploads(force=false){
         // Home shows all already-uploaded content. We separately calculate
         // the current admin's own uploads for the reminder message below.
         uploads.push({
-          id:ch.key,type,icon,title:v.title||v.name||"Untitled",
+          ...v,id:ch.key,type,icon,title:v.title||v.name||"Untitled",
           image:v.image||v.thumb||v.ownerPhoto||DEFAULT_PROFILE_IMAGE,
           link:v.link||v.pdf||"",timestamp:Number(v.timestamp||v.createdAt||0),
           category:v.category||v.cat||v.branch||type,
@@ -5771,10 +5772,18 @@ async function loadHomeUploads(force=false){
   }
 }
 
-function renderHomeUploads(uploads,countEl,box,currentUid){
-  if(countEl)countEl.textContent=uploads.length+" upload"+(uploads.length===1?"":"s");
+function adminReaderPage(type,id){
+  const key=String(type||'').toLowerCase();
+  const page=key==='news'?'news-reader.html':key==='blog'?'blog-reader.html':'book-reader.html';
+  return page+'?id='+encodeURIComponent(String(id||''));
+}
 
+function renderHomeUploads(uploads,countEl,box,currentUid){
   const myUploads=uploads.filter(x=>x.ownerUid===currentUid);
+  if(countEl)countEl.textContent=myUploads.length+" upload"+(myUploads.length===1?"":"s");
+  const allBox=document.getElementById('allHomeUploads');
+  const allCount=document.getElementById('allUploadCount');
+  if(allCount)allCount.textContent=uploads.length+" upload"+(uploads.length===1?"":"s");
   const reminder=myUploads.length===0 ? `
     <div class="home-upload-reminder">
       <div class="home-upload-reminder-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
@@ -5788,22 +5797,39 @@ function renderHomeUploads(uploads,countEl,box,currentUid){
         </div>
       </div>
     </div>` : '';
-
-  if(!uploads.length){
-    box.innerHTML=reminder || '<div class="home-empty">No uploaded content found yet.</div>';
-    return;
-  }
-
-  box.innerHTML=reminder + uploads.map(x=>`<article class="upload-card reveal">
-    <div class="upload-card-cover"><img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'"></div>
-    <div class="upload-card-body">
-      <span class="upload-type"><i class="fa-solid ${x.icon}"></i> ${escapeHTML(x.type)}</span>
-      <h3 title="${escapeHTML(x.title)}">${escapeHTML(x.title)}</h3>
-      <p>${escapeHTML(x.category)}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:''}</p>
-      ${x.link?`<a href="${escapeHTML(x.link)}" target="_blank" rel="noopener">📂 Open <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:""}
-    </div>
-  </article>`).join('');
+  // Keep the existing edit/delete handlers connected to the same records shown on Home.
+  window.__adminNewsCache=uploads.filter(x=>x.type==='News');
+  window.__adminBlogCache=uploads.filter(x=>x.type==='Blog');
+  window.__allBlogsCache=window.__adminBlogCache;
+  if(typeof bookItems!=='undefined') bookItems=uploads.filter(x=>x.type==='Book');
+  const cardHTML=x=>{
+    const isOwner=!!currentUid && x.ownerUid===currentUid;
+    const canManage=isOwner || (typeof isMasterAdmin==='function' && isMasterAdmin());
+    const id=String(x.id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const editFn=x.type==='News'?'editNews':x.type==='Blog'?'editBlog':'editBookEntry';
+    const deleteFn=x.type==='News'?'deleteNews':x.type==='Blog'?'deleteBlog':'deleteBookEntry';
+    const thumb=x.image && x.image!==DEFAULT_PROFILE_IMAGE ? `<img src="${escapeHTML(x.image)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : '';
+    return `<article class="upload-card folder-upload-card upload-material-row reveal">
+      <div class="upload-material-thumb">${thumb}<span class="upload-material-fallback" style="${thumb?'display:none':''}"><i class="fa-solid fa-folder-open"></i></span></div>
+      <div class="upload-material-info"><span class="upload-type"><i class="fa-solid ${escapeHTML(x.icon||'fa-file')}"></i> ${escapeHTML(x.type||'Upload')}</span>
+        <h3 title="${escapeHTML(x.title||'Untitled')}">${escapeHTML(x.title||'Untitled')}</h3>
+        <p>${escapeHTML(x.category||'General')}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:''}</p>
+        <div class="upload-material-actions"><a class="folder-open-link" href="${escapeHTML(adminReaderPage(x.type,x.id))}" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Read</a>${x.link?`<a class="folder-open-link" href="${escapeHTML(x.link)}" target="_blank" rel="noopener"><i class="fa-solid fa-folder-open"></i> Open</a>`:''}${canManage?`<button type="button" class="material-edit-btn" onclick="${editFn}('${id}')"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button type="button" class="material-delete-btn" onclick="${deleteFn}('${id}')"><i class="fa-solid fa-trash"></i> Delete</button>`:''}</div>
+      </div></article>`;
+  };
+  box.innerHTML=reminder+(myUploads.length?myUploads.map(cardHTML).join(''):'<div class="home-empty">Your uploads will appear here.</div>');
+  if(allBox)allBox.innerHTML=uploads.length?uploads.map(cardHTML).join(''):'<div class="home-empty">No uploaded content found yet.</div>';
   initHomeReveal();
+  document.querySelectorAll('.see-all-uploads').forEach(btn=>{
+    if(btn.dataset.bound==='1')return;btn.dataset.bound='1';
+    btn.addEventListener('click',()=>{
+      const target=document.getElementById(btn.dataset.seeAll);if(!target)return;
+      const expanded=target.classList.toggle('show-all-uploads');
+      btn.setAttribute('aria-expanded',String(expanded));
+      btn.innerHTML=expanded?'Show Less <i class="fa-solid fa-chevron-up"></i>':'See All <i class="fa-solid fa-arrow-right"></i>';
+      if(expanded)target.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
 }
 
 function initHomeReveal(){document.querySelectorAll("#homeAdminSection .reveal").forEach(el=>{el.classList.add("visible")});}
@@ -8782,3 +8808,52 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
   window.refreshDECertificate=()=>{const r=seedCurrentRecord();if(r)paintRecord(r);};
 })();
 </script>
+
+<style id="WORKING-HOME-UPLOAD-SLIDERS">
+#homeAdminSection .upload-section-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin:20px 0 10px!important}
+#homeAdminSection .upload-heading-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+#homeAdminSection .upload-heading-actions span{font-size:11px;color:#64748b;font-weight:700}
+#homeAdminSection .see-all-uploads{border:0;background:#eff6ff;color:#2563eb;border-radius:10px;padding:8px 11px;font:700 11px Poppins,Arial,sans-serif;cursor:pointer;white-space:nowrap}
+#homeAdminSection .see-all-uploads:hover{background:#dbeafe}
+#homeAdminSection .upload-slider{display:flex!important;flex-wrap:nowrap!important;grid-template-columns:none!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:3px 2px 13px!important;scroll-snap-type:x mandatory!important;scrollbar-width:thin!important;scroll-behavior:smooth!important;-webkit-overflow-scrolling:touch}
+#homeAdminSection .upload-slider:not(.show-all-uploads) .upload-card{display:block!important;flex:0 0 245px!important;width:245px!important;min-width:245px!important;max-width:245px!important}
+#homeAdminSection .upload-slider:not(.show-all-uploads) .home-upload-reminder,#homeAdminSection .upload-slider:not(.show-all-uploads) .home-empty{flex:0 0 100%!important}
+#homeAdminSection .upload-slider.show-all-uploads{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow:visible!important;flex-wrap:initial!important;scroll-snap-type:none!important}
+#homeAdminSection .upload-slider.show-all-uploads .upload-card{width:100%!important;min-width:0!important;max-width:none!important}
+@media(max-width:900px){#homeAdminSection .upload-slider.show-all-uploads{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:600px){#homeAdminSection .upload-section-heading h2{font-size:15px!important}#homeAdminSection .upload-heading-actions{gap:6px}#homeAdminSection .upload-heading-actions span{font-size:9px}#homeAdminSection .see-all-uploads{padding:8px 9px;font-size:10px}#homeAdminSection .upload-slider:not(.show-all-uploads) .upload-card{flex-basis:220px!important;width:220px!important;min-width:220px!important;max-width:220px!important}#homeAdminSection .upload-slider.show-all-uploads{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}#homeAdminSection .upload-slider.show-all-uploads .upload-card{min-width:0!important}}
+</style>
+
+
+<style id="FOLDER-STYLE-UPLOADED-MATERIAL">
+#homeAdminSection .folder-upload-card{border-radius:17px!important;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)!important;border:1px solid #dce7f5!important;overflow:hidden!important}
+#homeAdminSection .upload-folder-art{height:128px!important;position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;background:linear-gradient(135deg,#eef5ff,#f8fbff)!important;color:#3b82f6!important}
+#homeAdminSection .upload-folder-art>i{font-size:72px!important;color:#60a5fa!important;filter:drop-shadow(0 8px 6px rgba(37,99,235,.13))!important;z-index:1!important}
+#homeAdminSection .upload-folder-art .folder-tab{position:absolute!important;left:calc(50% - 52px)!important;top:30px!important;width:44px!important;height:12px!important;border-radius:5px 5px 0 0!important;background:#93c5fd!important;transform:translateX(-10px)!important}
+#homeAdminSection .folder-file-icon{position:absolute!important;z-index:2!important;left:calc(50% - 8px)!important;top:49px!important;width:30px!important;height:36px!important;border-radius:5px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff!important;color:#2563eb!important;box-shadow:0 3px 10px #1d4ed822!important;font-size:15px!important}
+#homeAdminSection .folder-upload-card .upload-card-body{padding:12px!important}
+#homeAdminSection .folder-upload-card h3{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;min-height:34px!important;line-height:1.35!important;overflow:hidden!important}
+#homeAdminSection .folder-open-link{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;width:100%!important;box-sizing:border-box!important;margin-top:11px!important;padding:9px 8px!important;border-radius:10px!important;background:#eaf2ff!important;color:#1d4ed8!important;font-size:10px!important;font-weight:800!important;text-decoration:none!important}
+#homeAdminSection .folder-open-link:hover{background:#dbeafe!important}
+#homeAdminSection .folder-no-link{display:block!important;margin-top:11px!important;padding:9px 5px!important;border-radius:10px!important;background:#f1f5f9!important;color:#64748b!important;font-size:10px!important;text-align:center!important}
+@media(max-width:600px){#homeAdminSection .upload-folder-art{height:108px!important}#homeAdminSection .upload-folder-art>i{font-size:61px!important}#homeAdminSection .upload-folder-art .folder-tab{top:25px!important}#homeAdminSection .folder-file-icon{top:42px!important}}
+</style>
+
+<style id="UPLOAD-MATERIAL-ROW-EDIT-DELETE">
+#homeAdminSection .upload-material-row{display:flex!important;flex:0 0 320px!important;width:320px!important;min-height:132px!important;flex-direction:row!important;align-items:stretch!important;gap:0!important;overflow:hidden!important;border-radius:14px!important;background:#fff!important;border:1px solid #dbe5f1!important;box-shadow:0 4px 14px rgba(15,23,42,.05)!important}
+#homeAdminSection .upload-material-thumb{flex:0 0 100px!important;width:100px!important;min-height:132px!important;position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;background:#eff6ff!important}
+#homeAdminSection .upload-material-thumb img{width:100%!important;height:100%!important;position:absolute!important;inset:0!important;object-fit:cover!important}
+#homeAdminSection .upload-material-fallback{width:100%;height:100%;align-items:center;justify-content:center;color:#60a5fa;font-size:38px;background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+#homeAdminSection .upload-material-info{flex:1;min-width:0;padding:10px!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important}
+#homeAdminSection .upload-material-info h3{font-size:13px!important;min-height:0!important;margin:5px 0!important;line-height:1.35!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;overflow-wrap:anywhere!important}
+#homeAdminSection .upload-material-info p{font-size:10px!important;margin:0!important;line-height:1.35!important}
+#homeAdminSection .upload-material-actions{display:flex!important;flex-wrap:wrap!important;gap:5px!important;align-items:center!important;margin-top:auto!important;padding-top:8px!important;width:100%!important}
+#homeAdminSection .upload-material-actions .folder-open-link,#homeAdminSection .upload-material-actions .folder-no-link{width:auto!important;margin:0!important;padding:6px 7px!important;font-size:10px!important}
+#homeAdminSection .upload-material-actions button{border:0!important;border-radius:7px!important;padding:6px 7px!important;font-size:10px!important;font-weight:800!important;cursor:pointer!important;white-space:nowrap!important}
+#homeAdminSection .material-edit-btn{background:#e0f2fe!important;color:#0369a1!important}
+#homeAdminSection .material-delete-btn{background:#fee2e2!important;color:#dc2626!important}
+#homeAdminSection .material-edit-btn:hover{background:#bae6fd!important}
+#homeAdminSection .material-delete-btn:hover{background:#fecaca!important}
+#homeAdminSection .upload-material-row .upload-folder-art{display:none!important}
+@media(max-width:480px){#homeAdminSection .upload-material-row{flex-basis:285px!important;width:285px!important;min-height:126px!important}#homeAdminSection .upload-material-thumb{flex-basis:84px!important;width:84px!important;min-height:126px!important}}
+</style>

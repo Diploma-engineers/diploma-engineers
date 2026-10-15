@@ -10265,24 +10265,39 @@ function semesters(){const items=getItems();const vals=items.map(itemSemester).f
 function showCourse(c){currentCourse=c;$('deCRCourseTitle').textContent=c.title||c.name||c.courseName||'Course';$('deCRCourseDescription').textContent=c.description||'Explore subject folders, video lectures and PDF notes for this course.';const items=getItems();const meta=[c.branch||c.category||'Diploma Engineering',normalizeSemester(c.semester),`${items.length} resource${items.length===1?'':'s'}`].filter(Boolean);$('deCRCourseMeta').innerHTML=meta.map(x=>`<span class="decr-pill">${esc(x)}</span>`).join('');currentSemester=semesters()[0]||'All Semesters';currentFolder='';$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();renderSemesters();renderFolders();showCourseValidity(c);}
 async function showCourseValidity(c){
   const metaEl=$('deCRCourseMeta'); if(!metaEl)return;
+  // Remove any previous badge before refreshing the current course.
+  metaEl.querySelectorAll('.decr-validity-pill').forEach(el=>el.remove());
   const courseId=String(c.id||c.courseId||c.key||currentCourseId||'');
   const uid=auth?.currentUser?.uid;
-  if(!uid||!courseId||!db)return;
+  if(!courseId)return;
   try{
-    const snap=await get(ref(db,`courseAccess/${uid}/${courseId}`));
-    if(!snap.exists()||currentCourse!==c)return;
-    const v=snap.val()||{};
+    let v={};
+    if(uid&&db){
+      const snap=await get(ref(db,`courseAccess/${uid}/${courseId}`));
+      if(snap.exists())v=snap.val()||{};
+    }
+    if(currentCourse!==c)return;
     let expiry=Number(v.expiresAt??v.expiryAt??v.validUntil??v.validityEnd??0)||0;
+    let approved=Number(v.approvedAt??v.approvalAt??v.verifiedAt??v.approvedOn??v.grantedAt??v.updatedAt??0)||0;
+    const key='de_course_approval_'+String(uid||'guest')+'_'+courseId;
     if(!expiry){
-      let approved=Number(v.approvedAt??v.approvalAt??v.verifiedAt??v.approvedOn??v.updatedAt??v.grantedAt??0)||0;
-      if(!approved)return;
+      if(!approved){
+        try{approved=Number(localStorage.getItem(key))||0;}catch(e){}
+      }
+      // Last-resort display fallback for older records lacking timestamps.
+      // The admin approval handler should write approvedAt/expiresAt for cross-device accuracy.
+      if(!approved){approved=Date.now();try{localStorage.setItem(key,String(approved));}catch(e){}}
       expiry=approved+210*24*60*60*1000;
     }
     const expired=Date.now()>=expiry;
     const date=new Date(expiry).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
     const remaining=Math.max(0,Math.ceil((expiry-Date.now())/86400000));
-    const label=expired?`Course Expired · ${date}`:`Valid ${remaining} day${remaining===1?'':'s'} · Until ${date}`;
-    metaEl.insertAdjacentHTML('beforeend',`<span class="decr-pill decr-validity-pill" style="background:${expired?'#fee2e2':'#dcfce7'};color:${expired?'#b91c1c':'#166534'};border-color:${expired?'#fecaca':'#bbf7d0'}">${esc(label)}</span>`);
+    const label=expired?`Course Expired · ${date}`:`Valid ${remaining} days · Until ${date}`;
+    const badge=document.createElement('span');
+    badge.className='decr-pill decr-validity-pill';
+    badge.style.cssText=`background:${expired?'#fee2e2':'#dcfce7'};color:${expired?'#b91c1c':'#166534'};border-color:${expired?'#fecaca':'#bbf7d0'};font-weight:800;white-space:normal`;
+    badge.textContent=label;
+    metaEl.appendChild(badge);
   }catch(e){console.warn('[Course validity display]',e);}
 }
 function renderSemesters(){const values=semesters();if(!values.includes(currentSemester))currentSemester=values[0]||'All Semesters';$('deCRSemesterTrack').innerHTML=values.map(v=>`<button type="button" class="decr-sem ${v===currentSemester?'active':''}" data-de-sem="${esc(v)}">${esc(v)}</button>`).join('');$('deCRSemesterTrack').querySelectorAll('[data-de-sem]').forEach(btn=>btn.addEventListener('click',()=>{currentSemester=btn.dataset.deSem;currentFolder='';renderSemesters();renderFolders();}));}

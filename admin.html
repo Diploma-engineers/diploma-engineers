@@ -4505,7 +4505,7 @@ function loadBlogs(){
             meta.innerHTML=`${escapeHTML(item.category||item.cat||"Education")} • <b>Uploaded by: ${escapeHTML(owner)}</b> • ${escapeHTML(when)}`;
             const excerpt=document.createElement("p"); excerpt.className="blog-admin-excerpt"; excerpt.textContent=item.text||item.desc||"";
             const actions=document.createElement("div"); actions.className="blog-actions";
-            const read=document.createElement("button"); read.type="button"; read.className="blog-open"; read.dataset.adminRead='1'; read.dataset.adminReadType='Blog'; read.dataset.adminReadId=item.id; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; actions.appendChild(read);
+            const read=document.createElement("a"); read.className="blog-open"; read.href=adminReaderPage('Blog',item.id); read.target='_blank'; read.rel='noopener'; read.innerHTML='<i class="fa-solid fa-book-open"></i> Read Blog'; actions.appendChild(read);
             const ownUid=item.authorUid||item.ownerUid||item.uploaderUid||item.createdBy||item.uid||item.userId||item.userUid||item.adminUid||item.uploadedByUid||"";
             const canManage=isMasterAdmin() || (currentUid && ownUid===currentUid);
             if(canManage){
@@ -4576,12 +4576,11 @@ function loadNews() {
             const links = document.createElement("div");
             links.className = "links";
 
-            const readBtn = document.createElement("button");
-            readBtn.type = "button";
+            const readBtn = document.createElement("a");
             readBtn.className = "secondary";
-            readBtn.dataset.adminRead='1';
-            readBtn.dataset.adminReadType='News';
-            readBtn.dataset.adminReadId=item.id;
+            readBtn.href = adminReaderPage('News', item.id);
+            readBtn.target = "_blank";
+            readBtn.rel = "noopener";
             readBtn.innerHTML = '<i class="fa-solid fa-book-open"></i> Read';
             links.appendChild(readBtn);
 
@@ -4745,7 +4744,7 @@ function renderBookRows(){
             <td>${escapeHTML(category)}</td>
             <td>${escapeHTML(owner)}</td>
             <td>${escapeHTML(when)}</td>
-            <td>${pdf && pdf !== "#" ? `<button type="button" class="blog-open" data-admin-read="1" data-admin-read-type="Book" data-admin-read-id="${escapeHTML(b.id)}"><i class="fa-solid fa-book-open"></i> Read</button>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
+            <td>${pdf && pdf !== "#" ? `<a class="blog-open" href="${escapeHTML(adminReaderPage('Book',b.id))}" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Read</a>` : `<span style="color:#94a3b8">No PDF link</span>`}</td>
             <td class="book-actions-cell">
                 <div class="book-actions-wrap">
                 <button class="secondary" data-book-edit="${escapeHTML(b.id)}" ${canManage ? "" : "disabled title=\"No permission\""} style="padding:5px 10px;border-radius:6px;border:0;background:#e2e8f0;cursor:${canManage ? "pointer" : "not-allowed"};opacity:${canManage ? "1" : ".55"};">Edit</button>
@@ -5773,6 +5772,12 @@ async function loadHomeUploads(force=false){
   }
 }
 
+function adminReaderPage(type,id){
+  const key=String(type||'').toLowerCase();
+  const page=key==='news'?'news-reader.html':key==='blog'?'blog-reader.html':'book-reader.html';
+  return page+'?id='+encodeURIComponent(String(id||''));
+}
+
 function renderHomeUploads(uploads,countEl,box,currentUid){
   const myUploads=uploads.filter(x=>x.ownerUid===currentUid);
   if(countEl)countEl.textContent=myUploads.length+" upload"+(myUploads.length===1?"":"s");
@@ -5809,7 +5814,7 @@ function renderHomeUploads(uploads,countEl,box,currentUid){
       <div class="upload-material-info"><span class="upload-type"><i class="fa-solid ${escapeHTML(x.icon||'fa-file')}"></i> ${escapeHTML(x.type||'Upload')}</span>
         <h3 title="${escapeHTML(x.title||'Untitled')}">${escapeHTML(x.title||'Untitled')}</h3>
         <p>${escapeHTML(x.category||'General')}${x.ownerName?` • ${escapeHTML(x.ownerName)}`:''}</p>
-        <div class="upload-material-actions">${x.link?`<a class="folder-open-link" href="${escapeHTML(x.link)}" target="_blank" rel="noopener"><i class="fa-solid fa-folder-open"></i> Open</a>`:`<span class="folder-no-link">No material link</span>`}${canManage?`<button type="button" class="material-edit-btn" onclick="${editFn}('${id}')"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button type="button" class="material-delete-btn" onclick="${deleteFn}('${id}')"><i class="fa-solid fa-trash"></i> Delete</button>`:''}</div>
+        <div class="upload-material-actions"><a class="folder-open-link" href="${escapeHTML(adminReaderPage(x.type,x.id))}" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Read</a>${x.link?`<a class="folder-open-link" href="${escapeHTML(x.link)}" target="_blank" rel="noopener"><i class="fa-solid fa-folder-open"></i> Open</a>`:''}${canManage?`<button type="button" class="material-edit-btn" onclick="${editFn}('${id}')"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button type="button" class="material-delete-btn" onclick="${deleteFn}('${id}')"><i class="fa-solid fa-trash"></i> Delete</button>`:''}</div>
       </div></article>`;
   };
   box.innerHTML=reminder+(myUploads.length?myUploads.map(cardHTML).join(''):'<div class="home-empty">Your uploads will appear here.</div>');
@@ -7410,6 +7415,36 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
 
 
 
+
+
+<style id="HOME-THUMBNAIL-FULL-VISIBILITY-FIX">
+/* Keep the complete uploaded thumbnail visible on Home; never crop its edges. */
+#homeAdminSection .upload-material-thumb{
+  background:#f8fafc!important;
+  padding:5px!important;
+  box-sizing:border-box!important;
+}
+#homeAdminSection .upload-material-thumb img{
+  position:relative!important;
+  inset:auto!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+}
+#homeAdminSection .upload-material-thumb .upload-material-fallback{
+  width:100%!important;height:100%!important;align-items:center!important;justify-content:center!important;
+}
+#homeAdminSection .upload-material-thumb .upload-material-fallback i{font-size:30px!important;}
+@media(max-width:600px){
+  #homeAdminSection .upload-material-thumb{padding:4px!important;}
+  #homeAdminSection .upload-material-thumb .upload-material-fallback i{font-size:25px!important;}
+}
+</style>
+
 </body>
 
 <style id="profile-full-width-final">
@@ -8851,4 +8886,16 @@ body.admin-logged-in{height:100dvh!important;min-height:100dvh!important;overflo
 #homeAdminSection .material-delete-btn:hover{background:#fecaca!important}
 #homeAdminSection .upload-material-row .upload-folder-art{display:none!important}
 @media(max-width:480px){#homeAdminSection .upload-material-row{flex-basis:285px!important;width:285px!important;min-height:126px!important}#homeAdminSection .upload-material-thumb{flex-basis:84px!important;width:84px!important;min-height:126px!important}}
+</style>
+
+<style id="FINAL-UPLOADED-MATERIAL-ROW-LAYOUT">
+/* Uploaded material: thumbnail/folder on left, details and actions on right. */
+#homeAdminSection .upload-slider:not(.show-all-uploads) .upload-material-row{flex:0 0 320px!important;width:320px!important;min-width:320px!important;max-width:320px!important;display:flex!important;flex-direction:row!important;align-items:stretch!important}
+#homeAdminSection .upload-material-row .upload-material-thumb{flex:0 0 96px!important;width:96px!important;min-width:96px!important;align-self:stretch!important}
+#homeAdminSection .upload-material-row .upload-material-info{flex:1 1 auto!important;min-width:0!important;text-align:left!important}
+#homeAdminSection .upload-material-row .upload-material-actions{display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+#homeAdminSection .upload-material-row .material-edit-btn{background:#dbeafe!important;color:#1d4ed8!important}
+#homeAdminSection .upload-material-row .material-delete-btn{background:#fee2e2!important;color:#dc2626!important}
+#homeAdminSection .upload-slider.show-all-uploads .upload-material-row{width:100%!important;min-width:0!important;max-width:none!important;flex-basis:auto!important}
+@media(max-width:600px){#homeAdminSection .upload-slider:not(.show-all-uploads) .upload-material-row{flex-basis:285px!important;width:285px!important;min-width:285px!important;max-width:285px!important}#homeAdminSection .upload-material-row .upload-material-thumb{flex-basis:82px!important;width:82px!important;min-width:82px!important}}
 </style>

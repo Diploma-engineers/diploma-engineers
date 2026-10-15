@@ -10413,14 +10413,39 @@ async function iqDownloadPdf(el,name){
  clone.querySelectorAll('.iq-sheet-unit').forEach(h=>{h.style.breakAfter='avoid';h.style.pageBreakAfter='avoid';h.style.marginTop='13px';});
  const head=clone.querySelector('.iq-sheet-head');if(head){head.style.position='relative';head.style.overflow='hidden';head.style.background='#fff';}
  const host=document.createElement('div');host.style.cssText='position:fixed;left:-10000px;top:0;width:190mm;z-index:-1;pointer-events:none;background:#fff;';host.appendChild(clone);document.body.appendChild(host);
- const logoUrl='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg';
+ const logoUrl='https://diplomaengineers.vercel.app/pdf-logo.png';
  let logoData=null;
  // Try a short CORS-safe image load. Never hold PDF generation for a long remote timeout.
- try{const img=new Image();img.crossOrigin='anonymous';img.decoding='async';img.src=logoUrl;await Promise.race([new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Logo image could not load'));}),new Promise((_,rej)=>setTimeout(()=>rej(Error('logo timeout')),3500))]);if(!img.naturalWidth)throw new Error('Logo image is empty');const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const cx=c.getContext('2d');cx.drawImage(img,0,0);logoData=c.toDataURL('image/jpeg',0.82);}catch(e){console.warn('Remote logo unavailable for PDF watermark (CORS/network).',e)}
+ try{const img=new Image();img.crossOrigin='anonymous';img.decoding='async';img.src=logoUrl;await Promise.race([new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Logo image could not load'));}),new Promise((_,rej)=>setTimeout(()=>rej(Error('logo timeout')),3500))]);if(!img.naturalWidth)throw new Error('Logo image is empty');const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const cx=c.getContext('2d');cx.drawImage(img,0,0);logoData=c.toDataURL('image/png');}catch(e){console.warn('Remote logo unavailable for PDF watermark (CORS/network).',e)}
  try{
   const opt={margin:[7,7,7,7],filename:(name||'Important_Questions')+'.pdf',image:{type:'jpeg',quality:0.84},html2canvas:{scale:1.05,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,imageTimeout:1800},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css'],avoid:['.iq-sheet-q','.iq-sheet-unit']}};
   const worker=window.html2pdf().set(opt).from(clone).toPdf();
-  await worker.get('pdf').then(pdf=>{if(logoData){const total=pdf.internal.getNumberOfPages();for(let i=1;i<=total;i++){pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();try{if(pdf.GState&&pdf.setGState)pdf.setGState(new pdf.GState({opacity:0.12}));pdf.addImage(logoData,'JPEG',pw*.22,ph*.34,pw*.56,ph*.30,undefined,'FAST');if(pdf.GState&&pdf.setGState)pdf.setGState(new pdf.GState({opacity:1}));}catch(err){console.warn('Watermark insertion failed on page '+i,err)}}}});
+  await worker.get('pdf').then(pdf=>{
+    if(!logoData) return;
+    const total=pdf.internal.getNumberOfPages();
+    for(let i=1;i<=total;i++){
+      pdf.setPage(i);
+      const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+      try{
+        // Large, centered logo watermark on EVERY downloaded PDF page.
+        // Keep its original aspect ratio and use a very light opacity so questions remain readable.
+        const img=new Image(); img.src=logoData;
+        const ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalHeight/img.naturalWidth:0.95;
+        let wmW=pw*0.78, wmH=wmW*ratio;
+        if(wmH>ph*0.48){wmH=ph*0.48;wmW=wmH/ratio;}
+        const wmX=(pw-wmW)/2;
+        const wmY=(ph-wmH)/2;
+        if(pdf.GState && pdf.setGState){
+          pdf.setGState(new pdf.GState({opacity:0.12}));
+          pdf.addImage(logoData,'PNG',wmX,wmY,wmW,wmH,undefined,'FAST');
+          pdf.setGState(new pdf.GState({opacity:1}));
+        } else {
+          // Compatibility fallback for PDF engines without graphics-state opacity.
+          pdf.addImage(logoData,'PNG',wmX,wmY,wmW,wmH,undefined,'FAST');
+        }
+      }catch(err){console.warn('Watermark insertion failed on page '+i,err)}
+    }
+  });
   await worker.save();
  }finally{host.remove();}
 }

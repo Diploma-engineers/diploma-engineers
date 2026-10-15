@@ -6433,21 +6433,58 @@ function tsFillForm(t){
 let iqCurrentId=null, iqDraftTimer=null;
 const iqEl=id=>document.getElementById(id);
 function iqStatus(msg,isError=false){const el=iqEl("iqStatus");if(el){el.textContent=msg;el.style.color=isError?"#b91c1c":"#2563eb";}}
-function iqCollect(){const branch=iqEl("iqBranch").value;return {title:iqEl("iqTitle").value.trim(),subject:iqEl("iqSubject").value.trim(),branch,category:branch,availableToAllBranches:branch==="Common",semester:iqEl("iqSemester").value.trim(),visibility:branch==="Common"?"all":"branch",content:iqEl("iqContent").value.trim()};}
+function iqParseContent(raw){
+  const text=String(raw||"").replace(/\r/g,"").trim();
+  const lines=text.split("\n");
+  let title="",metaLine="",units=[],current=null,questionBuffer=[];
+  const flushQuestion=()=>{const q=questionBuffer.join("\n").trim();if(q&&current)current.questions.push(q);questionBuffer=[];};
+  for(const line of lines){
+    const t=line.trim();
+    if(!t){if(questionBuffer.length)questionBuffer.push("");continue;}
+    if(!title && /^#\s+/.test(t)){title=t.replace(/^#+\s*/,"").trim();continue;}
+    if(!metaLine && /Diploma Engineering\s*\|/i.test(t)){metaLine=t.replace(/^>\s*/,"");continue;}
+    const um=t.match(/^#{0,3}\s*UNIT\s*[-–—:]?\s*(VI|IV|V|III|II|I|[1-6])\b\s*[:\-–—.]?\s*(.*)$/i);
+    if(um){flushQuestion();current={unit:"UNIT "+um[1].toUpperCase(),title:(um[2]||"").replace(/\s*\([^)]*हिंदी[^)]*\)/i,"").trim(),questions:[]};units.push(current);continue;}
+    const qm=t.match(/^(?:Q\s*)?(\d{1,3})\s*[.)]\s*(.+)$/i);
+    if(qm&&current){flushQuestion();questionBuffer=[qm[2].trim()];continue;}
+    if(questionBuffer.length)questionBuffer.push(t);
+    else if(current&&!/^[#*_`-]+$/.test(t))questionBuffer=[t];
+  }
+  flushQuestion();
+  const meta=(metaLine||"").split("|").map(x=>x.trim());
+  const subjectCandidates=meta.slice(2).filter(x=>x&&!/unit\s+(?:i|ii|iii|iv|v|vi|[1-6])/i.test(x));
+  const subjectHint=subjectCandidates.find(x=>/physics|mathematics|chemistry|communication|electrical|civil|mechanical|agriculture|computer|strength|material/i.test(x))||subjectCandidates[0]||"";
+  const branchHint=meta.find(x=>/agriculture|civil|mechanical|electrical|electronics|computer|information technology|chemical|dairy/i.test(x))||"";
+  return {title,metaLine,meta,branchHint,subjectHint,units,questionCount:units.reduce((n,u)=>n+u.questions.length,0)};
+}
+function iqCollect(){
+  const branch=iqEl("iqBranch").value,raw=iqEl("iqContent").value.trim(),parsed=iqParseContent(raw);
+  const title=iqEl("iqTitle").value.trim()||parsed.title;
+  const subject=iqEl("iqSubject").value.trim()||parsed.subjectHint||"General";
+  const semester=iqEl("iqSemester").value.trim()||((parsed.metaLine.match(/Semester\s*[^|]*/i)||[])[0]||"All Semesters").trim();
+  return {title,subject,branch,category:branch,availableToAllBranches:branch==="Common",semester,visibility:branch==="Common"?"all":"branch",content:raw,units:parsed.units,unitCount:parsed.units.length,questionCount:parsed.questionCount,format:"bilingual-unit-sheet",parsedAt:Date.now()};
+}
 function iqUpdateBranchPreview(){const b=iqEl("iqBranch")?.value||"Common",el=iqEl("iqBranchPreview");if(el)el.textContent=b==="Common"?"🌐 Common — All Engineering Branches":"🎯 Selected Branch — "+b;}
 async function iqSave(isDraft=false){
   if(!auth.currentUser){iqStatus("Please login again to save to Firebase.",true);return;}
-  const d=iqCollect(); if(!d.title||!d.subject||!d.content){if(!isDraft)iqStatus("Title, Subject और Questions Content भरें।",true);return;}
+  const d=iqCollect(); if(d.content && /\bUNIT\b/i.test(d.content) && d.unitCount>0 && d.questionCount===0){iqStatus("Units detect हुए लेकिन numbered questions नहीं मिले। हर question को 1. या 1) से शुरू करें।",true);return;} if(!d.title&&d.content){d.title=iqParseContent(d.content).title||"Important Questions";iqEl("iqTitle").value=d.title;} if(!d.subject&&d.content){d.subject=iqParseContent(d.content).subjectHint||"General";iqEl("iqSubject").value=d.subject;} if(!d.title||!d.subject||!d.content){if(!isDraft)iqStatus("Content paste करें और Title/Subject जाँचें।",true);return;}
   try{const now=Date.now();Object.assign(d,{status:isDraft?"draft":"published",createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||"",updatedAt:now});
     let r;if(iqCurrentId){r=ref(db,"importantQuestions/"+iqCurrentId);const old=await get(r);d.createdAt=old.val()?.createdAt||now;d.id=iqCurrentId;await update(r,d);}else{r=push(ref(db,"importantQuestions"));d.id=r.key;d.createdAt=now;await set(r,d);iqCurrentId=r.key;}
     iqStatus(isDraft?"Draft auto-saved to Firebase.":"Sheet saved successfully to Firebase.");await iqLoadSaved();
   }catch(e){console.error("Important questions save error",e);iqStatus("Save failed: "+(e.message||"Check Firebase Database Rules."),true);}
 }
-async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>v&& (v.createdBy===auth.currentUser.uid || v.createdByEmail===auth.currentUser.email)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>`<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"}</small></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button></div></div>`).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqStatus("Loaded for editing. Save Sheet to update.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
+async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>v&& (v.createdBy===auth.currentUser.uid || v.createdByEmail===auth.currentUser.email)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>`<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"} questions • ${Number(v.unitCount)||0} units</small></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button></div></div>`).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqStatus("Loaded for editing. Save Sheet to update.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
   }catch(e){console.error(e);list.textContent="Unable to load. Check Firebase rules for importantQuestions.";}}
 function iqNew(){iqCurrentId=null;["iqTitle","iqSemester","iqContent"].forEach(id=>iqEl(id).value="");iqEl("iqSubject").value="Engineering Mathematics";iqEl("iqBranch").value="Common";iqUpdateBranchPreview();iqEl("iqVisibility").value="all";iqStatus("New sheet ready.");}
 iqEl("iqBranch")?.addEventListener("change",iqUpdateBranchPreview);iqUpdateBranchPreview();
 iqEl("iqSaveBtn")?.addEventListener("click",()=>iqSave(false));iqEl("iqNewBtn")?.addEventListener("click",iqNew);iqEl("iqRefreshBtn")?.addEventListener("click",iqLoadSaved);
+iqEl("iqContent")?.addEventListener("input",()=>{
+ const raw=iqEl("iqContent").value,parsed=iqParseContent(raw);
+ if(parsed.title&&(!iqEl("iqTitle").value.trim()||iqEl("iqTitle").dataset.autoDetected==="1")){iqEl("iqTitle").value=parsed.title;iqEl("iqTitle").dataset.autoDetected="1";}
+ if(parsed.subjectHint&&(!iqEl("iqSubject").value.trim()||iqEl("iqSubject").value.trim()==="Engineering Mathematics"||iqEl("iqSubject").dataset.autoDetected==="1")){iqEl("iqSubject").value=parsed.subjectHint;iqEl("iqSubject").dataset.autoDetected="1";}
+ if(parsed.metaLine&&!iqEl("iqSemester").value.trim()){const m=parsed.metaLine.match(/(Semester\s*[^|]+)/i);if(m)iqEl("iqSemester").value=m[1].trim();}
+ iqStatus(parsed.units.length?`Auto-detected ${parsed.units.length} Units and ${parsed.questionCount} numbered questions. Preview/save will retain unit-wise bilingual text.`:"Paste a complete sheet with # title, subject line, UNIT headings and numbered questions.");
+});
 ["iqTitle","iqSubject","iqSemester","iqContent"].forEach(id=>iqEl(id)?.addEventListener("input",()=>{clearTimeout(iqDraftTimer);iqDraftTimer=setTimeout(()=>iqSave(true),1600);}));
 
 async function tsSaveTest(status){

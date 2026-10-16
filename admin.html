@@ -2199,7 +2199,7 @@ body.campus-hiring-open{overflow:hidden!important;}
 
     <section class="ts-card" id="tsBulkUploadCard">
       <h2 class="ts-section-title"><i class="fa-solid fa-layer-group"></i> Bulk Upload — All Subjects / Unit-wise</h2>
-      <p class="ts-hint">एक ही बार में कई subjects और उनके सभी units paste करें। सबसे पहले ऊपर <b>Folder Details → Category</b> में अपनी branch चुनें। Bulk में मौजूद <b>CATEGORY:</b> लाइन को अनदेखा किया जाएगा; सभी subjects/units आपके चुने हुए branch में ही save होंगे। हर UNIT में 20 MCQ रखें।</p>
+      <p class="ts-hint">एक ही बार में कई subjects और उनके सभी units paste करें। सबसे पहले ऊपर <b>Folder Details → Category</b> में अपनी branch चुनें। Bulk में मौजूद <b>CATEGORY:</b> लाइन को अनदेखा किया जाएगा; सभी subjects/units आपके चुने हुए branch में ही save होंगे। हर UNIT में जितने MCQ हों, सभी valid MCQ parse किए जाएंगे।</p>
       <div class="ts-field"><label>Bulk Subject + Unit MCQ Format</label>
         <textarea id="tsBulkMcqInput" class="ts-mcq-input" placeholder="SUBJECT: Applied Physics
 SEMESTER: 1st Semester
@@ -2218,7 +2218,7 @@ SEMESTER: 1st Semester
 UNIT-1: Water
 ... 20 MCQ"></textarea>
       </div>
-      <div class="ts-hint">Format rules: <b>SUBJECT:</b>, <b>SEMESTER:</b>, then <b>UNIT-1:</b> heading and numbered MCQs with A/B/C/D + Answer: B. Branch ऊपर Category dropdown से तय होगी; text में CATEGORY: Common लिखा हो तब भी चुनी हुई branch लागू होगी। हर unit में 20 valid MCQs होने चाहिए।</div>
+      <div class="ts-hint">Format rules: <b>SUBJECT:</b>, <b>SEMESTER:</b>, then <b>UNIT-1:</b> heading and numbered MCQs with A/B/C/D + Answer: B. Branch ऊपर Category dropdown से तय होगी; text में CATEGORY: Common लिखा हो तब भी चुनी हुई branch लागू होगी। हर unit में valid MCQs होने चाहिए; अलग-अलग UNIT headings अपने अलग test में save होंगी। Subject heading न हो तो ऊपर Subject field भरें।</div>
       <div class="ts-actions">
         <button class="ts-btn ts-btn-blue" id="tsBulkParseBtn" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> SPLIT ALL SUBJECTS & UNITS</button>
         <button class="ts-btn ts-btn-warning" id="tsBulkDraftBtn" type="button"><i class="fa-regular fa-floppy-disk"></i> SAVE ALL AS DRAFT</button>
@@ -6259,34 +6259,50 @@ function parseTestMCQs(raw){
 function tsParseBulkSubjects(){
   const raw=String(TS("tsBulkMcqInput")?.value||"").replace(/\r/g,"").trim();
   if(!raw){tsToast("Bulk format में subjects और MCQs paste करें.");return false;}
-  const subjectRe=/^\s*SUBJECT\s*:\s*(.+)\s*$/gim, matches=[...raw.matchAll(subjectRe)];
-  if(!matches.length){tsToast("हर subject से पहले SUBJECT: Subject Name लिखें.");return false;}
-  const all=[];let errors=[];
-  for(let si=0;si<matches.length;si++){
-    const start=matches[si].index, end=si+1<matches.length?matches[si+1].index:raw.length;
-    const block=raw.slice(start,end).trim(), subject=matches[si][1].trim();
-    // Bulk uploads always use the branch selected in Folder Details. Ignore CATEGORY in pasted text.
+  const lines=raw.split("\n");
+  const subjRe=/^\s*(?:#{1,3}\s*)?SUBJECT\s*[:：\-]\s*(.*?)\s*$/i;
+  const subjMarks=[];
+  for(let i=0;i<lines.length;i++){const m=lines[i].match(subjRe);if(m&&m[1].trim())subjMarks.push({line:i,subject:m[1].trim()});}
+  // Also allow one subject entered in the Subject field with only multiple UNIT headings pasted.
+  if(!subjMarks.length){
+    const fallbackSubject=tsGetValue("tsSubject"), fallbackSemester=tsGetValue("tsSemester");
+    if(!fallbackSubject){tsToast("SUBJECT: Subject Name लिखें या ऊपर Subject field भरें.");return false;}
+    const units=tsSplitUnits(raw).filter(u=>u.unitTitle);
+    if(!units.length){tsToast("UNIT-I / UNIT-1 जैसी अलग-अलग unit headings नहीं मिलीं.");return false;}
     const category=String(TS("tsBranch")?.value||"Common").trim()||"Common";
-    const semester=(block.match(/^\s*SEMESTER\s*:\s*(.+)\s*$/im)||[])[1]?.trim()||"";
-    const content=block.replace(/^\s*SUBJECT\s*:\s*.+\s*$/im,"").replace(/^\s*(?:CATEGORY|SEMESTER)\s*:\s*.+\s*$/gim,"").trim();
-    const units=tsSplitUnits(content).filter(u=>/^UNIT\s*[-–:]?\s*\d+/i.test(u.unitTitle));
-    if(!semester)errors.push(subject+": SEMESTER missing");
-    if(!units.length){errors.push(subject+": UNIT-1 heading missing");continue;}
+    const all=[],errors=[];
+    for(const u of units){const qs=parseTestMCQs(u.raw);if(!qs.length)errors.push(fallbackSubject+" / "+u.unitTitle+": valid MCQ नहीं मिले (numbered question, A/B/C/D, Answer: B जाँचें).");else all.push({subject:fallbackSubject,category,semester:fallbackSemester,unitTitle:u.unitTitle,topic:u.unitTitle,title:fallbackSubject+" - "+u.unitTitle,questions:qs});}
+    return tsFinishBulkParse(all,errors);
+  }
+  const all=[],errors=[];
+  const category=String(TS("tsBranch")?.value||"Common").trim()||"Common";
+  for(let si=0;si<subjMarks.length;si++){
+    const a=subjMarks[si],end=si+1<subjMarks.length?subjMarks[si+1].line:lines.length;
+    const blockLines=lines.slice(a.line+1,end),block=blockLines.join("\n"),subject=a.subject;
+    const semMatch=block.match(/^\s*SEMESTER\s*[:：\-]\s*(.+?)\s*$/im);
+    const semester=(semMatch?.[1]||tsGetValue("tsSemester")||"").trim();
+    const content=blockLines.filter(line=>!/^\s*(?:CATEGORY|SEMESTER)\s*[:：\-]/i.test(line)).join("\n").trim();
+    const units=tsSplitUnits(content).filter(u=>u.unitTitle);
+    if(!semester)errors.push(subject+": SEMESTER: लिखें या ऊपर Semester चुनें.");
+    if(!units.length){errors.push(subject+": UNIT-I / UNIT-1 जैसी heading नहीं मिली.");continue;}
     for(const u of units){
-      const qs=parseTestMCQs(u.raw), unitLabel=u.unitTitle||"Unit";
-      if(qs.length!==20)errors.push(subject+" / "+unitLabel+": "+qs.length+" valid MCQ मिले (20 चाहिए)");
-      if(qs.length)all.push({subject,category,semester,unitTitle:unitLabel,topic:unitLabel,title:subject+" - "+unitLabel,questions:qs});
+      const qs=parseTestMCQs(u.raw);
+      if(!qs.length)errors.push(subject+" / "+u.unitTitle+": valid MCQ नहीं मिले (numbered question, A/B/C/D, Answer: B जाँचें). ");
+      else all.push({subject,category,semester,unitTitle:u.unitTitle,topic:u.unitTitle,title:subject+" - "+u.unitTitle,questions:qs});
     }
   }
-  if(errors.length){TS("tsBulkStatus").innerHTML="<b>Check before saving:</b><br>"+errors.map(tsEscape).join("<br>");tsToast("कुछ units में format/20 MCQ की समस्या है; पहले सुधारें.");return false;}
-  tsGeneratedTests=all;tsGeneratedTest=all.length?{questions:all[0].questions}:null;
-  TS("tsSubject").value=all[0]?.subject||"";/* Preserve selected branch; do not reset to Common from pasted content. */TS("tsSemester").value=all[0]?.semester||"";TS("tsTopic").value="Multiple Units";TS("tsTestTitle").value=all[0]?.title||"Bulk MCQ";TS("tsFolderName").value="All Subjects";
-  TS("tsBulkStatus").innerHTML="Ready for branch <b>"+tsEscape(TS("tsBranch")?.value||"Common")+"</b>: <b>"+new Set(all.map(x=>x.subject)).size+" subjects</b>, <b>"+all.length+" unit tests</b>, <b>"+all.reduce((n,x)=>n+x.questions.length,0)+" MCQs</b>. सभी tests इसी selected branch में save होंगे। अब Save All या Publish All दबाएँ.";
-  TS("tsStats").classList.remove("hidden");TS("tsStats").innerHTML=`<div class="ts-stat"><b>${new Set(all.map(x=>x.subject)).size}</b> Subjects</div><div class="ts-stat"><b>${all.length}</b> Unit Tests</div><div class="ts-stat"><b>${all.reduce((n,x)=>n+x.questions.length,0)}</b> MCQs</div>`;
-  TS("tsPreview").innerHTML=all.map(g=>`<div class="ts-unit-preview"><h3 style="padding:12px;background:#eff6ff;border-radius:10px;margin:14px 0 8px;color:#1d4ed8">${tsEscape(g.subject)} · ${tsEscape(g.unitTitle)} <small>(${g.questions.length} MCQs)</small></h3>${g.questions.map((q,i)=>`<div class="ts-question"><div class="ts-qhead">${i+1}. ${tsEscape(q.question)}</div>${q.options.map((op,j)=>`<div class="ts-option ${q.answer===["A","B","C","D"][j]?"correct":""}"><b>${["A","B","C","D"][j]})</b> ${tsEscape(op)}</div>`).join("")}<span class="ts-answer">Answer: ${tsEscape(q.answer)}</span></div>`).join("")}</div>`).join("");
-  TS("tsGeneratedCode").textContent=JSON.stringify({bulk:true,tests:all},null,2);tsToast("Bulk subjects and units parsed successfully.");return true;
+  return tsFinishBulkParse(all,errors);
 }
-
+function tsFinishBulkParse(all,errors){
+  if(errors.length||!all.length){TS("tsBulkStatus").innerHTML="<b>Bulk parse में समस्या:</b><br>"+errors.map(tsEscape).join("<br>")+(all.length?"":"<br>कोई valid unit test नहीं बना।");tsToast("Bulk parse पूरा नहीं हुआ। ऊपर दिख रही समस्या ठीक करें.");return false;}
+  tsGeneratedTests=all;tsGeneratedTest=all.length?{questions:all[0].questions}:null;
+  TS("tsSubject").value=all[0]?.subject||TS("tsSubject").value;TS("tsSemester").value=all[0]?.semester||TS("tsSemester").value;TS("tsTopic").value="Multiple Units";TS("tsTestTitle").value=all[0]?.title||"Bulk MCQ";TS("tsFolderName").value="All Subjects";
+  const total=all.reduce((n,x)=>n+x.questions.length,0),subjects=[...new Set(all.map(x=>x.subject))];
+  TS("tsBulkStatus").innerHTML="<b>Preview ready:</b> "+subjects.length+" subject(s), "+all.length+" separate unit test(s), "+total+" MCQs.<br>"+all.map(g=>tsEscape(g.subject+" · "+g.unitTitle)+" — "+g.questions.length+" MCQs").join("<br>")+"<br>अब Save All as Draft या Publish All दबाएँ.";
+  TS("tsStats").classList.remove("hidden");TS("tsStats").innerHTML=`<div class="ts-stat"><b>${subjects.length}</b> Subjects</div><div class="ts-stat"><b>${all.length}</b> Unit Tests</div><div class="ts-stat"><b>${total}</b> MCQs</div>`;
+  TS("tsPreview").innerHTML=all.map(g=>`<div class="ts-unit-preview"><h3 style="padding:12px;background:#eff6ff;border-radius:10px;margin:14px 0 8px;color:#1d4ed8">${tsEscape(g.subject)} · ${tsEscape(g.unitTitle)} <small>(${g.questions.length} MCQs)</small></h3>${g.questions.map((q,i)=>`<div class="ts-question"><div class="ts-qhead">${i+1}. ${tsEscape(q.question)}</div>${q.options.map((op,j)=>`<div class="ts-option ${q.answer===["A","B","C","D"][j]?"correct":""}"><b>${["A","B","C","D"][j]})</b> ${tsEscape(op)}</div>`).join("")}<span class="ts-answer">Answer: ${tsEscape(q.answer)}</span></div>`).join("")}</div>`).join("");
+  TS("tsGeneratedCode").textContent=JSON.stringify({bulk:true,tests:all},null,2);tsToast("Parsed "+all.length+" separate unit tests.");return true;
+}
 function tsValidateTest(){
   for(const [id,name] of [["tsTestTitle","Test Title"],["tsBranch","Category"],["tsSemester","Semester"],["tsSubject","Subject"],["tsTopic","Topic"]]){
     if(!tsGetValue(id)){tsToast(name+" भरना जरूरी है.");TS(id)?.focus();return false;}
@@ -6308,17 +6324,25 @@ function tsRenderPreview(qs){
 function tsUpdateGeneratedCode(){if(tsGeneratedTests.length>1)TS("tsGeneratedCode").textContent=JSON.stringify({multiUnit:true,subject:tsGetValue("tsSubject"),units:tsGeneratedTests.map(g=>({title:g.title,topic:g.topic,unit:g.unitTitle,questionCount:g.questions.length,questions:g.questions}))},null,2);else if(tsGeneratedTest?.questions?.length)TS("tsGeneratedCode").textContent=JSON.stringify(tsBuildTest("draft"),null,2);}
 function tsSplitUnits(raw){
   const text=String(raw||"").replace(/\r/g,"").trim();
-  const re=/^\s*(?:#{1,3}\s*)?UNIT\s*[-–:]?\s*(\d+)\s*[:\-–.]?\s*(.*?)\s*$/gim;
-  const matches=[...text.matchAll(re)];
-  if(!matches.length)return [{unitTitle:"",topic:tsGetValue("tsTopic")||"General",raw:text}];
+  if(!text)return [];
+  // Parse headings line-by-line so a heading cannot swallow the previous unit's MCQs.
+  // Supported: UNIT-I, UNIT I, UNIT-1, UNIT 1, UNIT–II: Title, ## UNIT 3 - Title.
+  const lines=text.split("\n"), marks=[];
+  const unitHead=/^\s*(?:#{1,3}\s*)?UNIT\s*[-–—:]?\s*(VI|IV|V|III|II|I|[1-6])\b\s*(?:[:：.\)\-–—]\s*)?(.*?)\s*$/i;
+  for(let i=0;i<lines.length;i++){
+    const m=lines[i].match(unitHead);
+    if(m)marks.push({line:i,no:String(m[1]).toUpperCase(),title:(m[2]||"").trim()});
+  }
+  if(!marks.length)return [{unitTitle:"",topic:tsGetValue("tsTopic")||"General",raw:text}];
   const out=[];
-  for(let i=0;i<matches.length;i++){
-    const m=matches[i],begin=m.index+m[0].length,end=i+1<matches.length?matches[i+1].index:text.length;
-    const body=text.slice(begin,end).trim();if(!body)continue;
-    const heading=("UNIT-"+m[1]+(m[2]?" : "+m[2].replace(/[—–-]+$/,"").trim():"")).trim();
+  for(let i=0;i<marks.length;i++){
+    const a=marks[i],end=i+1<marks.length?marks[i+1].line:lines.length;
+    const body=lines.slice(a.line+1,end).join("\n").trim();
+    if(!body)continue;
+    const heading=("UNIT-"+a.no+(a.title?" : "+a.title:"" )).trim();
     out.push({unitTitle:heading,topic:heading,raw:body});
   }
-  return out.length?out:[{unitTitle:"",topic:tsGetValue("tsTopic")||"General",raw:text}];
+  return out;
 }
 function tsParseAndPreview(){
   const raw=TS("tsMcqInput").value,chunks=tsSplitUnits(raw);
@@ -6492,7 +6516,7 @@ async function tsSaveTest(status){
   if(!tsGeneratedTests.length && tsGeneratedTest?.questions?.length)tsGeneratedTests=[{unitTitle:tsGetValue("tsTopic"),topic:tsGetValue("tsTopic"),title:tsGetValue("tsTestTitle"),questions:tsGeneratedTest.questions}];
   if(!tsGeneratedTests.length){tsToast("पहले AUTO GENERATE करें.");return;}
   if(!tsGetValue("tsSubject")||!tsGetValue("tsSemester")||!tsGetValue("tsBranch")){tsToast("Category, Semester और Subject भरना जरूरी है.");return;}
-  const hasUnitHeadings=tsGeneratedTests.some(g=>/^UNIT\s*[-–:]?\s*\d+/i.test(g.unitTitle||""));
+  const hasUnitHeadings=tsGeneratedTests.some(g=>/^UNIT\s*[-–—:]?\s*(?:VI|IV|V|III|II|I|[1-6])\b/i.test(g.unitTitle||""));
   if(!hasUnitHeadings&&(!tsGetValue("tsTestTitle")||!tsGetValue("tsTopic"))){tsToast("Single unit के लिए Test Title और Unit/Topic Title भरें.");(!tsGetValue("tsTestTitle")?TS("tsTestTitle"):TS("tsTopic")).focus();return;}
   try{
     const saved=[];

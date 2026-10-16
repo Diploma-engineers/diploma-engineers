@@ -10008,6 +10008,12 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   function route(page,push){if(typeof window.navigateTo==='function')window.navigateTo(page,!!push);else{document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active-page',x.id===page));}}
   function backAction(source){
     const active=activePageId();
+    // Important Questions has its own Branch > Semester > Subject > File stack.
+    // Never send its Back button directly to Home while a folder is open.
+    if(active==='importantQuestionsPage' && typeof window.iqNavigateBack==='function'){
+      window.iqNavigateBack();
+      return true;
+    }
     if(active==='testRunnerPage'){route('testSeriesPage',true);setTimeout(()=>{window.deTsRenderHistory?.();},0);return true}
     if(active==='testSeriesPage'){
       if(typeof window.deTsGoBack==='function'&&window.deTsGoBack())return true;
@@ -10021,6 +10027,13 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   window.goBack=function(){return backAction('button');};
   window.addEventListener('popstate',function(e){
     const active=activePageId();
+    if(active==='importantQuestionsPage'){
+      e.stopImmediatePropagation();e.preventDefault();
+      if(e.state && e.state.__iqNav && typeof window.iqRestoreState==='function') window.iqRestoreState(e.state);
+      else if(typeof window.iqNavigateBack==='function') window.iqNavigateBack();
+      syncArrow();
+      return;
+    }
     if(active==='testRunnerPage'){
       e.stopImmediatePropagation();e.preventDefault();
       route('testSeriesPage',false);
@@ -10407,9 +10420,7 @@ function iqRenderCrumbs(){const labels=['Branches','Semesters','Subjects','Files
 function iqRenderFolders(){iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
 function iqOpen(index){let r=iqRecords[index];if(!r)return;iqChosen=r;let branch=iqField(r,'branch','branchName')||'Diploma Engineering',sem=iqField(r,'semester','year')||'',subject=iqField(r,'subject','subjectName')||'Important Questions',units=iqUnits(r);iqEl('iqAppFolders').style.display='none';iqEl('iqAppStatus').textContent='';iqEl('iqAppReader').hidden=false;document.title=[subject,branch,'Imp. Questions by diploma_engineers7'].filter(Boolean).join('_');iqEl('iqAppSheet').innerHTML='<div class="iq-sheet-watermark">@diploma_engineers7</div><header class="iq-sheet-head"><div class="iq-sheet-brand"><img crossorigin="anonymous" src="https://diplomaengineers.vercel.app/certificate%20logo.png" alt="Diploma Engineers Certificate Logo"></div><div class="iq-sheet-branch">'+iqTxt(branch.toUpperCase())+(sem?' • '+iqTxt(sem.toUpperCase()):'')+'</div><div class="iq-sheet-subject">'+iqTxt(subject.toUpperCase())+'</div><div class="iq-sheet-meta">Branch: '+iqTxt(branch)+' | Semester: '+iqTxt(sem||'Not specified')+' | Subject: '+iqTxt(subject)+'</div><div style="font-size:12px;font-weight:800;color:#2563eb;margin-top:6px">@diploma_engineers7</div></header>'+(units.length?units.map((u,i)=>'<section><h2 class="iq-sheet-unit">'+iqTxt((/^\s*(?:UNIT\s*[-–:]?\s*(?:\d+|[IVX]+)|(?:\d+|[IVX]+)\s*[.):\-])/i.test(String(u.title||''))?String(u.title):('UNIT '+(i+1)+': '+String(u.title||'Unit'))))+'</h2>'+(u.questions.length?u.questions.map((q,j)=>{let parts=String(q.text||'').split(/\n/);return '<div class="iq-sheet-q"><span class="iq-hi">'+iqTxt((q.number||j+1)+'. '+(parts[0]||''))+'</span>'+(parts.slice(1).map(t=>'<span class="iq-en">'+iqTxt(t)+'</span>').join(''))+'</div>'}).join(''):'<div class="iq-sheet-empty">Questions are not stored inside this unit in Firebase.</div>')+'</section>').join(''):'<div class="iq-sheet-empty">No units/questions found. Please check the Admin Panel saved record.</div>')+'<footer style="text-align:center;color:#94a3b8;font-size:11px;margin-top:22px">The Students’ Trusted Learning Platform • @diploma_engineers7</footer>'}
 function iqNavigateBack(){
- // Do NOT call history.back() here: the main app has its own popstate
- // router, which can switch straight to Home instead of closing one folder.
- // Handle this reader's navigation locally, one level at a time.
+ // Local folder stack only: File -> Subject -> Semester -> Branch -> Home.
  if(iqChosen){
    iqChosen=null;
    iqEl('iqAppReader').hidden=true;
@@ -10425,6 +10436,15 @@ function iqNavigateBack(){
  }
  if(typeof navigateTo==='function')navigateTo('homePage');
 }
+window.iqNavigateBack=iqNavigateBack;
+window.iqRestoreState=function(state){
+ iqPath=Array.isArray(state.path)?state.path.slice():[];
+ if(state.chosen!==null&&state.chosen!==undefined&&iqRecords[Number(state.chosen)]){
+   iqOpen(Number(state.chosen));
+ }else{
+   iqChosen=null;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders();
+ }
+};
 iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Generating PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='PDF Downloaded ✓'}catch(e){console.error('PDF generation failed',e);alert('PDF library load/generation failed. Print dialog will open; choose Save as PDF.');window.print();btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='PDF Downloaded ✓')btn.textContent=old},1800)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
 async function iqDownloadPdf(el,name){
  if(!el)throw new Error('Question sheet not found');
@@ -10480,8 +10500,7 @@ async function iqDownloadPdf(el,name){
 onValue(ref(iqDb,'importantQuestions'),snap=>{const data=snap.val()||{};iqRecords=Object.entries(data).map(([id,v])=>({...v,id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&r.status!=='unpublished');iqPopulateFilters();iqRenderFolders()},err=>{iqEl('iqAppStatus').textContent='Could not load Important Questions: '+(err.message||'Firebase read denied')});
 window.addEventListener('popstate',function(e){
  if(e.state&&e.state.__iqNav){
-   iqPath=Array.isArray(e.state.path)?e.state.path.slice():[];
-   if(e.state.chosen!==null&&e.state.chosen!==undefined&&iqRecords[e.state.chosen]){iqOpen(Number(e.state.chosen))}else{iqChosen=null;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders()}
+   window.iqRestoreState(e.state);
  } else if(iqChosen){
    iqChosen=null;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders();
  } else if(iqPath.length){

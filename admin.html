@@ -2828,7 +2828,7 @@ Engineering Mathematics"></textarea><small>Enter the complete subject list now, 
    FIREBASE IMPORT
 ===================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, push, set, onValue, remove, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 /* =====================================================
@@ -2886,6 +2886,13 @@ const studentFirebaseConfig = {
 const studentApp = initializeApp(studentFirebaseConfig, "studentPurchaseAdmin");
 const studentAuth = getAuth(studentApp);
 const studentDb = getDatabase(studentApp);
+
+function requireStudentPurchaseSession(){
+  if(studentAuth.currentUser) return true;
+  const msg = "Admin panel login successful, but Purchase Approval is not connected. In Firebase project diploma-app-9a378, create/enable this admin email in Authentication (Email/Password) and grant this UID/email access in Realtime Database Rules, then log in again.";
+  alert(msg);
+  return false;
+}
 
 const CLOUD_NAME = "ub0qgzwa";
 const UPLOAD_PRESET = "news_upload";
@@ -3884,17 +3891,24 @@ async function checkAndApplyAdminActivityPolicy(user,{render=true}={}){
                 deactivationReason:"14 consecutive calendar days without any News, Blog or Book upload.",
                 inactivityStartDate:gap.start,
                 inactivityEndDate:gap.end,
-                purgeAfter:now + 14 * 24 * 60 * 60 * 1000,
-                purgeStatus:"scheduled",
                 updatedAt:now
             };
             try{ await update(ref(db,`adminProfiles/${user.uid}`),patch); }catch(e){ console.warn("Admin deactivation profile update failed:",e?.message||e); }
             try{
                 if(user.email) await update(ref(db,`adminAccess/${adminEmailKey(user.email)}`),{enabled:false,disabled:true,disabledAt:now,updatedAt:now});
             }catch(e){ console.warn("Admin access disable failed:",e?.message||e); }
-            // Do not delete the Authentication account immediately. The server-side
-            // scheduled cleanup deletes owned records and Auth exactly 14 days later.
-            return {allowed:false,blocked:true,reason:patch.deactivationReason,gap,purgeAfter:patch.purgeAfter,purgeScheduled:true};
+            // Firebase client SDK allows the currently signed-in user to delete
+            // their own Auth account. RTDB content is NOT removed, so all
+            // previously uploaded News/Blogs/Books remain available to Founder.
+            let authDeleted=false, authDeleteError="";
+            try{
+                await deleteUser(user);
+                authDeleted=true;
+            }catch(e){
+                authDeleteError=e?.code||e?.message||"auth-delete-failed";
+                console.warn("Automatic Firebase Auth deletion failed; access remains disabled:",e);
+            }
+            return {allowed:false,blocked:true,reason:patch.deactivationReason,gap,authDeleted,authDeleteError};
         }
         // Keep a lightweight heartbeat for Founder/admin reporting without changing creation date.
         try{ await update(ref(db,`adminProfiles/${user.uid}`),{active:true,accountStatus:"active",lastActivityPolicyCheckAt:Date.now(),updatedAt:Date.now()}); }catch(e){}
@@ -3913,7 +3927,10 @@ async function blockDeactivatedAdminSession(user,result){
     loginPage.style.display="flex";
     adminPanel.style.display="none";
     document.body.classList.remove("admin-logged-in");
-    errorBox.innerHTML=`<strong>Admin access deactivated.</strong><br>14 consecutive inactive days detected. Your owned records and Authentication account are scheduled for permanent deletion 14 days after deactivation, by the server cleanup job.`;
+    const deleted = !!result?.authDeleted;
+    errorBox.innerHTML=deleted
+      ? `<strong>Admin account permanently deleted.</strong><br>14 consecutive days passed without any upload. Your uploaded News, Blogs and Books are preserved.`
+      : `<strong>Admin access permanently deactivated.</strong><br>14 consecutive days passed without any upload. Your uploaded News, Blogs and Books are preserved.`;
     return result;
 }
 
@@ -3959,9 +3976,16 @@ loginBtn.addEventListener("click", async () => {
                 "Student Purchase Firebase login timed out"
             );
         } catch (studentAuthError) {
-            console.error("Student Purchase Firebase login failed:", studentAuthError?.code || studentAuthError?.message);
-            throw new Error("Purchase approval login failed in diploma-app-9a378. Create/enable this same admin email in that project's Firebase Authentication and grant admin access in its Database Rules.");
+            // Do not block the entire Admin Panel because the secondary
+            // purchase-project account has not been provisioned yet.
+            // Main admin login remains available; purchase approval actions
+            // will require a valid session and Rules authorization in this project.
+            console.error("Student Purchase Firebase login unavailable:", studentAuthError?.code || studentAuthError?.message);
+            window.studentPurchaseAuthReady = false;
+            window.studentPurchaseAuthErrorCode = studentAuthError?.code || "unknown";
+            try { await signOut(studentAuth); } catch (_) {}
         }
+        if (studentAuth.currentUser) window.studentPurchaseAuthReady = true;
 
         // Sign in to the course Firebase session for the UID/email authorized
         // by the uploaded /courseCatalog Realtime Database rules.

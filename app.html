@@ -7289,30 +7289,51 @@ function openCourse(courseId){
 }
 async function accessValue(courseId){if(!db||!currentUid)return null;const s=await get(ref(db,`courseAccess/${currentUid}/${courseId}`));return s.exists()?s.val():null;}
 function watchAccess(courseId){if(accessUnsub){accessUnsub();accessUnsub=null;}if(!db||!currentUid)return;accessUnsub=onValue(ref(db,`courseAccess/${currentUid}/${courseId}`),snap=>{if(isApproved(snap.val(),courseId)){showVerifyTick();setPaidCardState(courseId,'approved');closeTracking();showStatus('Payment verified. Opening your course…','ok');setTimeout(()=>openCourse(courseId),650);}},err=>console.warn('Course access listener:',err));}
-async function loadAdminUploadedPaymentQR(){
+async function loadAdminUploadedPaymentQR(courseId){
  const img=overlay?.querySelector('.payment-qr'); if(!img)return;
  const fallback='https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png';
- const valid=v=>typeof v==='string'&&(/^(https?:|data:image\/)/i.test(v.trim()));
- const findQR=(node,depth=0)=>{if(!node||depth>5)return '';if(typeof node==='string')return valid(node)&&/(qr|payment|upi|image|photo|url)/i.test(node)?node:'';if(Array.isArray(node)){for(const x of node){const f=findQR(x,depth+1);if(f)return f;}return '';}if(typeof node==='object'){for(const k of ['qrUrl','qrURL','qrImage','qrImageUrl','paymentQr','paymentQR','paymentQrUrl','paymentQRUrl','upiQr','upiQR','upiQrUrl','paymentImage','paymentImageUrl','imageUrl','image','qr','url','src']){const v=node[k];if(valid(v))return v.trim();}for(const [k,v] of Object.entries(node)){if(/qr|payment|upi/i.test(k)){const f=findQR(v,depth+1);if(f)return f;}}for(const v of Object.values(node)){const f=findQR(v,depth+1);if(f)return f;}}return '';};
- img.onerror=()=>{if(img.src!==fallback)img.src=fallback;};
+ const valid=v=>typeof v==='string'&&/^(https?:|data:image\/)/i.test(v.trim());
+ const directQR=node=>{
+  if(!node||typeof node!=='object')return '';
+  // Prefer the payment QR fields saved by the Admin Course Upload form.
+  const keys=['qrImage','paymentQr','paymentQR','paymentImage','qrUrl','qrURL','qrImageUrl','paymentQrUrl','paymentQRUrl','paymentImageUrl','qrCodeUrl','upiQr','upiQR','upiQrUrl'];
+  for(const k of keys){const v=node[k];if(valid(v))return v.trim();}
+  return '';
+ };
+ const setQR=url=>{img.onerror=()=>{img.onerror=null;img.src=fallback;img.dataset.qrSource='fallback';};img.src=url;img.dataset.qrSource=url===fallback?'fallback':'course-firebase';};
  try{
+  let catalogCourse=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
+  let courseQR=directQR(catalogCourse);
+  // Catalog listener may not have finished when a student opens the payment modal.
+  if(!courseQR){
+   const base='https://diplomaengineers-869df-default-rtdb.firebaseio.com';
+   try{
+    const res=await fetch(base+'/courseCatalog/'+encodeURIComponent(String(courseId))+'.json',{cache:'no-store'});
+    if(res.ok){const fresh=await res.json();if(fresh&&typeof fresh==='object'){catalogCourse=fresh;courseQR=directQR(fresh);}}
+   }catch(e){console.warn('Direct course QR lookup failed',e);}
+  }
+  if(courseQR){setQR(courseQR);return;}
+  // Legacy fallback paths are checked only when this course has no uploaded QR.
   const base='https://diplomaengineers-869df-default-rtdb.firebaseio.com';
-  const paths=['paymentSettings.json','settings/payment.json','settings.json','appSettings.json','paymentQR.json','paymentQr.json','paymentConfig.json','config/payment.json','adminSettings/payment.json','upiSettings.json'];
-  for(const path of paths){try{const res=await fetch(base+'/'+path,{cache:'no-store'});if(!res.ok)continue;const data=await res.json();const found=findQR(data);if(found){img.src=found;img.dataset.qrSource='firebase';return;}}catch(e){}}
- }catch(e){console.warn('Could not load admin QR from Firebase',e)}
- img.src=fallback;img.dataset.qrSource='fallback';
+  const paths=['courses/'+encodeURIComponent(String(courseId))+'.json','courses.json','paymentSettings.json','settings/payment.json','settings.json','appSettings.json','paymentQR.json','paymentQr.json','paymentConfig.json','config/payment.json','adminSettings/payment.json','upiSettings.json'];
+  const findLegacyQR=(node,depth=0)=>{if(!node||depth>5)return '';if(typeof node==='string')return valid(node)?node.trim():'';if(Array.isArray(node)){for(const x of node){const f=findLegacyQR(x,depth+1);if(f)return f;}return '';}if(typeof node==='object'){for(const k of ['qrUrl','qrURL','qrImage','qrImageUrl','paymentQr','paymentQR','paymentQrUrl','paymentQRUrl','upiQr','upiQR','upiQrUrl','paymentImage','paymentImageUrl','qrCodeUrl']){const v=node[k];if(valid(v))return v.trim();}for(const [k,v] of Object.entries(node)){if(/qr|payment|upi/i.test(k)){const f=findLegacyQR(v,depth+1);if(f)return f;}}}return '';};
+  for(const path of paths){try{const res=await fetch(base+'/'+path,{cache:'no-store'});if(!res.ok)continue;const data=await res.json();let found='';if(path==='courses.json')found=directQR(data?.[courseId]||data?.[String(courseId)]||{});else found=directQR(data)||findLegacyQR(data);if(found){setQR(found);img.dataset.qrSource='legacy-firebase';return;}}catch(e){}}
+ }catch(e){console.warn('Could not load course payment QR from Firebase',e);}
+ setQR(fallback);img.dataset.qrSource='fallback';
 }
 async function openPayment(courseId){
  if(!currentUid){alert('Please login first.');return;}
  const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
  const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}
  currentCourse=courseId;courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
- const price=Number((window.__deAdminCourseCatalog||{})[courseId]?.price??(window.__deAdminCourseCatalog||{})[courseId]?.amount??99)||99;
+ const courseRecord=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
+ const priceRaw=Number(courseRecord.price??courseRecord.amount??99);
+ const price=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:99;
  const priceEl=overlay.querySelector('.payment-price');if(priceEl)priceEl.textContent='₹'+price+' INR';const head=overlay.querySelector('.payment-head h3');if(head)head.textContent='Course Purchase • ₹'+price;
  utrEl.value='';document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
  overlay.style.setProperty('display','flex','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');overlay.style.setProperty('z-index','2147483646','important');overlay.setAttribute('aria-hidden','false');
  const modal=overlay.querySelector('.payment-modal');if(modal){modal.style.setProperty('display','block','important');modal.style.setProperty('position','relative','important');modal.style.setProperty('z-index','1','important');}
- await loadAdminUploadedPaymentQR();watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);
+ await loadAdminUploadedPaymentQR(courseId);watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);
 }
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();setTimeout(()=>window.refreshUploadedCourseCards?.(),200);}
 function getCourseCard(courseId){

@@ -2887,6 +2887,13 @@ const studentApp = initializeApp(studentFirebaseConfig, "studentPurchaseAdmin");
 const studentAuth = getAuth(studentApp);
 const studentDb = getDatabase(studentApp);
 
+function requireStudentPurchaseSession(){
+  if(studentAuth.currentUser) return true;
+  const msg = "Admin panel login successful, but Purchase Approval is not connected. In Firebase project diploma-app-9a378, create/enable this admin email in Authentication (Email/Password) and grant this UID/email access in Realtime Database Rules, then log in again.";
+  alert(msg);
+  return false;
+}
+
 const CLOUD_NAME = "ub0qgzwa";
 const UPLOAD_PRESET = "news_upload";
 
@@ -3969,9 +3976,16 @@ loginBtn.addEventListener("click", async () => {
                 "Student Purchase Firebase login timed out"
             );
         } catch (studentAuthError) {
-            console.error("Student Purchase Firebase login failed:", studentAuthError?.code || studentAuthError?.message);
-            throw new Error("Purchase approval login failed in diploma-app-9a378. Create/enable this same admin email in that project's Firebase Authentication and grant admin access in its Database Rules.");
+            // Do not block the entire Admin Panel because the secondary
+            // purchase-project account has not been provisioned yet.
+            // Main admin login remains available; purchase approval actions
+            // will require a valid session and Rules authorization in this project.
+            console.error("Student Purchase Firebase login unavailable:", studentAuthError?.code || studentAuthError?.message);
+            window.studentPurchaseAuthReady = false;
+            window.studentPurchaseAuthErrorCode = studentAuthError?.code || "unknown";
+            try { await signOut(studentAuth); } catch (_) {}
         }
+        if (studentAuth.currentUser) window.studentPurchaseAuthReady = true;
 
         // Sign in to the course Firebase session for the UID/email authorized
         // by the uploaded /courseCatalog Realtime Database rules.

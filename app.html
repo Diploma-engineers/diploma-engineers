@@ -3301,7 +3301,6 @@ html,body{max-width:100%;overflow-x:hidden}
   <div id="syllabusPage" class="page"></div>
 
   <!-- UPDATED COURSE DETAIL PAGES -->
-  <div id="year-1-course" class="page"></div>
   <div id="civil-year-2-course" class="page"></div>
   <div id="mechanical-year-2-course" class="page"></div>
   <div id="it-year-2-course" class="page"></div>
@@ -3349,7 +3348,6 @@ html,body{max-width:100%;overflow-x:hidden}
 
     <div class="course-filter-panel" id="courseFilterPanel">
       <button type="button" class="course-filter-chip active" data-filter="all">All</button>
-      <button type="button" class="course-filter-chip" data-filter="year1">1st Year</button>
       <button type="button" class="course-filter-chip" data-filter="year2">2nd Year</button>
       <button type="button" class="course-filter-chip" data-filter="year3">3rd Year</button>
       <button type="button" class="course-filter-chip" data-filter="civil">Civil</button>
@@ -3367,33 +3365,6 @@ html,body{max-width:100%;overflow-x:hidden}
     <div id="adminUploadedCourseGrid" class="course-grid"><div class="course-no-results show" style="display:block">Loading published courses...</div></div>
 
     <div class="course-grid" id="builtInCourseGrid">
-
-      <!-- Year 1 Course -->
-      <div class="course-card" data-course-search="1st year course">
-        <div class="card-header-banner purple">
-          <span class="free-badge">FREE</span>
-          <div class="header-title-box">
-            <i class="fa-solid fa-shapes"></i>
-            <h2>1st Year Course</h2>
-          </div>
-          <p>For All Branches (Common Foundation)</p>
-        </div>
-        <div class="course-body">
-          <div class="rating-bar">
-            <i class="fa-solid fa-star"></i>
-            <span>4.9</span>
-            <span class="reviews">(1,240 Reviews)</span>
-          </div>
-          <ul class="feature-list">
-<li><i class="fa-solid fa-circle-check"></i> YouTube's best lectures provided here</li>
-<li><i class="fa-solid fa-circle-check"></i> AI Short Notes (Unit wise)</li>
-<li><i class="fa-solid fa-circle-check"></i> New syllabus based</li>
-</ul>
-          <button type="button" onclick="navigateTo('year-1-course')" class="action-btn">
-            <i class="fa-solid fa-gift"></i> Access Course
-          </button>
-        </div>
-      </div>
 
       <!-- Civil Year 2 Course -->
       <div class="course-card" data-course-search="civil year 2">
@@ -4452,7 +4423,6 @@ const firebaseConfig = {
     resultPage: "result.html",
     groupsPage: "app-group.html",
     syllabusPage: "app-syllabus.html",
-    "year-1-course": "year-1-course.html",
     "civil-year-2-course": "civil-year-2-course.html",
     "mechanical-year-2-course": "mechanical-year-2-course.html",
     "it-year-2-course": "it-year-2-course.html",
@@ -7634,7 +7604,6 @@ if(coursePageRoot)courseCardsObserver.observe(coursePageRoot,{childList:true,sub
   function courseMatchesFilter(card, filter){
     if(filter === 'all') return true;
     const text = (card.dataset.courseSearch || '').toLowerCase();
-    if(filter === 'year1') return text.includes('year 1') || text.includes('1st');
     if(filter === 'year2') return text.includes('year 2') || text.includes('2nd');
     if(filter === 'year3') return text.includes('year 3') || text.includes('3rd');
     return text.includes(filter);
@@ -10084,11 +10053,11 @@ function renderAdminCourses(data){
   const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
   const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
   const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="card-header-banner green" style="${img?`background-image:linear-gradient(90deg,rgba(15,23,42,.78),rgba(15,23,42,.12)),url('${img}');background-size:cover;background-position:center`:''}"><span class="free-badge paid-badge">₹${price} • UPI</span><div class="header-title-box"><i class="fa-solid fa-graduation-cap"></i><h2>${title}</h2></div><p>${branch}</p></div><div class="course-body"><p style="font-size:13px;color:#64748b;line-height:1.5">${desc}</p><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> ${itemCount} lecture / PDF items</li><li><i class="fa-solid fa-circle-check"></i> Semester and subject-wise content</li></ul><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy</button></div></div></article>`;
+  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><span class="free-badge paid-badge de-firebase-course-price">₹${price} • UPI</span><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body"><div class="de-firebase-course-description"><span class="de-firebase-course-description-icon"><i class="fa-solid fa-book-open-reader"></i></span><p>${desc}</p></div><ul class="feature-list"><li><i class="fa-solid fa-circle-check"></i> ${itemCount} lecture / PDF items</li><li><i class="fa-solid fa-circle-check"></i> Semester and subject-wise content</li></ul><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy</button></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
  grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
-  grid.querySelectorAll("[data-admin-course-explore]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-explore");if(typeof window.openIntegratedCourse==="function")window.openIntegratedCourse(id);else window.__dePendingCourseId=id;});
+  grid.querySelectorAll("[data-admin-course-explore]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-explore");if(typeof window.openFirebaseCourseDetails==="function")window.openFirebaseCourseDetails(id);else window.__dePendingCourseId=id;});
  if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
  // Authentication/profile might finish loading before or after this catalog listener.
  setTimeout(()=>window.refreshUploadedCourseCards?.(),100);
@@ -10509,6 +10478,81 @@ window.addEventListener('popstate',function(e){
 },true);
 
 </script>
+
+<!-- Firebase-uploaded course detail page (only for Admin/Firebase catalog courses) -->
+<style id="de-firebase-course-detail-page-style">
+#deFirebaseCourseDetail{position:fixed;inset:0;z-index:1000015;background:#f5f7fb;display:none;overflow:auto;color:#172033;font-family:inherit}
+#deFirebaseCourseDetail.show{display:block}
+#deFirebaseCourseDetail .de-fcd-wrap{max-width:980px;margin:0 auto;padding:0 0 34px}
+#deFirebaseCourseDetail .de-fcd-top{height:54px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:3}
+#deFirebaseCourseDetail .de-fcd-back{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:50%;background:#f8fafc;color:#172033;cursor:pointer}
+#deFirebaseCourseDetail .de-fcd-brand{font-weight:900;font-size:16px}#deFirebaseCourseDetail .de-fcd-brand span{color:#2563eb}
+#deFirebaseCourseDetail .de-fcd-banner{width:100%;aspect-ratio:1536/812;background:linear-gradient(135deg,#0f172a,#2563eb);position:relative;overflow:hidden}
+#deFirebaseCourseDetail .de-fcd-banner img{width:100%;height:100%;object-fit:cover;display:block}
+#deFirebaseCourseDetail .de-fcd-banner:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(2,6,23,.58));pointer-events:none}
+#deFirebaseCourseDetail .de-fcd-price{position:absolute;z-index:1;right:14px;top:14px;background:#fff;color:#047857;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:900;box-shadow:0 4px 15px #0002}
+#deFirebaseCourseDetail .de-fcd-main{padding:22px 18px 0}
+#deFirebaseCourseDetail .de-fcd-title{font-size:clamp(22px,4vw,31px);line-height:1.25;font-weight:900;margin:0 0 7px;color:#111827}
+#deFirebaseCourseDetail .de-fcd-branch{font-size:13px;color:#64748b;margin-bottom:15px}
+#deFirebaseCourseDetail .de-fcd-buy{width:100%;min-height:48px;border:0;border-radius:13px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:16px;font-weight:900;box-shadow:0 8px 20px #2563eb2e;cursor:pointer;margin:0 0 20px}
+#deFirebaseCourseDetail .de-fcd-tabs{display:flex;gap:8px;padding:5px;background:#e9eef7;border-radius:13px;margin:0 0 15px}
+#deFirebaseCourseDetail .de-fcd-tab{flex:1;border:0;border-radius:10px;padding:10px 12px;background:transparent;color:#64748b;font-size:13px;font-weight:900;cursor:pointer}
+#deFirebaseCourseDetail .de-fcd-tab.active{background:#fff;color:#1d4ed8;box-shadow:0 2px 8px #0f172a12}
+#deFirebaseCourseDetail .de-fcd-panel{display:none;background:#fff;border:1px solid #e5eaf2;border-radius:15px;padding:18px;box-shadow:0 5px 18px #0f172a08}
+#deFirebaseCourseDetail .de-fcd-panel.active{display:block}
+#deFirebaseCourseDetail .de-fcd-panel h3{font-size:17px;font-weight:900;margin:0 0 12px}
+#deFirebaseCourseDetail .de-fcd-description{font-size:14px;line-height:1.8;color:#475569;white-space:pre-wrap;overflow-wrap:anywhere}
+#deFirebaseCourseDetail .de-fcd-stat{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px dashed #e2e8f0;margin-top:14px;color:#475569;font-size:13px}
+#deFirebaseCourseDetail .de-fcd-stat i{color:#10b981}
+#deFirebaseCourseDetail .de-fcd-content-item{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #edf0f5;font-size:13px;color:#334155}
+#deFirebaseCourseDetail .de-fcd-content-item:last-child{border-bottom:0}
+#deFirebaseCourseDetail .de-fcd-content-icon{width:38px;height:38px;display:grid;place-items:center;background:#eff6ff;color:#2563eb;border-radius:11px;flex:none}
+#deFirebaseCourseDetail .de-fcd-open-content{width:100%;margin-top:14px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:11px;padding:12px;font-weight:900;cursor:pointer}
+@media(min-width:700px){#deFirebaseCourseDetail .de-fcd-wrap{padding-bottom:45px}#deFirebaseCourseDetail .de-fcd-main{padding:24px 28px 0}#deFirebaseCourseDetail .de-fcd-banner{border-radius:0 0 18px 18px}}
+</style>
+<div id="deFirebaseCourseDetail" aria-hidden="true">
+ <div class="de-fcd-wrap">
+  <header class="de-fcd-top"><button class="de-fcd-back" id="deFcdBack" aria-label="Back" type="button"><i class="fa-solid fa-arrow-left"></i></button><div class="de-fcd-brand">Diploma <span>Engineers</span></div></header>
+  <div class="de-fcd-banner" id="deFcdBanner"><span class="de-fcd-price" id="deFcdPrice">₹99 • UPI</span></div>
+  <main class="de-fcd-main">
+   <h1 class="de-fcd-title" id="deFcdTitle">Course Title</h1><div class="de-fcd-branch" id="deFcdBranch">Diploma Engineering</div>
+   <button class="de-fcd-buy" id="deFcdBuy" type="button"><i class="fa-solid fa-qrcode"></i> Buy Course</button>
+   <div class="de-fcd-tabs" role="tablist"><button class="de-fcd-tab active" data-fcd-tab="details" type="button">Course Details</button><button class="de-fcd-tab" data-fcd-tab="content" type="button">Course Content</button></div>
+   <section class="de-fcd-panel active" id="deFcdDetailsPanel"><h3><i class="fa-solid fa-circle-info"></i> About This Course</h3><div class="de-fcd-description" id="deFcdDescription"></div><div class="de-fcd-stat"><i class="fa-solid fa-circle-check"></i><span id="deFcdCount">Course resources</span></div><div class="de-fcd-stat"><i class="fa-solid fa-mobile-screen-button"></i><span>Mobile और Computer दोनों पर उपयोग करें</span></div></section>
+   <section class="de-fcd-panel" id="deFcdContentPanel"><h3><i class="fa-solid fa-folder-open"></i> Included Content</h3><div id="deFcdContentList"></div><button type="button" class="de-fcd-open-content" id="deFcdOpenContent"><i class="fa-solid fa-book-open"></i> Open Full Course Content</button></section>
+  </main>
+ </div>
+</div>
+<script>
+(function(){
+ const root=document.getElementById('deFirebaseCourseDetail');if(!root)return;
+ let activeId='',previousOverflow='';
+ const $=id=>document.getElementById(id);
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function close(){root.classList.remove('show');root.setAttribute('aria-hidden','true');document.body.style.overflow=previousOverflow;}
+ function openTab(tab){root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.classList.toggle('active',b.dataset.fcdTab===tab));$('deFcdDetailsPanel').classList.toggle('active',tab==='details');$('deFcdContentPanel').classList.toggle('active',tab==='content');}
+ window.openFirebaseCourseDetails=function(id){
+  const c=(window.__deAdminCourseCatalog||{})[String(id)];
+  if(!c){if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(String(id));else window.__dePendingCourseId=String(id);return;}
+  activeId=String(id);const title=c.title||c.name||c.courseName||'Course',branch=c.branch||c.category||'Diploma Engineering',price=Number(c.price??c.amount??99)||99;
+  const banner=c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
+  $('deFcdBanner').querySelector('img')?.remove();if(banner){const img=document.createElement('img');img.src=banner;img.alt=title+' banner';img.onerror=()=>img.remove();$('deFcdBanner').prepend(img);}
+  $('deFcdTitle').textContent=title;$('deFcdBranch').textContent=branch;$('deFcdPrice').textContent='₹'+price+' • UPI';$('deFcdBuy').innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course • ₹'+price;
+  $('deFcdDescription').textContent=c.description||'Video lectures, PDF notes and study resources.';
+  const items=Array.isArray(c.items)?c.items:(Array.isArray(c.content)?c.content:[]);$('deFcdCount').textContent=items.length+' lecture / PDF items included';
+  const list=$('deFcdContentList');
+  if(items.length){list.innerHTML=items.slice(0,30).map((it,i)=>{const obj=typeof it==='string'?{title:it}:it||{};return '<div class="de-fcd-content-item"><span class="de-fcd-content-icon"><i class="fa-solid '+(/pdf|file|document/i.test(String(obj.type||obj.title||obj.name||''))?'fa-file-pdf':'fa-play-circle')+'"></i></span><span>'+esc(obj.title||obj.name||obj.fileName||obj.subject||('Course Resource '+(i+1)))+'</span></div>';}).join('');}
+  else list.innerHTML='<div class="de-fcd-content-item"><span class="de-fcd-content-icon"><i class="fa-solid fa-folder-open"></i></span><span>Semester-wise folders, subject resources, video lectures and PDF notes</span></div>';
+  openTab('details');previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root.classList.add('show');root.setAttribute('aria-hidden','false');
+ };
+ $('deFcdBack').addEventListener('click',close);root.addEventListener('click',e=>{if(e.target===root)close();});
+ root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.fcdTab)));
+ $('deFcdBuy').addEventListener('click',()=>{const id=activeId;close();if(typeof window.openCoursePayment==='function')window.openCoursePayment(id);else alert('Please sign in, then try again.');});
+ $('deFcdOpenContent').addEventListener('click',()=>{const id=activeId;close();if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(id);else{window.__dePendingCourseId=id;window.dispatchEvent(new CustomEvent('de:open-integrated-course',{detail:{courseId:id}}));}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('show'))close();});
+})();
+</script>
+
 </body>
 </html>
 
@@ -10538,3 +10582,31 @@ window.addEventListener('popstate',function(e){
 }
 </style>
                                                  
+
+
+<style id="de-firebase-course-banner-description-refresh">
+/* Firebase/Admin uploaded courses: banner image fills the entire banner frame. */
+#coursePage .de-firebase-course-card{border:1px solid #dbe5f3;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 9px 28px rgba(15,23,42,.08);transition:transform .2s ease,box-shadow .2s ease}
+#coursePage .de-firebase-course-card:hover{transform:translateY(-3px);box-shadow:0 15px 34px rgba(15,23,42,.13)}
+#coursePage .de-firebase-course-banner{height:clamp(170px,24vw,240px);min-height:170px;width:100%;box-sizing:border-box;position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;padding:18px;background:linear-gradient(135deg,#12213d,#315c91 58%,#f28a28);color:#fff}
+#coursePage .de-firebase-course-banner.has-image{background-color:#10203a}
+#coursePage .de-firebase-course-banner-image{position:absolute;inset:0;width:100%;height:100%;min-width:100%;min-height:100%;object-fit:cover;object-position:center center;z-index:-2;background:linear-gradient(135deg,#e8eef8,#cbd8e9);display:block}
+#coursePage .de-firebase-course-banner-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,18,38,.05) 5%,rgba(8,18,38,.16) 38%,rgba(8,18,38,.88) 100%);pointer-events:none}
+#coursePage .de-firebase-course-price{position:absolute;right:12px;top:12px;z-index:2;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+#coursePage .de-firebase-course-banner-copy{position:relative;z-index:1;max-width:100%;padding-right:70px;text-shadow:0 2px 8px rgba(0,0,0,.28)}
+#coursePage .de-firebase-course-kicker{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:900;letter-spacing:.09em;color:#fff;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 8px;margin-bottom:7px;backdrop-filter:blur(6px)}
+#coursePage .de-firebase-course-banner-copy h2{margin:0 0 4px;font-size:clamp(17px,2vw,23px);font-weight:900;line-height:1.2;color:#fff;overflow-wrap:anywhere}
+#coursePage .de-firebase-course-banner-copy p{margin:0;font-size:12px;font-weight:700;color:#f1f5f9}
+#coursePage .de-firebase-course-body{padding:16px!important;display:flex;flex-direction:column;gap:13px}
+#coursePage .de-firebase-course-description{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #e2eaf8;border-radius:14px;background:linear-gradient(135deg,#f8fbff,#fff7ed)}
+#coursePage .de-firebase-course-description-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;box-shadow:0 5px 12px rgba(37,99,235,.18)}
+#coursePage .de-firebase-course-description p{margin:0;color:#475569;font-size:13px;line-height:1.7;font-weight:500;overflow-wrap:anywhere;white-space:pre-line}
+#coursePage .de-firebase-course-body .feature-list{margin:0;padding:0;display:grid;gap:8px}
+#coursePage .de-firebase-course-body .feature-list li{font-size:12px;color:#334155;line-height:1.45}
+#coursePage .de-firebase-course-body .feature-list li i{color:#10b981;margin-right:5px}
+#coursePage .de-firebase-course-body .admin-course-actions{margin-top:auto;padding-top:2px}
+/* Banner image/design aspect ratio matches the requested 1536 x 812 source. */
+#coursePage .de-firebase-course-banner{height:auto!important;min-height:0!important;aspect-ratio:1536 / 812;width:100%;padding:clamp(12px,2vw,24px)!important}
+#coursePage .de-firebase-course-banner-image{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;object-fit:cover!important;object-position:center center!important}
+@media(max-width:520px){#coursePage .de-firebase-course-banner{height:auto!important;min-height:0!important;aspect-ratio:1536 / 812;padding:10px!important}#coursePage .de-firebase-course-banner-copy{padding-right:54px}#coursePage .de-firebase-course-banner-copy h2{font-size:clamp(12px,3.4vw,17px)}#coursePage .de-firebase-course-kicker{font-size:clamp(7px,1.8vw,9px)}#coursePage .de-firebase-course-body{padding:13px!important}#coursePage .de-firebase-course-description p{font-size:12px}}
+</style>

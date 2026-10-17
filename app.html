@@ -7236,6 +7236,11 @@ import {getDatabase,ref,get,push,set,onValue} from "https://www.gstatic.com/fire
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {getApps} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
+// Expose the payment opener as soon as this module starts. Function declarations
+// are hoisted, so the course-detail Buy button can call it even before the rest
+// of the payment module finishes initializing.
+window.openCoursePayment = openPayment;
+
 const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2-course","it-year-2-course","electrical-year-2-course","electronics-year-2-course","agriculture-year-2-course","chemical-year-2-course","civil-year-3-course","mechanical-year-3-course","electrical-year-3-course","electronics-year-3-course","cs-year-3-course","it-year-3-course","dairy-year-3-course","dairy-year-2-course","agriculture-year-3-course","chemical-year-3-course"];
 const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2","civil-year-3-course":"Civil Engineering Year 3","mechanical-year-3-course":"Mechanical Engineering Year 3","electrical-year-3-course":"Electrical Engineering Year 3","electronics-year-3-course":"Electronics Engineering Year 3","cs-year-3-course":"Computer Science Engineering Year 3","it-year-3-course":"Information Technology Year 3","dairy-year-3-course":"Dairy Technology Year 3","dairy-year-2-course":"Dairy Technology Year 2","agriculture-year-3-course":"Agriculture Engineering Year 3","chemical-year-3-course":"Chemical Engineering Year 3"};
 const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus');
@@ -7402,9 +7407,17 @@ async function applyPaymentCoupon(){
  finally{if(btn){btn.disabled=false;btn.textContent='Apply';}}
 }
 async function openPayment(courseId){
- if(!currentUid){alert('Please login first.');return;}
- const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
- const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}
+ // Recover Firebase's persisted signed-in user if the auth-state callback has
+ // not populated currentUid yet. Do not block opening the QR card for guests;
+ // require sign-in only when they submit the UTR/purchase request.
+ if(!currentUid && auth2?.currentUser){
+   try{await loadProfile(auth2.currentUser);}catch(e){console.warn('[Diploma Engineers] Could not refresh signed-in profile:',e);}
+ }
+ const signedIn=!!currentUid;
+ if(signedIn){
+   const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
+   const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}
+ }
  currentCourse=courseId;courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
  const courseRecord=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
  const priceRaw=Number(courseRecord.price??courseRecord.amount??99);
@@ -7413,7 +7426,9 @@ async function openPayment(courseId){
  utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
  overlay.style.setProperty('display','flex','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');overlay.style.setProperty('z-index','2147483646','important');overlay.setAttribute('aria-hidden','false');
  const modal=overlay.querySelector('.payment-modal');if(modal){modal.style.setProperty('display','block','important');modal.style.setProperty('position','relative','important');modal.style.setProperty('z-index','1','important');}
- await loadAdminUploadedPaymentQR(courseId);const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr=qrImg.src;qrImg.onerror=null;}watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);
+ await loadAdminUploadedPaymentQR(courseId);const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr=qrImg.src;qrImg.onerror=null;}
+ if(signedIn)watchAccess(courseId);else showStatus('QR payment is available to view. Please sign in before submitting your UTR.','warn');
+ setTimeout(()=>utrEl.focus(),80);
 }
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();setTimeout(()=>window.refreshUploadedCourseCards?.(),200);}
 function getCourseCard(courseId){
@@ -10738,7 +10753,7 @@ window.addEventListener('popstate',function(e){
  };
  $('deFcdBack').addEventListener('click',close);root.addEventListener('click',e=>{if(e.target===root)close();});
  root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.fcdTab==='content'){openReaderFromDetail(activeId);return;}openTab('details');}));
- $('deFcdBuy').addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{alert('Please sign in, then try again.');}});
+ $('deFcdBuy').addEventListener('click',async(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;for(let i=0;i<25&&typeof window.openCoursePayment!=='function';i++)await new Promise(r=>setTimeout(r,80));if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{console.error('[Diploma Engineers] Payment module did not initialize; check Firebase module/network errors.');alert('Payment system is still loading. Please refresh the app and try again.');}});
  $('deFcdOpenContent').addEventListener('click',()=>openReaderFromDetail(activeId));
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('show'))close();});
 })();

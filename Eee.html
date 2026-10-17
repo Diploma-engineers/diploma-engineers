@@ -10566,7 +10566,44 @@ window.addEventListener('popstate',function(e){
 })();
 </script>
 
-\n<script id="de-firebase-course-detail-reliability-fix">\n(function(){\n  function boot(){\n    const root=document.getElementById('deFirebaseCourseDetail');\n    if(root && root.parentElement!==document.body) document.body.appendChild(root);\n    // Capture Explore clicks before any parent/card handlers can swallow them.\n    document.addEventListener('click',function(e){\n      const btn=e.target && e.target.closest ? e.target.closest('[data-admin-course-explore]') : null;\n      if(!btn)return;\n      e.preventDefault(); e.stopPropagation();\n      const id=String(btn.getAttribute('data-admin-course-explore')||'');\n      if(!id)return;\n      const catalog=window.__deAdminCourseCatalog||{};\n      if(catalog[id] && typeof window.openFirebaseCourseDetails==='function'){\n        window.openFirebaseCourseDetails(id);\n      }else{\n        // Firebase catalog can arrive after the user taps Explore. Retry briefly.\n        let tries=0; const timer=setInterval(function(){\n          tries++;\n          if((window.__deAdminCourseCatalog||{})[id] && typeof window.openFirebaseCourseDetails==='function'){\n            clearInterval(timer); window.openFirebaseCourseDetails(id);\n          }else if(tries>=30){\n            clearInterval(timer);\n            if(typeof window.openFirebaseCourseDetails==='function') window.openFirebaseCourseDetails(id);\n            else alert('Course details are still loading. Please wait a moment and tap Explore again.');\n          }\n        },200);\n      }\n    },true);\n    // Ensure the detail overlay has a visible layout even if older CSS overrides exist.\n    const style=document.createElement('style');\n    style.textContent='#deFirebaseCourseDetail.show{display:block!important;visibility:visible!important;opacity:1!important}#deFirebaseCourseDetail{z-index:2147483000!important}';\n    document.head.appendChild(style);\n  }\n  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();\n})();\n</script>\n</body>
+
+<script id="de-firebase-course-detail-reliability-fix">
+(function(){
+  function boot(){
+    const root=document.getElementById('deFirebaseCourseDetail');
+    if(root && root.parentElement!==document.body) document.body.appendChild(root);
+    // Capture Explore clicks before any parent/card handlers can swallow them.
+    document.addEventListener('click',function(e){
+      const btn=e.target && e.target.closest ? e.target.closest('[data-admin-course-explore]') : null;
+      if(!btn)return;
+      e.preventDefault(); e.stopPropagation();
+      const id=String(btn.getAttribute('data-admin-course-explore')||'');
+      if(!id)return;
+      const catalog=window.__deAdminCourseCatalog||{};
+      if(catalog[id] && typeof window.openFirebaseCourseDetails==='function'){
+        window.openFirebaseCourseDetails(id);
+      }else{
+        // Firebase catalog can arrive after the user taps Explore. Retry briefly.
+        let tries=0; const timer=setInterval(function(){
+          tries++;
+          if((window.__deAdminCourseCatalog||{})[id] && typeof window.openFirebaseCourseDetails==='function'){
+            clearInterval(timer); window.openFirebaseCourseDetails(id);
+          }else if(tries>=30){
+            clearInterval(timer);
+            if(typeof window.openFirebaseCourseDetails==='function') window.openFirebaseCourseDetails(id);
+            else alert('Course details are still loading. Please wait a moment and tap Explore again.');
+          }
+        },200);
+      }
+    },true);
+    // Ensure the detail overlay has a visible layout even if older CSS overrides exist.
+    const style=document.createElement('style');
+    style.textContent='#deFirebaseCourseDetail.show{display:block!important;visibility:visible!important;opacity:1!important}#deFirebaseCourseDetail{z-index:2147483000!important}';
+    document.head.appendChild(style);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
+})();
+</script>\n</body>
 </html>
 
 

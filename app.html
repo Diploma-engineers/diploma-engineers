@@ -2653,8 +2653,8 @@ html,body{max-width:100%;overflow-x:hidden}
 #paymentOverlay .payment-student-details,
 #paymentOverlay .profile-fields { display:none !important; }
 /* If older form markup is used, hide all purchase-form fields except UTR and submit. */
-#paymentOverlay .payment-body label:not([for="paymentUTR"]),
-#paymentOverlay .payment-body input:not(#paymentUTR):not([type="hidden"]),
+#paymentOverlay .payment-body label:not([for="paymentUTR"]):not([for="paymentCouponCode"]),
+#paymentOverlay .payment-body input:not(#paymentUTR):not(#paymentCouponCode):not([type="hidden"]),
 #paymentOverlay .payment-body select,
 #paymentOverlay .payment-body .student-field { display:none !important; }
 #paymentOverlay .payment-body #paymentUTR,
@@ -2725,11 +2725,11 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <style>
 /* Login/Register card notifications */
-#authToastHost{position:fixed;top:18px;right:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 28px));pointer-events:none}
+#authToastHost{z-index:1000005;position:fixed;top:18px;right:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 28px));pointer-events:none}
 .auth-toast{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;padding:15px 16px;background:#fff;border:1px solid #e5eaf2;border-left:5px solid #2563eb;border-radius:14px;box-shadow:0 12px 35px rgba(15,35,75,.18);color:#15233d;font:500 14px/1.45 Inter,Arial,sans-serif;animation:authToastIn .25s ease-out}
 .auth-toast.error{border-left-color:#dc2626}.auth-toast.success{border-left-color:#16a34a}.auth-toast .auth-toast-icon{font-size:20px;line-height:1.2;color:#2563eb}.auth-toast.error .auth-toast-icon{color:#dc2626}.auth-toast.success .auth-toast-icon{color:#16a34a}.auth-toast strong{display:block;font-size:14px;margin-bottom:3px}.auth-toast p{margin:0;color:#536179}.auth-toast button{margin-left:auto;border:0;background:transparent;color:#7b8798;font-size:19px;line-height:1;cursor:pointer;padding:0 0 0 4px}
 @keyframes authToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:480px){#authToastHost{top:10px;right:10px;width:calc(100vw - 20px)}}
+@media(max-width:480px){#authToastHost{z-index:1000005;top:10px;right:10px;width:calc(100vw - 20px)}}
 </style>
 <div id="authToastHost" aria-live="polite" aria-atomic="false"></div>
 
@@ -4925,6 +4925,9 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const authButton = document.getElementById("submitBtnText");
+    const originalAuthButtonText = authButton ? authButton.textContent : "";
+    if (authButton) { authButton.disabled = true; authButton.textContent = isRegister ? "Creating account..." : "Logging in..."; }
     try {
       if (isRegister) {
         let name = document.getElementById("name").value.trim();
@@ -4950,6 +4953,7 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
       }
     } catch (e) {
+      if (authButton) { authButton.disabled = false; authButton.textContent = originalAuthButtonText || (isRegister ? "Register" : "Login"); }
       const code = String(e?.code || "");
       if (code.includes("auth/email-already-in-use")) {
         showAuthNotice("This email is already registered. Please log in instead.", "error", "Account already exists");
@@ -5949,22 +5953,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const submitBtn = document.getElementById("feedbackSubmitBtn");
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Checking...`; }
-    let existing;
-    try { existing = await getMyFeedbackSnapshot(); }
-    catch (checkError) {
-      console.error("Feedback duplicate check failed:", checkError);
-      setFeedbackStatus("Feedback database access failed. Check Firebase rules and make sure this app uses the correct Firebase project. " + (checkError.message || ""), "error");
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Submit Feedback`; }
-      return;
-    }
-    if (existing) {
-      setFeedbackStatus("You have already submitted feedback. Delete it first if you want to submit a new one.", "error");
-      updateFeedbackFormAvailability();
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> Feedback Already Submitted`; }
-      return;
-    }
-
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Submitting...`; }
+    // Do not read the entire feedback collection before writing. Many secure
+    // Firebase rules allow users to create feedback but not read every user's
+    // private record; that old pre-check prevented otherwise-valid submissions.
     const rating = Number(document.getElementById("feedbackRating")?.value || 0);
     const message = (document.getElementById("feedbackMessage")?.value || "").trim();
     if (rating < 1 || rating > 5) {
@@ -7050,6 +7042,17 @@ window.addEventListener('DOMContentLoaded', () => {
 @media(max-width:520px){.approved-home-course{align-items:flex-start;padding:11px}.approved-home-course-open{padding:9px 9px;white-space:nowrap}.approved-home-course-name{font-size:11.5px}.approved-home-status{font-size:9.5px}}
 .payment-overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(5px);z-index:2147483646;display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto}.payment-modal{width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25)}
 .payment-head{padding:18px 20px;background:linear-gradient(135deg,#166534,#16a34a);color:#fff;display:flex;justify-content:space-between;align-items:center}.payment-head h3{margin:0;font-size:18px}.payment-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}.payment-body{padding:20px}.payment-course{font-weight:800;font-size:16px;margin-bottom:5px}.payment-price{font-size:24px;font-weight:900;color:#166534;margin-bottom:14px}.payment-qr{display:block;width:min(280px,80vw);height:auto;aspect-ratio:1/1;object-fit:contain;margin:0 auto 15px;border-radius:12px;border:1px solid #e5e7eb}.payment-note{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}.utr-input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;outline:none}.payment-submit{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:#166534;color:#fff;font-weight:800;cursor:pointer}.payment-submit:disabled{opacity:.55;cursor:not-allowed}.payment-status{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:12px}.payment-status.ok{display:block;background:#ecfdf3;color:#166534}.payment-status.warn{display:block;background:#fff7ed;color:#9a3412}.payment-status.err{display:block;background:#fef2f2;color:#991b1b}
+/* Coupon code selector for course-specific payment QR images */
+#paymentOverlay .coupon-box{display:block!important;margin:0 0 14px;padding:12px;border:1px solid #dbeafe;background:#f8fbff;border-radius:14px}
+#paymentOverlay .coupon-box .payment-field-label{display:block!important;margin:0 0 7px!important}
+#paymentOverlay .coupon-row{display:flex;gap:8px;align-items:stretch}
+#paymentOverlay .coupon-input{display:block!important;min-width:0;flex:1;text-transform:uppercase}
+#paymentOverlay .coupon-apply{display:inline-flex!important;align-items:center;justify-content:center;border:0;border-radius:10px;padding:0 16px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap}
+#paymentOverlay .coupon-status{display:none;margin-top:7px;font-size:12px;font-weight:700;line-height:1.4}
+#paymentOverlay .coupon-status.ok{display:block;color:#15803d}
+#paymentOverlay .coupon-status.err{display:block;color:#b91c1c}
+#paymentOverlay .coupon-status.info{display:block;color:#475569}
+@media(max-width:380px){#paymentOverlay .coupon-row{flex-direction:column}#paymentOverlay .coupon-apply{padding:11px}}
 
 /* ===== FINAL COMPACT HOME BANNER FIX ===== */
 #homeBannerDots{display:none!important;}
@@ -7177,6 +7180,11 @@ window.addEventListener('DOMContentLoaded', () => {
   <div class="payment-body">
    <div class="payment-course" id="paymentCourseName">Course</div>
    <div class="payment-price">₹99 INR</div>
+   <div class="coupon-box" id="paymentCouponBox">
+    <label class="payment-field-label" for="paymentCouponCode">Coupon Code (Optional)</label>
+    <div class="coupon-row"><input id="paymentCouponCode" class="utr-input coupon-input" type="text" maxlength="40" autocomplete="off" placeholder="Enter coupon code"><button id="applyCouponBtn" class="coupon-apply" type="button">Apply</button></div>
+    <div id="couponStatus" class="coupon-status" aria-live="polite"></div>
+   </div>
    <img class="payment-qr" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png" alt="UPI Payment QR">
    <div class="payment-note">Pay using this QR and enter only your UTR / Transaction ID. Your profile details will be sent to the admin automatically.</div>
    <input id="paymentStudentName" type="hidden"><input id="paymentStudentBranch" type="hidden"><input id="paymentStudentMobile" type="hidden"><input id="paymentStudentEmail" type="hidden">
@@ -7231,7 +7239,7 @@ import {getApps} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js
 const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2-course","it-year-2-course","electrical-year-2-course","electronics-year-2-course","agriculture-year-2-course","chemical-year-2-course","civil-year-3-course","mechanical-year-3-course","electrical-year-3-course","electronics-year-3-course","cs-year-3-course","it-year-3-course","dairy-year-3-course","dairy-year-2-course","agriculture-year-3-course","chemical-year-3-course"];
 const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2","civil-year-3-course":"Civil Engineering Year 3","mechanical-year-3-course":"Mechanical Engineering Year 3","electrical-year-3-course":"Electrical Engineering Year 3","electronics-year-3-course":"Electronics Engineering Year 3","cs-year-3-course":"Computer Science Engineering Year 3","it-year-3-course":"Information Technology Year 3","dairy-year-3-course":"Dairy Technology Year 3","dairy-year-2-course":"Dairy Technology Year 2","agriculture-year-3-course":"Agriculture Engineering Year 3","chemical-year-3-course":"Chemical Engineering Year 3"};
 const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus');
-let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null,homeAccessUnsub=null;
+let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null,homeAccessUnsub=null,appliedCoupon=null,currentPaymentAmount=99,defaultPaymentQR='https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png';
 const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const COURSE_VALIDITY_DAYS=210;
 function courseExpiryInfo(v,courseId='',uid=currentUid){
@@ -7321,6 +7329,78 @@ async function loadAdminUploadedPaymentQR(courseId){
  }catch(e){console.warn('Could not load course payment QR from Firebase',e);}
  setQR(fallback);img.dataset.qrSource='fallback';
 }
+function couponStatus(message,type='info'){
+ const el=document.getElementById('couponStatus');if(!el)return;
+ el.textContent=message||'';el.className='coupon-status'+(message?' '+type:'');
+}
+function couponImageFrom(data){
+ if(typeof data==='string' && /^(https?:|data:image\/)/i.test(data.trim()))return data.trim();
+ if(!data||typeof data!=='object')return '';
+ for(const k of ['qrImage','paymentQr','paymentQR','paymentImage','qrUrl','qrURL','qrImageUrl','paymentQrUrl','paymentQRUrl','paymentImageUrl','qrCodeUrl','upiQr','upiQR','upiQrUrl','imageUrl','image','qr']){
+  const v=data[k];if(typeof v==='string'&&/^(https?:|data:image\/)/i.test(v.trim()))return v.trim();
+ }
+ return '';
+}
+async function findCouponRecord(courseId,code){
+ const catalog=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
+ const codeMaps=[catalog.coupons,catalog.couponCodes,catalog.paymentCoupons,catalog.qrCoupons,window.__dePaymentCoupons];
+ for(const map of codeMaps){if(map&&typeof map==='object'&&map[code])return map[code];}
+ const paths=[
+  `courseCatalog/${courseId}/coupons/${code}`,
+  `courseCatalog/${courseId}/couponCodes/${code}`,
+  `courseCatalog/${courseId}/paymentCoupons/${code}`,
+  `courseCoupons/${courseId}/${code}`,
+  `paymentCoupons/${code}`,
+  `coupons/${code}`
+ ];
+ for(const path of paths){
+  try{const snap=await get(ref(db,path));if(snap.exists())return snap.val();}catch(e){/* try other supported coupon locations */}
+ }
+ // REST fallback for deployments where the catalog is readable but the module's Firebase ref is unavailable.
+ const base='https://diplomaengineers-869df-default-rtdb.firebaseio.com';
+ for(const path of paths){try{const r=await fetch(base+'/'+path.split('/').map(encodeURIComponent).join('/')+'.json',{cache:'no-store'});if(r.ok){const v=await r.json();if(v!==null&&v!==undefined)return v;}}catch(e){}}
+ return null;
+}
+async function applyPaymentCoupon(){
+ const input=document.getElementById('paymentCouponCode');
+ const btn=document.getElementById('applyCouponBtn');
+ const code=String(input?.value||'').trim().toUpperCase();
+ const img=overlay?.querySelector('.payment-qr');
+ if(!currentCourse){couponStatus('Open a course payment card first.','err');return;}
+ if(!code){appliedCoupon=null;currentPaymentAmount=Number((window.__deAdminCourseCatalog||{})[String(currentCourse)]?.price??(window.__deAdminCourseCatalog||{})[String(currentCourse)]?.amount??99)||99;
+  const p=overlay.querySelector('.payment-price');if(p)p.textContent='₹'+currentPaymentAmount+' INR';
+  if(img){img.src=img.dataset.baseQr||defaultPaymentQR;img.dataset.qrSource='course-firebase';}
+  const h=overlay.querySelector('.payment-head h3');if(h)h.textContent='Course Purchase • ₹'+currentPaymentAmount;
+  couponStatus('Coupon removed. Standard course QR restored.','info');return;
+ }
+ if(btn){btn.disabled=true;btn.textContent='Checking…';}
+ appliedCoupon=null;
+ const catalogBeforeCheck=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};
+ currentPaymentAmount=Number(catalogBeforeCheck.price??catalogBeforeCheck.amount??99)||99;
+ const priceBeforeCheck=overlay.querySelector('.payment-price');if(priceBeforeCheck)priceBeforeCheck.textContent='₹'+currentPaymentAmount+' INR';
+ const headBeforeCheck=overlay.querySelector('.payment-head h3');if(headBeforeCheck)headBeforeCheck.textContent='Course Purchase • ₹'+currentPaymentAmount;
+ if(img&&img.dataset.baseQr){img.onerror=null;img.src=img.dataset.baseQr;}
+ couponStatus('Checking coupon code…','info');
+ try{
+  const record=await findCouponRecord(currentCourse,code);
+  if(!record){appliedCoupon=null;couponStatus('Invalid coupon code, or no QR image is configured for this code.','err');return;}
+  const qr=couponImageFrom(record);
+  if(!qr){appliedCoupon=null;couponStatus('This coupon has no QR image configured. Please contact the admin.','err');return;}
+  if(record.active===false||record.enabled===false||String(record.status||'').toLowerCase()==='disabled'){
+   appliedCoupon=null;couponStatus('This coupon code is currently inactive.','err');return;
+  }
+  const priceRaw=Number(record.price??record.amount??record.payableAmount??record.discountedPrice);
+  const catalog=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};
+  const basePrice=Number(catalog.price??catalog.amount??99)||99;
+  currentPaymentAmount=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:basePrice;
+  appliedCoupon={code,qrImage:qr,amount:currentPaymentAmount,label:String(record.title||record.name||code)};
+  if(img){if(!img.dataset.baseQr)img.dataset.baseQr=img.src;img.onerror=()=>{img.onerror=null;couponStatus('Coupon QR image could not be loaded. Check the image URL.','err');};img.src=qr;img.dataset.qrSource='coupon:'+code;}
+  const p=overlay.querySelector('.payment-price');if(p)p.textContent='₹'+currentPaymentAmount+' INR';
+  const h=overlay.querySelector('.payment-head h3');if(h)h.textContent='Course Purchase • ₹'+currentPaymentAmount;
+  couponStatus('Coupon applied ✓ QR updated for '+code+'. Pay using this QR, then enter your UTR.','ok');
+ }catch(e){console.error('Coupon apply error:',e);couponStatus('Could not check this coupon. Please try again.','err');}
+ finally{if(btn){btn.disabled=false;btn.textContent='Apply';}}
+}
 async function openPayment(courseId){
  if(!currentUid){alert('Please login first.');return;}
  const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
@@ -7330,10 +7410,10 @@ async function openPayment(courseId){
  const priceRaw=Number(courseRecord.price??courseRecord.amount??99);
  const price=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:99;
  const priceEl=overlay.querySelector('.payment-price');if(priceEl)priceEl.textContent='₹'+price+' INR';const head=overlay.querySelector('.payment-head h3');if(head)head.textContent='Course Purchase • ₹'+price;
- utrEl.value='';document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
+ utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
  overlay.style.setProperty('display','flex','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');overlay.style.setProperty('z-index','2147483646','important');overlay.setAttribute('aria-hidden','false');
  const modal=overlay.querySelector('.payment-modal');if(modal){modal.style.setProperty('display','block','important');modal.style.setProperty('position','relative','important');modal.style.setProperty('z-index','1','important');}
- await loadAdminUploadedPaymentQR(courseId);watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);
+ await loadAdminUploadedPaymentQR(courseId);const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr=qrImg.src;qrImg.onerror=null;}watchAccess(courseId);setTimeout(()=>utrEl.focus(),80);
 }
 async function loadProfile(user){currentUid=user.uid;currentProfile={name:user.displayName||'Engineer',email:user.email||'',profilePic:user.photoURL||'',mobile:'',branch:'Diploma Member',college:'',semester:''};try{const s=await get(ref(db,`users/${user.uid}`));if(s.exists())currentProfile={...currentProfile,...(s.val()||{})};}catch(e){console.warn('Profile read:',e);}applyPaidCards();loadApprovedHomeCourses();setTimeout(()=>window.refreshUploadedCourseCards?.(),200);}
 function getCourseCard(courseId){
@@ -7559,6 +7639,8 @@ async function submitPurchase(){
   const studentMobile=document.getElementById('paymentStudentMobile').value.trim();
   const studentEmail=document.getElementById('paymentStudentEmail').value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
+  const typedCoupon=String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase();
+  if(typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
   // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
   /* DIRECT PAYMENT SUCCESS SOUND */
@@ -7580,7 +7662,7 @@ async function submitPurchase(){
     const p=push(root),now=Date.now();
     const purchaseDetails={
       purchaseId:p.key,uid:currentUid,courseId:currentCourse,
-      courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,
+      courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(currentPaymentAmount)||Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,couponCode:appliedCoupon?.code||'',paymentQrImage:appliedCoupon?.qrImage||overlay.querySelector('.payment-qr')?.src||'',
       status:'pending',verified:false,submittedAt:now,
       name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),
       mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member'),
@@ -7594,7 +7676,7 @@ async function submitPurchase(){
         _subject:'New Course Purchase / Approval Request - '+purchaseDetails.courseName,
         _template:'table',_captcha:'false',_replyto:purchaseDetails.email||'astar22072006@gmail.com',
         'Request Status':purchaseDetails.status,'Course Name':purchaseDetails.courseName,
-        'Course ID':purchaseDetails.courseId,'Course Price':'₹'+purchaseDetails.amount,
+        'Course ID':purchaseDetails.courseId,'Course Price':'₹'+purchaseDetails.amount,'Coupon Code':purchaseDetails.couponCode||'Not used','Payment QR Image':purchaseDetails.paymentQrImage||'Standard QR',
         'Student Name':purchaseDetails.name,'Student Email':purchaseDetails.email||'Not provided',
         'Student Mobile':purchaseDetails.mobile||'Not provided','Branch':purchaseDetails.branch||'Not provided',
         'College':purchaseDetails.college||'Not provided','Semester':purchaseDetails.semester||'Not provided',
@@ -7635,7 +7717,7 @@ async function submitPurchase(){
     submitEl.disabled=false;
   }
 }
-submitEl.addEventListener('click',submitPurchase);document.getElementById('paymentClose').addEventListener('click',closePayment);document.getElementById('trackingClose').addEventListener('click',closeTracking);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment();});document.getElementById('trackingOverlay').addEventListener('click',e=>{if(e.target.id==='trackingOverlay')closeTracking();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment();});
+submitEl.addEventListener('click',submitPurchase);document.getElementById('applyCouponBtn')?.addEventListener('click',applyPaymentCoupon);document.getElementById('paymentCouponCode')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyPaymentCoupon();}});document.getElementById('paymentClose').addEventListener('click',closePayment);document.getElementById('trackingClose').addEventListener('click',closeTracking);overlay.addEventListener('click',e=>{if(e.target===overlay)closePayment();});document.getElementById('trackingOverlay').addEventListener('click',e=>{if(e.target.id==='trackingOverlay')closeTracking();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePayment();});
 const originalNavigate=window.navigateTo;window.navigateTo=async function(pageId){if(paidCourseIds.includes(pageId)){if(!currentUid){alert('Please login first.');return;}const access=await accessValue(pageId).catch(()=>null);if(isApproved(access))return originalNavigate.apply(this,arguments);return openPayment(pageId);}return originalNavigate.apply(this,arguments);};
 const existingApps=getApps(),existingApp=existingApps[0];if(existingApp){db=getDatabase(existingApp);auth2=getAuth(existingApp);onAuthStateChanged(auth2,user=>{if(user)loadProfile(user);else{currentUid=null;if(homeAccessUnsub){homeAccessUnsub();homeAccessUnsub=null;}restoreHomeUnlockCard();}});}
 

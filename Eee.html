@@ -4014,13 +4014,8 @@ loginBtn.addEventListener("click", async () => {
             await blockDeactivatedAdminSession(auth.currentUser,activityAccess);
             throw new Error("ADMIN_ACTIVITY_DEACTIVATED");
         }
-        // Login is based on successful MAIN Firebase Authentication. Profile/access
-        // synchronization is best-effort so a temporary RTDB rules/network issue
-        // does not sign the admin back out after valid credentials.
-        try { await ensureAdminProfileAndTeam(auth.currentUser); }
-        catch (profileSyncError) { console.warn("Admin profile sync deferred:", profileSyncError?.code || profileSyncError?.message || profileSyncError); }
-        try { await publishAdminAccessRecord(auth.currentUser); }
-        catch (accessSyncError) { console.warn("Admin access record sync deferred:", accessSyncError?.code || accessSyncError?.message || accessSyncError); }
+        await ensureAdminProfileAndTeam(auth.currentUser);
+        await publishAdminAccessRecord(auth.currentUser);
 
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
@@ -6754,12 +6749,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
 
   async function loadProfile(){const user=auth.currentUser;if(!user)return;const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));const profile=profileSnap.exists()?profileSnap.val()||{}:{};const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];ownCouponCode=String(profile.couponCode||(founder()?"ANUBHAV20":makeCode(displayName,user.uid))).toUpperCase();ownCouponQr=String(profile.couponQrUrl||profile.couponQrImage||"");if(!profile.couponCode&&!founder()){await update(ref(db,"adminProfiles/"+user.uid),{couponCode:ownCouponCode,couponQrUrl:ownCouponQr,couponCreatedAt:Date.now()});}byId("adminPersonalCouponCode").textContent=ownCouponCode;const preview=byId("adminCouponQrPreview");if(ownCouponQr){preview.src=ownCouponQr;preview.hidden=false;}else{preview.removeAttribute("src");preview.hidden=true;}status(ownCouponQr?"Your saved QR is ready. Upload a new image to replace it.":"Upload the QR that you want students using your code to pay with.");}
   async function listenUsage(){if(usageStop){usageStop();usageStop=null;}try{const profilesSnap=await get(ref(db,"adminProfiles"));adminCouponProfiles=profilesSnap.val()||{};}catch(e){adminCouponProfiles={};}if(!studentAuth.currentUser){byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Student purchase database is not signed in for this admin account.</div>';return;}usageStop=onValue(ref(studentDb,"utrPurchases"),snap=>{useRows=matchingUsage(collectPurchases(snap));renderUsage();},err=>{console.error("Coupon usage read failed",err);byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Could not load coupon uses. Check diploma-app-9a378 Realtime Database Rules for admin read access to utrPurchases.</div>';});}
-  document.getElementById("topCouponBtn")?.addEventListener("click",()=>{
-    if(!auth.currentUser){alert("Please log in first to open your Coupon Dashboard.");return;}
-    const nav=document.querySelector('.app-nav-link[data-app-target="course"]');
-    if(nav) nav.click(); else document.getElementById("courseSwitch")?.click();
-    setTimeout(()=>{const d=byId("adminPersonalCouponDashboard");if(d){d.style.display="block";d.scrollIntoView({behavior:"smooth",block:"start"});}window.initAdminCouponDashboard?.();},500);
-  });
+  document.getElementById("topCouponBtn")?.addEventListener("click",()=>{document.querySelector("[data-app-target=\"course\"]")?.click();setTimeout(()=>{const d=byId("adminPersonalCouponDashboard");if(d){d.style.display="block";d.scrollIntoView({behavior:"smooth",block:"start"});}window.initAdminCouponDashboard?.();},350);});
   window.initAdminCouponDashboard=async function(){if(loading||!auth.currentUser)return;loading=true;try{await loadProfile();listenUsage();}catch(err){console.error(err);status("Could not load coupon profile: "+(err.message||err),true);}finally{loading=false;}};
   byId("adminCouponQrFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const img=byId("adminCouponQrPreview");img.src=URL.createObjectURL(f);img.hidden=false;status("Image selected. Click Save QR Image to upload it.");});
   byId("adminCouponQrSave")?.addEventListener("click",async()=>{if(!auth.currentUser)return;const file=byId("adminCouponQrFile")?.files?.[0];if(!file&&!ownCouponQr){status("Please select a QR image first.",true);return;}const btn=byId("adminCouponQrSave");btn.disabled=true;try{status("Uploading QR image…");const url=file?await cloudUpload(file):ownCouponQr;await update(ref(db,"adminProfiles/"+auth.currentUser.uid),{couponCode:ownCouponCode,couponQrUrl:url,couponQrImage:url,couponQrUpdatedAt:Date.now()});ownCouponQr=url;byId("adminCouponQrPreview").src=url;byId("adminCouponQrPreview").hidden=false;byId("adminCouponQrFile").value="";status("Coupon QR saved successfully.");}catch(err){console.error(err);status("QR save failed: "+(err.message||err),true);}finally{btn.disabled=false;}});

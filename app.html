@@ -7341,29 +7341,46 @@ function couponStatus(message,type='info'){
 function couponImageFrom(data){
  if(typeof data==='string' && /^(https?:|data:image\/)/i.test(data.trim()))return data.trim();
  if(!data||typeof data!=='object')return '';
- for(const k of ['qrImage','paymentQr','paymentQR','paymentImage','qrUrl','qrURL','qrImageUrl','paymentQrUrl','paymentQRUrl','paymentImageUrl','qrCodeUrl','upiQr','upiQR','upiQrUrl','imageUrl','image','qr']){
-  const v=data[k];if(typeof v==='string'&&/^(https?:|data:image\/)/i.test(v.trim()))return v.trim();
- }
+ const keys=['qrImage','paymentQr','paymentQR','paymentImage','qrUrl','qrURL','qrImageUrl','paymentQrUrl','paymentQRUrl','paymentImageUrl','qrCodeUrl','upiQr','upiQR','upiQrUrl','imageUrl','image','qr','qrCode','paymentQrImage','qr_image','payment_qr','upi_qr'];
+ for(const k of keys){const v=data[k];if(typeof v==='string'&&/^(https?:|data:image\/)/i.test(v.trim()))return v.trim();}
+ // Also support differently-capitalized keys from older admin uploads.
+ for(const [k,v] of Object.entries(data)){if(/^(qr.?image|payment.?qr|qr.?url|upi.?qr|payment.?image|image.?url)$/i.test(k)&&typeof v==='string'&&/^(https?:|data:image\/)/i.test(v.trim()))return v.trim();}
  return '';
+}
+function findCouponInMap(map,code){
+ if(!map||typeof map!=='object')return null;
+ const wanted=String(code||'').trim().toUpperCase();
+ for(const [k,v] of Object.entries(map)){if(String(k).trim().toUpperCase()===wanted)return v;}
+ // Some admin screens store coupon records as an array with a `code` field.
+ if(Array.isArray(map)){for(const v of map){if(v&&String(v.code||v.couponCode||v.coupon||'').trim().toUpperCase()===wanted)return v;}}
+ return null;
 }
 async function findCouponRecord(courseId,code){
  const catalog=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
- const codeMaps=[catalog.coupons,catalog.couponCodes,catalog.paymentCoupons,catalog.qrCoupons,window.__dePaymentCoupons];
- for(const map of codeMaps){if(map&&typeof map==='object'&&map[code])return map[code];}
+ const codeMaps=[catalog.coupons,catalog.couponCodes,catalog.paymentCoupons,catalog.qrCoupons,catalog.coupon_codes,window.__dePaymentCoupons,window.__deCoupons];
+ for(const map of codeMaps){const hit=findCouponInMap(map,code);if(hit!==null&&hit!==undefined)return hit;}
+ const encoded=encodeURIComponent(String(code||'').trim());
  const paths=[
-  `courseCatalog/${courseId}/coupons/${code}`,
-  `courseCatalog/${courseId}/couponCodes/${code}`,
-  `courseCatalog/${courseId}/paymentCoupons/${code}`,
-  `courseCoupons/${courseId}/${code}`,
-  `paymentCoupons/${code}`,
-  `coupons/${code}`
+  `courseCatalog/${courseId}/coupons/${encoded}`,
+  `courseCatalog/${courseId}/couponCodes/${encoded}`,
+  `courseCatalog/${courseId}/paymentCoupons/${encoded}`,
+  `courseCoupons/${courseId}/${encoded}`,
+  `paymentCoupons/${encoded}`,
+  `coupons/${encoded}`,
+  `couponCodes/${encoded}`,
+  `courseCatalog/${courseId}/coupons`,
+  `courseCatalog/${courseId}/couponCodes`,
+  `paymentCoupons`,`coupons`,`couponCodes`
  ];
  for(const path of paths){
-  try{const snap=await get(ref(db,path));if(snap.exists())return snap.val();}catch(e){/* try other supported coupon locations */}
+  try{const snap=await get(ref(db,path));if(snap.exists()){
+    const val=snap.val();
+    if(/\/(coupons|couponCodes|paymentCoupons)$/.test(path)){const hit=findCouponInMap(val,code);if(hit!==null&&hit!==undefined)return hit;}
+    else return val;
+  }}catch(e){/* try alternate coupon storage paths */}
  }
- // REST fallback for deployments where the catalog is readable but the module's Firebase ref is unavailable.
  const base='https://diplomaengineers-869df-default-rtdb.firebaseio.com';
- for(const path of paths){try{const r=await fetch(base+'/'+path.split('/').map(encodeURIComponent).join('/')+'.json',{cache:'no-store'});if(r.ok){const v=await r.json();if(v!==null&&v!==undefined)return v;}}catch(e){}}
+ for(const path of paths){try{const r=await fetch(base+'/'+path.split('/').map(encodeURIComponent).join('/')+'.json',{cache:'no-store'});if(r.ok){const v=await r.json();if(v!==null&&v!==undefined){if(/\/(coupons|couponCodes|paymentCoupons)$/.test(path)){const hit=findCouponInMap(v,code);if(hit!==null&&hit!==undefined)return hit;}else return v;}}}catch(e){}}
  return null;
 }
 async function applyPaymentCoupon(){
@@ -7372,7 +7389,7 @@ async function applyPaymentCoupon(){
  const code=String(input?.value||'').trim().toUpperCase();
  const img=overlay?.querySelector('.payment-qr');
  if(!currentCourse){couponStatus('Open a course payment card first.','err');return;}
- if(!code){appliedCoupon=null;currentPaymentAmount=Number((window.__deAdminCourseCatalog||{})[String(currentCourse)]?.price??(window.__deAdminCourseCatalog||{})[String(currentCourse)]?.amount??99)||99;
+ if(!code){appliedCoupon=null;{const base=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};const v=Number(base.price??base.amount??99);currentPaymentAmount=Number.isFinite(v)&&v>=0?v:99;}
   const p=overlay.querySelector('.payment-price');if(p)p.textContent='₹'+currentPaymentAmount+' INR';
   if(img){img.src=img.dataset.baseQr||defaultPaymentQR;img.dataset.qrSource='course-firebase';}
   const h=overlay.querySelector('.payment-head h3');if(h)h.textContent='Course Purchase • ₹'+currentPaymentAmount;
@@ -7394,10 +7411,12 @@ async function applyPaymentCoupon(){
   if(record.active===false||record.enabled===false||String(record.status||'').toLowerCase()==='disabled'){
    appliedCoupon=null;couponStatus('This coupon code is currently inactive.','err');return;
   }
-  const priceRaw=Number(record.price??record.amount??record.payableAmount??record.discountedPrice);
+  const priceValue=record.price??record.amount??record.payableAmount??record.discountedPrice??record.finalPrice??record.newPrice??record.coursePrice??record.payAmount??record.payable_amount??record.discounted_price;
+  const priceRaw=priceValue===undefined||priceValue===null||priceValue===''?NaN:Number(String(priceValue).replace(/[^0-9.]/g,''));
   const catalog=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};
   const basePrice=Number(catalog.price??catalog.amount??99)||99;
-  currentPaymentAmount=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:basePrice;
+  const discountRaw=Number(record.discountAmount??record.discount??record.discount_amount);
+  currentPaymentAmount=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:(Number.isFinite(discountRaw)&&discountRaw>=0?Math.max(0,basePrice-discountRaw):basePrice);
   appliedCoupon={code,qrImage:qr,amount:currentPaymentAmount,label:String(record.title||record.name||code)};
   if(img){if(!img.dataset.baseQr)img.dataset.baseQr=img.src;img.onerror=()=>{img.onerror=null;couponStatus('Coupon QR image could not be loaded. Check the image URL.','err');};img.src=qr;img.dataset.qrSource='coupon:'+code;}
   const p=overlay.querySelector('.payment-price');if(p)p.textContent='₹'+currentPaymentAmount+' INR';

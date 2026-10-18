@@ -10411,7 +10411,7 @@ onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=
       <div class="decr-footer">Diploma Engineers • Your trusted learning platform</div>
     </section>
     <section id="deCRPlayer" class="decr-hidden">
-      <div class="decr-player-intro"><div><strong id="deCRActiveFolder">Course Folder</strong><small id="deCRActiveFolderMeta" class="decr-hidden"></small></div></div>
+      <div class="decr-player-intro"><button type="button" id="deCRPlayerBack" class="decr-player-back" aria-label="Back to course folders">← Back</button><div><strong id="deCRActiveFolder">Course Folder</strong><small id="deCRActiveFolderMeta" class="decr-hidden"></small></div></div>
       <div class="decr-layout">
         <article class="decr-player-card"><div class="decr-player-top"><div id="deCRPlayerKicker" class="decr-player-kicker">VIDEO LECTURE</div><h2 id="deCRPlayerTitle" class="decr-player-title">Select a resource</h2><p id="deCRPlayerDesc" class="decr-player-desc">Video lecture, PDF notes or other study material.</p></div><div id="deCRMedia" class="decr-media"><div class="decr-placeholder"><div class="big">📚</div><p>Select a lecture from the list to play it here.</p></div></div>
           <div class="decr-video-feedback"><div class="decr-feedback-row"><button type="button" id="deCRLikeBtn" class="decr-like-btn">♡ Like <span id="deCRLikeCount">0</span></button><button type="button" id="deCRRateBtn" class="decr-rate-btn">★ Rate this lesson</button><span id="deCRRatingSummary" class="decr-rating-note" style="margin:0">Rate this video or resource</span></div><p class="decr-rating-note">Your like is saved for this lesson. Ratings are saved for admin review; the video keeps playing while you rate.</p></div>
@@ -10424,6 +10424,7 @@ onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=
   </main>
   <div class="decr-rating-overlay" id="deCRRatingOverlay" aria-hidden="true"><div class="decr-rating-card" role="dialog" aria-modal="true" aria-labelledby="deCRRatingHeading"><h3 id="deCRRatingHeading">Rate this lesson</h3><p id="deCRRatingItemName">Share your feedback about this video or resource.</p><div class="decr-stars" id="deCRStars"><button type="button" data-stars="1" aria-label="1 star">★</button><button type="button" data-stars="2" aria-label="2 stars">★</button><button type="button" data-stars="3" aria-label="3 stars">★</button><button type="button" data-stars="4" aria-label="4 stars">★</button><button type="button" data-stars="5" aria-label="5 stars">★</button></div><p class="decr-rating-note">Your student profile details will be attached automatically. The video keeps playing while this card is open. Select a star rating to submit.</p><div id="deCRRatingStatus" class="decr-rating-status" aria-live="polite"></div><div class="decr-rating-actions"><button type="button" class="decr-rating-cancel" id="deCRRatingCancel">Cancel</button><button type="button" class="decr-rating-submit" id="deCRRatingSubmit">Submit rating</button></div></div></div>
 </div>
+<style id="decr-player-back-style">#deCRPlayer .decr-player-intro{display:flex;align-items:center;gap:12px;flex-wrap:wrap}#deCRPlayer .decr-player-back{border:0;border-radius:12px;background:#e8efff;color:#1d4ed8;padding:10px 14px;font-weight:800;cursor:pointer;min-height:42px;flex:0 0 auto}#deCRPlayer .decr-player-back:active{transform:scale(.98)}@media(max-width:560px){#deCRPlayer .decr-player-intro{align-items:flex-start}#deCRPlayer .decr-player-back{padding:9px 12px}}</style>
 <script type="module" id="de-integrated-course-reader-script">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getDatabase, ref, get, set, push, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
@@ -10450,7 +10451,7 @@ async function goBack(){
  if(currentSubject){currentSubject='';currentFolder='';currentResourceType='';renderFolders();$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRTopSub').textContent='Choose a subject';return;}
  const id=String(currentCourseId||currentCourse?.id||currentCourse?.courseId||currentCourse?.key||'');let unlocked=false;
  try{unlocked=await readerCourseUnlocked();}catch(e){console.warn('Could not verify course purchase before Back navigation:',e);}
- closeShell();if(unlocked)return;if(id&&typeof window.openFirebaseCourseDetails==='function')window.openFirebaseCourseDetails(id);
+ closeShell();if(id&&typeof window.openFirebaseCourseDetails==='function'){setTimeout(()=>window.openFirebaseCourseDetails(id),0);return;}
 }
 function coursePublished(c){const st=String(c?.status??'').trim().toLowerCase();if(['rejected','draft','pending','unpublished','disabled','inactive'].includes(st))return false;return ['approved','published','live','active'].includes(st)||c?.approved===true||c?.published===true;}
 function validAccess(v,courseId=currentCourseId){
@@ -10570,6 +10571,22 @@ function openFolder(folder){
  currentFolderItems=chosen;currentLessonIndex=0;currentFolder=currentResourceType==='pdf'?'PDF Files':currentSubject;
  $('deCRTopTitle').textContent=String(chosen[0].title||chosen[0].fileName||currentSubject);$('deCRActiveFolder').textContent=currentResourceType==='pdf'?`${currentSubject} / PDF Files`:currentSubject;$('deCRActiveFolderMeta').textContent='';$('deCRListTitle').textContent=currentResourceType==='pdf'?`${currentSubject} • PDF Files`:currentSubject;renderPlaylist();renderLesson(0);lastView='player';$('deCRTopSub').textContent='';$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');hideMsg();shell.scrollTo({top:0,behavior:'smooth'});
 }
+function deCRReturnToFolderBrowser(){
+  const player=$('deCRPlayer'), browser=$('deCRBrowser'), media=$('deCRMedia');
+  if(!player||player.classList.contains('decr-hidden')) return false;
+  // Stop active media so Back really exits the player rather than leaving playback running.
+  if(media){media.querySelectorAll('iframe').forEach(f=>{try{f.src='about:blank'}catch(e){}});media.querySelectorAll('video,audio').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});}
+  player.classList.add('decr-hidden');
+  if(browser) browser.classList.remove('decr-hidden');
+  hideMsg(); lastView='browser';
+  const title=$('deCRTopTitle'), sub=$('deCRTopSub');
+  if(title) title.textContent=currentSubject||currentCourse?.title||currentCourse?.name||'Course Content';
+  if(sub) sub.textContent=currentSubject?'Videos and PDF folder for this subject':'Choose a subject or folder';
+  try{shell?.scrollTo({top:0,behavior:'smooth'})}catch(e){}
+  return true;
+}
+$('deCRPlayerBack')?.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();deCRReturnToFolderBrowser();});
+window.addEventListener('de:course-player-back',()=>deCRReturnToFolderBrowser());
 async function readerCourseUnlocked(){
  if(!signedInUser||!studentDb||!currentCourseId)return false;
  try{
@@ -10845,7 +10862,7 @@ window.addEventListener('popstate',function(e){
   else list.innerHTML='<div class="de-fcd-content-item"><span class="de-fcd-content-icon"><i class="fa-solid fa-folder-open"></i></span><span>Semester-wise folders, subject resources, video lectures and PDF notes</span></div>';
   openTab('details');previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root.classList.add('show');root.setAttribute('aria-hidden','false');
  };
- $('deFcdBack').addEventListener('click',close);root.addEventListener('click',e=>{if(e.target===root)close();});
+ $('deFcdBack').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();close();});root.addEventListener('click',e=>{if(e.target===root)close();});
  root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.fcdTab==='content'){openReaderFromDetail(activeId);return;}openTab('details');}));
  $('deFcdBuy').addEventListener('click',async(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;for(let i=0;i<25&&typeof window.openCoursePayment!=='function';i++)await new Promise(r=>setTimeout(r,80));if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{console.error('[Diploma Engineers] Payment module did not initialize; check Firebase module/network errors.');alert('Payment system is still loading. Please refresh the app and try again.');}});
  $('deFcdOpenContent').addEventListener('click',()=>openReaderFromDetail(activeId));
@@ -10915,6 +10932,32 @@ window.addEventListener('popstate',function(e){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&box.classList.contains('is-open')){e.preventDefault();close();}});
 })();
 </script>
+<script id="decr-mobile-player-back-fix">(function(){
+  var shellId='deCourseShell', playerId='deCRPlayer', browserId='deCRBrowser';
+  var internalBackInProgress=false;
+  function el(id){return document.getElementById(id)}
+  function visible(id){var n=el(id);return !!(n&&getComputedStyle(n).display!=='none'&&!n.classList.contains('decr-hidden')&&(id!=='deCourseShell'||n.classList.contains('de-open')))}
+  function playerVisible(){return visible(shellId)&&visible(playerId)}
+  function courseReaderVisible(){return visible(shellId)}
+  function stopMedia(){var m=el('deCRMedia');if(!m)return;m.querySelectorAll('video,audio').forEach(function(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});m.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank'}catch(e){}})}
+  function returnFromPlayer(){if(!playerVisible())return false;stopMedia();if(typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();var p=el(playerId),b=el(browserId);if(p)p.classList.add('decr-hidden');if(b)b.classList.remove('decr-hidden');return true}
+  // Track each reader layer as a real browser-history step so Android hardware Back
+  // closes player -> returns to folder list -> returns to course detail -> app.
+  function pushLayer(name){try{history.pushState({__deCourseLayer:name,href:location.href},'',location.href)}catch(e){}}
+  document.addEventListener('click',function(e){
+    var lesson=e.target&&e.target.closest&&e.target.closest('[data-de-lesson]');
+    if(lesson&&visible(shellId)){pushLayer('player')}
+  },true);
+  var pback=el('deCRPlayerBack');if(pback)pback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();returnFromPlayer();try{history.pushState({__deCourseLayer:'folder',href:location.href},'',location.href)}catch(err){}},true);
+  var topback=el('deCRBack');if(topback)topback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(returnFromPlayer())return;if(courseReaderVisible()){var id=String(el('deCRCourseTitle')?.textContent||'');if(typeof window.goBack==='function')window.goBack();}},true);
+  window.addEventListener('popstate',function(e){
+    if(internalBackInProgress)return;
+    if(playerVisible()){e.stopImmediatePropagation();e.preventDefault();returnFromPlayer();internalBackInProgress=true;setTimeout(function(){internalBackInProgress=false},80);return;}
+    // Do not force the app's home page while the integrated course reader is open.
+    if(courseReaderVisible()&&e.state&&e.state.__deCourseLayer){e.stopImmediatePropagation();e.preventDefault();if(e.state.__deCourseLayer==='folder'){returnFromPlayer();}else if(e.state.__deCourseLayer==='reader'&&typeof window.goBack==='function'){window.goBack();}}
+  },true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&playerVisible()){e.preventDefault();returnFromPlayer()}},true);
+})();</script>
 </body>
 </html>
 

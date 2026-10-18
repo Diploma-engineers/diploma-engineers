@@ -2097,6 +2097,23 @@ body.campus-hiring-open{overflow:hidden!important;}
       </div>
     </div>
 
+    <section id="homeCouponUsageSection" class="reveal" style="margin:18px 0 22px;padding:18px;background:linear-gradient(135deg,#f8fbff,#fff);border:1px solid #dbeafe;border-radius:22px;box-shadow:0 8px 25px rgba(15,23,42,.04)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div><span style="display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:900;letter-spacing:.5px"><i class="fa-solid fa-ticket"></i> COUPON ACTIVITY</span><h2 style="margin:10px 0 4px;font-size:20px;color:#0f172a">Students Who Used Your Coupon</h2><p style="margin:0;color:#64748b;font-size:12px">Home dashboard · Tap a student card to view details.</p></div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="homeCouponUseCount" style="padding:8px 12px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:900">0 students</span><button type="button" id="homeCouponUsageRefresh" class="course-builder-btn secondary" style="white-space:nowrap"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+      </div>
+      <div style="margin-top:14px;padding:15px;border:1px solid #bfdbfe;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#ffffff)">
+        <div style="font-size:11px;font-weight:900;letter-spacing:.6px;color:#64748b;text-transform:uppercase"><i class="fa-solid fa-ticket" style="color:#2563eb"></i> Your Shareable Coupon Code</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <strong id="homePersonalCouponCode" style="font-size:clamp(24px,5vw,34px);letter-spacing:1.2px;color:#1d4ed8;overflow-wrap:anywhere">Loading…</strong>
+          <button type="button" id="homeCouponCopyCode" class="course-builder-btn primary"><i class="fa-regular fa-copy"></i> Copy Code</button>
+          <button type="button" id="homeCouponShareCode" class="course-builder-btn secondary"><i class="fa-solid fa-share-nodes"></i> Share Code</button>
+        </div>
+        <p style="margin:7px 0 0;color:#64748b;font-size:12px">Copy or share this code with students so they can use it while purchasing a course.</p>
+      </div>
+      <div id="homeCouponUseList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;margin-top:14px"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading coupon uses...</div></div>
+    </section>
+
     <div class="home-section-head upload-section-heading"><h2><i class="fa-solid fa-cloud-arrow-up" style="color:#2563eb"></i> Your Uploaded</h2><div class="upload-heading-actions"><span id="homeUploadCount">Loading...</span><button type="button" class="see-all-uploads" data-see-all="homeUploads" aria-expanded="false">See All <i class="fa-solid fa-arrow-right"></i></button></div></div>
     <div class="upload-slider" id="homeUploads"><div class="home-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading uploaded content...</div></div>
     <div class="home-section-head upload-section-heading"><h2><i class="fa-solid fa-layer-group" style="color:#2563eb"></i> All Uploaded</h2><div class="upload-heading-actions"><span id="allUploadCount">Loading...</span><button type="button" class="see-all-uploads" data-see-all="allHomeUploads" aria-expanded="false">See All <i class="fa-solid fa-arrow-right"></i></button></div></div>
@@ -2933,8 +2950,8 @@ function applyCourseVisibility(){
         btn.setAttribute("aria-hidden", loggedIn ? "false" : "true");
     }
     if(track) track.classList.toggle("course-enabled", loggedIn);
-    if(!loggedIn && section){ section.classList.remove("active"); section.style.display = "none"; }
-    else if(loggedIn && section){ section.style.removeProperty("display"); }
+    if(!loggedIn && section){ section.classList.remove("active"); section.style.display = "none"; section.classList.add("course-locked"); }
+    else if(loggedIn && section){ section.classList.remove("course-locked"); section.style.removeProperty("display"); }
     return founderAllowed;
 }
 
@@ -5730,6 +5747,8 @@ function showAdminMode(mode) {
         loadTestSeries();
     } else if (mode === "course") {
         if(!auth.currentUser) { applyCourseVisibility(); showAdminMode("news"); return; }
+        courseAdminSection.classList.remove("course-locked");
+        courseAdminSection.style.removeProperty("display");
         adminSwitcher.classList.add("course-active");
         courseSwitch.classList.add("active");
         courseAdminSection.classList.add("active");
@@ -5945,7 +5964,7 @@ function appGo(mode){
       window.__navWarningInProgress = false;
     }
   }
-  if(mode==="home"){showAdminMode("home");syncAppNav("home");window.scrollTo({top:0,behavior:"auto"});return;}
+  if(mode==="home"){showAdminMode("home");syncAppNav("home");if(window.initAdminCouponDashboard)window.initAdminCouponDashboard();window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="profile"){showAdminMode("profile");syncAppNav("profile");window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="news"){showAdminMode("news");}
   else if(mode==="blog"){showAdminMode("blog");}
@@ -6721,26 +6740,50 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   function matchingUsage(rows){
     const code=ownCouponCode.toUpperCase(); const uid=auth.currentUser?.uid;
     return rows.filter(r=>{
-      const used=String(r.couponCode||r.usedCouponCode||r.appliedCouponCode||r.coupon||r.coupon?.code||"").trim().toUpperCase();
-      const owner=String(r.couponOwnerUid||r.couponAdminUid||r.referrerAdminUid||r.couponCreatedBy||"");
+      const used=String(r.couponCode||r.usedCouponCode||r.appliedCouponCode||r.appliedCoupon||r.coupon||r.coupon?.code||r.coupon_code||r.coupon_code_used||"").trim().toUpperCase();
+      const owner=String(r.couponOwnerUid||r.couponAdminUid||r.referrerAdminUid||r.couponCreatedBy||r.couponUid||r.couponAdminId||"");
       return !!code && used===code && (!owner||owner===uid);
     }).sort((a,b)=>(Number(b.submittedAt||b.createdAt)||0)-(Number(a.submittedAt||a.createdAt)||0));
   }
   function renderUsage(){
-    const box=byId("adminCouponUseList"),count=byId("adminCouponUseCount");if(!box)return;
-    const rows=useRows; if(count)count.textContent=rows.length+" student"+(rows.length===1?"":"s");
+    const box=byId("adminCouponUseList"),count=byId("adminCouponUseCount"),homeBox=byId("homeCouponUseList"),homeCount=byId("homeCouponUseCount");
+    const rows=useRows;
+    if(count)count.textContent=rows.length+" student"+(rows.length===1?"":"s");
+    if(homeCount)homeCount.textContent=rows.length+" student"+(rows.length===1?"":"s");
+    const emptyHtml='<div style="grid-column:1/-1;padding:22px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;color:#64748b"><i class="fa-solid fa-ticket" style="font-size:24px;display:block;margin-bottom:9px;color:#94a3b8"></i><b>No coupon uses found yet</b><div style="font-size:12px;margin-top:6px;line-height:1.6">When a student buys with coupon '+safe(ownCouponCode||'code')+', the purchase request must save the coupon code.</div></div>';
+    if(!rows.length){if(box)box.innerHTML=emptyHtml;if(homeBox)homeBox.innerHTML=emptyHtml;return;}
+    const cards=rows.map((r,i)=>{const name=r.name||r.fullName||r.studentName||"Student",branch=r.branch||r.courseBranch||"Branch not set",pic=r.profilePic||r.photoURL||r.photoUrl||"",initial=(name.trim()[0]||"S").toUpperCase(),course=r.courseName||r.courseTitle||r.courseId||"Course";return `<button type="button" data-coupon-student="${i}" style="text-align:left;display:flex;gap:12px;align-items:center;padding:14px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;cursor:pointer;box-shadow:0 5px 18px rgba(15,23,42,.04);color:#0f172a"><span style="width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#dbeafe;color:#1d4ed8;font-weight:900">${pic?`<img src="${safe(pic)}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.textContent='${safe(initial)}'">`:safe(initial)}</span><span style="min-width:0;display:block;flex:1"><b style="display:block;font-size:14px;overflow-wrap:anywhere">${safe(name)}</b><span style="display:block;color:#64748b;font-size:11px;margin-top:3px">${safe(branch)}</span><span style="display:block;color:#2563eb;font-size:12px;font-weight:800;margin-top:5px">${safe(course)}</span></span><i class="fa-solid fa-chevron-right" style="color:#94a3b8"></i></button>`;}).join("");
+    if(box){box.innerHTML=cards;box.querySelectorAll("[data-coupon-student]").forEach(btn=>btn.addEventListener("click",()=>openStudent(rows[Number(btn.dataset.couponStudent)])));}
+    if(homeBox){homeBox.innerHTML=cards;homeBox.querySelectorAll("[data-coupon-student]").forEach(btn=>btn.addEventListener("click",()=>openStudent(rows[Number(btn.dataset.couponStudent)])));}
+    return;
     if(!rows.length){box.innerHTML='<div style="grid-column:1/-1;padding:25px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;color:#64748b"><i class="fa-solid fa-ticket" style="font-size:26px;display:block;margin-bottom:10px;color:#94a3b8"></i><b>No coupon uses found yet</b><div style="font-size:12px;margin-top:6px;line-height:1.6">When a student buys a course using '+safe(ownCouponCode)+', the student app must save the coupon code and coupon owner UID in their purchase request.</div></div>';return;}
-    box.innerHTML=rows.map((r,i)=>{const name=r.name||r.fullName||r.studentName||"Student",branch=r.branch||r.courseBranch||"Branch not set",pic=r.profilePic||r.photoURL||r.photoUrl||"",initial=(name.trim()[0]||"S").toUpperCase(),sid=r.studentId||r.studentID||r.rollNo||r.enrollmentNo||r.enrollmentNumber||r.uid||"-",course=r.courseName||r.courseTitle||r.courseId||"Course";return `<button type="button" data-coupon-student="${i}" style="text-align:left;display:flex;gap:12px;align-items:center;padding:14px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;cursor:pointer;box-shadow:0 5px 18px rgba(15,23,42,.04);color:#0f172a"><span style="width:48px;height:48px;flex:0 0 48px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#dbeafe;color:#1d4ed8;font-weight:900">${pic?`<img src="${safe(pic)}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.textContent='${safe(initial)}'">`:safe(initial)}</span><span style="min-width:0;display:block;flex:1"><b style="display:block;font-size:15px;overflow-wrap:anywhere">${safe(name)}</b><span style="display:block;color:#64748b;font-size:12px;margin-top:3px">${safe(branch)}</span><span style="display:block;color:#2563eb;font-size:12px;font-weight:700;margin-top:5px">${safe(course)}</span></span><i class="fa-solid fa-chevron-right" style="color:#94a3b8"></i></button>`;}).join("");
-    box.querySelectorAll("[data-coupon-student]").forEach(btn=>btn.addEventListener("click",()=>openStudent(rows[Number(btn.dataset.couponStudent)])));
   }
   function openStudent(r){const modal=byId("adminCouponStudentModal"),box=byId("adminCouponStudentDetails");if(!modal||!box)return;const name=r.name||r.fullName||r.studentName||"Student",branch=r.branch||r.courseBranch||"-",mobile=r.mobile||r.mobileNumber||r.phone||r.phoneNumber||"-",sid=r.studentId||r.studentID||r.rollNo||r.enrollmentNo||r.enrollmentNumber||r.uid||"-",course=r.courseName||r.courseTitle||r.courseId||"-",pic=r.profilePic||r.photoURL||r.photoUrl||"",email=r.email||"-",date=r.submittedAt||r.createdAt||r.timestamp;const fields=[["Name",name],["Branch",branch],["Mobile Number",mobile],["Student ID / Roll No.",sid],["Email",email],["Course Purchased",course],["Amount",(r.amount!=null?"₹"+r.amount:"-")],["Purchase Status",r.status||"pending"],["Coupon Code",r.couponCode||r.usedCouponCode||ownCouponCode],["Purchase Date",date?new Date(Number(date)).toLocaleString():"-"]];box.innerHTML=`<div style="text-align:center;margin-bottom:16px">${pic?`<img src="${safe(pic)}" alt="Student profile" style="width:86px;height:86px;object-fit:cover;border-radius:50%;border:3px solid #dbeafe">`:`<div style="width:86px;height:86px;display:grid;place-items:center;margin:auto;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:30px;font-weight:900">${safe((name[0]||"S").toUpperCase())}</div>`}<h3 style="margin:9px 0 0;color:#0f172a">${safe(name)}</h3><p style="margin:4px 0;color:#64748b">${safe(branch)}</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px">${fields.map(([k,v])=>`<div style="padding:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px"><small style="display:block;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase">${safe(k)}</small><b style="display:block;color:#0f172a;font-size:13px;margin-top:5px;overflow-wrap:anywhere">${safe(v)}</b></div>`).join("")}</div>`;modal.style.display="flex";}
-  async function loadProfile(){const user=auth.currentUser;if(!user||founder())return;const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));const profile=profileSnap.exists()?profileSnap.val()||{}:{};const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];ownCouponCode=String(profile.couponCode||makeCode(displayName,user.uid)).toUpperCase();ownCouponQr=String(profile.couponQrUrl||profile.couponQrImage||"");if(!profile.couponCode){await update(ref(db,"adminProfiles/"+user.uid),{couponCode:ownCouponCode,couponQrUrl:ownCouponQr,couponCreatedAt:Date.now()});}byId("adminPersonalCouponCode").textContent=ownCouponCode;const preview=byId("adminCouponQrPreview");if(ownCouponQr){preview.src=ownCouponQr;preview.hidden=false;}else{preview.removeAttribute("src");preview.hidden=true;}status(ownCouponQr?"Your saved QR is ready. Upload a new image to replace it.":"Upload the QR that you want students using your code to pay with.");}
-  function listenUsage(){if(usageStop){usageStop();usageStop=null;}if(!studentAuth.currentUser){byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Student purchase database is not signed in for this admin account.</div>';return;}usageStop=onValue(ref(studentDb,"utrPurchases"),snap=>{useRows=matchingUsage(collectPurchases(snap));renderUsage();},err=>{console.error("Coupon usage read failed",err);byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Could not load coupon uses. Check diploma-app-9a378 Realtime Database Rules for admin read access to utrPurchases.</div>';});}
+  async function loadProfile(){const user=auth.currentUser;if(!user||founder())return;const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));const profile=profileSnap.exists()?profileSnap.val()||{}:{};const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];ownCouponCode=String(profile.couponCode||makeCode(displayName,user.uid)).toUpperCase();ownCouponQr=String(profile.couponQrUrl||profile.couponQrImage||"");if(!profile.couponCode){await update(ref(db,"adminProfiles/"+user.uid),{couponCode:ownCouponCode,couponQrUrl:ownCouponQr,couponCreatedAt:Date.now()});}byId("adminPersonalCouponCode").textContent=ownCouponCode;const homeCode=byId("homePersonalCouponCode");if(homeCode)homeCode.textContent=ownCouponCode;const preview=byId("adminCouponQrPreview");if(ownCouponQr){preview.src=ownCouponQr;preview.hidden=false;}else{preview.removeAttribute("src");preview.hidden=true;}status(ownCouponQr?"Your saved QR is ready. Upload a new image to replace it.":"Upload the QR that you want students using your code to pay with.");}
+  function listenUsage(){
+    if(usageStop){usageStop();usageStop=null;}
+    if(!studentAuth.currentUser){
+      const msg='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px;line-height:1.7"><b>Purchase database connection required</b><br>Coupon usage is stored in Firebase project <b>diploma-app-9a378</b>. The same admin email/password must exist there and have read access to <code>/utrPurchases</code>.</div>';
+      if(byId("adminCouponUseList"))byId("adminCouponUseList").innerHTML=msg;
+      if(byId("homeCouponUseList"))byId("homeCouponUseList").innerHTML=msg;
+      return;
+    }
+    usageStop=onValue(ref(studentDb,"utrPurchases"),snap=>{useRows=matchingUsage(collectPurchases(snap));renderUsage();},err=>{
+      console.error("Coupon usage read failed",err);
+      const msg='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Could not load coupon uses. Check <code>diploma-app-9a378</code> Realtime Database Rules for admin read access to <code>utrPurchases</code>.</div>';
+      if(byId("adminCouponUseList"))byId("adminCouponUseList").innerHTML=msg;
+      if(byId("homeCouponUseList"))byId("homeCouponUseList").innerHTML=msg;
+    });
+  }
   window.initAdminCouponDashboard=async function(){if(loading||founder()||!auth.currentUser)return;loading=true;try{await loadProfile();listenUsage();}catch(err){console.error(err);status("Could not load coupon profile: "+(err.message||err),true);}finally{loading=false;}};
   byId("adminCouponQrFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const img=byId("adminCouponQrPreview");img.src=URL.createObjectURL(f);img.hidden=false;status("Image selected. Click Save QR Image to upload it.");});
   byId("adminCouponQrSave")?.addEventListener("click",async()=>{if(!auth.currentUser||founder())return;const file=byId("adminCouponQrFile")?.files?.[0];if(!file&&!ownCouponQr){status("Please select a QR image first.",true);return;}const btn=byId("adminCouponQrSave");btn.disabled=true;try{status("Uploading QR image…");const url=file?await cloudUpload(file):ownCouponQr;await update(ref(db,"adminProfiles/"+auth.currentUser.uid),{couponCode:ownCouponCode,couponQrUrl:url,couponQrImage:url,couponQrUpdatedAt:Date.now()});ownCouponQr=url;byId("adminCouponQrPreview").src=url;byId("adminCouponQrPreview").hidden=false;byId("adminCouponQrFile").value="";status("Coupon QR saved successfully.");}catch(err){console.error(err);status("QR save failed: "+(err.message||err),true);}finally{btn.disabled=false;}});
   byId("adminCouponCopy")?.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(ownCouponCode||byId("adminPersonalCouponCode").textContent);const b=byId("adminCouponCopy");b.innerHTML='<i class="fa-solid fa-check"></i> Copied';setTimeout(()=>b.innerHTML='<i class="fa-regular fa-copy"></i> Copy Code',1300);}catch(_){status("Coupon code: "+ownCouponCode);}});
+  async function copyOwnCoupon(button){const code=ownCouponCode||byId("homePersonalCouponCode")?.textContent||byId("adminPersonalCouponCode")?.textContent||"";if(!code||code==="Loading…"){status("Coupon code is still loading. Please try again.",true);return;}try{await navigator.clipboard.writeText(code);if(button){const old=button.innerHTML;button.innerHTML='<i class="fa-solid fa-check"></i> Copied';setTimeout(()=>button.innerHTML=old,1400);}else status("Coupon code copied: "+code);}catch(_){const area=document.createElement("textarea");area.value=code;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();try{document.execCommand("copy");status("Coupon code copied: "+code);}catch(e){status("Your coupon code: "+code);}area.remove();}}
+  byId("homeCouponCopyCode")?.addEventListener("click",e=>copyOwnCoupon(e.currentTarget));
+  byId("homeCouponShareCode")?.addEventListener("click",async()=>{const code=ownCouponCode||byId("homePersonalCouponCode")?.textContent||"";if(!code||code==="Loading…"){status("Coupon code is still loading. Please try again.",true);return;}const shareData={title:"Diploma Engineers Course Coupon",text:"Use my coupon code "+code+" when purchasing a course on Diploma Engineers."};try{if(navigator.share)await navigator.share(shareData);else{await copyOwnCoupon();status("Sharing is not supported here. Coupon code copied: "+code);}}catch(err){if(err?.name!=="AbortError")status("Coupon code: "+code);}});
   byId("adminCouponRefresh")?.addEventListener("click",()=>{loadProfile().then(listenUsage).catch(err=>status(err.message||String(err),true));});
+  byId("homeCouponUsageRefresh")?.addEventListener("click",()=>{loadProfile().then(listenUsage).catch(err=>status(err.message||String(err),true));});
   byId("adminCouponStudentClose")?.addEventListener("click",()=>{byId("adminCouponStudentModal").style.display="none";});
   byId("adminCouponStudentModal")?.addEventListener("click",e=>{if(e.target.id==="adminCouponStudentModal")e.currentTarget.style.display="none";});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&byId("adminCouponStudentModal"))byId("adminCouponStudentModal").style.display="none";});

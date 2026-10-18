@@ -7381,6 +7381,8 @@ async function findCouponRecord(courseId,code){
  }
  const base='https://diplomaengineers-869df-default-rtdb.firebaseio.com';
  for(const path of paths){try{const r=await fetch(base+'/'+path.split('/').map(encodeURIComponent).join('/')+'.json',{cache:'no-store'});if(r.ok){const v=await r.json();if(v!==null&&v!==undefined){if(/\/(coupons|couponCodes|paymentCoupons)$/.test(path)){const hit=findCouponInMap(v,code);if(hit!==null&&hit!==undefined)return hit;}else return v;}}}catch(e){}}
+ // Public, minimal coupon index: exposes only coupon code, QR, and owning admin UID.
+ try{const r=await fetch(base+'/publicAdminCoupons/'+encodeURIComponent(String(code).trim().toUpperCase())+'.json',{cache:'no-store'});if(r.ok){const p=await r.json();if(p&&p.active!==false){const qr=String(p.qrUrl||p.couponQrImage||p.couponQrUrl||'');if(qr)return {...p,code,couponCode:code,couponOwnerUid:String(p.adminUid||p.couponOwnerUid||''),qrUrl:qr,couponQrImage:qr,price:p.price??(window.__deAdminCourseCatalog||{})[String(courseId)]?.price??99,source:'publicAdminCoupons'};}}}catch(e){console.warn('Public admin coupon lookup failed',e);}
  return null;
 }
 async function applyPaymentCoupon(){
@@ -7417,7 +7419,7 @@ async function applyPaymentCoupon(){
   const basePrice=Number(catalog.price??catalog.amount??99)||99;
   const discountRaw=Number(record.discountAmount??record.discount??record.discount_amount);
   currentPaymentAmount=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:(Number.isFinite(discountRaw)&&discountRaw>=0?Math.max(0,basePrice-discountRaw):basePrice);
-  appliedCoupon={code,qrImage:qr,amount:currentPaymentAmount,label:String(record.title||record.name||code)};
+  appliedCoupon={code,qrImage:qr,amount:currentPaymentAmount,label:String(record.title||record.name||code),couponOwnerUid:String(record.couponOwnerUid||record.adminUid||record.ownerUid||''),source:String(record.source||'course')};
   if(img){if(!img.dataset.baseQr)img.dataset.baseQr=img.src;img.onerror=()=>{img.onerror=null;couponStatus('Coupon QR image could not be loaded. Check the image URL.','err');};img.src=qr;img.dataset.qrSource='coupon:'+code;}
   const p=overlay.querySelector('.payment-price');if(p)p.textContent='₹'+currentPaymentAmount+' INR';
   const h=overlay.querySelector('.payment-head h3');if(h)h.textContent='Course Purchase • ₹'+currentPaymentAmount;
@@ -7637,11 +7639,15 @@ function renderCourseTracking(courseId,state='pending',data=null){
 }
 async function getLatestPurchase(courseId){
   if(!db||!currentUid)return null;
+  // Private per-user index avoids granting students read access to all purchases.
+  const idx=await get(ref(db,`userPurchaseIndex/${currentUid}/${courseId}`)).catch(()=>null);
+  if(idx&&idx.exists()){
+    const key=String(idx.val()?.purchaseId||idx.val()?.key||'');
+    if(key){const one=await get(ref(db,`utrPurchases/${key}`)).catch(()=>null);if(one&&one.exists())return {key,...(one.val()||{})};}
+  }
+  // Legacy nested records remain readable for older purchases.
   const s=await get(ref(db,`utrPurchases/${currentUid}/${courseId}`)).catch(()=>null);
-  if(!s||!s.exists())return null;
-  let latest=null;
-  s.forEach(x=>{latest={key:x.key,...(x.val()||{})};});
-  return latest;
+  if(!s||!s.exists())return null;let latest=null;s.forEach(x=>{latest={key:x.key,...(x.val()||{})};});return latest;
 }
 async function refreshCourseTracking(courseId){await syncPaidCardState(courseId);}
 async function refreshAllCourseTracking(){
@@ -7681,22 +7687,15 @@ async function submitPurchase(){
   if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
-    const root=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);
-    const old=await get(root);
-    let pending=false;
-    if(old.exists())old.forEach(x=>{if((x.val()||{}).status==='pending')pending=true;});
-    if(pending){
-      showStatus('This course already has a pending verification request.','warn');
-      setPaidCardState(currentCourse,'pending');
-      submitEl.disabled=false;return;
-    }
+    const purchaseRoot=ref(db,'utrPurchases');
+    // Do not read the entire private purchase database from a student session.
+    // Founder/admin verifies the request; each new request is written as one flat record.
     const approved=await accessValue(currentCourse).catch(()=>null);
     if(isApproved(approved)){openCourse(currentCourse);return;}
-
-    const p=push(root),now=Date.now();
+    const p=push(purchaseRoot),now=Date.now();
     const purchaseDetails={
       purchaseId:p.key,uid:currentUid,courseId:currentCourse,
-      courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(currentPaymentAmount)||Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,couponCode:appliedCoupon?.code||'',paymentQrImage:appliedCoupon?.qrImage||overlay.querySelector('.payment-qr')?.src||'',
+      courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),amount:Number(currentPaymentAmount)||Number(getCoursePrice(currentCourse))||99,currency:'INR',utr,couponCode:appliedCoupon?.code||'',couponOwnerUid:appliedCoupon?.couponOwnerUid||'',couponAdminUid:appliedCoupon?.couponOwnerUid||'',paymentQrImage:appliedCoupon?.qrImage||overlay.querySelector('.payment-qr')?.src||'',
       status:'pending',verified:false,submittedAt:now,
       name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),
       mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member'),
@@ -7705,6 +7704,7 @@ async function submitPurchase(){
     };
     // Firebase remains the primary admin workflow. Also send a copy of the request to the owner's inbox via FormSubmit.
     await set(p,purchaseDetails);
+    await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now}).catch(e=>console.warn('Could not save private purchase index:',e));
     try{
       const emailPayload={
         _subject:'New Course Purchase / Approval Request - '+purchaseDetails.courseName,

@@ -7457,14 +7457,18 @@ function getCourseCard(courseId){
     Array.from(document.querySelectorAll('.course-card')).find(c=>c.querySelector(`button[onclick*="${courseId}"]`));
 }
 function removeTrackingCard(card){const h=card?.querySelector('.payment-tracking-host');if(h)h.remove();}
-function showTrackingOnCard(courseId){
+async function showTrackingOnCard(courseId){
   if(!currentUid){alert('Please login first.');return;}
   currentCourse=courseId;
   const o=document.getElementById('trackingOverlay');
   const body=document.getElementById('trackingModalBody');
   if(!o||!body)return;
-  body.innerHTML=trackingStatusHtml(courseId,'pending');
+  body.innerHTML='<div class="payment-tracking-card" style="padding:22px;text-align:center"><i class="fa-solid fa-spinner fa-spin"></i> Loading payment details…</div>';
   o.style.display='flex';o.setAttribute('aria-hidden','false');
+  const purchase=await getLatestPurchase(courseId).catch(()=>null);
+  const access=await accessValue(courseId).catch(()=>null);
+  const state=isApproved(access)||String(purchase?.status||'').toLowerCase()==='verified'?'verified':'pending';
+  body.innerHTML=trackingStatusHtml(courseId,state,purchase);
   watchAccess(courseId);
 }
 
@@ -7600,34 +7604,38 @@ function showVerifyTick(){
   setTimeout(()=>{o.style.display='none';o.setAttribute('aria-hidden','true');},1050);
 }
 function trackingStatusHtml(courseId, state='pending', requestData=null){
-  const safeName=esc(courseNames[courseId]||courseId);
+  const safeName=esc(requestData?.courseName||courseNames[courseId]||getCourseDisplayName(courseId)||courseId);
   const verified=state==='verified';
-  const pending=state==='pending';
+  const data=requestData&&typeof requestData==='object'?requestData:{};
+  const amount=Number(data.amount);
+  const amountText='₹'+(Number.isFinite(amount)&&amount>=0?amount:(Number(getCoursePrice(courseId))||99));
+  const coupon=String(data.couponCode||'').trim();
+  const utr=String(data.utr||data.transactionId||'').trim();
+  const qr=String(data.paymentQrImage||data.qrImage||'').trim();
+  const qrSafe=/^https:\/\//i.test(qr)?qr:'';
+  const submitted=data.submittedAt?new Date(Number(data.submittedAt)).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}):'Not available';
+  const paymentDetails=`<div class="track-payment-details" style="margin:16px 0;padding:14px;border:1px solid #dbeafe;border-radius:14px;background:#f8fbff">
+    <div style="font-weight:800;font-size:13px;color:#0f172a;margin-bottom:10px"><i class="fa-solid fa-receipt" style="color:#2563eb;margin-right:6px"></i>Your Submitted Payment Details</div>
+    <div style="display:grid;grid-template-columns:minmax(95px,auto) 1fr;gap:8px 10px;font-size:12px;overflow-wrap:anywhere">
+      <strong>Course</strong><span>${safeName}</span>
+      <strong>Amount</strong><span>${esc(amountText)}</span>
+      <strong>Coupon Code</strong><span style="font-weight:800;color:${coupon?'#15803d':'#64748b'}">${coupon?esc(coupon):'Not used'}</span>
+      <strong>UTR / Transaction ID</strong><span style="font-weight:800;color:#1d4ed8;letter-spacing:.2px">${utr?esc(utr):'Not found'}</span>
+      <strong>Submitted At</strong><span>${esc(submitted)}</span>
+    </div>
+    ${qrSafe?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #dbeafe"><div style="font-size:12px;font-weight:700;margin-bottom:7px;color:#334155">QR used for this payment</div><img src="${esc(qrSafe)}" alt="Payment QR used" loading="lazy" style="display:block;width:150px;max-width:100%;max-height:190px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:6px" onerror="this.style.display='none'"></div>`:''}
+  </div>`;
   return `<div class="payment-tracking-card" data-tracking-course="${esc(courseId)}">
-    <div class="track-head">
-      <div class="track-icon"><i class="fa-solid fa-route"></i></div>
-      <div>
-        <div class="track-title">Payment Verification Tracking</div>
-        <div class="track-sub">${safeName}</div>
-      </div>
-    </div>
-    <div class="track-step done">
-      <div class="track-dot"><i class="fa-solid fa-check"></i></div>
-      <div><div class="track-label">Payment Successful</div><div class="track-status">₹99 payment submitted successfully</div></div>
-    </div>
-    <div class="track-step ${verified?'done':'active'}">
-      <div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-clock'}"></i></div>
-      <div><div class="track-label">${verified?'Admin Verified':'Admin Verification'}</div><div class="track-status">${verified?'Payment verified successfully':'Under 60 min verification'}</div></div>
-    </div>
-    <div class="track-step ${verified?'done':'pending'}">
-      <div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-lock'}"></i></div>
-      <div><div class="track-label">Course Access</div><div class="track-status">${verified?'Opening course…':'Will open automatically after verification'}</div></div>
-    </div>
+    <div class="track-head"><div class="track-icon"><i class="fa-solid fa-route"></i></div><div><div class="track-title">Payment Verification Tracking</div><div class="track-sub">${safeName}</div></div></div>
+    ${paymentDetails}
+    <div class="track-step done"><div class="track-dot"><i class="fa-solid fa-check"></i></div><div><div class="track-label">Payment Request Submitted</div><div class="track-status">${utr?'UTR received • '+esc(amountText)+' submitted':'Payment details are not available yet'}</div></div></div>
+    <div class="track-step ${verified?'done':'active'}"><div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-clock'}"></i></div><div><div class="track-label">${verified?'Admin Verified':'Admin Verification'}</div><div class="track-status">${verified?'Payment verified successfully':'Waiting for admin to verify your payment'}</div></div></div>
+    <div class="track-step ${verified?'done':'pending'}"><div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-lock'}"></i></div><div><div class="track-label">Course Access</div><div class="track-status">${verified?'Your course access is active':'Course opens after verification'}</div></div></div>
     ${verified?'<div class="track-success"><i class="fa-solid fa-circle-check"></i> Verification complete. Your course is now accessible.</div>':''}
-    ${pending?'<button type="button" class="course-tracking-btn" onclick="closePayment()">Continue browsing</button>':''}
-  </div>
-    <div id="courseNoResults" class="course-no-results">No courses found. Try another search or filter.</div>`;
+    <button type="button" class="course-tracking-btn" onclick="closeTracking()">Close Tracking</button>
+  </div>`;
 }
+
 function findCourseCard(courseId){return getCourseCard(courseId);}
 function renderCourseTracking(courseId,state='pending',data=null){
   const card=findCourseCard(courseId);
@@ -7659,6 +7667,11 @@ window.refreshUploadedCourseCards=async function(){
   if(!currentUid)return;
   const ids=Object.keys(window.__deAdminCourseCatalog||{});
   for(const id of ids){try{await syncPaidCardState(id);}catch(e){console.warn('Uploaded course state refresh failed:',id,e);}}
+  const grid=document.getElementById('adminUploadedCourseGrid');if(!grid)return;
+  const cards=[...grid.querySelectorAll('[data-paid-course]')];
+  const unlocked=card=>{const b=card.querySelector('[data-admin-course-buy]');const t=(b?.textContent||'').toLowerCase();return /unlocked|purchased|open course|access granted|continue learning/.test(t)||b?.dataset?.unlocked==='true'||card.dataset.unlocked==='true';};
+  cards.sort((a,b)=>Number(unlocked(b))-Number(unlocked(a)));
+  cards.forEach(card=>{const isOpen=unlocked(card);card.classList.toggle('de-course-is-unlocked',isOpen);const banner=card.querySelector('.de-firebase-course-banner');if(banner){let badge=banner.querySelector('.de-course-unlocked-badge');if(isOpen&&!badge){badge=document.createElement('span');badge.className='de-course-unlocked-badge';badge.innerHTML='<i class="fa-solid fa-circle-check"></i> UNLOCKED';banner.appendChild(badge);}else if(!isOpen&&badge)badge.remove();}grid.appendChild(card);});
 };
 
 function getCourseDisplayName(courseId){
@@ -9563,7 +9576,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     });
     const list=$("deTsList"); if(!list)return;
     if(deTsCourseFilter){
-      const matched=filtered.filter(t=>deTsMatch(t.branch,deTsCourseFilter.branch)&&deTsMatch(t.subject,deTsCourseFilter.subject)&&deTsMatch(t.semester,deTsCourseFilter.semester));
+      const matched=filtered.filter(t=>deTsMatch(t.branch,deTsCourseFilter.branch)&&(deTsNorm(deTsCourseFilter.subject)==='allsubjects'||deTsMatch(t.subject,deTsCourseFilter.subject))&&deTsMatch(t.semester,deTsCourseFilter.semester));
       if($("deTsBack"))$("deTsBack").style.display='inline-flex';
       if($("deTsBreadcrumb"))$("deTsBreadcrumb").textContent=[deTsCourseFilter.branch,deTsCourseFilter.semester,deTsCourseFilter.subject].filter(Boolean).join('  /  ');
       if($("deTsStats"))$("deTsStats").innerHTML=`<div class="de-ts-stat"><b>${matched.length}</b> Matching Published Tests</div><div class="de-ts-stat"><b>${deTsTests.length}</b> Total Published Tests</div>`;
@@ -10453,6 +10466,8 @@ async function goBack(){
  try{unlocked=await readerCourseUnlocked();}catch(e){console.warn('Could not verify course purchase before Back navigation:',e);}
  closeShell();if(id&&typeof window.openFirebaseCourseDetails==='function'){setTimeout(()=>window.openFirebaseCourseDetails(id),0);return;}
 }
+// Expose the Course Reader's own hierarchical Back handler.
+window.deCRGoBack = goBack;
 function coursePublished(c){const st=String(c?.status??'').trim().toLowerCase();if(['rejected','draft','pending','unpublished','disabled','inactive'].includes(st))return false;return ['approved','published','live','active'].includes(st)||c?.approved===true||c?.published===true;}
 function validAccess(v,courseId=currentCourseId){
 if(v===true)return true;if(!v||typeof v!=='object')return false;
@@ -10522,11 +10537,13 @@ function itemIsPdf(it){return isPdf(it,itemUrl(it));}
 function renderFolders(){
  const groups=folderGroups();let cards=[];
  if(!currentSubject){
-  cards=groups.map(g=>{const videos=g.items.filter(x=>!itemIsPdf(x)).length,pdfs=g.items.filter(itemIsPdf).length;return {key:g.name,name:g.name,icon:'📚',count:g.items.length,sub:`${videos} video${videos===1?'':'s'} · ${pdfs} PDF${pdfs===1?'':'s'}`};});
-  const totalPdfs=groups.reduce((n,g)=>n+g.items.filter(itemIsPdf).length,0);
-  cards.push({key:'__all_pdfs__',name:'PDF Files',icon:'📁',count:totalPdfs,sub:'All uploaded PDFs grouped by subject'});
-  $('deCRFolderHeading')?.replaceChildren(document.createTextNode('Subjects'));
- }else if(currentSubject==='__ALL_PDFS__'){
+  cards.push({key:'__course_test_series__',name:'Test Series',icon:'📝',count:1,sub:'Practice tests for this course'});
+  cards.push({key:'__course_important_questions__',name:'Important Questions',icon:'❓',count:1,sub:'Important questions for this course'});
+  const totalPdfCount=getItems().filter(itemIsPdf).length;
+  cards.push({key:'__all_pdfs__',name:'Uploaded PDFs',icon:'📄',count:totalPdfCount,sub:totalPdfCount?`Open ${totalPdfCount} uploaded PDF${totalPdfCount===1?'':'s'} from Google Drive`:'All uploaded PDF links'});
+  cards.push(...groups.map(g=>{const videos=g.items.filter(x=>!itemIsPdf(x)).length,pdfs=g.items.filter(itemIsPdf).length;return {key:g.name,name:g.name,icon:'📚',count:g.items.length,sub:`${videos} video${videos===1?'':'s'} · ${pdfs} PDF${pdfs===1?'':'s'}`};}));
+  $('deCRFolderHeading')?.replaceChildren(document.createTextNode('Course Content • Subjects & Resources'));
+}else if(currentSubject==='__ALL_PDFS__'){
   cards=groups.filter(g=>g.items.some(itemIsPdf)).map(g=>({key:`__pdf_subject__${g.name}`,name:g.name,icon:'📁',count:g.items.filter(itemIsPdf).length,sub:`${g.items.filter(itemIsPdf).length} PDF file${g.items.filter(itemIsPdf).length===1?'':'s'}`}));
   $('deCRFolderHeading')?.replaceChildren(document.createTextNode('PDF Files • Subjects'));
  }else{
@@ -10550,9 +10567,9 @@ function openFolder(folder){
  if(String(folder).startsWith('__pdf_subject__')){const subject=String(folder).slice('__pdf_subject__'.length);currentSubject=subject;currentResourceType='pdf';currentFolder='PDF Files';renderFolders();$('deCRTopTitle').textContent=subject+' • PDF Files';$('deCRTopSub').textContent='All PDFs uploaded in this subject';return;}
  if(folder==='__course_test_series__'||folder==='__course_important_questions__'){
   const branch=String(currentCourse?.branch||currentCourse?.branchName||currentCourse?.category||currentCourse?.department||currentCourse?.courseBranch||'').trim();
-  const subject=String(currentSubject||'').trim();
+  const subject=String(currentSubject||'All Subjects').trim();
   const semester=String(currentSemester||currentCourse?.semester||'').trim();
-  if(!branch||!subject){alert('Course branch and subject could not be detected. Please check the course details and uploaded content.');return;}
+  if(!branch){alert('Course branch could not be detected. Please check the course details and uploaded content.');return;}
   window.__deCourseLinkedContext={courseId:String(currentCourseId||''),semester,subject,branch,source:'course-content'};
   closeShell();
   if(typeof window.navigateTo==='function')window.navigateTo(folder==='__course_test_series__'?'testSeriesPage':'importantQuestionsPage',true);
@@ -10563,11 +10580,17 @@ function openFolder(folder){
   return;
  }
  const groups=folderGroups();
- if(!currentSubject){const group=groups.find(g=>g.name===folder);if(!group)return;currentSubject=group.name;currentFolder='';currentResourceType='';renderFolders();$('deCRTopTitle').textContent=currentSubject;$('deCRTopSub').textContent='Videos and PDF folder for this subject';return;}
+ if(!currentSubject){const group=groups.find(g=>g.name===folder);if(!group)return;currentSubject=group.name;currentResourceType='';currentFolder=currentSubject;currentFolderItems=group.items.slice();currentLessonIndex=0;$('deCRTopTitle').textContent=String(currentFolderItems[0]?.title||currentFolderItems[0]?.fileName||currentSubject);$('deCRActiveFolder').textContent=currentSubject;$('deCRActiveFolderMeta').textContent='';$('deCRListTitle').textContent=currentSubject+' • Videos & PDFs';renderPlaylist();$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');hideMsg();if(currentFolderItems.length)renderLesson(0);else{$('deCRPlayerTitle').textContent=currentSubject;$('deCRMedia').innerHTML='<div class="decr-placeholder"><p>No videos or PDFs have been added to this subject yet.</p></div>';}lastView='player';$('deCRTopSub').textContent='';shell.scrollTo({top:0,behavior:'smooth'});return;}
  const group=groups.find(g=>g.name===currentSubject);if(!group)return;
  if(folder==='__pdfs__'){currentResourceType='pdf';currentFolder='PDF Files';renderFolders();$('deCRTopTitle').textContent=currentSubject+' • PDF Files';$('deCRTopSub').textContent='All PDFs uploaded in this subject';return;}
  const match=String(folder).match(/^__resource__(\d+)$/);if(!match)return;const sourceIndex=Number(match[1]);
  let chosen=group.items.filter(x=>x.__sourceIndex===sourceIndex);chosen=currentResourceType==='pdf'?chosen.filter(itemIsPdf):chosen.filter(x=>!itemIsPdf(x));if(!chosen.length)return;
+ // Google Drive PDFs should open their original Drive page directly instead of being trapped in an embedded reader.
+ const selectedUrl=safeLink(itemUrl(chosen[0]));
+ if(itemIsPdf(chosen[0]) && /(^|\.)drive\.google\.com$/i.test((()=>{try{return new URL(selectedUrl).hostname}catch{return ''}})())){
+   window.open(selectedUrl,'_blank','noopener,noreferrer');
+   return;
+ }
  currentFolderItems=chosen;currentLessonIndex=0;currentFolder=currentResourceType==='pdf'?'PDF Files':currentSubject;
  $('deCRTopTitle').textContent=String(chosen[0].title||chosen[0].fileName||currentSubject);$('deCRActiveFolder').textContent=currentResourceType==='pdf'?`${currentSubject} / PDF Files`:currentSubject;$('deCRActiveFolderMeta').textContent='';$('deCRListTitle').textContent=currentResourceType==='pdf'?`${currentSubject} • PDF Files`:currentSubject;renderPlaylist();renderLesson(0);lastView='player';$('deCRTopSub').textContent='';$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');hideMsg();shell.scrollTo({top:0,behavior:'smooth'});
 }
@@ -10602,7 +10625,7 @@ async function refreshReaderFolderLocks(){
  $('deCRFolderGrid')?.querySelectorAll('[data-de-folder]').forEach(btn=>btn.classList.toggle('is-locked',!unlocked));
 }
 function showBrowser(scrollTop=true){lastView='browser';currentFolder='';renderFolders();$('deCRTopTitle').textContent=currentSubject==='__ALL_PDFS__'?'PDF Files':(currentResourceType==='pdf'?(currentSubject+' • PDF Files'):(currentSubject||String(currentCourse?.title||currentCourse?.name||'Course Reader')));$('deCRTopSub').textContent=currentSubject==='__ALL_PDFS__'?'Choose a subject to view its uploaded PDF files':(currentResourceType==='pdf'?'All PDFs uploaded in this subject':(currentSubject?'Videos and PDF folder for this subject':'Choose a subject'));$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
-function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} item${items.length===1?'':'s'} • Tap to play`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
+function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} video/PDF item${items.length===1?'':'s'} • Select to open`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
 function safeLink(url){try{const u=new URL(url,location.href);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}}
 async function renderLesson(index){if(index<0||index>=currentFolderItems.length)return;currentLessonIndex=index;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';if(!(await readerCourseUnlocked())){$('deCRPlayerDesc').style.display='none';$('deCRPlayerKicker').style.display='none';$('deCRCreditNotice')?.style.setProperty('display','none','important');document.querySelector('.decr-video-feedback')?.style.setProperty('display','none','important');$('deCRMedia').classList.add('decr-locked-media');$('deCRList').style.filter='none';$('deCRList').style.pointerEvents='none';$('deCRList').style.userSelect='none';media.innerHTML=`<div class="decr-lock-preview"><div class="decr-lock-symbol"><i class="fa-solid fa-lock"></i></div><h3>Course content locked</h3><p>Your 210-day course validity may have expired. Course access is available for 210 days from approval; contact the admin if you need help.</p><button type="button" id="deCRUnlockBtn"><i class="fa-solid fa-qrcode"></i> Buy Course</button></div>`;$('deCRUnlockBtn').onclick=()=>{if(typeof window.openCoursePayment==='function')window.openCoursePayment(currentCourseId);else alert('Please return to Courses and tap Buy.');};$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
 $('deCRActions').innerHTML='';
@@ -10695,7 +10718,7 @@ function iqNavigateBack(){
 window.iqNavigateBack=iqNavigateBack;
 let iqCourseRequest=null;
 function iqNormMatch(a,b){const x=String(a||'').toLowerCase().replace(/[^a-z0-9]/g,''),y=String(b||'').toLowerCase().replace(/[^a-z0-9]/g,'');return !!x&&!!y&&(x===y||x.includes(y)||y.includes(x))}
-function iqApplyCourseRequest(){if(!iqCourseRequest||!iqRecords.length)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch)&&iqNormMatch(iqField(r,'subject','subjectName'),req.subject));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const pick=candidates[0];iqPath=pick?[iqGroupKey(pick,'branch'),iqGroupKey(pick,'semester'),iqGroupKey(pick,'subject')]:[req.branch||'Common / All Branches',iqSemesterLabel(req.semester),req.subject||'Subject not set'];iqChosen=null;iqRenderFolders();}
+function iqApplyCourseRequest(){if(!iqCourseRequest||!iqRecords.length)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch)&&(!req.subject||/^all\s*subjects?$/i.test(req.subject)||iqNormMatch(iqField(r,'subject','subjectName'),req.subject)));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const pick=candidates[0];iqPath=pick?[iqGroupKey(pick,'branch'),iqGroupKey(pick,'semester'),iqGroupKey(pick,'subject')]:[req.branch||'Common / All Branches',iqSemesterLabel(req.semester),req.subject||'Subject not set'];iqChosen=null;iqRenderFolders();}
 window.openCourseImportantQuestions=function(branch,semester,subject){iqCourseRequest={branch:String(branch||''),semester:String(semester||''),subject:String(subject||'')};if(iqRecords.length)iqApplyCourseRequest();else iqEl('iqAppStatus').textContent='Loading matching Important Questions…';};
 window.iqRestoreState=function(state){
  iqPath=Array.isArray(state.path)?state.path.slice():[];
@@ -10907,7 +10930,7 @@ window.addEventListener('popstate',function(e){
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();
-</script>\n
+</script>
 <style id="de-qr-inline-preview-style">
 #deQrInlinePreview{position:fixed;inset:0;z-index:2147483000;background:rgba(8,15,32,.82);display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
 #deQrInlinePreview.is-open{display:flex}
@@ -10949,7 +10972,7 @@ window.addEventListener('popstate',function(e){
     if(lesson&&visible(shellId)){pushLayer('player')}
   },true);
   var pback=el('deCRPlayerBack');if(pback)pback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();returnFromPlayer();try{history.pushState({__deCourseLayer:'folder',href:location.href},'',location.href)}catch(err){}},true);
-  var topback=el('deCRBack');if(topback)topback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(returnFromPlayer())return;if(courseReaderVisible()){var id=String(el('deCRCourseTitle')?.textContent||'');if(typeof window.goBack==='function')window.goBack();}},true);
+  var topback=el('deCRBack');if(topback)topback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(returnFromPlayer())return;if(courseReaderVisible()&&typeof window.deCRGoBack==='function')window.deCRGoBack();},true);
   window.addEventListener('popstate',function(e){
     if(internalBackInProgress)return;
     if(playerVisible()){e.stopImmediatePropagation();e.preventDefault();returnFromPlayer();internalBackInProgress=true;setTimeout(function(){internalBackInProgress=false},80);return;}
@@ -10958,6 +10981,68 @@ window.addEventListener('popstate',function(e){
   },true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&playerVisible()){e.preventDefault();returnFromPlayer()}},true);
 })();</script>
+
+<script id="de-login-loader-and-course-back-fix">
+(function(){
+  function hideLoader(){
+    var loader=document.getElementById('page-loader');
+    if(loader){loader.classList.add('hide');loader.style.pointerEvents='none';}
+    document.body.style.overflow='';
+  }
+  // Do not leave the splash screen over the app if Firebase/network initialization is slow.
+  window.addEventListener('load',function(){setTimeout(hideLoader,900);},{once:true});
+  setTimeout(hideLoader,4500);
+
+  function visible(el){
+    return !!(el && getComputedStyle(el).display!=='none' &&
+      !el.classList.contains('decr-hidden') &&
+      (el.id!=='deCourseShell' || el.classList.contains('de-open')));
+  }
+  // The global arrow must respect the course reader's internal folder/player stack.
+  document.addEventListener('click',function(e){
+    var btn=e.target && e.target.closest('#headerBackBtn');
+    if(!btn)return;
+    var shell=document.getElementById('deCourseShell');
+    if(!visible(shell))return;
+    var player=document.getElementById('deCRPlayer');
+    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+      window.deCRReturnToFolderBrowser();
+      try{history.pushState({__deCourseLayer:'folder'},'',location.href);}catch(_){}
+      return;
+    }
+    // Follow Course Reader's own stack, rather than routing directly to app Home.
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    var player=document.getElementById('deCRPlayer');
+    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
+    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
+    var ownBack=document.getElementById('deCRBack');if(ownBack)ownBack.click();
+  },true);
+
+  // If Firebase auth restores a session after the splash timeout, ensure app/auth
+  // visibility remains governed by the existing Firebase auth listener.
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+      var loader=document.getElementById('page-loader');
+      if(loader && loader.classList.contains('hide'))return;
+      var app=document.getElementById('app'), auth=document.getElementById('authPage');
+      if(app && getComputedStyle(app).display!=='none')hideLoader();
+      else if(auth && getComputedStyle(auth).display!=='none')hideLoader();
+    },1800);
+  });
+})();
+</script>
+
+
+<style id="de-course-unlocked-priority-style">
+#coursePage .de-course-unlocked-badge{position:absolute;left:12px;top:12px;z-index:4;display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:999px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-size:10px;font-weight:900;box-shadow:0 4px 12px rgba(22,101,52,.15)}
+#coursePage .de-course-is-unlocked{border:2px solid #86efac!important;box-shadow:0 9px 28px rgba(22,163,74,.12)!important}
+</style>
+<style id="de-uploaded-pdfs-home-folder-style">
+#deCourseShell .decr-folder[data-de-folder="__all_pdfs__"]{border-color:#fed7aa;background:linear-gradient(135deg,#fff7ed,#fff 72%)}
+#deCourseShell .decr-folder[data-de-folder="__all_pdfs__"] .decr-folder-icon{background:#ffedd5;color:#c2410c}
+#deCourseShell .decr-folder[data-de-folder="__all_pdfs__"] .decr-folder-info strong{color:#9a3412}
+</style>
 </body>
 </html>
 
@@ -11025,3 +11110,19 @@ window.addEventListener('popstate',function(e){
 #coursePage .de-firebase-course-card .de-firebase-course-description,#coursePage .de-firebase-course-card .feature-list{display:none!important}
 @media(max-width:520px){#coursePage .de-firebase-course-compact-body{padding:10px!important}#coursePage .de-firebase-course-compact-body .admin-course-actions{gap:8px}#coursePage .de-firebase-course-compact-body .admin-course-actions button{min-height:40px;font-size:13px}}
 </style>
+
+
+<script id="de-course-back-final-guard">
+(function(){
+  function isOpen(){var s=document.getElementById('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
+  function handle(e){
+    var b=e.target&&e.target.closest&&e.target.closest('#headerBackBtn, #deCRBack');
+    if(!b||!isOpen())return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    var p=document.getElementById('deCRPlayer');
+    if(p&&!p.classList.contains('decr-hidden')&&typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
+    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
+  }
+  document.addEventListener('click',handle,true);
+})();
+</script>

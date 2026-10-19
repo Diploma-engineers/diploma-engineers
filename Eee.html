@@ -5669,6 +5669,28 @@ function renderAdminRanking(){
   });
 }
 
+function applyFounderOnlyCourseSections(){
+    const user = auth.currentUser;
+    const isFounder = !!user && (user.uid === COURSE_ONLY_ADMIN_UID || String(user.email||"").trim().toLowerCase() === "astar22072006@gmail.com");
+    const setVisible = (el, yes) => { if(el) el.style.display = yes ? "" : "none"; };
+    // The purchase approval controls are Founder-only. Hide each section independently
+    // so other admin features and the rest of the Course page remain unchanged.
+    const approvalTitle = document.getElementById("refreshBtn")?.closest(".top");
+    setVisible(approvalTitle, isFounder);
+    setVisible(document.getElementById("notice"), isFounder);
+    setVisible(document.querySelector("#courseAdminSection .stats"), isFounder);
+    setVisible(document.querySelector("#courseAdminSection .course-filter-tabs"), isFounder);
+    setVisible(document.getElementById("list"), isFounder);
+    // Coupon QR upload card is not shown to non-Founder admins; their student list remains.
+    const couponDash = document.getElementById("adminPersonalCouponDashboard");
+    if(couponDash){
+      const qrHeading = [...couponDash.querySelectorAll("h3")].find(h => /Your Coupon QR/i.test(h.textContent||""));
+      const qrCard = qrHeading?.parentElement;
+      setVisible(qrCard, isFounder);
+    }
+    return isFounder;
+}
+
 function showAdminMode(mode) {
     applyRankingVisibility();
     adminSwitcher.classList.remove("books-active", "test-active", "course-active", "rank-active");
@@ -5720,6 +5742,7 @@ function showAdminMode(mode) {
         loadTestSeries();
     } else if (mode === "course") {
         if(!auth.currentUser) { applyCourseVisibility(); showAdminMode("news"); return; }
+        applyFounderOnlyCourseSections();
         adminSwitcher.classList.add("course-active");
         courseSwitch.classList.add("active");
         courseAdminSection.classList.add("active");
@@ -5766,6 +5789,7 @@ if(topCouponStudentsBtn){
     showAdminMode("course");
     setTimeout(()=>{
       const dashboard=document.getElementById("adminPersonalCouponDashboard");
+      applyFounderOnlyCourseSections();
       if(dashboard){dashboard.style.display="block";dashboard.scrollIntoView({behavior:"smooth",block:"start"});}
       window.initAdminCouponDashboard?.();
     },100);

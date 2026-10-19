@@ -6733,7 +6733,36 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   function detailNotice(message,type=""){const el=$("courseDetailNotice");if(!el)return;el.textContent=message;el.className="course-detail-notice show "+type;}
   function openCourseDetail(id){const c=catalog[id];if(!c)return;detailCourseId=id;$("courseBuilder").style.display="none";$("courseDetailPage").classList.add("open");$("courseDetailName").textContent=c.title||"Course Content";$("courseDetailMeta").textContent=[c.category||c.branch||"Common",(Array.isArray(c.semesters)?c.semesters:[c.semester||"All Semesters"]).join(", "),"Fee ₹"+(Number(c.price)||0),(c.status|| (c.approved?"approved":"pending")).toUpperCase()].join(" • ");fillDetailChoices(c);const qrw=$("courseDetailQrWrap"),qri=$("courseDetailQrImage"),qrl=$("courseDetailQrLink");const courseQR=c.qrImage||c.paymentQr||c.paymentQR||c.paymentImage||c.qrUrl||c.qrCodeUrl||c.paymentQrUrl||c.paymentImageUrl||"";if(courseQR){qri.src=courseQR;qrl.href=courseQR;qrw.style.display="block";}else{qri.removeAttribute("src");qrl.href="#";qrw.style.display="none";}$("detailFolderName").value="";$("detailContentTitle").value="";$("detailContentUrl").value="";$("detailPdfLink").value="";$("detailOtherSubject").value="";renderDetailTypeFields();renderCourseDetail();window.scrollTo({top:0,behavior:"smooth"});}
   function renderCourseDetail(){const c=catalog[detailCourseId];if(!c)return;const all=Array.isArray(c.items)?c.items:[];$("courseDetailCount").textContent=all.length+" resources";const folders={};all.forEach((it,i)=>{const name=(it.folderName||"General").trim()||"General";(folders[name]||(folders[name]=[])).push({...it,_index:i});});const names=Object.keys(folders);$("courseDetailFolders").innerHTML=names.length?names.map(name=>`<section class="course-folder"><div class="course-folder-head"><span><i class="fa-solid fa-folder"></i> ${esc(name)}</span><span>${folders[name].length} item${folders[name].length===1?"":"s"}</span></div><div class="course-folder-items">${folders[name].map(it=>{const video=it.type==="video";const url=video?(it.videoUrl||it.url||""):(it.fileUrl||it.pdfUrl||it.pdfLink||it.url||"");return `<div class="course-resource-row"><div><div class="course-resource-name"><i class="fa-solid ${video?"fa-circle-play":"fa-file-pdf"}" style="color:${video?"#2563eb":"#dc2626"};margin-right:6px"></i>${esc(it.title||it.fileName||(video?"Untitled Video":"Untitled PDF"))}</div><div class="course-resource-type">${video?"VIDEO":"PDF / DOCUMENT"}${it.subject?" • "+esc(it.subject):""}${it.semester?" • "+esc(it.semester):""}${it.fileName?" • "+esc(it.fileName):""}</div></div><div class="course-resource-actions">${url?`<a class="course-resource-open" href="${esc(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>`:""}<button type="button" class="course-resource-open" data-detail-edit="${it._index}"><i class="fa-solid fa-pen"></i> Edit</button><button type="button" class="course-resource-delete" data-detail-delete="${it._index}"><i class="fa-solid fa-trash"></i> Remove</button></div></div>`}).join("")}</div></section>`).join(""):'<div class="course-detail-empty"><i class="fa-regular fa-folder-open" style="font-size:26px;display:block;margin-bottom:8px"></i>No folders or content yet. Use the form above to add your first video or PDF.</div>'; }
-  function cancelCourseItemEdit(){detailEditingIndex=null;$('courseDetailForm')?.reset();$('detailOtherSubjectWrap').style.display='none';$('courseDetailAddBtn').innerHTML='<i class="fa-solid fa-plus"></i> Add to Course';$('courseDetailCancelEdit').style.display='none';renderDetailTypeFields();}
+  function cancelCourseItemEdit(options={}){
+    // After saving a content item, keep the current semester, subject and folder selected
+    // so the next video only needs a title and video link. Explicit cancel/reset clears them.
+    const keep=options.keepSelection===true;
+    const semester=keep?$('detailSemester')?.value||'':'';
+    const subject=keep?$('detailSubject')?.value||'':'';
+    const folder=keep?$('detailFolderName')?.value||'':'';
+    const type=keep?$('detailContentType')?.value||'video':'video';
+    detailEditingIndex=null;
+    $('courseDetailForm')?.reset();
+    if(keep){
+      if(semester){const sem=$('detailSemester');if(![...sem.options].some(o=>o.value===semester)){const opt=document.createElement('option');opt.value=semester;opt.textContent=semester;sem.appendChild(opt);}sem.value=semester;}
+      const c=catalog[detailCourseId]||{};
+      fillSubjectsForSemester(c,semester);
+      if(subject&&subject!=='__other__'&&![...$('detailSubject').options].some(o=>o.value===subject)){const opt=document.createElement('option');opt.value=subject;opt.textContent=subject;$('detailSubject').insertBefore(opt,$('detailSubject').lastElementChild);}
+      $('detailSubject').value=subject;
+      $('detailFolderName').value=folder;
+      $('detailContentType').value=type;
+    }else{
+      $('detailOtherSubject').value='';
+      $('detailFolderName').value='';
+      $('detailContentTitle').value='';
+      $('detailContentUrl').value='';
+      $('detailPdfLink').value='';
+    }
+    $('detailOtherSubjectWrap').style.display='none';
+    $('courseDetailAddBtn').innerHTML='<i class="fa-solid fa-plus"></i> Add to Course';
+    $('courseDetailCancelEdit').style.display='none';
+    renderDetailTypeFields();
+  }
   function beginCourseItemEdit(index){const c=catalog[detailCourseId]||{},it=(Array.isArray(c.items)?c.items:[])[index];if(!it)return;detailEditingIndex=index;const sem=$('detailSemester');if(![...sem.options].some(o=>o.value===it.semester)){const o=document.createElement('option');o.value=it.semester;o.textContent=it.semester;sem.appendChild(o);}sem.value=it.semester||'';fillSubjectsForSemester(c,sem.value);if(it.subject&&![...$('detailSubject').options].some(o=>o.value===it.subject)){const o=document.createElement('option');o.value=it.subject;o.textContent=it.subject;$('detailSubject').insertBefore(o,$('detailSubject').lastElementChild);} $('detailSubject').value=it.subject||'';$('detailFolderName').value=it.folderName||'';$('detailContentType').value=it.type||'video';$('detailContentTitle').value=it.title||'';$('detailContentUrl').value=it.videoUrl||it.url||'';$('detailPdfLink').value=it.fileUrl||it.pdfUrl||it.pdfLink||'';$('detailPdfFile').value='';$('detailOtherSubjectWrap').style.display='none';renderDetailTypeFields();$('courseDetailAddBtn').innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Changes';$('courseDetailCancelEdit').style.display='inline-flex';detailNotice('Editing content. If you do not choose a new PDF file or link, the existing PDF will be kept.');$('courseDetailForm').scrollIntoView({behavior:'smooth',block:'start'});}
   async function addCourseDetailItem(){
     if(!allowed()){detailNotice("Course editing requires the Founder account to be signed in to both Firebase projects. Log out and log in again, then retry.","err");return;}
@@ -6760,7 +6789,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
       // Change only items + audit metadata. Do not rewrite course subjects/semesters while saving a lecture.
       await update(ref(courseDb,"courseCatalog/"+detailCourseId),{items:all,updatedAt:Date.now(),updatedBy:courseAuth.currentUser.uid});
       const verify=await get(ref(courseDb,"courseCatalog/"+detailCourseId));if(!verify.exists())throw new Error("Saved request returned, but course could not be re-read.");
-      catalog[detailCourseId]=verify.val();cancelCourseItemEdit();detailNotice((oldItem?"Content updated":"Video/PDF saved")+" under "+subject+" • "+semester+". Course subject and semester list was kept unchanged.","ok");renderCourseDetail();renderCatalog();
+      catalog[detailCourseId]=verify.val();cancelCourseItemEdit({keepSelection:!oldItem});detailNotice((oldItem?"Content updated":"Video/PDF saved")+" under "+subject+" • "+semester+". Subject, semester and folder are kept selected for the next upload.","ok");renderCourseDetail();renderCatalog();
     }catch(err){console.error("Course content save failed",err);const raw=String(err?.code?err.code+": ":"")+String(err?.message||err||"Firebase error");detailNotice(/permission_denied|permission denied|PERMISSION_DENIED/i.test(raw)?"Firebase Permission Denied: Admin Rules must allow this Founder UID to update /courseCatalog/"+detailCourseId+". No content was confirmed saved. Error: "+raw:"Could not save content: "+raw,"err");}
     finally{btn.disabled=false;btn.innerHTML=detailEditingIndex===null?'<i class="fa-solid fa-plus"></i> Add to Course':'<i class="fa-solid fa-floppy-disk"></i> Save Changes';}
   }
@@ -9417,4 +9446,3 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
   document.addEventListener('click',function(e){const a=e.target.closest('a[href^="#"]');if(!a)return;const id=a.getAttribute('href');if(!id||id==='#')return;let target;try{target=document.querySelector(id)}catch(_){return}if(target){e.preventDefault();target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}});
 })();
 </script>
-               

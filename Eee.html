@@ -6634,7 +6634,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   let catalog={},items=[],bannerUrl="",qrUrl="",editing=false,listener=null,couponRows=[];
   const root=()=>ref(courseDb,"courseCatalog");
   function notice(msg,type=""){const el=$("courseBuilderNotice");if(el){el.className="course-builder-notice "+type;el.textContent=msg;}}
-  function allowed(){return typeof isCourseAllowed==="function"&&isCourseAllowed()&&!!courseAuth.currentUser;}
+  function allowed(){return !!auth.currentUser && auth.currentUser.uid===MASTER_ADMIN_UID && !!courseAuth.currentUser && courseAuth.currentUser.uid===MASTER_ADMIN_UID;}
   function uploadFile(file,kind){return new Promise((resolve,reject)=>{if(!file)return resolve("");const data=new FormData();data.append("file",file);data.append("upload_preset",UPLOAD_PRESET);const resourceType=kind==="image"?"image":kind==="raw"?"raw":"auto";const endpoint=`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;fetch(endpoint,{method:"POST",body:data}).then(async r=>{const d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||"Upload failed. Check Cloudinary upload preset and allowed resource type.");resolve(d.secure_url);}).catch(reject);});}
   const SEMESTERS=["1st Semester","2nd Semester","3rd Semester","4th Semester","5th Semester","6th Semester"];
   function renderSemesterChoices(selected=[]){const box=$("courseSemesterChoices");if(!box)return;box.innerHTML=SEMESTERS.map(v=>`<label style="display:flex;align-items:center;gap:7px;padding:9px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;font-size:12px"><input type="checkbox" name="courseSemesterChoice" value="${v}" ${selected.includes(v)?"checked":""} style="width:auto;margin:0">${v}</label>`).join("");}
@@ -6716,9 +6716,13 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   function matchingUsage(rows){
     const code=ownCouponCode.toUpperCase(); const uid=auth.currentUser?.uid;
     return rows.filter(r=>{
-      const used=String(r.couponCode||r.usedCouponCode||r.appliedCouponCode||r.coupon||r.coupon?.code||"").trim().toUpperCase();
+      const used=String(r.couponCode||r.usedCouponCode||r.appliedCouponCode||(typeof r.coupon==='string'?r.coupon:r.coupon?.code)||"").trim().toUpperCase();
       const owner=String(r.couponOwnerUid||r.couponAdminUid||r.referrerAdminUid||r.couponCreatedBy||"");
-      return !!code && used===code && (owner ? owner===uid : true);
+      const paymentStatus=String(r.status||"").toLowerCase();
+      // Coupon reward/student list is shown only after Founder verifies the payment.
+      // Pending and rejected purchases never count as coupon uses.
+      const approved=paymentStatus==='approved'||paymentStatus==='verified'||r.verified===true;
+      return !!code && used===code && approved && (owner ? owner===uid : true);
     }).sort((a,b)=>(Number(b.submittedAt||b.createdAt)||0)-(Number(a.submittedAt||a.createdAt)||0));
   }
   function renderUsage(){

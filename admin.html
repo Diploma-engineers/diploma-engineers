@@ -2872,9 +2872,11 @@ const courseFirebaseConfig = {
     appId: "1:356779436080:web:4b28da380e547420d0e5f5"
 };
 
-const courseApp = initializeApp(courseFirebaseConfig, "courseApp");
-const courseAuth = getAuth(courseApp);
-const courseDb = getDatabase(courseApp);
+// Course catalog is in the same Firebase project as the main Admin panel.
+// Reuse the already authenticated main app/session. A separate Firebase app
+// creates a separate Auth session and was causing PERMISSION_DENIED on approve/save.
+const courseAuth = auth;
+const courseDb = db;
 window.courseDb = courseDb;
 
 // Student app Firebase: purchase requests and access grants live here.
@@ -4003,21 +4005,9 @@ loginBtn.addEventListener("click", async () => {
             }
         }
 
-        // Sign in to the course Firebase session for the UID/email authorized
-        // by the uploaded /courseCatalog Realtime Database rules.
-        if (auth.currentUser?.uid === COURSE_ONLY_ADMIN_UID || String(auth.currentUser?.email || '').trim().toLowerCase() === 'astar22072006@gmail.com') {
-            try {
-                await withTimeout(
-                    signInWithEmailAndPassword(courseAuth, email, password),
-                    8000,
-                    "Course Firebase unavailable"
-                );
-            } catch (courseError) {
-                console.warn("Course Firebase login skipped:", courseError?.code || courseError?.message);
-                try { await signOut(courseAuth); } catch (_) {}
-            }
-        } else {
-            try { await signOut(courseAuth); } catch (_) {}
+        // Course management shares the main Auth session; no second sign-in is needed.
+        if (!courseAuth.currentUser || courseAuth.currentUser.uid !== auth.currentUser.uid) {
+            throw new Error("Course session is not authenticated. Please sign out and sign in again.");
         }
 
         // Any valid account created in the MAIN Firebase Authentication
@@ -6784,7 +6774,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   $("detailSemester")?.addEventListener("change",()=>{const c=catalog[detailCourseId]||{};fillSubjectsForSemester(c,$("detailSemester").value);});
   $("detailSubject")?.addEventListener("change",()=>{$("detailOtherSubjectWrap").style.display=$("detailSubject").value==="__other__"?"":"none";if($("detailSubject").value!=="__other__")$("detailOtherSubject").value="";});
   $("courseDetailFolders")?.addEventListener("click",async e=>{const editBtn=e.target.closest("[data-detail-edit]");if(editBtn){beginCourseItemEdit(Number(editBtn.dataset.detailEdit));return;}const b=e.target.closest("[data-detail-delete]");if(!b||!detailCourseId)return;if(!allowed()||!confirm("Remove this item from the course?"))return;try{const c=catalog[detailCourseId]||{},all=Array.isArray(c.items)?[...c.items]:[];if(detailEditingIndex===Number(b.dataset.detailDelete))cancelCourseItemEdit();all.splice(Number(b.dataset.detailDelete),1);await update(ref(courseDb,"courseCatalog/"+detailCourseId),{items:all,updatedAt:Date.now(),updatedBy:courseAuth.currentUser.uid});catalog[detailCourseId]={...c,items:all};renderCourseDetail();renderCatalog();detailNotice("Item removed.");}catch(err){detailNotice("Remove failed: "+err.message,"err");}});
-  document.addEventListener("click",async e=>{const open=e.target.closest("[data-course-open]");if(open){openCourseDetail(open.dataset.courseOpen);return;}const content=e.target.closest("[data-course-content]");if(content){openCourseDetail(content.dataset.courseContent);return;}const tab=e.target.closest("[data-course-tab]");if(tab){activateTab(tab.dataset.courseTab);listen();}const add=e.target.closest("#courseAddItemBtn");if(add){readItemsFromUI();addItem();}const rem=e.target.closest("[data-remove-item]");if(rem){readItemsFromUI();items.splice(Number(rem.dataset.removeItem),1);renderItems();}const edit=e.target.closest("[data-course-edit]");if(edit)editCourse(edit.dataset.courseEdit);const approve=e.target.closest("[data-course-approve]");if(approve){if(!allowed()){notice("Approval requires Founder login in both Firebase projects. Log out and log in again.","err");return;}const id=approve.dataset.courseApprove;if(!confirm("Approve and publish this course for students?"))return;approve.disabled=true;try{const courseRef=ref(courseDb,"courseCatalog/"+id);const before=await get(courseRef);if(!before.exists())throw new Error("Course not found in /courseCatalog/"+id);const now=Date.now();await update(courseRef,{status:"approved",approved:true,approvedAt:now,approvedBy:courseAuth.currentUser.uid,updatedAt:now,updatedBy:courseAuth.currentUser.uid});const check=await get(courseRef);if(!check.exists()||check.val().status!=="approved"||check.val().approved!==true)throw new Error("Firebase did not confirm approved status after save.");catalog[id]=check.val();renderCatalog();notice("Course approved and verified in Firebase.","ok");}catch(err){console.error("Course approval failed",err);notice("Approval failed: "+(err?.code?err.code+" — ":"")+String(err?.message||err)+". Check Admin-project Realtime Database Rules for /courseCatalog/"+id+" write access.","err");}finally{approve.disabled=false;}}const reject=e.target.closest("[data-course-reject]");if(reject){if(!allowed())return;const id=reject.dataset.courseReject;if(!confirm("Reject this course? It can still be edited later."))return;try{await update(ref(courseDb,"courseCatalog/"+id),{status:"rejected",approved:false,updatedAt:Date.now()});notice("Course rejected. You can edit it and approve again later.","ok");}catch(err){notice("Reject failed: "+err.message,"err");}}const del=e.target.closest("[data-course-delete]");if(del){if(!allowed()||!confirm("Delete this course and its content metadata? Uploaded Cloudinary files are not deleted."))return;try{await remove(ref(courseDb,"courseCatalog/"+del.dataset.courseDelete));notice("Course deleted.","ok");}catch(err){notice("Delete failed: "+err.message,"err");}}});
+  document.addEventListener("click",async e=>{const open=e.target.closest("[data-course-open]");if(open){openCourseDetail(open.dataset.courseOpen);return;}const content=e.target.closest("[data-course-content]");if(content){openCourseDetail(content.dataset.courseContent);return;}const tab=e.target.closest("[data-course-tab]");if(tab){activateTab(tab.dataset.courseTab);listen();}const add=e.target.closest("#courseAddItemBtn");if(add){readItemsFromUI();addItem();}const rem=e.target.closest("[data-remove-item]");if(rem){readItemsFromUI();items.splice(Number(rem.dataset.removeItem),1);renderItems();}const edit=e.target.closest("[data-course-edit]");if(edit)editCourse(edit.dataset.courseEdit);const approve=e.target.closest("[data-course-approve]");if(approve){if(!allowed()){notice("Approval requires Founder login in both Firebase projects. Log out and log in again.","err");return;}const id=approve.dataset.courseApprove;if(!confirm("Approve and publish this course for students?"))return;approve.disabled=true;try{const courseRef=ref(courseDb,"courseCatalog/"+id);const before=await get(courseRef);if(!before.exists())throw new Error("Course not found in /courseCatalog/"+id);const now=Date.now();await update(courseRef,{status:"approved",approved:true,approvedAt:now,approvedBy:courseAuth.currentUser.uid,updatedAt:now,updatedBy:courseAuth.currentUser.uid});const check=await get(courseRef);if(!check.exists()||check.val().status!=="approved"||check.val().approved!==true)throw new Error("Firebase did not confirm approved status after save.");catalog[id]=check.val();renderCatalog();notice("Course approved and verified in Firebase.","ok");}catch(err){console.error("Course approval failed",err);notice("Approval failed: "+(err?.code?err.code+" — ":"")+String(err?.message||err)+". Confirm Founder UID KirLkZUGXoZf0cXHkuCZ4Mfnxam2 is the signed-in UID and Admin-project Rules allow /courseCatalog/"+id+" writes.","err");}finally{approve.disabled=false;}}const reject=e.target.closest("[data-course-reject]");if(reject){if(!allowed())return;const id=reject.dataset.courseReject;if(!confirm("Reject this course? It can still be edited later."))return;try{await update(ref(courseDb,"courseCatalog/"+id),{status:"rejected",approved:false,updatedAt:Date.now()});notice("Course rejected. You can edit it and approve again later.","ok");}catch(err){notice("Reject failed: "+err.message,"err");}}const del=e.target.closest("[data-course-delete]");if(del){if(!allowed()||!confirm("Delete this course and its content metadata? Uploaded Cloudinary files are not deleted."))return;try{await remove(ref(courseDb,"courseCatalog/"+del.dataset.courseDelete));notice("Course deleted.","ok");}catch(err){notice("Delete failed: "+err.message,"err");}}});
   $("courseBannerFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const preview=$("courseBannerPreview");preview.src=URL.createObjectURL(f);preview.hidden=false;});
   $("courseQrFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const preview=$("courseQrPreview");preview.src=URL.createObjectURL(f);preview.hidden=false;});
   $("courseAddCouponBtn")?.addEventListener("click",()=>{const rows=collectCouponRows().map(({code,qrUrl,file})=>({code,qrUrl,file}));rows.push({code:"",price:"",qrUrl:""});renderCouponRows(rows);});
@@ -9427,3 +9417,4 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
   document.addEventListener('click',function(e){const a=e.target.closest('a[href^="#"]');if(!a)return;const id=a.getAttribute('href');if(!id||id==='#')return;let target;try{target=document.querySelector(id)}catch(_){return}if(target){e.preventDefault();target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}});
 })();
 </script>
+               

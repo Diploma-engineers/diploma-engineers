@@ -7881,10 +7881,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
  try{
    const {get,ref}=firebaseFns();
    if(typeof get!=='function'||typeof ref!=='function'||!window.db) throw new Error('Main Admin Firebase is still initializing. Wait a moment and press Refresh.');
-   // Coupon activity is read from the same project used by the Admin Panel.
-   // Check known coupon/purchase collections without requiring a second Firebase Auth session.
+   // Coupon/purchase activity belongs to diploma-app-9a378, not the main Admin project.
+   // Use the secondary project's authenticated session; never make student data public.
+   if(!window.studentDb || !window.studentAuth?.currentUser) throw new Error('Purchase-project login is missing. Sign out and sign in again so the Admin Panel can authenticate against diploma-app-9a378.');
    const paths=['couponUses','couponUsage','couponPurchases','couponRedemptions','utrPurchases','courseAccess'];
-   const snapshots=await Promise.all(paths.map(async path=>{try{return {path,snap:await get(ref(window.db,path)),error:null};}catch(error){return {path,snap:null,error};}}));
+   const snapshots=await Promise.all(paths.map(async path=>{try{return {path,snap:await get(ref(window.studentDb,path)),error:null};}catch(error){return {path,snap:null,error};}}));
    const rows=[]; const seen=new Set();
    function walk(value,path,depth=0){
      if(!value||typeof value!=='object'||depth>5)return;
@@ -7915,10 +7916,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminContentRea
        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:12px;font-size:12px;color:#475569">
        <div><b>Branch</b><br>${esc(r.branch||r.courseBranch||r.department||'-')}</div><div><b>Course</b><br>${esc(r.courseName||r.courseTitle||r.courseId||'-')}</div><div><b>Amount</b><br>${amount!=null?'₹'+esc(amount):'-'}</div><div><b>Mobile</b><br>${esc(r.mobile||r.mobileNumber||r.phone||'-')}</div><div><b>Email</b><br>${esc(r.email||'-')}</div><div><b>UTR / Transaction</b><br>${esc(r.utr||r.transactionId||r.txnId||'-')}</div><div><b>Purchase date</b><br>${esc(date)}</div><div><b>Approved by</b><br>${esc(r.approvedBy||r.verifiedBy||'-')}</div><div><b>Source</b><br>${esc(r._sourcePath)}</div></div>
        </article>`;
-   }).join(''):'<p style="grid-column:1/-1;padding:18px;border-radius:12px;background:#f8fafc;color:#64748b">No coupon-linked purchase records found in the readable collections of diplomaengineers-869df.</p>';
-   if(!anyReadable&&errors.length) throw new Error('Could not read coupon records from diplomaengineers-869df. Check this Admin account’s Realtime Database Rules. '+errors.join(' | '));
-   status.textContent='Reading coupon records from diplomaengineers-869df using the current Admin Panel login. '+(errors.length?'Some collections were blocked by rules: '+errors.join(' | '):'');
- }catch(e){count.textContent='Student list unavailable';students.innerHTML='<p style="color:#b91c1c">Could not load coupon records: '+esc(e.message||e)+'</p>';status.textContent='The Admin Panel can only display records that actually exist in diplomaengineers-869df and are allowed by its Realtime Database Rules.';}
+   }).join(''):'<p style="grid-column:1/-1;padding:18px;border-radius:12px;background:#f8fafc;color:#64748b">No coupon-linked purchase records found in the readable collections of diploma-app-9a378.</p>';
+   if(!anyReadable&&errors.length) throw new Error('Could not read coupon records from diploma-app-9a378. Check its Realtime Database Rules and adminAccess for this secondary Firebase UID. '+errors.join(' | '));
+   status.textContent='Reading purchase records from diploma-app-9a378. '+(errors.length?'Some collections were blocked by rules: '+errors.join(' | '):'');
+ }catch(e){count.textContent='Student list unavailable';students.innerHTML='<p style="color:#b91c1c">Could not load coupon records: '+esc(e.message||e)+'</p>';status.textContent='Student purchase records are read from diploma-app-9a378. Its Realtime Database Rules must authorize this authenticated admin; do not enable public reads.';}
  }
 })();
 </script>

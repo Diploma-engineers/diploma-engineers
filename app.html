@@ -10471,9 +10471,11 @@ async function goBack(){
  if(currentSubject==='__ALL_PDFS__'){currentSubject='';currentResourceType='';currentFolder='';renderFolders();$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRTopSub').textContent='Choose a subject';return;}
  if(currentSubject&&currentResourceType==='pdf'){currentResourceType='';currentFolder='';renderFolders();$('deCRTopTitle').textContent=currentSubject;$('deCRTopSub').textContent='Videos and PDF folder for this subject';return;}
  if(currentSubject){currentSubject='';currentFolder='';currentResourceType='';renderFolders();$('deCRTopTitle').textContent=String(currentCourse?.title||currentCourse?.name||'Course Reader');$('deCRTopSub').textContent='Choose a subject';return;}
- const id=String(currentCourseId||currentCourse?.id||currentCourse?.courseId||currentCourse?.key||'');let unlocked=false;
- try{unlocked=await readerCourseUnlocked();}catch(e){console.warn('Could not verify course purchase before Back navigation:',e);}
- closeShell();if(id&&typeof window.openFirebaseCourseDetails==='function'){setTimeout(()=>window.openFirebaseCourseDetails(id),0);return;}
+ // At the root of course content, Back returns to the course catalogue (Explore list),
+ // never opens the details page again. Folder/player Back steps above remain unchanged.
+ closeShell();
+ if(typeof window.navigateTo==='function')window.navigateTo('coursePage',true);
+ else {document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id==='coursePage'));}
 }
 // Expose the Course Reader's own hierarchical Back handler.
 window.deCRGoBack = goBack;
@@ -10918,10 +10920,29 @@ window.addEventListener('popstate',function(e){
      el.innerHTML=`<strong>Validity: 210 days</strong><br>Approval / purchase approval date: ${dateLabel(approved)}<br>Expiry date: ${dateLabel(expiry)}<br><strong style="color:${left?'#166534':'#b91c1c'}">${state}</strong>`;
    }catch(err){console.warn('[Course Detail validity]',err);el.textContent='Course validity is 210 days from admin approval. Sign in and check your connection to view the exact dates.';}
  }
- window.openFirebaseCourseDetails=function(id){
-  const c=(window.__deAdminCourseCatalog||{})[String(id)];
-  if(!c){if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(String(id));else window.__dePendingCourseId=String(id);return;}
-  activeId=String(id);const title=c.title||c.name||c.courseName||'Course',branch=c.branch||c.category||'Diploma Engineering',price=Number(c.price??c.amount??99)||99;
+ window.openFirebaseCourseDetails=async function(id){
+  id=String(id||'');
+  const c=(window.__deAdminCourseCatalog||{})[id];
+  if(!c){if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(id);else window.__dePendingCourseId=id;return;}
+  // Approved purchasers go straight to the content reader when they tap Explore.
+  // The details screen is reserved for students who explicitly choose Course Details.
+  try{
+   const api=await firebaseReady();const user=auth?.currentUser;
+   if(api&&user){
+    const snap=await api.get(api.ref(db,`courseAccess/${user.uid}/${id}`));
+    if(snap.exists()){
+     const v=snap.val()||{},st=String(v.status||v.accessStatus||v.purchaseStatus||'').toLowerCase();
+     const approved=v===true||v.approved===true||v.isApproved===true||v.access===true||v.hasAccess===true||v.paid===true||['approved','verified','active','granted','success'].includes(st);
+     const exp=Number(v.expiresAt??v.expiryAt??v.validUntil??v.validityEnd??0)||0;
+     if(approved&&(!exp||Date.now()<exp)){
+      close();returnToDetail=false;detailHistoryPushed=false;
+      if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(id);else{window.__dePendingCourseId=id;window.dispatchEvent(new CustomEvent('de:open-integrated-course',{detail:{courseId:id}}));}
+      return;
+     }
+    }
+   }
+  }catch(err){console.warn('Could not verify course access before opening details:',err);}
+  activeId=id;const title=c.title||c.name||c.courseName||'Course',branch=c.branch||c.category||'Diploma Engineering',price=Number(c.price??c.amount??99)||99;
   const banner=c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
   $('deFcdBanner').querySelector('img')?.remove();if(banner){const img=document.createElement('img');img.src=banner;img.alt=title+' banner';img.onerror=()=>img.remove();$('deFcdBanner').prepend(img);}
   $('deFcdTitle').textContent=title;$('deFcdBranch').textContent=branch;$('deFcdPrice').textContent='₹'+price+' • UPI';$('deFcdBuy').innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course • ₹'+price;

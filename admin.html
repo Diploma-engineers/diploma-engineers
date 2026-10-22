@@ -113,6 +113,11 @@ body{
 #progress-percent { color: #2864e8; font-weight: 700; }
 
 
+
+/* Firebase saved-session scan spinner */
+.auth-scan-spinner{width:42px;height:42px;margin:18px auto 8px;border:4px solid #e5eaf3;border-top-color:#ff6b00;border-right-color:#2864e8;border-radius:50%;animation:authScanSpin .8s linear infinite}
+.auth-scan-caption{margin:0 0 8px!important;font-size:13px!important;font-weight:600;color:#64748b!important}
+@keyframes authScanSpin{to{transform:rotate(360deg)}}
 /* =========================
    LOGIN
 ========================= */
@@ -1929,6 +1934,8 @@ body.campus-hiring-open{overflow:hidden!important;}
         </h1>
 
         <p class="loader-subtitle">The Students' Trusted Learning Platform</p>
+        <div id="auth-scan-spinner" class="auth-scan-spinner" role="status" aria-label="Checking saved login"></div>
+        <p class="auth-scan-caption">Checking saved account…</p>
 
         <div class="progress-container">
             <div class="progress-bar" id="loader-progress-bar"></div>
@@ -3567,8 +3574,14 @@ profileSave.addEventListener("click",async()=>{
   }
 });
 
-/* ADMIN_LOADER_FALLBACK */
-setTimeout(()=>{ if(pageLoader && !pageLoader.classList.contains("hide")){ pageLoader.classList.add("hide"); document.body.style.overflow=""; } }, 3000);
+/* ADMIN_LOADER_SAFETY_FALLBACK: prevent an infinite overlay only if Firebase never responds. */
+setTimeout(() => {
+    if (pageLoader && !pageLoader.classList.contains("hide")) {
+        console.warn("Firebase auth session check is taking longer than expected.");
+        pageLoader.classList.add("hide");
+        document.body.style.overflow = "";
+    }
+}, 18000);
 
 /* =====================================================
    SINGLE LOGIN FOR NEWS + COURSE ADMIN
@@ -4064,44 +4077,52 @@ loginBtn.addEventListener("click", async () => {
    AUTH STATE MANAGEMENT
 ===================================================== */
 onAuthStateChanged(auth, async (user) => {
-    syncMasterCertificateButton();
-    if (pageLoader && !pageLoader.classList.contains("hide")) {
-        pageLoader.classList.add("hide");
-        document.body.style.overflow = "";
-    }
+    // Keep the startup loader visible while Firebase restores/scans the saved
+    // login session and checks the account before deciding which screen to show.
+    try {
+        syncMasterCertificateButton();
 
-    if (user) {
-        const registered = await isRegisteredAdmin(user);
-        if(!registered){
-            try { await signOut(auth); } catch (_) {}
-            try { await signOut(courseAuth); } catch (_) {}
+        if (user) {
+            const registered = await isRegisteredAdmin(user);
+            if (!registered) {
+                try { await signOut(auth); } catch (_) {}
+                try { await signOut(courseAuth); } catch (_) {}
+                loginPage.style.display = "flex";
+                adminPanel.style.display = "none";
+                document.body.classList.remove("admin-logged-in");
+                errorBox.innerText = "Unable to verify the Firebase account.";
+                return;
+            }
+
+            /* Restore the already signed-in admin session without asking for login again. */
+            await ensureAdminProfileAndTeam(user);
+            await publishAdminAccessRecord(user);
+            loginPage.style.display = "none";
+            adminPanel.style.display = "block";
+            document.body.classList.add("admin-logged-in");
+            applyCourseVisibility();
+            loadAdminProfile();
+            loadHomeUploads();
+            getAdminIdentityInfo(user.uid, {}).then(info => { window.__currentAdminIdentity = info; }).catch(() => {});
+
+            if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") {
+                connectCourseAdmin();
+            }
+        } else {
             loginPage.style.display = "flex";
             adminPanel.style.display = "none";
             document.body.classList.remove("admin-logged-in");
-            errorBox.innerText = "Unable to verify the Firebase account.";
-            return;
         }
-
-        /* Login restore must not auto-delete/deactivate the signed-in Auth account. */
-
-        await ensureAdminProfileAndTeam(user);
-        await publishAdminAccessRecord(user);
-        loginPage.style.display = "none";
-        adminPanel.style.display = "block";
-        document.body.classList.add("admin-logged-in");
-        applyCourseVisibility();
-        loadAdminProfile();
-        loadHomeUploads();
-        /* 14-day activity enforcement disabled here to prevent accidental login lockouts. */
-        getAdminIdentityInfo(user.uid,{}).then(info=>{window.__currentAdminIdentity=info;}).catch(()=>{});
-
-        if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") {
-            connectCourseAdmin();
-        }
-    } else {
+    } catch (authScanError) {
+        console.error("Admin saved-session scan failed:", authScanError);
         loginPage.style.display = "flex";
         adminPanel.style.display = "none";
         document.body.classList.remove("admin-logged-in");
+        if (errorBox && !auth.currentUser) errorBox.innerText = "Checking saved login failed. Please log in again.";
+    } finally {
+        // Hide loader only after the saved account has been checked and UI selected.
+        if (pageLoader) pageLoader.classList.add("hide");
+        document.body.style.overflow = "";
     }
 });
 
@@ -5274,7 +5295,7 @@ async function connectCourseAdmin(){
 async function approve(uid,courseId,key,button){
   if(!isCourseAllowed()) { alert("Course Approval Admin is restricted to the authorized account."); denyCourseAccess(); return; }
   if(!uid||!courseId||!key) return;
-  if(!confirm("Confirm that the payment and UTR are genuine.")) return;
+  if(!confirm("Confirm that the ₹99 payment and UTR are genuine.")) return;
 
   const oldText=button.innerHTML;
   button.disabled=true;
@@ -5289,63 +5310,48 @@ async function approve(uid,courseId,key,button){
     const now=Date.now();
     const adminEmail=auth.currentUser?.email||courseAuth.currentUser?.email||"admin";
 
-    // Authoritative approval time: validity starts when the Founder approves this request.
-    // Keep numeric timestamps and ISO date strings for compatibility with older app versions.
-    const approvedAt=now;
-    const expiresAt=approvedAt+(210*24*60*60*1000);
-    const approvedDate=new Date(approvedAt).toISOString();
-    const expiresDate=new Date(expiresAt).toISOString();
+    // Save approval and expiry timestamps. Access expires exactly 210 days after approval.
+    const approvedAt = now;
+    const expiresAt = approvedAt + (210 * 24 * 60 * 60 * 1000);
+    const approvedDate = new Date(approvedAt).toISOString();
+    const expiresDate = new Date(expiresAt).toISOString();
 
-    // Resolve both current flat purchase records and legacy nested purchase records.
-    const purchasePath=String(key).startsWith("flat:")
-      ? "utrPurchases/"+String(key).slice(5)
-      : "utrPurchases/"+uid+"/"+courseId+"/"+key;
-
-    const purchaseUpdate={
+    await update(purchaseRef,{
       status:"verified",
       verified:true,
-      verifiedAt:approvedAt,
+      verifiedAt:now,
       verifiedBy:adminEmail,
       approvedAt,
       expiresAt,
       approvedDate,
-      expiresDate,
-      validityDays:210,
-      accessGrantedAt:approvedAt,
-      accessExpiresAt:expiresAt
-    };
-
-    const accessRecord={
-      uid,
-      courseId,
-      courseName:d.courseName||courseId,
-      amount:Number(d.amount)||99,
-      currency:"INR",
-      utr:d.utr||"",
-      verified:true,
-      status:"verified",
-      purchaseId:d.purchaseId||String(key).replace(/^flat:/,""),
-      grantedAt:approvedAt,
-      approvedAt,
-      expiresAt,
-      approvedDate,
-      expiresDate,
-      validityDays:210,
-      approvedBy:adminEmail,
-      verifiedBy:adminEmail
-    };
-
-    // Atomic multi-location update: purchase history and courseAccess cannot be
-    // left out of sync if one of the two writes fails.
-    await update(ref(studentDb),{
-      [purchasePath]:{...d,...purchaseUpdate},
-      ["courseAccess/"+uid+"/"+courseId]:accessRecord
+      expiresDate
     });
 
-    alert("Payment approved successfully.\\nApproved: "+new Date(approvedAt).toLocaleString()+"\\nCourse access expires: "+new Date(expiresAt).toLocaleString()+" (210 days).");
+    await set(
+      ref(studentDb,`courseAccess/${uid}/${courseId}`),
+      {
+        uid,
+        courseId,
+        courseName:d.courseName||courseId,
+        amount:Number(d.amount)||99,
+        currency:"INR",
+        utr:d.utr||"",
+        verified:true,
+        status:"verified",
+        purchaseId:d.purchaseId||key,
+        grantedAt:now,
+        approvedAt,
+        expiresAt,
+        approvedDate,
+        expiresDate,
+        approvedBy:adminEmail,
+        verifiedBy:adminEmail
+      }
+    );
+
+    alert("Payment approved successfully.\nApproved: " + new Date(approvedAt).toLocaleString() + "\nCourse access expires: " + new Date(expiresAt).toLocaleString() + " (210 days).");
   }catch(e){
-    console.error("Course approval failed:",e);
-    alert("Approve failed: "+(e?.message||"Unknown Firebase error")+". Check diploma-app-9a378 Realtime Database Rules for both /utrPurchases and /courseAccess.");
+    alert("Approve failed: " + e.message);
     button.disabled=false;
     button.innerHTML=oldText;
   }

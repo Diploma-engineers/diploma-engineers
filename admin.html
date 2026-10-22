@@ -5274,7 +5274,7 @@ async function connectCourseAdmin(){
 async function approve(uid,courseId,key,button){
   if(!isCourseAllowed()) { alert("Course Approval Admin is restricted to the authorized account."); denyCourseAccess(); return; }
   if(!uid||!courseId||!key) return;
-  if(!confirm("Confirm that the ₹99 payment and UTR are genuine.")) return;
+  if(!confirm("Confirm that the payment and UTR are genuine.")) return;
 
   const oldText=button.innerHTML;
   button.disabled=true;
@@ -5289,48 +5289,63 @@ async function approve(uid,courseId,key,button){
     const now=Date.now();
     const adminEmail=auth.currentUser?.email||courseAuth.currentUser?.email||"admin";
 
-    // Save approval and expiry timestamps. Access expires exactly 210 days after approval.
-    const approvedAt = now;
-    const expiresAt = approvedAt + (210 * 24 * 60 * 60 * 1000);
-    const approvedDate = new Date(approvedAt).toISOString();
-    const expiresDate = new Date(expiresAt).toISOString();
+    // Authoritative approval time: validity starts when the Founder approves this request.
+    // Keep numeric timestamps and ISO date strings for compatibility with older app versions.
+    const approvedAt=now;
+    const expiresAt=approvedAt+(210*24*60*60*1000);
+    const approvedDate=new Date(approvedAt).toISOString();
+    const expiresDate=new Date(expiresAt).toISOString();
 
-    await update(purchaseRef,{
+    // Resolve both current flat purchase records and legacy nested purchase records.
+    const purchasePath=String(key).startsWith("flat:")
+      ? "utrPurchases/"+String(key).slice(5)
+      : "utrPurchases/"+uid+"/"+courseId+"/"+key;
+
+    const purchaseUpdate={
       status:"verified",
       verified:true,
-      verifiedAt:now,
+      verifiedAt:approvedAt,
       verifiedBy:adminEmail,
       approvedAt,
       expiresAt,
       approvedDate,
-      expiresDate
+      expiresDate,
+      validityDays:210,
+      accessGrantedAt:approvedAt,
+      accessExpiresAt:expiresAt
+    };
+
+    const accessRecord={
+      uid,
+      courseId,
+      courseName:d.courseName||courseId,
+      amount:Number(d.amount)||99,
+      currency:"INR",
+      utr:d.utr||"",
+      verified:true,
+      status:"verified",
+      purchaseId:d.purchaseId||String(key).replace(/^flat:/,""),
+      grantedAt:approvedAt,
+      approvedAt,
+      expiresAt,
+      approvedDate,
+      expiresDate,
+      validityDays:210,
+      approvedBy:adminEmail,
+      verifiedBy:adminEmail
+    };
+
+    // Atomic multi-location update: purchase history and courseAccess cannot be
+    // left out of sync if one of the two writes fails.
+    await update(ref(studentDb),{
+      [purchasePath]:{...d,...purchaseUpdate},
+      ["courseAccess/"+uid+"/"+courseId]:accessRecord
     });
 
-    await set(
-      ref(studentDb,`courseAccess/${uid}/${courseId}`),
-      {
-        uid,
-        courseId,
-        courseName:d.courseName||courseId,
-        amount:Number(d.amount)||99,
-        currency:"INR",
-        utr:d.utr||"",
-        verified:true,
-        status:"verified",
-        purchaseId:d.purchaseId||key,
-        grantedAt:now,
-        approvedAt,
-        expiresAt,
-        approvedDate,
-        expiresDate,
-        approvedBy:adminEmail,
-        verifiedBy:adminEmail
-      }
-    );
-
-    alert("Payment approved successfully.\nApproved: " + new Date(approvedAt).toLocaleString() + "\nCourse access expires: " + new Date(expiresAt).toLocaleString() + " (210 days).");
+    alert("Payment approved successfully.\\nApproved: "+new Date(approvedAt).toLocaleString()+"\\nCourse access expires: "+new Date(expiresAt).toLocaleString()+" (210 days).");
   }catch(e){
-    alert("Approve failed: " + e.message);
+    console.error("Course approval failed:",e);
+    alert("Approve failed: "+(e?.message||"Unknown Firebase error")+". Check diploma-app-9a378 Realtime Database Rules for both /utrPurchases and /courseAccess.");
     button.disabled=false;
     button.innerHTML=oldText;
   }

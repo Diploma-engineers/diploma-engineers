@@ -3376,10 +3376,10 @@ html,body{max-width:100%;overflow-x:hidden}
       <button type="button" class="course-filter-chip" data-filter="chemical">Chemical</button>
     </div>
 
-    <div class="course-uploaded-heading" style="margin:14px 0 6px;font-weight:800;color:#0f172a"><i class="fa-solid fa-cloud-arrow-down" style="color:#2563eb;margin-right:7px"></i>Courses Uploaded by Admin</div>
+    <div class="course-uploaded-heading de-firebase-courses-heading" style="margin:22px 0 8px;font-weight:800;color:#0f172a"><i class="fa-solid fa-cloud-arrow-down" style="color:#2563eb;margin-right:7px"></i>Courses Uploaded by Admin</div>
     <div id="adminUploadedCourseGrid" class="course-grid"><div class="course-no-results show" style="display:block">Loading published courses...</div></div>
 
-    <div class="course-grid" id="builtInCourseGrid">
+    <div class="course-grid de-built-in-course-slider" id="builtInCourseGrid">
 
       <!-- Civil Year 2 Course -->
       <div class="course-card" data-course-search="civil year 2">
@@ -11367,6 +11367,51 @@ window.addEventListener('popstate',function(e){
     #deFirebaseCourseDetail .de-fcd-top{padding-left:12px!important;padding-right:12px!important}
     #deFirebaseCourseDetail .de-fcd-banner{border-radius:0 0 14px 14px!important}
   }
+</style>
+
+
+<script id="de-course-sections-order-fix">
+(function(){
+  function orderCourseSections(){
+    const builtIn=document.getElementById('builtInCourseGrid');
+    const heading=document.querySelector('.de-firebase-courses-heading');
+    const firebaseGrid=document.getElementById('adminUploadedCourseGrid');
+    if(!builtIn||!heading||!firebaseGrid||!builtIn.parentNode)return;
+    const parent=builtIn.parentNode;
+    // Put the built-in/app-file courses first, then Firebase-uploaded courses.
+    if(heading.previousElementSibling!==builtIn){
+      parent.insertBefore(heading,builtIn.nextSibling);
+      parent.insertBefore(firebaseGrid,heading.nextSibling);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',orderCourseSections);
+  else orderCourseSections();
+  setTimeout(orderCourseSections,250);
+})();
+</script>
+
+
+<style id="de-hardcoded-course-horizontal-slider">
+/* ₹99 courses hardcoded in the app file are displayed as a horizontal swipe rail. */
+#coursePage #builtInCourseGrid.de-built-in-course-slider{
+  display:flex!important;flex-flow:row nowrap!important;gap:14px!important;
+  overflow-x:auto!important;overflow-y:hidden!important;width:100%;max-width:100%;
+  padding:5px 3px 16px!important;margin:8px 0 16px!important;
+  scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;overscroll-behavior-x:contain;
+}
+#coursePage #builtInCourseGrid.de-built-in-course-slider>.course-card{
+  flex:0 0 270px!important;width:270px!important;min-width:270px!important;
+  max-width:270px!important;scroll-snap-align:start;height:auto;
+}
+#coursePage #adminUploadedCourseGrid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px;
+}
+@media(max-width:480px){
+  #coursePage #builtInCourseGrid.de-built-in-course-slider>.course-card{
+    flex-basis:82vw!important;width:82vw!important;min-width:82vw!important;max-width:82vw!important;
+  }
+}
 </style>
 
 </body>

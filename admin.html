@@ -9998,27 +9998,148 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
 
 <!-- Final Course Creation coupon/semester interaction fix -->
 <style id="deCourseCreationFunctionalSliderFix">
-#courseCreateForm #courseCouponsEditor,#courseCreateForm #courseSemesterChoices{position:relative!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;max-width:100%!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;scrollbar-width:thin!important;scroll-behavior:auto!important;pointer-events:auto!important;}
-#courseCreateForm #courseCouponsEditor{min-height:185px!important;}
-#courseCreateForm #courseSemesterChoices>label{flex:0 0 145px!important;min-width:145px!important;max-width:145px!important;pointer-events:auto!important;touch-action:pan-x pan-y!important;user-select:none!important;-webkit-user-select:none!important;}
-#courseCreateForm #courseCouponsEditor .course-coupon-option,#courseCreateForm #courseCouponsEditor .course-coupon-add-card{flex:0 0 190px!important;min-width:190px!important;max-width:190px!important;pointer-events:auto!important;touch-action:pan-x pan-y!important;}
-#courseCreateForm #courseCouponsEditor input,#courseCreateForm #courseSemesterChoices input{pointer-events:auto!important;}
-.de-course-slider-controls{display:flex;justify-content:flex-end;gap:7px;margin:6px 0 2px;}
-.de-course-slider-controls button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:9px;padding:7px 11px;font-weight:800;cursor:pointer;touch-action:manipulation;}
-@media(max-width:600px){#courseCreateForm #courseSemesterChoices>label{flex-basis:138px!important;min-width:138px!important;max-width:138px!important;}#courseCreateForm #courseCouponsEditor .course-coupon-option,#courseCreateForm #courseCouponsEditor .course-coupon-add-card{flex-basis:178px!important;min-width:178px!important;max-width:178px!important;} }
+#courseCreateForm #courseCouponsEditor,#courseCreateForm #courseSemesterChoices{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:10px!important;overflow-x:scroll!important;overflow-y:hidden!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:auto!important;scroll-behavior:auto!important;touch-action:pan-x!important;pointer-events:auto!important;position:relative!important;}
+#courseCreateForm #courseCouponsEditor{min-height:190px!important;padding:10px 4px 14px!important;}
+#courseCreateForm #courseCouponsEditor>.course-coupon-option,#courseCreateForm #courseCouponsEditor>.course-coupon-add-card{flex:0 0 190px!important;width:190px!important;min-width:190px!important;max-width:190px!important;box-sizing:border-box!important;}
+#courseCreateForm #courseSemesterChoices>label{display:flex!important;flex:0 0 145px!important;width:145px!important;min-width:145px!important;max-width:145px!important;box-sizing:border-box!important;pointer-events:auto!important;user-select:none!important;-webkit-user-select:none!important;}
+#courseCreateForm #courseSemesterChoices input{pointer-events:auto!important;}
+.de-course-slider-controls{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;width:100%!important;margin:8px 0 4px!important;}
+.de-course-slider-controls .de-slider-label{font-size:12px;font-weight:700;color:#475569;margin-right:auto;}
+.de-course-slider-controls button{flex:0 0 auto!important;border:1px solid #93c5fd!important;background:#eff6ff!important;color:#1d4ed8!important;border-radius:10px!important;padding:9px 14px!important;font-weight:800!important;cursor:pointer!important;touch-action:manipulation!important;min-height:38px!important;}
+#courseCreateForm #courseCouponsEditor::-webkit-scrollbar,#courseCreateForm #courseSemesterChoices::-webkit-scrollbar{height:8px!important;display:block!important;}
+#courseCreateForm #courseCouponsEditor::-webkit-scrollbar-thumb,#courseCreateForm #courseSemesterChoices::-webkit-scrollbar-thumb{background:#94a3b8!important;border-radius:20px!important;}
+@media(max-width:600px){#courseCreateForm #courseCouponsEditor>.course-coupon-option,#courseCreateForm #courseCouponsEditor>.course-coupon-add-card{flex-basis:175px!important;width:175px!important;min-width:175px!important;max-width:175px!important;}#courseCreateForm #courseSemesterChoices>label{flex-basis:135px!important;width:135px!important;min-width:135px!important;max-width:135px!important;}#courseCreateForm #courseCouponsEditor,#courseCreateForm #courseSemesterChoices{scrollbar-width:none!important;}#courseCreateForm #courseCouponsEditor::-webkit-scrollbar,#courseCreateForm #courseSemesterChoices::-webkit-scrollbar{display:none!important;height:0!important;}}
 </style>
 <script id="deCourseCreationFunctionalSliderFixJS">
 (function(){
- const $=id=>document.getElementById(id);
- function api(){return window.__couponFirebase||window.__adminFirebaseMain||window.__courseFirebase||window.firebaseDatabaseApi||window.firebaseDBApi||window.dbApi||null;}
- function makeControls(id,label){const el=$(id);if(!el||el.dataset.controlsReady==='1')return;el.dataset.controlsReady='1';const bar=document.createElement('div');bar.className='de-course-slider-controls';bar.innerHTML='<button type="button" data-dir="left" aria-label="Scroll '+label+' left">‹ Previous</button><button type="button" data-dir="right" aria-label="Scroll '+label+' right">Next ›</button>';el.parentNode.insertBefore(bar,el);bar.addEventListener('click',e=>{const b=e.target.closest('button[data-dir]');if(!b)return;const step=Math.max(150,Math.floor(el.clientWidth*.78));el.scrollBy({left:b.dataset.dir==='right'?step:-step,behavior:'auto'});});}
- function dragScroll(el){if(!el||el.dataset.dragScrollReady==='1')return;el.dataset.dragScrollReady='1';let down=false,startX=0,left=0,moved=false;el.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;if(e.button!==0||e.target.closest('input,button,select,textarea,label'))return;down=true;moved=false;startX=e.clientX;left=el.scrollLeft;el.dataset.dragging='0';});el.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-startX;if(Math.abs(dx)>5){moved=true;el.dataset.dragging='1';el.scrollLeft=left-dx;}});const stop=()=>{down=false;setTimeout(()=>{el.dataset.dragging='0';},0);};el.addEventListener('pointerup',stop);el.addEventListener('pointercancel',stop);el.addEventListener('mouseleave',stop);el.addEventListener('click',e=>{if(el.dataset.dragging==='1'){e.preventDefault();e.stopPropagation();}},true);}
- async function refreshCouponCache(){const db=window.db,fb=api();if(!db||!fb?.get||!fb?.ref)return false;try{const snap=await fb.get(fb.ref(db,'publicAdminCoupons'));const list=[];if(snap?.exists())Object.entries(snap.val()||{}).forEach(([key,p])=>{if(!p||p.active===false)return;const code=String(p.code||p.couponCode||key||'').trim().toUpperCase();if(!code)return;list.push({code,name:p.adminName||p.name||'Admin',adminName:p.adminName||p.name||'Admin',uid:p.adminUid||p.uid||'',adminUid:p.adminUid||p.uid||'',qrUrl:p.qrUrl||p.couponQrUrl||p.couponQrImage||'',discountPercent:Number(p.discountPercent||20),reward:Number(p.adminRewardRupees||20),price:p.coursePrice??p.newPrice??''});});if(list.length||!Array.isArray(window.__deSavedCourseCoupons))window.__deSavedCourseCoupons=list;if(typeof window.__renderCourseCouponOptions==='function')window.__renderCourseCouponOptions();return true;}catch(err){console.warn('Course coupon refresh failed:',err);const st=$('deExistingCouponStatus');if(st)st.textContent='Coupon list could not load: '+(err.message||err)+' — check /publicAdminCoupons read permission.';return false;}}
- function setup(){const form=$('courseCreateForm');if(!form)return;makeControls('courseCouponsEditor','coupon codes');makeControls('courseSemesterChoices','semesters');dragScroll($('courseCouponsEditor'));dragScroll($('courseSemesterChoices'));
- const semesterBox=$('courseSemesterChoices');if(semesterBox&&!semesterBox.dataset.semesterChangeReady){semesterBox.dataset.semesterChangeReady='1';semesterBox.addEventListener('change',e=>{if(e.target.matches('input[name="courseSemesterChoice"]')){e.target.closest('label')?.style.setProperty('border-color',e.target.checked?'#2563eb':'#e2e8f0');e.target.closest('label')?.style.setProperty('background',e.target.checked?'#eff6ff':'#fff');}});}
- const couponBox=$('courseCouponsEditor');if(couponBox&&!couponBox.dataset.scrollReady){couponBox.dataset.scrollReady='1';couponBox.addEventListener('change',e=>{if(e.target.matches('[data-coupon-select]')){const card=e.target.closest('.course-coupon-option');if(card){card.style.borderColor=e.target.checked?'#2563eb':'#dbeafe';card.style.background=e.target.checked?'#eff6ff':'#fff';const price=card.querySelector('[data-coupon-price]');if(price)price.disabled=!e.target.checked;}}});}
- refreshCouponCache();let tries=0;const timer=setInterval(()=>{tries++;if(window.db&&api()?.get&&api()?.ref){refreshCouponCache();clearInterval(timer);}if(tries>=12)clearInterval(timer);},900);
+ const byId=id=>document.getElementById(id);
+ function ensureSlider(id,title){
+   const el=byId(id); if(!el)return;
+   el.style.setProperty('display','flex','important');el.style.setProperty('flex-direction','row','important');el.style.setProperty('flex-wrap','nowrap','important');el.style.setProperty('overflow-x','scroll','important');el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('max-width','100%','important');el.style.setProperty('width','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('touch-action','pan-x','important');el.style.setProperty('-webkit-overflow-scrolling','touch','important');
+   if(!el.dataset.realSliderReady){el.dataset.realSliderReady='1';
+     let startX=0,startLeft=0,active=false;
+     el.addEventListener('touchstart',e=>{if(e.touches.length){startX=e.touches[0].clientX;startLeft=el.scrollLeft;active=true;}},{passive:true});
+     el.addEventListener('touchmove',e=>{if(!active||!e.touches.length)return;const dx=e.touches[0].clientX-startX;if(Math.abs(dx)>4){el.scrollLeft=startLeft-dx;}},{passive:true});
+     el.addEventListener('touchend',()=>{active=false;},{passive:true});
+     el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+   }
+   let bar=el.previousElementSibling;
+   if(!bar||!bar.classList.contains('de-course-slider-controls')){
+     bar=document.createElement('div');bar.className='de-course-slider-controls';
+     const label=document.createElement('span');label.className='de-slider-label';label.textContent=title+' — swipe or use arrows';bar.appendChild(label);
+     const prev=document.createElement('button');prev.type='button';prev.textContent='‹ Previous';prev.setAttribute('aria-label','Previous '+title);
+     const next=document.createElement('button');next.type='button';next.textContent='Next ›';next.setAttribute('aria-label','Next '+title);
+     prev.addEventListener('click',()=>el.scrollBy({left:-Math.max(160,el.clientWidth*.8),behavior:'auto'}));
+     next.addEventListener('click',()=>el.scrollBy({left:Math.max(160,el.clientWidth*.8),behavior:'auto'}));
+     bar.append(prev,next);el.parentNode.insertBefore(bar,el);
+   }
+   // Re-apply fixed width after dynamic coupon/semester rendering.
+   Array.from(el.children).forEach(child=>{
+     if(id==='courseCouponsEditor'&&(child.classList.contains('course-coupon-option')||child.classList.contains('course-coupon-add-card'))){child.style.setProperty('flex','0 0 175px','important');child.style.setProperty('min-width','175px','important');child.style.setProperty('max-width','175px','important');}
+     if(id==='courseSemesterChoices'&&child.tagName==='LABEL'){child.style.setProperty('flex','0 0 135px','important');child.style.setProperty('min-width','135px','important');child.style.setProperty('max-width','135px','important');}
+   });
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();window.addEventListener('load',()=>setTimeout(setup,350));
+ function refresh(){
+   ensureSlider('courseCouponsEditor','Coupon codes');ensureSlider('courseSemesterChoices','Semesters');
+   const cb=byId('courseCouponsEditor');if(cb&&typeof window.__renderCourseCouponOptions==='function'&&!cb.dataset.sliderRenderHook){cb.dataset.sliderRenderHook='1';const old=window.__renderCourseCouponOptions;window.__renderCourseCouponOptions=function(){const result=old.apply(this,arguments);setTimeout(()=>ensureSlider('courseCouponsEditor','Coupon codes'),0);return result;};}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
+ const observer=new MutationObserver(()=>refresh());observer.observe(document.documentElement,{childList:true,subtree:true});
+ window.addEventListener('resize',refresh);setInterval(refresh,1200);
+})();
+</script>
+
+<!-- Final responsive page-fit fix: prevent the admin page from exceeding the screen width -->
+<style id="deFinalResponsivePageFit">
+*,*::before,*::after{box-sizing:border-box;}
+html{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+body{width:100%;max-width:100%;min-width:0;margin:0;overflow-x:hidden;}
+img,video,canvas,svg,iframe{max-width:100%;}
+input,select,textarea,button{max-width:100%;font:inherit;}
+input,select,textarea{min-width:0;}
+.dashboard,main,.app-shell,.app-content,.content,.container,.container-fluid,.page-content,.admin-content,.section-content{max-width:100%;min-width:0;}
+.dashboard{width:100%;margin-left:auto;margin-right:auto;}
+.app-shell-nav{max-width:100%;min-width:0;}
+.app-brand-mini,.app-nav-profile{min-width:0;max-width:100%;}
+.app-brand-mini strong,.app-nav-profile span{overflow-wrap:anywhere;}
+/* Keep intentional coupon/semester carousels scrollable while the overall page stays fitted. */
+#courseCouponsEditor,#courseSemesterChoices{max-width:100%!important;min-width:0!important;}
+/* Long tables and code/text panels should scroll inside their own region, not stretch the page. */
+table{max-width:100%;}
+.table-responsive,.table-wrap,.table-container,.overflow-auto,pre,code{max-width:100%;}
+pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;}
+@media(max-width:768px){
+ body{font-size:14px;}
+ .dashboard{padding-left:12px!important;padding-right:12px!important;width:100%!important;}
+ .app-shell-nav{padding-left:10px!important;padding-right:10px!important;gap:8px!important;}
+ .app-brand-mini{flex:1 1 auto;overflow:hidden;}
+ .app-brand-mini img{max-width:36px;max-height:36px;object-fit:contain;}
+ .app-brand-mini strong{font-size:14px;line-height:1.25;}
+ .app-nav-profile{flex:0 1 auto;gap:5px!important;}
+ .app-nav-profile span{max-width:90px;white-space:normal;line-height:1.2;font-size:12px;}
+ .row{margin-left:0!important;margin-right:0!important;}
+ .row>*{min-width:0;}
+ .card,.modal-content,.panel,.admin-card{max-width:100%;min-width:0;}
+ .modal-dialog{width:auto!important;max-width:calc(100vw - 20px)!important;margin:10px auto!important;}
+ .modal-body{max-width:100%;overflow-x:auto;}
+ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{width:100%;max-width:100%;}
+ button{white-space:normal;overflow-wrap:anywhere;}
+}
+@media(max-width:420px){
+ .dashboard{padding-left:9px!important;padding-right:9px!important;}
+ .app-brand-mini strong{font-size:12px;}
+ .app-nav-profile span{max-width:68px;font-size:11px;}
+ .de-course-slider-controls{gap:5px!important;flex-wrap:wrap!important;}
+ .de-course-slider-controls button{padding:8px 10px!important;}
+}
+</style>
+
+<!-- FINAL FIX v2: fit the course form to the viewport and make the two horizontal lists truly scrollable -->
+<style id="deCourseViewportAndSliderFixV2">
+html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!important}
+#courseAdminSection,#courseAdminSection .course-admin-shell,#courseAdminSection .wrap,#courseBuilder,#courseCreatePanel,#courseCreateForm{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#courseAdminSection .course-admin-shell,#courseAdminSection .wrap{margin-left:auto!important;margin-right:auto!important}
+#courseCreateForm .course-form-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;max-width:100%!important;min-width:0!important;gap:14px!important}
+#courseCreateForm .course-field{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-wrap:anywhere!important}
+#courseCreateForm .course-field input,#courseCreateForm .course-field select,#courseCreateForm .course-field textarea{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#courseCreateForm .course-wide{grid-column:1/-1!important}
+#courseCreateForm #courseCouponsEditor,#courseCreateForm #courseSemesterChoices{display:flex!important;flex-flow:row nowrap!important;align-items:stretch!important;justify-content:flex-start!important;gap:10px!important;width:100%!important;max-width:100%!important;min-width:0!important;height:auto!important;overflow-x:auto!important;overflow-y:hidden!important;box-sizing:border-box!important;overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x!important;scrollbar-width:thin!important;scroll-snap-type:x proximity!important;position:relative!important}
+#courseCreateForm #courseCouponsEditor{min-height:180px!important;padding:10px 8px 16px!important}
+#courseCreateForm #courseCouponsEditor>*{flex:0 0 180px!important;width:180px!important;min-width:180px!important;max-width:180px!important;box-sizing:border-box!important;scroll-snap-align:start!important}
+#courseCreateForm #courseSemesterChoices{padding:6px 2px 12px!important}
+#courseCreateForm #courseSemesterChoices>label{display:flex!important;flex:0 0 145px!important;width:145px!important;min-width:145px!important;max-width:145px!important;white-space:normal!important;overflow-wrap:anywhere!important;cursor:pointer!important;scroll-snap-align:start!important}
+#courseCreateForm #courseSemesterChoices input[type=checkbox]{width:18px!important;min-width:18px!important;max-width:18px!important;flex:0 0 18px!important}
+#courseCreateForm .de-course-slider-controls{display:flex!important;flex-flow:row wrap!important;align-items:center!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#courseCreateForm .de-course-slider-controls button{min-width:78px!important;max-width:100%!important;white-space:nowrap!important;flex:0 0 auto!important}
+#courseCreateForm .de-course-slider-controls .de-slider-label{min-width:0!important;overflow-wrap:anywhere!important}
+@media(max-width:700px){#courseCreateForm .course-form-grid{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}#courseCreateForm .course-wide{grid-column:1!important}#courseCreateForm #courseCouponsEditor>*{flex-basis:165px!important;width:165px!important;min-width:165px!important;max-width:165px!important}#courseCreateForm #courseSemesterChoices>label{flex-basis:132px!important;width:132px!important;min-width:132px!important;max-width:132px!important}#courseCreateForm .de-course-slider-controls{gap:5px!important}#courseCreateForm .de-course-slider-controls button{padding:8px 9px!important;font-size:12px!important}}
+</style>
+<script id="deCourseViewportAndSliderFixV2JS">
+(function(){
+ const $=id=>document.getElementById(id);
+ function makeScrollable(id){
+  const el=$(id);if(!el)return;
+  el.style.setProperty('width','100%','important');el.style.setProperty('max-width','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('display','flex','important');el.style.setProperty('flex-flow','row nowrap','important');el.style.setProperty('overflow-x','auto','important');el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('touch-action','pan-x','important');el.style.setProperty('-webkit-overflow-scrolling','touch','important');
+  if(!el.dataset.dragScrollV2){el.dataset.dragScrollV2='1';let down=false,start=0,left=0,moved=false;
+   el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;down=true;moved=false;start=e.clientX;left=el.scrollLeft;},{passive:true});
+   el.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-start;if(Math.abs(dx)>5)moved=true;if(moved){el.scrollLeft=left-dx;if(e.pointerType==='mouse'&&e.cancelable)e.preventDefault();}},{passive:false});
+   ['pointerup','pointercancel','pointerleave'].forEach(type=>el.addEventListener(type,()=>{down=false;},{passive:true}));
+   el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+  }
+  let controls=el.previousElementSibling;
+  if(!controls||!controls.classList.contains('de-course-slider-controls')){
+   controls=document.createElement('div');controls.className='de-course-slider-controls';
+   const label=document.createElement('span');label.className='de-slider-label';label.textContent=(id==='courseCouponsEditor'?'Coupon codes':'Semesters')+' — slide to see more';controls.appendChild(label);
+   const prev=document.createElement('button');prev.type='button';prev.textContent='‹ Prev';
+   const next=document.createElement('button');next.type='button';next.textContent='Next ›';
+   prev.addEventListener('click',()=>{el.scrollLeft=Math.max(0,el.scrollLeft-Math.max(150,el.clientWidth*.75));});
+   next.addEventListener('click',()=>{el.scrollLeft=Math.min(el.scrollWidth,el.scrollLeft+Math.max(150,el.clientWidth*.75));});
+   controls.append(prev,next);el.parentNode.insertBefore(controls,el);
+  }
+  Array.from(el.children).forEach(child=>{if(id==='courseCouponsEditor'){child.style.setProperty('flex','0 0 180px','important');child.style.setProperty('min-width','180px','important');child.style.setProperty('max-width','180px','important');}else if(child.tagName==='LABEL'){child.style.setProperty('flex','0 0 145px','important');child.style.setProperty('min-width','145px','important');child.style.setProperty('max-width','145px','important');}});
+ }
+ function apply(){const form=$('courseCreateForm');if(form){form.style.setProperty('width','100%','important');form.style.setProperty('max-width','100%','important');form.style.setProperty('min-width','0','important');}makeScrollable('courseCouponsEditor');makeScrollable('courseSemesterChoices');}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+ let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply();});});observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',apply,{passive:true});
 })();
 </script>

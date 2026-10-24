@@ -11025,31 +11025,7 @@ window.addEventListener('popstate',function(e){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&box.classList.contains('is-open')){e.preventDefault();close();}});
 })();
 </script>
-<script id="decr-mobile-player-back-fix">(function(){
-  var shellId='deCourseShell', playerId='deCRPlayer', browserId='deCRBrowser';
-  var internalBackInProgress=false;
-  function el(id){return document.getElementById(id)}
-  function visible(id){var n=el(id);return !!(n&&getComputedStyle(n).display!=='none'&&!n.classList.contains('decr-hidden')&&(id!=='deCourseShell'||n.classList.contains('de-open')))}
-  function playerVisible(){return visible(shellId)&&visible(playerId)}
-  function courseReaderVisible(){return visible(shellId)}
-  function stopMedia(){var m=el('deCRMedia');if(!m)return;m.querySelectorAll('video,audio').forEach(function(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});m.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank'}catch(e){}})}
-  function returnFromPlayer(){if(!playerVisible())return false;stopMedia();if(typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();var p=el(playerId),b=el(browserId);if(p)p.classList.add('decr-hidden');if(b)b.classList.remove('decr-hidden');return true}
-  // Track each reader layer as a real browser-history step so Android hardware Back
-  // closes player -> returns to folder list -> returns to course detail -> app.
-  function pushLayer(name){try{history.pushState({__deCourseLayer:name,href:location.href},'',location.href)}catch(e){}}
-  document.addEventListener('click',function(e){
-    var lesson=e.target&&e.target.closest&&e.target.closest('[data-de-lesson]');
-    if(lesson&&visible(shellId)){pushLayer('player')}
-  },true);
-  var topback=el('deCRBack');if(topback)topback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(returnFromPlayer())return;if(courseReaderVisible()&&typeof window.deCRGoBack==='function')window.deCRGoBack();},true);
-  window.addEventListener('popstate',function(e){
-    if(internalBackInProgress)return;
-    if(playerVisible()){e.stopImmediatePropagation();e.preventDefault();returnFromPlayer();internalBackInProgress=true;setTimeout(function(){internalBackInProgress=false},80);return;}
-    // Do not force the app's home page while the integrated course reader is open.
-    if(courseReaderVisible()&&e.state&&e.state.__deCourseLayer){e.stopImmediatePropagation();e.preventDefault();if(e.state.__deCourseLayer==='folder'){returnFromPlayer();}else if(e.state.__deCourseLayer==='reader'&&typeof window.goBack==='function'){window.goBack();}}
-  },true);
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&playerVisible()){e.preventDefault();returnFromPlayer()}},true);
-})();</script>
+<!-- Replaced conflicting navigation handler: decr-mobile-player-back-fix -->
 
 <script id="de-login-loader-and-course-back-fix">
 (function(){
@@ -11058,45 +11034,14 @@ window.addEventListener('popstate',function(e){
     if(loader){loader.classList.add('hide');loader.style.pointerEvents='none';}
     document.body.style.overflow='';
   }
-  // Do not leave the splash screen over the app if Firebase/network initialization is slow.
   window.addEventListener('load',function(){setTimeout(hideLoader,900);},{once:true});
   setTimeout(hideLoader,4500);
-
-  function visible(el){
-    return !!(el && getComputedStyle(el).display!=='none' &&
-      !el.classList.contains('decr-hidden') &&
-      (el.id!=='deCourseShell' || el.classList.contains('de-open')));
-  }
-  // The global arrow must respect the course reader's internal folder/player stack.
-  document.addEventListener('click',function(e){
-    var btn=e.target && e.target.closest('#headerBackBtn');
-    if(!btn)return;
-    var shell=document.getElementById('deCourseShell');
-    if(!visible(shell))return;
-    var player=document.getElementById('deCRPlayer');
-    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-      window.deCRReturnToFolderBrowser();
-      try{history.pushState({__deCourseLayer:'folder'},'',location.href);}catch(_){}
-      return;
-    }
-    // Follow Course Reader's own stack, rather than routing directly to app Home.
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    var player=document.getElementById('deCRPlayer');
-    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
-    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
-    var ownBack=document.getElementById('deCRBack');if(ownBack)ownBack.click();
-  },true);
-
-  // If Firebase auth restores a session after the splash timeout, ensure app/auth
-  // visibility remains governed by the existing Firebase auth listener.
   document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){
       var loader=document.getElementById('page-loader');
       if(loader && loader.classList.contains('hide'))return;
       var app=document.getElementById('app'), auth=document.getElementById('authPage');
-      if(app && getComputedStyle(app).display!=='none')hideLoader();
-      else if(auth && getComputedStyle(auth).display!=='none')hideLoader();
+      if((app && getComputedStyle(app).display!=='none') || (auth && getComputedStyle(auth).display!=='none')) hideLoader();
     },1800);
   });
 })();
@@ -11113,42 +11058,18 @@ window.addEventListener('popstate',function(e){
 #deCourseShell .decr-folder[data-de-folder="__all_pdfs__"] .decr-folder-info strong{color:#9a3412}
 </style>
 
-<script id="de-course-final-back-and-validity-refresh">
+<script id="de-course-validity-refresh-only">
 (function(){
- const $=id=>document.getElementById(id);
- function shellOpen(){const s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
- function playerOpen(){const p=$('deCRPlayer');return !!(p&&!p.classList.contains('decr-hidden')&&getComputedStyle(p).display!=='none');}
- let handling=false;
- function returnPlayer(){if(!playerOpen())return false;if(typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();return false;}
- document.addEventListener('click',function(e){
-   const b=e.target&&e.target.closest&&e.target.closest('#deCRBack,#headerBackBtn');
-   if(!b||!shellOpen()||!playerOpen())return;
-   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-   returnPlayer();
-   try{history.pushState({__deCourseLayer:'folder'},'',location.href)}catch(_){ }
- },true);
- window.addEventListener('popstate',function(e){
-   if(handling||!shellOpen())return;
-   if(playerOpen()){
-     handling=true;returnPlayer();
-     setTimeout(()=>{handling=false},120);
-     return;
-   }
-   // If already on the folder browser, let the existing app-level navigation handlers handle the next Back.
- });
- // Keep the home validity countdown fresh without reopening Firebase queries.
  setInterval(function(){
-   const b=$('deCRValidityBanner');if(!b||!b.isConnected)return;
-   const state=b.querySelector('.decr-validity-state');if(!state)return;
-   const text=state.textContent||'';
-   const match=text.match(/^(\d+) day(s)? remaining$/);
-   if(match&&window.__deCourseValidityExpiry){const left=Math.max(0,Math.ceil((window.__deCourseValidityExpiry-Date.now())/86400000));state.textContent=left?`${left} day${left===1?'':'s'} remaining`:'EXPIRED';b.classList.toggle('expired',left===0);}
+   var b=document.getElementById('deCRValidityBanner');if(!b||!b.isConnected)return;
+   var state=b.querySelector('.decr-validity-state');if(!state)return;
+   var match=(state.textContent||'').match(/^(\d+) day(s)? remaining$/);
+   if(match&&window.__deCourseValidityExpiry){var left=Math.max(0,Math.ceil((window.__deCourseValidityExpiry-Date.now())/86400000));state.textContent=left?left+' day'+(left===1?'':'s')+' remaining':'EXPIRED';b.classList.toggle('expired',left===0);}
  },60000);
 })();
 </script>
 
-</body>
-</html>
+
 
 
 <style id="de-test-app-color-harmony">
@@ -11216,46 +11137,10 @@ window.addEventListener('popstate',function(e){
 </style>
 
 
-<script id="de-course-back-final-guard">
-(function(){
-  function isOpen(){var s=document.getElementById('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
-  function handle(e){
-    var b=e.target&&e.target.closest&&e.target.closest('#headerBackBtn, #deCRBack');
-    if(!b||!isOpen())return;
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    var p=document.getElementById('deCRPlayer');
-    if(p&&!p.classList.contains('decr-hidden')&&typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
-    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
-  }
-  document.addEventListener('click',handle,true);
-})();
-</script>
+<!-- Replaced conflicting navigation handler: de-course-back-final-guard -->
 
 
-<script id="de-course-navigation-final-patch">
-(function(){
- const $=id=>document.getElementById(id);
- function shellOpen(){const x=$('deCourseShell');return !!(x&&x.classList.contains('de-open')&&getComputedStyle(x).display!=='none');}
- function playerOpen(){const p=$('deCRPlayer');return !!(p&&!p.classList.contains('decr-hidden')&&getComputedStyle(p).display!=='none');}
- function back(e){
-  const b=e.target&&e.target.closest&&e.target.closest('#headerBackBtn,#deCRBack,#deCRPlayerBack');
-  if(!b||!shellOpen())return;
-  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-  if(playerOpen()){
-   if(typeof window.deCRReturnToFolderBrowser==='function')window.deCRReturnToFolderBrowser();
-   return;
-  }
-  if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
-  if(typeof window.closeShell==='function')window.closeShell();
- }
- document.addEventListener('click',back,true);
- window.addEventListener('popstate',function(){
-  if(!shellOpen())return;
-  if(playerOpen()){if(typeof window.deCRReturnToFolderBrowser==='function')window.deCRReturnToFolderBrowser();return;}
-  if(typeof window.deCRGoBack==='function')window.deCRGoBack();
- });
-})();
-</script>
+<!-- Replaced conflicting navigation handler: de-course-navigation-final-patch -->
 
 
 <!-- FINAL COURSE PAGE WIDTH + PREVIOUS-PAGE BACK PATCH -->
@@ -11291,135 +11176,108 @@ window.addEventListener('popstate',function(e){
     #deCourseShell .decr-top{padding-left:12px!important;padding-right:12px!important}
   }
 </style>
-<script id="de-course-previous-page-back-patch">
+<script id="de-course-previous-page-state-patch">
 (function(){
-  const $ = id => document.getElementById(id);
-  let previousPageId = '';
-  let wasShellOpen = false;
-
-  function shellOpen(){
-    const shell = $('deCourseShell');
-    return !!(shell && shell.classList.contains('de-open') &&
-      getComputedStyle(shell).display !== 'none');
-  }
-  function activePageId(){
-    const page = document.querySelector('.page.active-page');
-    return page ? page.id : '';
-  }
-
-  // Remember the app page that was visible immediately before the reader opens.
-  const shell = $('deCourseShell');
-  if(shell){
-    const observer = new MutationObserver(function(){
-      const open = shellOpen();
-      if(open && !wasShellOpen){
-        previousPageId = activePageId();
-        window.__deCoursePreviousPageId = previousPageId;
-      }
-      wasShellOpen = open;
-    });
-    observer.observe(shell,{attributes:true,attributeFilter:['class','style']});
-  }
-
-  const originalBack = window.deCRGoBack;
-  window.deCRGoBack = function(){
-    if(!shellOpen()){
-      if(typeof originalBack === 'function') return originalBack.apply(this,arguments);
-      return;
-    }
-    const player = $('deCRPlayer');
-    if(player && !player.classList.contains('decr-hidden') &&
-       typeof window.deCRReturnToFolderBrowser === 'function'){
-      return window.deCRReturnToFolderBrowser();
-    }
-
-    // Keep the existing subject/folder navigation; only change the root-level exit.
-    const subject = window.currentSubject;
-    const resourceType = window.currentResourceType;
-    if(subject === '__ALL_PDFS__' || (subject && resourceType === 'pdf') || subject){
-      if(typeof originalBack === 'function') return originalBack.apply(this,arguments);
-    }
-
-    if(typeof window.closeShell === 'function') window.closeShell();
-    const target = previousPageId && $(previousPageId) ? previousPageId : 'coursePage';
-    if(typeof window.navigateTo === 'function') window.navigateTo(target,false);
-    else {
-      document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===target));
-    }
-  };
-
-  // Ensure the desktop header arrow and mobile/app arrow use the same reader back stack.
-  document.addEventListener('click',function(e){
-    const btn=e.target && e.target.closest &&
-      e.target.closest('#headerBackBtn,#deCRBack');
-    if(!btn || !shellOpen()) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    if(typeof window.deCRGoBack === 'function') window.deCRGoBack();
-  },true);
+ const $=id=>document.getElementById(id);
+ let previousPageId='', wasOpen=false;
+ function shellOpen(){const s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
+ function activePageId(){const p=document.querySelector('.page.active-page');return p?p.id:'';}
+ const shell=$('deCourseShell');
+ if(shell){
+   const observer=new MutationObserver(function(){
+     const open=shellOpen();
+     if(open&&!wasOpen){previousPageId=activePageId()||window.__deCoursePreviousPageId||'';window.__deCoursePreviousPageId=previousPageId;}
+     wasOpen=open;
+   });
+   observer.observe(shell,{attributes:true,attributeFilter:['class','style']});
+ }
+ const originalBack=window.deCRGoBack;
+ window.deCRGoBack=function(){
+   if(!shellOpen()){if(typeof originalBack==='function')return originalBack.apply(this,arguments);return;}
+   const p=$('deCRPlayer');
+   if(p&&!p.classList.contains('decr-hidden')&&typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();
+   // The original handler owns the real module-scoped subject/folder state.
+   // Always delegate to it so Back walks subject/PDF/root in the correct order.
+   if(typeof originalBack==='function')return originalBack.apply(this,arguments);
+   if(typeof window.closeShell==='function')window.closeShell();
+   const target=previousPageId&&$(previousPageId)?previousPageId:(window.__deCoursePreviousPageId&&$(window.__deCoursePreviousPageId)?window.__deCoursePreviousPageId:'coursePage');
+   if(typeof window.navigateTo==='function')window.navigateTo(target,false);
+   else document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===target));
+ };
 })();
 </script>
 
 <!-- FINAL IMMEDIATE BACK FIX: player -> previous reader screen, never course details -->
-<script id="de-course-player-immediate-back-fix">
+<!-- Replaced conflicting navigation handler: de-course-player-immediate-back-fix -->
+
+<!-- SINGLE AUTHORITATIVE COURSE BACK CONTROLLER: desktop, mobile, keyboard and Android Back -->
+<script id="de-course-single-back-controller">
 (function(){
-  'use strict';
-  var handling = false;
-  function el(id){ return document.getElementById(id); }
-  function visible(node){
-    return !!(node && !node.classList.contains('decr-hidden') &&
-      getComputedStyle(node).display !== 'none');
-  }
-  function readerOpen(){
-    var s=el('deCourseShell');
-    return !!(s && s.classList.contains('de-open') && getComputedStyle(s).display!=='none');
-  }
-  function playerOpen(){ return readerOpen() && visible(el('deCRPlayer')); }
-  function browserOpen(){ return readerOpen() && visible(el('deCRBrowser')); }
-  function returnToPreviousReaderScreen(){
-    if(handling) return;
-    handling=true;
-    try{
-      if(playerOpen()){
-        // This is the important step: leave Part-1/Part-2 and return to the
-        // folder/subject browser, not the course-details page.
-        if(typeof window.deCRReturnToFolderBrowser==='function'){
-          window.deCRReturnToFolderBrowser();
-        } else {
-          var p=el('deCRPlayer'), b=el('deCRBrowser'), m=el('deCRMedia');
-          if(m){m.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank';}catch(_){}});}
-          if(p)p.classList.add('decr-hidden');
-          if(b)b.classList.remove('decr-hidden');
-        }
-        return;
-      }
-      if(browserOpen() && typeof window.deCRGoBack==='function'){
-        window.deCRGoBack();
-      }
-    } finally {
-      // Release on the next frame so multiple legacy handlers cannot double-run.
-      requestAnimationFrame(function(){handling=false;});
-    }
-  }
-  // Capture before legacy handlers; prevent their course-details navigation.
-  document.addEventListener('click',function(e){
-    var btn=e.target && e.target.closest && e.target.closest('#deCRBack');
-    if(!btn || !readerOpen()) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    returnToPreviousReaderScreen();
-  },true);
-  // Mobile / Android hardware Back: popstate must also step back within the reader.
-  window.addEventListener('popstate',function(e){
-    if(!readerOpen()) return;
-    if(playerOpen() || browserOpen()){
-      e.preventDefault(); e.stopImmediatePropagation();
-      returnToPreviousReaderScreen();
-    }
-  },true);
-  // Keep the reader's top Back button responsive if opened after this patch runs.
-  document.addEventListener('keydown',function(e){
-    if(e.key==='Escape' && playerOpen()) returnToPreviousReaderScreen();
-  },true);
+ 'use strict';
+ var busy=false, popHandling=false;
+ function $(id){return document.getElementById(id);}
+ function shellOpen(){var s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
+ function shown(node){return !!(node&&!node.classList.contains('decr-hidden')&&getComputedStyle(node).display!=='none');}
+ function playerOpen(){return shellOpen()&&shown($('deCRPlayer'));}
+ function browserOpen(){return shellOpen()&&shown($('deCRBrowser'));}
+ function stopPlayerMedia(){
+   var media=$('deCRMedia'); if(!media)return;
+   media.querySelectorAll('video,audio').forEach(function(v){try{v.pause();v.removeAttribute('src');v.querySelectorAll('source').forEach(function(s){s.removeAttribute('src');});v.load();}catch(_){}});
+   media.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank';}catch(_){}});
+ }
+ function toBrowser(){
+   if(!playerOpen())return false;
+   stopPlayerMedia();
+   if(typeof window.deCRReturnToFolderBrowser==='function'){
+     window.deCRReturnToFolderBrowser();
+   }else{
+     var p=$('deCRPlayer'),b=$('deCRBrowser');if(p)p.classList.add('decr-hidden');if(b)b.classList.remove('decr-hidden');
+   }
+   return true;
+ }
+ function goOneStep(){
+   if(busy)return; busy=true;
+   try{
+     if(playerOpen()){toBrowser();return;}
+     if(browserOpen()){
+       if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
+       if(typeof window.closeShell==='function')window.closeShell();return;
+     }
+   }finally{setTimeout(function(){busy=false;},0);}
+ }
+ // Capture phase + stopImmediatePropagation prevents legacy inline onclick/goBack handlers
+ // from routing directly to Course Details or Home while the reader is open.
+ document.addEventListener('click',function(e){
+   var btn=e.target&&e.target.closest&&e.target.closest('#headerBackBtn,#deCRBack,#deCRPlayerBack');
+   if(!btn||!shellOpen())return;
+   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();goOneStep();
+ },true);
+ // Hardware/browser Back: first Back exits the player, next Back traverses folder/subject,
+ // and only at reader root closes the reader to the page that opened it.
+ window.addEventListener('popstate',function(e){
+   if(!shellOpen()||popHandling)return;
+   popHandling=true;
+   try{
+     if(playerOpen()){
+       toBrowser();
+       // Restore an internal history sentinel so the next hardware Back remains inside reader.
+       try{history.pushState({__deCourseLayer:'folder',__deCourseReader:true},'',location.href);}catch(_){}
+       e.stopImmediatePropagation();
+       return;
+     }
+     if(browserOpen()){
+       if(typeof window.deCRGoBack==='function')window.deCRGoBack();
+       e.stopImmediatePropagation();
+     }
+   }finally{setTimeout(function(){popHandling=false;},0);}
+ },true);
+ document.addEventListener('keydown',function(e){
+   if(e.key==='Escape'&&shellOpen()){
+     e.preventDefault();e.stopPropagation();
+     goOneStep();
+   }
+ },true);
 })();
 </script>
+</body>
+</html>

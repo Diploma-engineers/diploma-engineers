@@ -10593,6 +10593,13 @@ function openFolder(folder){
   return;
  }
  const groups=folderGroups();
+ // Recovery guard: if the browser has stale subject state after returning from the player,
+ // allow a clicked subject folder to be treated as a root subject again.
+ if(currentSubject && !String(folder).startsWith('__resource__') && !String(folder).startsWith('__pdfresource__') && folder!=='__all_pdfs__' && folder!=='__course_test_series__' && folder!=='__course_important_questions__'){
+  if(groups.some(g=>g.name===folder)){
+   currentSubject=''; currentResourceType=''; currentFolder=''; currentFolderItems=[]; currentLessonIndex=0;
+  }
+ }
  if(!currentSubject){
   const group=groups.find(g=>g.name===folder);if(!group)return;
   const videos=group.items.filter(x=>!itemIsPdf(x));
@@ -10624,6 +10631,10 @@ function deCRReturnToFolderBrowser(){
   if(browser) browser.classList.remove('decr-hidden');
   if(window.__deCoursePlayerOrigin==='home'){
     currentSubject='';currentResourceType='';currentFolder='';currentFolderItems=[];currentLessonIndex=0;
+  } else {
+    // Returning from a lesson inside a subject should show that subject's resource list,
+    // but clear the stale player mode so the next folder click starts cleanly.
+    currentResourceType=''; currentFolder=currentSubject||'';
   }
   renderFolders();
   hideMsg(); lastView='browser';

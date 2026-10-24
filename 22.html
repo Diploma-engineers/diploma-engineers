@@ -7385,24 +7385,6 @@ async function findCouponRecord(courseId,code){
  try{const r=await fetch(base+'/publicAdminCoupons/'+encodeURIComponent(String(code).trim().toUpperCase())+'.json',{cache:'no-store'});if(r.ok){const p=await r.json();if(p&&p.active!==false){const qr=String(p.qrUrl||p.couponQrImage||p.couponQrUrl||'');if(qr)return {...p,code,couponCode:code,couponOwnerUid:String(p.adminUid||p.couponOwnerUid||''),qrUrl:qr,couponQrImage:qr,price:p.price??(window.__deAdminCourseCatalog||{})[String(courseId)]?.price??99,source:'publicAdminCoupons'};}}}catch(e){console.warn('Public admin coupon lookup failed',e);}
  return null;
 }
-async function isCouponPersistentlyInvalid(code){
- const normalized=String(code||'').trim().toUpperCase();
- if(!normalized)return true;
- const key=normalized.replace(/[.#$\[\]/]/g,'_');
- // Authoritative deny-list populated by the trusted Auth onDelete Cloud Function.
- try{
-  const snap=await get(ref(db,'invalidCoupons/'+key));
-  if(snap.exists()){
-   const marker=snap.val();
-   if(marker===true || marker===1 || marker?.invalid===true || marker?.active===false || marker?.status==='invalid')return true;
-  }
- }catch(e){
-  // Do not block every valid coupon merely because the optional deny-list read is denied.
-  // The Cloud Function must also remove deleted owners' public coupon records.
-  console.warn('invalidCoupons read unavailable; checking current coupon owner record:',e?.message||e);
- }
- return false;
-}
 async function applyPaymentCoupon(){
  const input=document.getElementById('paymentCouponCode');
  const btn=document.getElementById('applyCouponBtn');
@@ -7424,14 +7406,8 @@ async function applyPaymentCoupon(){
  if(img&&img.dataset.baseQr){img.onerror=null;img.src=img.dataset.baseQr;}
  couponStatus('Checking coupon code…','info');
  try{
-  if(await isCouponPersistentlyInvalid(code)){
-   appliedCoupon=null;couponStatus('Invalid Coupon — this admin coupon has been removed and can no longer be used.','err');return;
-  }
   const record=await findCouponRecord(currentCourse,code);
   if(!record){appliedCoupon=null;couponStatus('Invalid coupon code, or no QR image is configured for this code.','err');return;}
-  if(record.invalid===true||record.valid===false||String(record.status||'').toLowerCase()==='invalid'){
-   appliedCoupon=null;couponStatus('Invalid Coupon — this code is no longer valid.','err');return;
-  }
   const qr=couponImageFrom(record);
   if(!qr){appliedCoupon=null;couponStatus('This coupon has no QR image configured. Please contact the admin.','err');return;}
   if(record.active===false||record.enabled===false||String(record.status||'').toLowerCase()==='disabled'){
@@ -10498,8 +10474,10 @@ async function goBack(){
  // At the root of course content, Back returns to the course catalogue (Explore list),
  // never opens the details page again. Folder/player Back steps above remain unchanged.
  closeShell();
- if(typeof window.navigateTo==='function')window.navigateTo('coursePage',true);
- else {document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id==='coursePage'));}
+ var __deReturnPage = window.__deCoursePreviousPageId;
+ if(!__deReturnPage || !document.getElementById(__deReturnPage)) __deReturnPage='coursePage';
+ if(typeof window.navigateTo==='function')window.navigateTo(__deReturnPage,false);
+ else {document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===__deReturnPage));}
 }
 // Expose the Course Reader's own hierarchical Back handler.
 window.deCRGoBack = goBack;
@@ -10615,6 +10593,13 @@ function openFolder(folder){
   return;
  }
  const groups=folderGroups();
+ // Recovery guard: if the browser has stale subject state after returning from the player,
+ // allow a clicked subject folder to be treated as a root subject again.
+ if(currentSubject && !String(folder).startsWith('__resource__') && !String(folder).startsWith('__pdfresource__') && folder!=='__all_pdfs__' && folder!=='__course_test_series__' && folder!=='__course_important_questions__'){
+  if(groups.some(g=>g.name===folder)){
+   currentSubject=''; currentResourceType=''; currentFolder=''; currentFolderItems=[]; currentLessonIndex=0;
+  }
+ }
  if(!currentSubject){
   const group=groups.find(g=>g.name===folder);if(!group)return;
   const videos=group.items.filter(x=>!itemIsPdf(x));
@@ -10640,15 +10625,28 @@ function openFolder(folder){
 function deCRReturnToFolderBrowser(){
   const player=$('deCRPlayer'), browser=$('deCRBrowser'), media=$('deCRMedia');
   if(!player||player.classList.contains('decr-hidden')) return false;
-  // Stop active media so Back really exits the player rather than leaving playback running.
-  if(media){media.querySelectorAll('iframe').forEach(f=>{try{f.src='about:blank'}catch(e){}});media.querySelectorAll('video,audio').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});}
+  // Stop playback before changing the reader view.
+  if(media){media.querySelectorAll('iframe').forEach(f=>{try{f.src='about:blank'}catch(e){}});media.querySelectorAll('video,audio').forEach(v=>{try{v.pause();v.removeAttribute('src');v.querySelectorAll('source').forEach(x=>x.removeAttribute('src'));v.load()}catch(e){}});}
   player.classList.add('decr-hidden');
   if(browser) browser.classList.remove('decr-hidden');
-  if(window.__deCoursePlayerOrigin==='home'){
-    currentSubject='';currentResourceType='';currentFolder='';currentFolderItems=[];currentLessonIndex=0;
+
+  // Test-Series-style stack: when a subject card launches the player directly,
+  // Back returns to the subject-folder grid so another subject can be opened immediately.
+  // If a lesson was launched from inside a subject's resource list, return to that list.
+  const origin=String(window.__deCoursePlayerOrigin||'home');
+  if(origin==='home'){
+    currentSubject='';
+    currentResourceType='';
+    currentFolder='';
+  }else{
+    currentResourceType='';
+    currentFolder=currentSubject||'';
   }
+  currentFolderItems=[];
+  currentLessonIndex=0;
+  lastView='browser';
   renderFolders();
-  hideMsg(); lastView='browser';
+  hideMsg();
   const title=$('deCRTopTitle'), sub=$('deCRTopSub');
   if(title) title.textContent=currentSubject||currentCourse?.title||currentCourse?.name||'Course Content';
   if(sub) sub.textContent=currentSubject?'Videos and PDF folder for this subject':'Choose a subject or folder';
@@ -11047,31 +11045,7 @@ window.addEventListener('popstate',function(e){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&box.classList.contains('is-open')){e.preventDefault();close();}});
 })();
 </script>
-<script id="decr-mobile-player-back-fix">(function(){
-  var shellId='deCourseShell', playerId='deCRPlayer', browserId='deCRBrowser';
-  var internalBackInProgress=false;
-  function el(id){return document.getElementById(id)}
-  function visible(id){var n=el(id);return !!(n&&getComputedStyle(n).display!=='none'&&!n.classList.contains('decr-hidden')&&(id!=='deCourseShell'||n.classList.contains('de-open')))}
-  function playerVisible(){return visible(shellId)&&visible(playerId)}
-  function courseReaderVisible(){return visible(shellId)}
-  function stopMedia(){var m=el('deCRMedia');if(!m)return;m.querySelectorAll('video,audio').forEach(function(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});m.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank'}catch(e){}})}
-  function returnFromPlayer(){if(!playerVisible())return false;stopMedia();if(typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();var p=el(playerId),b=el(browserId);if(p)p.classList.add('decr-hidden');if(b)b.classList.remove('decr-hidden');return true}
-  // Track each reader layer as a real browser-history step so Android hardware Back
-  // closes player -> returns to folder list -> returns to course detail -> app.
-  function pushLayer(name){try{history.pushState({__deCourseLayer:name,href:location.href},'',location.href)}catch(e){}}
-  document.addEventListener('click',function(e){
-    var lesson=e.target&&e.target.closest&&e.target.closest('[data-de-lesson]');
-    if(lesson&&visible(shellId)){pushLayer('player')}
-  },true);
-  var topback=el('deCRBack');if(topback)topback.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(returnFromPlayer())return;if(courseReaderVisible()&&typeof window.deCRGoBack==='function')window.deCRGoBack();},true);
-  window.addEventListener('popstate',function(e){
-    if(internalBackInProgress)return;
-    if(playerVisible()){e.stopImmediatePropagation();e.preventDefault();returnFromPlayer();internalBackInProgress=true;setTimeout(function(){internalBackInProgress=false},80);return;}
-    // Do not force the app's home page while the integrated course reader is open.
-    if(courseReaderVisible()&&e.state&&e.state.__deCourseLayer){e.stopImmediatePropagation();e.preventDefault();if(e.state.__deCourseLayer==='folder'){returnFromPlayer();}else if(e.state.__deCourseLayer==='reader'&&typeof window.goBack==='function'){window.goBack();}}
-  },true);
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&playerVisible()){e.preventDefault();returnFromPlayer()}},true);
-})();</script>
+<!-- Replaced conflicting navigation handler: decr-mobile-player-back-fix -->
 
 <script id="de-login-loader-and-course-back-fix">
 (function(){
@@ -11080,45 +11054,14 @@ window.addEventListener('popstate',function(e){
     if(loader){loader.classList.add('hide');loader.style.pointerEvents='none';}
     document.body.style.overflow='';
   }
-  // Do not leave the splash screen over the app if Firebase/network initialization is slow.
   window.addEventListener('load',function(){setTimeout(hideLoader,900);},{once:true});
   setTimeout(hideLoader,4500);
-
-  function visible(el){
-    return !!(el && getComputedStyle(el).display!=='none' &&
-      !el.classList.contains('decr-hidden') &&
-      (el.id!=='deCourseShell' || el.classList.contains('de-open')));
-  }
-  // The global arrow must respect the course reader's internal folder/player stack.
-  document.addEventListener('click',function(e){
-    var btn=e.target && e.target.closest('#headerBackBtn');
-    if(!btn)return;
-    var shell=document.getElementById('deCourseShell');
-    if(!visible(shell))return;
-    var player=document.getElementById('deCRPlayer');
-    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-      window.deCRReturnToFolderBrowser();
-      try{history.pushState({__deCourseLayer:'folder'},'',location.href);}catch(_){}
-      return;
-    }
-    // Follow Course Reader's own stack, rather than routing directly to app Home.
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    var player=document.getElementById('deCRPlayer');
-    if(visible(player) && typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
-    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
-    var ownBack=document.getElementById('deCRBack');if(ownBack)ownBack.click();
-  },true);
-
-  // If Firebase auth restores a session after the splash timeout, ensure app/auth
-  // visibility remains governed by the existing Firebase auth listener.
   document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){
       var loader=document.getElementById('page-loader');
       if(loader && loader.classList.contains('hide'))return;
       var app=document.getElementById('app'), auth=document.getElementById('authPage');
-      if(app && getComputedStyle(app).display!=='none')hideLoader();
-      else if(auth && getComputedStyle(auth).display!=='none')hideLoader();
+      if((app && getComputedStyle(app).display!=='none') || (auth && getComputedStyle(auth).display!=='none')) hideLoader();
     },1800);
   });
 })();
@@ -11135,42 +11078,18 @@ window.addEventListener('popstate',function(e){
 #deCourseShell .decr-folder[data-de-folder="__all_pdfs__"] .decr-folder-info strong{color:#9a3412}
 </style>
 
-<script id="de-course-final-back-and-validity-refresh">
+<script id="de-course-validity-refresh-only">
 (function(){
- const $=id=>document.getElementById(id);
- function shellOpen(){const s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
- function playerOpen(){const p=$('deCRPlayer');return !!(p&&!p.classList.contains('decr-hidden')&&getComputedStyle(p).display!=='none');}
- let handling=false;
- function returnPlayer(){if(!playerOpen())return false;if(typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();return false;}
- document.addEventListener('click',function(e){
-   const b=e.target&&e.target.closest&&e.target.closest('#deCRBack,#headerBackBtn');
-   if(!b||!shellOpen()||!playerOpen())return;
-   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-   returnPlayer();
-   try{history.pushState({__deCourseLayer:'folder'},'',location.href)}catch(_){ }
- },true);
- window.addEventListener('popstate',function(e){
-   if(handling||!shellOpen())return;
-   if(playerOpen()){
-     handling=true;returnPlayer();
-     setTimeout(()=>{handling=false},120);
-     return;
-   }
-   // If already on the folder browser, let the existing app-level navigation handlers handle the next Back.
- });
- // Keep the home validity countdown fresh without reopening Firebase queries.
  setInterval(function(){
-   const b=$('deCRValidityBanner');if(!b||!b.isConnected)return;
-   const state=b.querySelector('.decr-validity-state');if(!state)return;
-   const text=state.textContent||'';
-   const match=text.match(/^(\d+) day(s)? remaining$/);
-   if(match&&window.__deCourseValidityExpiry){const left=Math.max(0,Math.ceil((window.__deCourseValidityExpiry-Date.now())/86400000));state.textContent=left?`${left} day${left===1?'':'s'} remaining`:'EXPIRED';b.classList.toggle('expired',left===0);}
+   var b=document.getElementById('deCRValidityBanner');if(!b||!b.isConnected)return;
+   var state=b.querySelector('.decr-validity-state');if(!state)return;
+   var match=(state.textContent||'').match(/^(\d+) day(s)? remaining$/);
+   if(match&&window.__deCourseValidityExpiry){var left=Math.max(0,Math.ceil((window.__deCourseValidityExpiry-Date.now())/86400000));state.textContent=left?left+' day'+(left===1?'':'s')+' remaining':'EXPIRED';b.classList.toggle('expired',left===0);}
  },60000);
 })();
 </script>
 
-</body>
-</html>
+
 
 
 <style id="de-test-app-color-harmony">
@@ -11238,43 +11157,181 @@ window.addEventListener('popstate',function(e){
 </style>
 
 
-<script id="de-course-back-final-guard">
-(function(){
-  function isOpen(){var s=document.getElementById('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
-  function handle(e){
-    var b=e.target&&e.target.closest&&e.target.closest('#headerBackBtn, #deCRBack');
-    if(!b||!isOpen())return;
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    var p=document.getElementById('deCRPlayer');
-    if(p&&!p.classList.contains('decr-hidden')&&typeof window.deCRReturnToFolderBrowser==='function'){window.deCRReturnToFolderBrowser();return;}
-    if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
+<!-- Replaced conflicting navigation handler: de-course-back-final-guard -->
+
+
+<!-- Replaced conflicting navigation handler: de-course-navigation-final-patch -->
+
+
+<!-- FINAL COURSE PAGE WIDTH + PREVIOUS-PAGE BACK PATCH -->
+<style id="de-course-fullwidth-back-patch">
+  #deCourseShell{
+    width:100vw!important;
+    max-width:none!important;
+    left:0!important;
+    right:0!important;
+    margin:0!important;
   }
-  document.addEventListener('click',handle,true);
-})();
-</script>
-
-
-<script id="de-course-navigation-final-patch">
+  #deCourseShell .decr-top{
+    width:100%!important;
+    max-width:none!important;
+    padding-left:clamp(12px,2.2vw,32px)!important;
+    padding-right:clamp(12px,2.2vw,32px)!important;
+  }
+  #deCourseShell .decr-wrap{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding-left:clamp(12px,2.2vw,32px)!important;
+    padding-right:clamp(12px,2.2vw,32px)!important;
+  }
+  #deCourseShell .decr-wrap > *,
+  #deCourseShell .decr-layout,
+  #deCourseShell .decr-browser,
+  #deCourseShell .decr-content{
+    max-width:none;
+  }
+  @media(max-width:600px){
+    #deCourseShell .decr-wrap{padding:12px 10px 42px!important}
+    #deCourseShell .decr-top{padding-left:12px!important;padding-right:12px!important}
+  }
+</style>
+<script id="de-course-previous-page-state-patch">
 (function(){
  const $=id=>document.getElementById(id);
- function shellOpen(){const x=$('deCourseShell');return !!(x&&x.classList.contains('de-open')&&getComputedStyle(x).display!=='none');}
- function playerOpen(){const p=$('deCRPlayer');return !!(p&&!p.classList.contains('decr-hidden')&&getComputedStyle(p).display!=='none');}
- function back(e){
-  const b=e.target&&e.target.closest&&e.target.closest('#headerBackBtn,#deCRBack,#deCRPlayerBack');
-  if(!b||!shellOpen())return;
-  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-  if(playerOpen()){
-   if(typeof window.deCRReturnToFolderBrowser==='function')window.deCRReturnToFolderBrowser();
-   return;
-  }
-  if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
-  if(typeof window.closeShell==='function')window.closeShell();
+ let previousPageId='', wasOpen=false;
+ function shellOpen(){const s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
+ function activePageId(){const p=document.querySelector('.page.active-page');return p?p.id:'';}
+ const shell=$('deCourseShell');
+ if(shell){
+   const observer=new MutationObserver(function(){
+     const open=shellOpen();
+     if(open&&!wasOpen){previousPageId=activePageId()||window.__deCoursePreviousPageId||'';window.__deCoursePreviousPageId=previousPageId;}
+     wasOpen=open;
+   });
+   observer.observe(shell,{attributes:true,attributeFilter:['class','style']});
  }
- document.addEventListener('click',back,true);
- window.addEventListener('popstate',function(){
-  if(!shellOpen())return;
-  if(playerOpen()){if(typeof window.deCRReturnToFolderBrowser==='function')window.deCRReturnToFolderBrowser();return;}
-  if(typeof window.deCRGoBack==='function')window.deCRGoBack();
- });
+ const originalBack=window.deCRGoBack;
+ window.deCRGoBack=function(){
+   if(!shellOpen()){if(typeof originalBack==='function')return originalBack.apply(this,arguments);return;}
+   const p=$('deCRPlayer');
+   if(p&&!p.classList.contains('decr-hidden')&&typeof window.deCRReturnToFolderBrowser==='function')return window.deCRReturnToFolderBrowser();
+   // The original handler owns the real module-scoped subject/folder state.
+   // Always delegate to it so Back walks subject/PDF/root in the correct order.
+   if(typeof originalBack==='function')return originalBack.apply(this,arguments);
+   if(typeof window.closeShell==='function')window.closeShell();
+   const target=previousPageId&&$(previousPageId)?previousPageId:(window.__deCoursePreviousPageId&&$(window.__deCoursePreviousPageId)?window.__deCoursePreviousPageId:'coursePage');
+   if(typeof window.navigateTo==='function')window.navigateTo(target,false);
+   else document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===target));
+ };
 })();
 </script>
+
+<!-- FINAL IMMEDIATE BACK FIX: player -> previous reader screen, never course details -->
+<!-- Replaced conflicting navigation handler: de-course-player-immediate-back-fix -->
+
+<!-- SINGLE AUTHORITATIVE COURSE BACK CONTROLLER: desktop, mobile, keyboard and Android Back -->
+<script id="de-course-single-back-controller">
+(function(){
+ 'use strict';
+ var busy=false, popHandling=false;
+ function $(id){return document.getElementById(id);}
+ function shellOpen(){var s=$('deCourseShell');return !!(s&&s.classList.contains('de-open')&&getComputedStyle(s).display!=='none');}
+ function shown(node){return !!(node&&!node.classList.contains('decr-hidden')&&getComputedStyle(node).display!=='none');}
+ function playerOpen(){return shellOpen()&&shown($('deCRPlayer'));}
+ function browserOpen(){return shellOpen()&&shown($('deCRBrowser'));}
+ function stopPlayerMedia(){
+   var media=$('deCRMedia'); if(!media)return;
+   media.querySelectorAll('video,audio').forEach(function(v){try{v.pause();v.removeAttribute('src');v.querySelectorAll('source').forEach(function(s){s.removeAttribute('src');});v.load();}catch(_){}});
+   media.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank';}catch(_){}});
+ }
+ function toBrowser(){
+   if(!playerOpen())return false;
+   stopPlayerMedia();
+   if(typeof window.deCRReturnToFolderBrowser==='function'){
+     window.deCRReturnToFolderBrowser();
+   }else{
+     var p=$('deCRPlayer'),b=$('deCRBrowser');if(p)p.classList.add('decr-hidden');if(b)b.classList.remove('decr-hidden');
+   }
+   return true;
+ }
+ function goOneStep(){
+   if(busy)return; busy=true;
+   try{
+     if(playerOpen()){toBrowser();return;}
+     if(browserOpen()){
+       if(typeof window.deCRGoBack==='function'){window.deCRGoBack();return;}
+       if(typeof window.closeShell==='function')window.closeShell();return;
+     }
+   }finally{setTimeout(function(){busy=false;},0);}
+ }
+ // Capture phase + stopImmediatePropagation prevents legacy inline onclick/goBack handlers
+ // from routing directly to Course Details or Home while the reader is open.
+ document.addEventListener('click',function(e){
+   var btn=e.target&&e.target.closest&&e.target.closest('#headerBackBtn,#deCRBack,#deCRPlayerBack');
+   if(!btn||!shellOpen())return;
+   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();goOneStep();
+ },true);
+ // Hardware/browser Back: first Back exits the player, next Back traverses folder/subject,
+ // and only at reader root closes the reader to the page that opened it.
+ window.addEventListener('popstate',function(e){
+   if(!shellOpen()||popHandling)return;
+   popHandling=true;
+   try{
+     if(playerOpen()){
+       toBrowser();
+       // Restore an internal history sentinel so the next hardware Back remains inside reader.
+       try{history.pushState({__deCourseLayer:'folder',__deCourseReader:true},'',location.href);}catch(_){}
+       e.stopImmediatePropagation();
+       return;
+     }
+     if(browserOpen()){
+       if(typeof window.deCRGoBack==='function')window.deCRGoBack();
+       e.stopImmediatePropagation();
+     }
+   }finally{setTimeout(function(){popHandling=false;},0);}
+ },true);
+ document.addEventListener('keydown',function(e){
+   if(e.key==='Escape'&&shellOpen()){
+     e.preventDefault();e.stopPropagation();
+     goOneStep();
+   }
+ },true);
+})();
+</script>
+
+<!-- FINAL OVERRIDE: Firebase course details use the full viewport width on desktop and mobile -->
+<style id="de-firebase-course-detail-fullwidth-final-fix">
+  #deFirebaseCourseDetail{
+    width:100vw!important;max-width:none!important;left:0!important;right:0!important;
+    margin:0!important;padding:0!important;box-sizing:border-box!important;
+  }
+  #deFirebaseCourseDetail .de-fcd-wrap{
+    width:100%!important;max-width:none!important;margin:0!important;padding:0 0 34px!important;
+    box-sizing:border-box!important;
+  }
+  #deFirebaseCourseDetail .de-fcd-top{
+    width:100%!important;max-width:none!important;box-sizing:border-box!important;
+    padding-left:clamp(12px,2.2vw,32px)!important;
+    padding-right:clamp(12px,2.2vw,32px)!important;
+  }
+  #deFirebaseCourseDetail .de-fcd-banner{
+    width:100%!important;max-width:none!important;margin:0!important;border-radius:0 0 18px 18px!important;
+  }
+  #deFirebaseCourseDetail .de-fcd-main{
+    width:100%!important;max-width:none!important;box-sizing:border-box!important;
+    padding:22px clamp(12px,2.2vw,32px) 0!important;
+  }
+  #deFirebaseCourseDetail .de-fcd-panel,
+  #deFirebaseCourseDetail .de-fcd-tabs,
+  #deFirebaseCourseDetail .de-fcd-buy{width:100%;box-sizing:border-box;}
+  @media(max-width:600px){
+    #deFirebaseCourseDetail .de-fcd-wrap{padding-bottom:28px!important}
+    #deFirebaseCourseDetail .de-fcd-main{padding:18px 12px 0!important}
+    #deFirebaseCourseDetail .de-fcd-top{padding-left:12px!important;padding-right:12px!important}
+    #deFirebaseCourseDetail .de-fcd-banner{border-radius:0 0 14px 14px!important}
+  }
+</style>
+
+</body>
+</html>

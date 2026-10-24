@@ -6282,30 +6282,50 @@ Delete ${name}'s admin profile, activity, team profile, admin access record and 
 Firebase Authentication login account cannot be deleted from another user's browser session. This action cannot be undone.`))return;
       btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Deleting';
       try{
-        // Remove every coupon assigned to this UID before deleting certificate/profile records.
-        // Scan both the public coupon index and the known per-admin coupon/profile nodes.
-        const couponSnap=await get(ref(db,"publicAdminCoupons"));
-        const couponDeletes=[];
-        if(couponSnap.exists()) couponSnap.forEach(child=>{
-          const c=child.val()||{};
-          if(String(c.adminUid||c.uid||"")===String(uid)) couponDeletes.push(remove(ref(db,`publicAdminCoupons/${child.key}`)));
-        });
-        const profilePaths=[`adminProfiles/${uid}`,`teamProfiles/${uid}`,`publicTeamProfiles/${uid}`,`certificateProfiles/${uid}`,`adminCoupons/${uid}`];
-        for(const path of profilePaths){
-          try{
-            const ps=await get(ref(db,path));
-            if(ps.exists()){
-              const v=ps.val()||{};
-              const code=String(v.couponCode||v.code||"").trim().toUpperCase();
-              if(code) couponDeletes.push(remove(ref(db,`publicAdminCoupons/${code}`)));
-              couponDeletes.push(remove(ref(db,path)));
-            }
-          }catch(e){console.warn("Could not clean coupon/profile path",path,e?.message||e);}
-        }
-        await Promise.all(couponDeletes);
-        const paths=[`adminActivity/${uid}`];
+        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`teamProfiles/${uid}`,`publicTeamProfiles/${uid}`];
         if(profile.email)paths.push(`adminAccess/${adminEmailKey(profile.email)}`);
-        await Promise.all(paths.map(path=>remove(ref(db,path))));
+        // Gather this admin's coupon codes before deleting profile records.
+        const couponCodes=new Set();
+        try{
+          const [pubSnap,ownCouponSnap,profileSnap]=await Promise.all([
+            get(ref(db,'publicAdminCoupons')),
+            get(ref(db,`adminCoupons/${uid}`)),
+            get(ref(db,`adminProfiles/${uid}`))
+          ]);
+          if(pubSnap.exists()) pubSnap.forEach(ch=>{const v=ch.val()||{};if(String(v.adminUid||v.uid||'')===uid){couponCodes.add(String(v.code||v.couponCode||ch.key||'').trim().toUpperCase());}});
+          if(ownCouponSnap.exists()) { const v=ownCouponSnap.val()||{}; if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase()); if(v.code)couponCodes.add(String(v.code).trim().toUpperCase()); }
+          if(profileSnap.exists()){const v=profileSnap.val()||{};if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase());if(v.code)couponCodes.add(String(v.code).trim().toUpperCase());}
+        }catch(couponReadErr){console.warn('Could not read every coupon source before admin deletion:',couponReadErr);}
+        for(const code of [...couponCodes]) if(!code)couponCodes.delete(code);
+        // Remove all coupon records owned by the deleted UID and invalidate its codes.
+        const couponCleanupPaths=[`adminCoupons/${uid}`,`couponUsage/${uid}`];
+        await Promise.all(couponCleanupPaths.map(path=>remove(ref(db,path))));
+        try{
+          const pub=await get(ref(db,'publicAdminCoupons'));
+          if(pub.exists()){
+            const jobs=[]; pub.forEach(ch=>{const v=ch.val()||{};const code=String(v.code||v.couponCode||ch.key||'').trim().toUpperCase();if(String(v.adminUid||v.uid||'')===uid||couponCodes.has(code))jobs.push(remove(ref(db,`publicAdminCoupons/${ch.key}`)));});
+            await Promise.all(jobs);
+          }
+        }catch(err){throw new Error('Coupon cleanup failed in /publicAdminCoupons: '+(err?.message||err));}
+        // Remove coupon references from every course so deleted-admin coupons cannot be selected.
+        async function purgeCouponRefs(path){
+          const snap=await get(ref(db,path)); if(!snap.exists())return;
+          const jobs=[];
+          function walk(value,nodePath){
+            if(!value||typeof value!=='object')return;
+            for(const [key,val] of Object.entries(value)){
+              const k=String(key).trim().toUpperCase();
+              const v=val&&typeof val==='object'?val:{};
+              const owner=String(v.adminUid||v.uid||v.ownerUid||'');
+              const valCode=String(v.code||v.couponCode||'').trim().toUpperCase();
+              if((couponCodes.has(k)||couponCodes.has(valCode)) || (owner===uid && (/^courseCoupons(?:\/|$)/.test(nodePath)||/coupon/i.test(nodePath)))){
+                jobs.push(remove(ref(db,`${nodePath}/${key}`)));
+              }else if(val&&typeof val==='object') walk(val,`${nodePath}/${key}`);
+            }
+          }
+          walk(snap.val(),path); await Promise.all(jobs);
+        }
+        await Promise.all([purgeCouponRefs('courseCoupons'),purgeCouponRefs('courseCatalog')]);
         // Remove only content clearly owned by this UID; retain records with unknown ownership.
         for(const rootPath of ["news","blogs","books"]){
           const snap=await get(ref(db,rootPath));
@@ -6908,7 +6928,34 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   $("detailSemester")?.addEventListener("change",()=>{const c=catalog[detailCourseId]||{};fillSubjectsForSemester(c,$("detailSemester").value);});
   $("detailSubject")?.addEventListener("change",()=>{$("detailOtherSubjectWrap").style.display=$("detailSubject").value==="__other__"?"":"none";if($("detailSubject").value!=="__other__")$("detailOtherSubject").value="";});
   $("courseDetailFolders")?.addEventListener("click",async e=>{const editBtn=e.target.closest("[data-detail-edit]");if(editBtn){beginCourseItemEdit(Number(editBtn.dataset.detailEdit));return;}const b=e.target.closest("[data-detail-delete]");if(!b||!detailCourseId)return;if(!allowed()||!confirm("Remove this item from the course?"))return;try{const c=catalog[detailCourseId]||{},all=Array.isArray(c.items)?[...c.items]:[];if(detailEditingIndex===Number(b.dataset.detailDelete))cancelCourseItemEdit();all.splice(Number(b.dataset.detailDelete),1);await update(ref(courseDb,"courseCatalog/"+detailCourseId),{items:all,updatedAt:Date.now(),updatedBy:courseAuth.currentUser.uid});catalog[detailCourseId]={...c,items:all};renderCourseDetail();renderCatalog();detailNotice("Item removed.");}catch(err){detailNotice("Remove failed: "+err.message,"err");}});
-  document.addEventListener("click",async e=>{const open=e.target.closest("[data-course-open]");if(open){openCourseDetail(open.dataset.courseOpen);return;}const content=e.target.closest("[data-course-content]");if(content){openCourseDetail(content.dataset.courseContent);return;}const tab=e.target.closest("[data-course-tab]");if(tab){activateTab(tab.dataset.courseTab);listen();}const add=e.target.closest("#courseAddItemBtn");if(add){readItemsFromUI();addItem();}const rem=e.target.closest("[data-remove-item]");if(rem){readItemsFromUI();items.splice(Number(rem.dataset.removeItem),1);renderItems();}const edit=e.target.closest("[data-course-edit]");if(edit)editCourse(edit.dataset.courseEdit);const approve=e.target.closest("[data-course-approve]");if(approve){if(!allowed()){notice("Approval requires Founder login in both Firebase projects. Log out and log in again.","err");return;}const id=approve.dataset.courseApprove;if(!confirm("Approve and publish this course for students?"))return;approve.disabled=true;try{const courseRef=ref(courseDb,"courseCatalog/"+id);const before=await get(courseRef);if(!before.exists())throw new Error("Course not found in /courseCatalog/"+id);const now=Date.now();await update(courseRef,{status:"approved",approved:true,approvedAt:now,approvedBy:courseAuth.currentUser.uid,updatedAt:now,updatedBy:courseAuth.currentUser.uid});const check=await get(courseRef);if(!check.exists()||check.val().status!=="approved"||check.val().approved!==true)throw new Error("Firebase did not confirm approved status after save.");catalog[id]=check.val();renderCatalog();notice("Course approved and verified in Firebase.","ok");}catch(err){console.error("Course approval failed",err);notice("Approval failed: "+(err?.code?err.code+" — ":"")+String(err?.message||err)+". Confirm Founder UID KirLkZUGXoZf0cXHkuCZ4Mfnxam2 is the signed-in UID and Admin-project Rules allow /courseCatalog/"+id+" writes.","err");}finally{approve.disabled=false;}}const reject=e.target.closest("[data-course-reject]");if(reject){if(!allowed())return;const id=reject.dataset.courseReject;if(!confirm("Reject this course? It can still be edited later."))return;try{await update(ref(courseDb,"courseCatalog/"+id),{status:"rejected",approved:false,updatedAt:Date.now()});notice("Course rejected. You can edit it and approve again later.","ok");}catch(err){console.error('Course reject failed',err);const detail=String(err?.code?err.code+' — ':'')+String(err?.message||err);notice(/permission_denied|permission denied|PERMISSION_DENIED/i.test(detail)?'Reject failed: Firebase PERMISSION_DENIED. Your Realtime Database Rules do not allow the signed-in Founder UID to update /courseCatalog/'+id+'. Publish the matching Founder write rule in the SAME Firebase project used by courseDb. Details: '+detail:'Reject failed: '+detail,'err');}}const del=e.target.closest("[data-course-delete]");if(del){if(!allowed()||!confirm("Delete this course and its content metadata? Uploaded Cloudinary files are not deleted."))return;try{await remove(ref(courseDb,"courseCatalog/"+del.dataset.courseDelete));notice("Course deleted.","ok");}catch(err){notice("Delete failed: "+err.message,"err");}}});
+  document.addEventListener("click",async e=>{const open=e.target.closest("[data-course-open]");if(open){openCourseDetail(open.dataset.courseOpen);return;}const content=e.target.closest("[data-course-content]");if(content){openCourseDetail(content.dataset.courseContent);return;}const tab=e.target.closest("[data-course-tab]");if(tab){activateTab(tab.dataset.courseTab);listen();}const add=e.target.closest("#courseAddItemBtn");if(add){readItemsFromUI();addItem();}const rem=e.target.closest("[data-remove-item]");if(rem){readItemsFromUI();items.splice(Number(rem.dataset.removeItem),1);renderItems();}const edit=e.target.closest("[data-course-edit]");if(edit)editCourse(edit.dataset.courseEdit);const approve=e.target.closest("[data-course-approve]");if(approve){if(!allowed()){notice("Approval requires Founder login in both Firebase projects. Log out and log in again.","err");return;}const id=approve.dataset.courseApprove;if(!confirm("Approve and publish this course for students?"))return;approve.disabled=true;try{const courseRef=ref(courseDb,"courseCatalog/"+id);const before=await get(courseRef);if(!before.exists())throw new Error("Course not found in /courseCatalog/"+id);const now=Date.now();await update(courseRef,{status:"approved",approved:true,approvedAt:now,approvedBy:courseAuth.currentUser.uid,updatedAt:now,updatedBy:courseAuth.currentUser.uid});const check=await get(courseRef);if(!check.exists()||check.val().status!=="approved"||check.val().approved!==true)throw new Error("Firebase did not confirm approved status after save.");catalog[id]=check.val();renderCatalog();notice("Course approved and verified in Firebase.","ok");}catch(err){console.error("Course approval failed",err);notice("Approval failed: "+(err?.code?err.code+" — ":"")+String(err?.message||err)+". Confirm Founder UID KirLkZUGXoZf0cXHkuCZ4Mfnxam2 is the signed-in UID and Admin-project Rules allow /courseCatalog/"+id+" writes.","err");}finally{approve.disabled=false;}}const reject=e.target.closest("[data-course-reject]");if(reject){
+      if(!allowed()){notice("Reject blocked: sign in with the Founder account authorized by Firebase Rules.","err");return;}
+      const id=reject.dataset.courseReject;
+      if(!id){notice("Reject failed: course ID is missing.","err");return;}
+      if(!confirm("Reject this course? It can still be edited later."))return;
+      reject.disabled=true;
+      const previousLabel=reject.innerHTML;
+      reject.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Rejecting…';
+      try{
+        const user=courseAuth.currentUser;
+        if(!user)throw new Error("NOT_AUTHENTICATED: Please sign in again.");
+        const courseRef=ref(courseDb,"courseCatalog/"+id);
+        const before=await get(courseRef);
+        if(!before.exists())throw new Error("COURSE_NOT_FOUND: /courseCatalog/"+id+" does not exist in diplomaengineers-869df.");
+        const now=Date.now();
+        await update(courseRef,{status:"rejected",approved:false,rejectedAt:now,rejectedBy:user.uid,updatedAt:now,updatedBy:user.uid});
+        const check=await get(courseRef);
+        if(!check.exists()||check.val().status!=="rejected"||check.val().approved!==false)throw new Error("VERIFY_FAILED: Firebase did not confirm the rejected status.");
+        catalog[id]=check.val();renderCatalog();
+        notice("Course rejected and verified in Firebase.","ok");
+      }catch(err){
+        console.error("Course rejection failed",err);
+        const code=String(err?.code||"");
+        const raw=String(err?.message||err||"Unknown Firebase error");
+        const denied=/permission_denied|permission denied|PERMISSION_DENIED/i.test(code+" "+raw);
+        notice(denied?"Reject failed (PERMISSION_DENIED). Publish Rules in the SAME Realtime Database project diplomaengineers-869df. /courseCatalog/"+id+" must allow .write for the signed-in Founder UID KirLkZUGXoZf0cXHkuCZ4Mfnxam2. Current signed-in UID: "+(courseAuth.currentUser?.uid||"none")+". Rules cannot be changed from HTML. Original error: "+raw:"Reject failed: "+raw,"err");
+      }finally{reject.disabled=false;reject.innerHTML=previousLabel;}
+    }const del=e.target.closest("[data-course-delete]");if(del){if(!allowed()||!confirm("Delete this course and its content metadata? Uploaded Cloudinary files are not deleted."))return;try{await remove(ref(courseDb,"courseCatalog/"+del.dataset.courseDelete));notice("Course deleted.","ok");}catch(err){notice("Delete failed: "+err.message,"err");}}});
   $("courseBannerFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const preview=$("courseBannerPreview");preview.src=URL.createObjectURL(f);preview.hidden=false;});
   $("courseQrFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const preview=$("courseQrPreview");preview.src=URL.createObjectURL(f);preview.hidden=false;});
   $("courseAddCouponBtn")?.addEventListener("click",()=>{const rows=collectCouponRows();rows.push({code:"",price:"",qrUrl:""});renderCouponRows(rows);const box=$("courseCouponsEditor");box?.scrollTo({left:box.scrollWidth,behavior:"smooth"});});
@@ -7993,9 +8040,9 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
    adminsLoadPromise=(async()=>{
     try{
      const fb=getFb();if(!fb?.get||!fb?.ref||!window.db)throw Error('Firebase is still initializing. Please refresh after login.');
-     // Read member/account records as well as admin/profile records from the connected diplomaengineers-869df database.
-     // Firebase Authentication users cannot be enumerated from browser code; members must have a database profile under one of these paths.
-     const paths=['users','userProfiles','studentProfiles','profiles','publicUsers','userAccounts','adminProfiles','teamProfiles','publicTeamProfiles','adminActivity','adminAccess','adminCoupons','publicAdminCoupons','certificateProfiles'];
+     // Read only profile/coupon records from the connected diplomaengineers-869df database.
+     // Never merge student-project records or ranking builders into Founder Coupon Control.
+     const paths=['adminProfiles','teamProfiles','publicTeamProfiles','adminActivity','adminAccess','adminCoupons','publicAdminCoupons','certificateProfiles'];
      const results=await Promise.all(paths.map(path=>fb.get(fb.ref(window.db,path)).then(s=>({path,data:s.val()||{}})).catch(error=>({path,error,data:{}}))));
      const merged=new Map();
      const add=(uid,raw,path)=>{if(!uid||!raw||typeof raw!=='object')return;const p=Array.isArray(raw)?{}:raw;const id=String(p.uid||p.userId||p.adminUid||uid);const old=merged.get(id)||{uid:id,p:{},sources:[]};old.p={...p,...old.p,uid:id};old.sources.push(path);merged.set(id,old);};
@@ -8005,8 +8052,8 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
      const rows=[...merged.values()].filter(x=>x.uid===FOUNDER_UID||active(x.p)).sort((a,b)=>a.uid===FOUNDER_UID?-1:b.uid===FOUNDER_UID?1:nameOf(a.p,a.uid).localeCompare(nameOf(b.p,b.uid))).map(x=>({...x,code:codeOf(x.p,x.uid)}));
      window.__founderCouponAdminRows=rows;
      const sel=$('founderAdminCouponSelect');if(sel)sel.innerHTML=rows.map(x=>`<option value="${esc(x.uid)}">${esc(nameOf(x.p,x.uid))}${x.uid===FOUNDER_UID?' — FOUNDER':''} — ${esc(x.uid)}</option>`).join('');
-     if(cards)cards.innerHTML=rows.length?rows.map(x=>{const p=x.p||{},photo=p.photoURL||p.photoUrl||p.photo||p.profilePhoto||p.image||'',initial=nameOf(p,x.uid).trim().charAt(0).toUpperCase()||'?',code=p.couponCode||'',src=[...new Set(x.sources||[])].join(', ');return `<button type="button" data-founder-admin-card="${esc(x.uid)}" style="flex:0 0 clamp(220px,78vw,255px);min-width:0;max-width:100%;text-align:left;scroll-snap-align:start;border:1px solid ${x.uid===FOUNDER_UID?'#fbbf24':'#dbeafe'};border-radius:15px;padding:14px;background:#fff;cursor:pointer;box-shadow:0 4px 16px #0f172a0a;touch-action:manipulation"><span style="display:flex;align-items:center;gap:10px"><span style="width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:800">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:esc(initial)}</span><span style="min-width:0;overflow-wrap:anywhere"><b style="display:block;color:#0f172a">${esc(nameOf(p,x.uid))}${x.uid===FOUNDER_UID?' 👑':''}</b><small style="display:block;color:#64748b;overflow-wrap:anywhere">UID: ${esc(x.uid)}</small><small style="display:block;color:#64748b;overflow-wrap:anywhere">${esc(p.email||p.designation||p.role||'Firebase profile')}</small></span></span><strong style="display:block;margin-top:12px;color:#1d4ed8;overflow-wrap:anywhere">${code?'✓ '+esc(code):'+ Assign Coupon Code'}</strong>${code&&Number(p.couponExpiresAt||p.expiresAt)>0?`<small style="display:block;color:${Number(p.couponExpiresAt||p.expiresAt)<=Date.now()?'#b91c1c':'#15803d'};margin-top:4px">${Number(p.couponExpiresAt||p.expiresAt)<=Date.now()?'EXPIRED':'Expires '+new Date(Number(p.couponExpiresAt||p.expiresAt)).toLocaleDateString()}</small>`:''}<small style="display:block;margin-top:5px;color:#64748b;overflow-wrap:anywhere">${esc(src||'Firebase profile')}${p.couponQrUrl||p.couponQrImage?' · QR uploaded':' · QR not uploaded'}</small></button>`;}).join(''):'<div style="padding:15px;color:#64748b">No registered member/profile records found. Check /users and /userProfiles read permission in diplomaengineers-869df.</div>';
-     adminsLoadedAt=Date.now();status(`${rows.length} member/profile records loaded from diplomaengineers-869df. Select a card to create or update a coupon.`);
+     if(cards)cards.innerHTML=rows.length?rows.map(x=>{const p=x.p||{},photo=p.photoURL||p.photoUrl||p.photo||p.profilePhoto||p.image||'',initial=nameOf(p,x.uid).trim().charAt(0).toUpperCase()||'?',code=p.couponCode||'',src=[...new Set(x.sources||[])].join(', ');return `<button type="button" data-founder-admin-card="${esc(x.uid)}" style="flex:0 0 clamp(220px,78vw,255px);min-width:0;max-width:100%;text-align:left;scroll-snap-align:start;border:1px solid ${x.uid===FOUNDER_UID?'#fbbf24':'#dbeafe'};border-radius:15px;padding:14px;background:#fff;cursor:pointer;box-shadow:0 4px 16px #0f172a0a;touch-action:manipulation"><span style="display:flex;align-items:center;gap:10px"><span style="width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:800">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:esc(initial)}</span><span style="min-width:0;overflow-wrap:anywhere"><b style="display:block;color:#0f172a">${esc(nameOf(p,x.uid))}${x.uid===FOUNDER_UID?' 👑':''}</b><small style="display:block;color:#64748b;overflow-wrap:anywhere">UID: ${esc(x.uid)}</small><small style="display:block;color:#64748b;overflow-wrap:anywhere">${esc(p.email||p.designation||p.role||'Firebase profile')}</small></span></span><strong style="display:block;margin-top:12px;color:#1d4ed8;overflow-wrap:anywhere">${code?'✓ '+esc(code):'+ Assign Coupon Code'}</strong><small style="display:block;margin-top:5px;color:#64748b;overflow-wrap:anywhere">${esc(src||'Firebase profile')}${p.couponQrUrl||p.couponQrImage?' · QR uploaded':' · QR not uploaded'}</small></button>`;}).join(''):'<div style="padding:15px;color:#64748b">No active Admin profiles found in diplomaengineers-869df.</div>';
+     adminsLoadedAt=Date.now();status(`${rows.length} active profiles loaded from diplomaengineers-869df only. Select a card to create or update a coupon.`);
     }catch(e){if(cards)cards.innerHTML='<div style="color:#b91c1c;padding:12px">Could not load profiles. Check diplomaengineers-869df Firebase read rules.</div>';status('Could not read diplomaengineers-869df records: '+(e.message||e),true);}
    })();
    try{await adminsLoadPromise;}finally{adminsLoadPromise=null;}
@@ -8015,7 +8062,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
  function openForm(uid){if(!isFounder())return status('Only Founder can assign coupon codes.',true);const x=(window.__founderCouponAdminRows||[]).find(v=>v.uid===uid);if(!x)return; $('founderCouponTargetUid').value=uid;$('founderAdminCouponSelect').value=uid;$('founderCouponAdminName').value=nameOf(x.p,uid);$('founderCouponSlideHeading').textContent='Assign Coupon · '+nameOf(x.p,uid);$('founderCouponCodeInput').value=x.p.couponCode||'';$('founderCouponQrInput').value='';const url=x.p.couponQrUrl||x.p.couponQrImage||'';const img=$('founderCouponQrPreview');if(url){img.src=url;img.hidden=false;}else{img.removeAttribute('src');img.hidden=true;}$('founderCouponSlide').style.display='block';$('founderCouponSlide').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});}
  async function saveCoupon(){if(!isFounder())return status('Only Founder can create or edit coupon codes.',true);const x=current();if(!x)return status('Select an Admin card first.',true);const code=$('founderCouponCodeInput').value.trim().toUpperCase().replace(/\s+/g,'');if(!/^[A-Z0-9_-]{3,32}$/.test(code))return status('Enter a coupon code using 3–32 letters, numbers, _ or -.',true);const btn=$('saveFounderAdminCoupon');btn.disabled=true;
    try{const fb=getFb();if(!fb?.get||!fb?.ref||!fb?.update||!window.db)throw Error('Firebase is not initialized yet. Wait a moment and retry.');const isCustom=String(x.uid).startsWith('custom_');const profilePath=isCustom?('adminCoupons/'+x.uid):('adminProfiles/'+x.uid);const snap=await fb.get(fb.ref(window.db,profilePath));const file=$('founderCouponQrInput').files?.[0];let qr=String((snap.val()||{}).couponQrUrl||(snap.val()||{}).couponQrImage||'');if(file){if(!/^image\//.test(file.type))throw Error('Please select an image file.');const data=new FormData();data.append('file',file);data.append('upload_preset','news_upload');const resp=await fetch('https://api.cloudinary.com/v1_1/ub0qgzwa/image/upload',{method:'POST',body:data});const out=await resp.json();if(!resp.ok||!out.secure_url)throw Error(out.error?.message||'QR image upload failed');qr=out.secure_url;}
-     const existing={...(x.p||{}),...(snap.val()||{})};const now=Date.now();const expiresAt=now+(30*24*60*60*1000);const patch={...existing,uid:x.uid,name:nameOf(x.p,x.uid),couponCode:code,couponCodeCreatedBy:FOUNDER_UID,couponCreatedAt:existing.couponCreatedAt||now,couponCodeUpdatedAt:now,couponExpiresAt:expiresAt,couponQrUrl:qr,couponQrImage:qr,couponQrUpdatedAt:qr?now:(existing.couponQrUpdatedAt||0),isCustomCouponIdentity:isCustom,discountPercent:20,adminRewardRupees:20,active:true};await fb.set(fb.ref(window.db,profilePath),patch);if(fb.set){await fb.set(fb.ref(window.db,'publicAdminCoupons/'+code),{code,adminUid:x.uid,adminName:nameOf(x.p,x.uid),qrUrl:qr,active:true,discountPercent:20,adminRewardRupees:20,updatedAt:now,createdAt:now,expiresAt,couponExpiresAt:expiresAt,isCustomCouponIdentity:isCustom});}status(`Saved ${code} for ${nameOf(x.p,x.uid)}. It expires in 30 days.`);await loadAdmins();$('founderCouponTargetUid').value=x.uid;openForm(x.uid);
+     const existing={...(x.p||{}),...(snap.val()||{})};const patch={...existing,uid:x.uid,name:nameOf(x.p,x.uid),couponCode:code,couponCodeCreatedBy:FOUNDER_UID,couponCreatedAt:existing.couponCreatedAt||Date.now(),couponCodeUpdatedAt:Date.now(),couponQrUrl:qr,couponQrImage:qr,couponQrUpdatedAt:qr?Date.now():(existing.couponQrUpdatedAt||0),isCustomCouponIdentity:isCustom,discountPercent:20,adminRewardRupees:20,active:true};await fb.set(fb.ref(window.db,profilePath),patch);if(fb.set){await fb.set(fb.ref(window.db,'publicAdminCoupons/'+code),{code,adminUid:x.uid,adminName:nameOf(x.p,x.uid),qrUrl:qr,active:true,discountPercent:20,adminRewardRupees:20,updatedAt:Date.now(),isCustomCouponIdentity:isCustom});}status(`Saved ${code} for ${nameOf(x.p,x.uid)} to Firebase.`);await loadAdmins();$('founderCouponTargetUid').value=x.uid;openForm(x.uid);
    }catch(e){status('Save failed: '+(e.message||e)+'. Check Founder write rules on adminProfiles and Cloudinary upload preset.',true);}finally{btn.disabled=false;}}
  function addToCourse(){if(!isFounder())return status('Only Founder can attach Admin coupons to a course.',true);const x=current();if(!x)return status('Select an Admin card first.',true);const code=String(x.p.couponCode||'').trim().toUpperCase();if(!code)return status('Save a coupon code for this Admin first.',true);const box=$('courseCouponsEditor');if(!box)return status('Course coupon slider is not available.',true);let card=[...box.querySelectorAll('[data-coupon-option]')].find(el=>String(el.getAttribute('data-coupon-option')||'').toUpperCase()===code);if(!card){const saved=Array.isArray(window.__deSavedCourseCoupons)?window.__deSavedCourseCoupons:[];if(!saved.some(c=>String(c.code||c.couponCode||'').toUpperCase()===code)){saved.push({code,name:nameOf(x.p,x.uid),adminName:nameOf(x.p,x.uid),uid:x.uid,adminUid:x.uid,qrUrl:x.p.couponQrUrl||x.p.couponQrImage||'',discountPercent:Number(x.p.discountPercent||20),reward:Number(x.p.adminRewardRupees||20),price:''});window.__deSavedCourseCoupons=saved;}window.__renderCourseCouponOptions?.();card=[...box.querySelectorAll('[data-coupon-option]')].find(el=>String(el.getAttribute('data-coupon-option')||'').toUpperCase()===code);}if(!card)return status('Coupon saved, but it could not be displayed. Refresh the coupon list and try again.',true);const check=card.querySelector('[data-coupon-select]');if(check&&!check.checked){check.checked=true;check.dispatchEvent(new Event('change',{bubbles:true}));}box.scrollTo({left:Math.max(0,card.offsetLeft-(box.clientWidth-card.offsetWidth)/2),behavior:'auto'});status('Selected '+code+' ('+nameOf(x.p,x.uid)+') in the horizontal course coupon slider. Set its course price, then save the course.');}
  $('createCustomCouponIdentity')?.addEventListener('click',()=>{if(!isFounder())return status('Only Founder can create coupon identities.',true);const f=$('customCouponIdentityForm');if(f)f.style.display=f.style.display==='none'?'block':'none';});
@@ -8117,8 +8164,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
  async function load(){const u=window.auth?.currentUser;if(!u)return;const w=$('deAdminOwnCouponWidget');if(!w)return;try{const fb=window.__adminFirebaseMain;if(!fb?.get||!fb?.ref||!window.db)return;let p={};for(const path of ['adminProfiles/'+u.uid,'teamProfiles/'+u.uid,'certificateProfiles/'+u.uid,'publicTeamProfiles/'+u.uid]){try{const snap=await fb.get(fb.ref(window.db,path));if(snap.exists()){p={...p,...(snap.val()||{})};if(p.couponCode||p.couponQrUrl||p.couponQrImage)break;}}catch(_){}}
    if(u.uid===F){w.style.display='none';return;}
    let code=String(p.couponCode||p.code||'').trim().toUpperCase();
-   const ownExpiry=Number(p.couponExpiresAt||p.expiresAt||((Number(p.couponCodeUpdatedAt||p.couponCreatedAt||p.updatedAt||p.createdAt||0)>0)?Number(p.couponCodeUpdatedAt||p.couponCreatedAt||p.updatedAt||p.createdAt)+30*24*60*60*1000:0));if(ownExpiry&&ownExpiry<=Date.now())code='';
-   if(!code){try{const snap=await fb.get(fb.ref(window.db,'publicAdminCoupons'));if(snap.exists())Object.entries(snap.val()||{}).some(([k,v])=>{if(String(v?.adminUid||v?.uid||'')===u.uid){p={...p,...v};const exp=Number(v?.expiresAt||v?.couponExpiresAt||((Number(v?.createdAt||v?.updatedAt||0)>0)?Number(v?.createdAt||v?.updatedAt)+30*24*60*60*1000:0));if(exp&&exp<=Date.now()){code='';return true;}code=String(v?.code||v?.couponCode||k).trim().toUpperCase();return true;}return false;});}catch(_){}}
+   if(!code){try{const snap=await fb.get(fb.ref(window.db,'publicAdminCoupons'));if(snap.exists())Object.entries(snap.val()||{}).some(([k,v])=>{if(String(v?.adminUid||v?.uid||'')===u.uid){code=String(v?.code||v?.couponCode||k).trim().toUpperCase();p={...p,...v};return true;}return false;});}catch(_){}}
    own={code,name:String(p.name||p.displayName||p.profileName||u.displayName||'Diploma Engineers Admin'),uid:u.uid,qr:String(p.couponQrUrl||p.couponQrImage||p.qrUrl||'')};
    // Put the coupon card at the top of the signed-in admin homepage, directly below the welcome/ranking hero.
    const home=document.querySelector('#homePage, #adminHome, .home-shell');const hero=home?.querySelector('.home-hero');if(hero&&w.parentElement!==hero.parentElement)hero.insertAdjacentElement('afterend',w);else if(hero&&w.previousElementSibling!==hero)hero.insertAdjacentElement('afterend',w);
@@ -8148,7 +8194,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
   // Coupon creation is separate from course creation; keep its existing row-add button hidden as an internal helper.
   const addBtn=document.getElementById('courseAddCouponBtn'); if(addBtn){addBtn.style.display='none';addBtn.setAttribute('aria-hidden','true');}
   const oldUsage=document.getElementById('adminPersonalCouponDashboard'); if(oldUsage)oldUsage.remove();
-  const header=manager.querySelector('div[style*="font-weight:800"]'); if(header)header.innerHTML='<i class="fa-solid fa-users-gear"></i> All Registered Members — Founder Coupon Control';
+  const header=manager.querySelector('div[style*="font-weight:800"]'); if(header)header.innerHTML='<i class="fa-solid fa-users-gear"></i> Active Admins — Founder Coupon Control';
   const intro=manager.querySelector('p'); if(intro)intro.textContent='Tap an eligible active Admin card to open the sliding form. Create or update the Admin coupon code and QR here. This is separate from Course Creation.';
   const attachBtn=document.getElementById('addSavedFounderCouponToCourse'); if(attachBtn)attachBtn.textContent='Add Saved Coupon to Course';
   document.getElementById('deOpenCouponManager').addEventListener('click',()=>{manager.style.display=manager.style.display==='none'?'block':'block';manager.scrollIntoView({behavior:'smooth',block:'start'});});
@@ -8193,7 +8239,6 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
     const val=snap.val()||{};
     Object.entries(val).forEach(([key,p])=>{
      if(!p||p.active===false)return;
-     const expiry=Number(p.expiresAt||p.couponExpiresAt||((Number(p.createdAt||p.updatedAt||p.couponCodeUpdatedAt||p.couponCreatedAt||0)>0)?Number(p.createdAt||p.updatedAt||p.couponCodeUpdatedAt||p.couponCreatedAt)+30*24*60*60*1000:0));if(expiry&&expiry<=Date.now())return;
      const code=String(p.code||p.couponCode||key||'').trim().toUpperCase();
      if(!code)return;
      list.push({key,code,name:p.adminName||p.name||'Admin',uid:p.adminUid||p.uid||'',qrUrl:p.qrUrl||p.couponQrUrl||p.couponQrImage||'',discountPercent:Number(p.discountPercent||20),reward:Number(p.adminRewardRupees||20),price:p.coursePrice??p.newPrice??''});
@@ -10167,123 +10212,90 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
 })();
 </script>
 
-<!-- FINAL COUPON SLIDER FIX: compact grid cards, one control bar, reliable horizontal scrolling -->
-<style id="deFinalCouponSliderFix">
-#courseCreateForm,#courseBuilder,#courseCouponsEditor,#courseCouponsEditor *{box-sizing:border-box!important}
-#courseCreateForm #courseCouponsEditor{
- display:flex!important;flex-flow:row nowrap!important;align-items:stretch!important;justify-content:flex-start!important;
- width:100%!important;max-width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;
- padding:10px!important;gap:10px!important;overflow-x:auto!important;overflow-y:hidden!important;
- overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important;scroll-snap-type:x mandatory!important;
- touch-action:pan-x!important;scrollbar-width:thin!important;background:#f8fbff!important;
-}
-#courseCreateForm #courseCouponsEditor>.course-coupon-option,
-#courseCreateForm #courseCouponsEditor>.course-coupon-add-card{
- display:flex!important;flex:0 0 190px!important;width:190px!important;min-width:190px!important;max-width:190px!important;
- min-height:205px!important;height:auto!important;flex-direction:column!important;align-items:stretch!important;
- justify-content:flex-start!important;gap:9px!important;padding:12px!important;overflow-wrap:normal!important;
- white-space:normal!important;writing-mode:horizontal-tb!important;scroll-snap-align:start!important;
-}
-#courseCreateForm #courseCouponsEditor>.course-coupon-option>label:first-child{
- display:grid!important;grid-template-columns:18px minmax(0,1fr)!important;align-items:start!important;
- gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
-}
-#courseCreateForm #courseCouponsEditor>.course-coupon-option>label:first-child>span{
- display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
- white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important;writing-mode:horizontal-tb!important;
-}
-#courseCreateForm #courseCouponsEditor .course-coupon-option b{
- display:block!important;font-size:13px!important;line-height:1.35!important;white-space:normal!important;
- word-break:normal!important;overflow-wrap:anywhere!important;writing-mode:horizontal-tb!important;
-}
-#courseCreateForm #courseCouponsEditor .course-coupon-option small,
-#courseCreateForm #courseCouponsEditor .course-coupon-option>span{
- display:block!important;line-height:1.45!important;white-space:normal!important;word-break:normal!important;
- overflow-wrap:anywhere!important;writing-mode:horizontal-tb!important;
-}
-#courseCreateForm #courseCouponsEditor .course-coupon-option label[data-price],
-#courseCreateForm #courseCouponsEditor .course-coupon-option label:has([data-coupon-price]){
- display:block!important;width:100%!important;min-width:0!important;line-height:1.4!important;
-}
-#courseCreateForm #courseCouponsEditor [data-coupon-price]{display:block!important;width:100%!important;min-width:0!important;margin-top:5px!important;padding:8px!important}
-#courseCreateForm #courseCouponsEditor .course-coupon-add-card{text-align:center!important;align-items:center!important;justify-content:center!important}
-#courseCreateForm .de-course-slider-controls{
- display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;
- width:100%!important;max-width:100%!important;min-width:0!important;margin:8px 0!important;padding:0 2px!important;
-}
-#courseCreateForm .de-course-slider-controls .de-slider-label{
- flex:1 1 auto!important;min-width:0!important;font-size:11px!important;color:#475569!important;
- white-space:normal!important;overflow-wrap:anywhere!important;
-}
-#courseCreateForm .de-course-slider-controls button{
- flex:0 0 auto!important;min-width:74px!important;padding:8px 11px!important;border:1px solid #bfdbfe!important;
- border-radius:10px!important;background:#eff6ff!important;color:#1d4ed8!important;font-size:11px!important;
- font-weight:700!important;white-space:nowrap!important;cursor:pointer!important;
-}
-#courseCreateForm #courseSemesterChoices{max-width:100%!important;min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;flex-flow:row nowrap!important;touch-action:pan-x!important;-webkit-overflow-scrolling:touch!important}
-@media(max-width:700px){
- #courseCreateForm #courseCouponsEditor>.course-coupon-option,#courseCreateForm #courseCouponsEditor>.course-coupon-add-card{flex-basis:165px!important;width:165px!important;min-width:165px!important;max-width:165px!important;padding:10px!important}
- #courseCreateForm .de-course-slider-controls{gap:5px!important}
- #courseCreateForm .de-course-slider-controls button{min-width:65px!important;padding:7px 8px!important;font-size:10px!important}
-}
-</style>
-<script id="deFinalCouponSliderFixJS">
+<!-- DE COUPON OWNER VALIDATION PATCH: inactive/deleted admins' coupons are hidden and purged from all course records -->
+<script id="de-coupon-owner-removal-guard">
 (function(){
- const ids=['courseCouponsEditor','courseSemesterChoices'];
- function normalize(id){
-  const el=document.getElementById(id);if(!el||!el.parentElement)return;
-  el.style.setProperty('width','100%','important');el.style.setProperty('max-width','100%','important');
-  el.style.setProperty('min-width','0','important');el.style.setProperty('display','flex','important');
-  el.style.setProperty('flex-flow','row nowrap','important');el.style.setProperty('overflow-x','auto','important');
-  el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('touch-action','pan-x','important');
-  el.style.setProperty('-webkit-overflow-scrolling','touch','important');
-  let bars=[...el.parentElement.querySelectorAll(':scope > .de-course-slider-controls')];
-  // Keep exactly one control bar per slider and move it directly before that slider.
-  let bar=bars.find(b=>b.dataset.sliderFor===id)||bars.find(b=>b.nextElementSibling===el)||bars[0];
-  bars.forEach(b=>{if(b!==bar)b.remove()});
-  if(!bar){bar=document.createElement('div');bar.className='de-course-slider-controls';}
-  bar.dataset.sliderFor=id;
-  if(!bar.querySelector('.de-slider-label')){const label=document.createElement('span');label.className='de-slider-label';label.textContent=id==='courseCouponsEditor'?'Coupon codes — swipe or use arrows':'Semesters — swipe or use arrows';bar.prepend(label);}
-  let buttons=[...bar.querySelectorAll('button')];
-  let prev=buttons[0],next=buttons[1];
-  buttons.slice(2).forEach(b=>b.remove());
-  if(!prev){prev=document.createElement('button');prev.type='button';prev.textContent='‹ Previous';bar.appendChild(prev);}
-  if(!next){next=document.createElement('button');next.type='button';next.textContent='Next ›';bar.appendChild(next);}
-  prev.textContent='‹ Previous';next.textContent='Next ›';
-  if(prev.dataset.bound!==id){prev.dataset.bound=id;prev.addEventListener('click',()=>el.scrollBy({left:-Math.max(170,el.clientWidth*.8),behavior:'smooth'}));}
-  if(next.dataset.bound!==id){next.dataset.bound=id;next.addEventListener('click',()=>el.scrollBy({left:Math.max(170,el.clientWidth*.8),behavior:'smooth'}));}
-  if(el.previousElementSibling!==bar)el.parentElement.insertBefore(bar,el);
-  [...el.children].forEach(child=>{
-   if(id==='courseCouponsEditor'&&(child.classList.contains('course-coupon-option')||child.classList.contains('course-coupon-add-card'))){
-    const w=innerWidth<=700?165:190;
-    ['flex','min-width','max-width','width'].forEach(prop=>child.style.setProperty(prop,prop==='flex'?`0 0 ${w}px`:`${w}px`,'important'));
-   }
-   if(id==='courseSemesterChoices'&&child.tagName==='LABEL'){
-    ['flex','min-width','max-width','width'].forEach(prop=>child.style.setProperty(prop,prop==='flex'?'0 0 135px':'135px','important'));
-   }
-  });
- }
- let queued=false;
- function apply(){ids.forEach(normalize);}
- function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply();});}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
- const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true});
- window.addEventListener('resize',schedule,{passive:true});
- // Reconcile with older slider scripts that may recreate extra controls.
- setInterval(apply,700);
-})();
-</script>
-
-<script id="deCouponExpiryAndCleanupGuard">
-(function(){
+ 'use strict';
  const FOUNDER='KirLkZUGXoZf0cXHkuCZ4Mfnxam2';
- function expired(c){const base=Number(c?.createdAt||c?.updatedAt||c?.couponCodeUpdatedAt||c?.couponCreatedAt||0);const t=Number(c?.expiresAt||c?.couponExpiresAt||(base?base+30*24*60*60*1000:0));return !!t&&t<=Date.now();}
- window.deIsCouponExpired=expired;
- // Hide expired coupons from any course coupon render path, even if cached in memory.
- const oldRender=window.__renderCourseCouponOptions;
- if(typeof oldRender==='function'&&!oldRender.__expiryWrapped){const wrapped=function(){if(Array.isArray(window.__deSavedCourseCoupons))window.__deSavedCourseCoupons=window.__deSavedCourseCoupons.filter(c=>!expired(c));return oldRender.apply(this,arguments)};wrapped.__expiryWrapped=true;window.__renderCourseCouponOptions=wrapped;}
- // Periodically refresh visible expiry labels and disable expired selection controls.
- function sweep(){document.querySelectorAll('#courseCouponsEditor [data-coupon-option]').forEach(card=>{const code=String(card.getAttribute('data-coupon-option')||'').toUpperCase();const item=(window.__deSavedCourseCoupons||[]).find(c=>String(c.code||c.couponCode||'').toUpperCase()===code);if(item&&expired(item)){const cb=card.querySelector('[data-coupon-select]');if(cb){cb.checked=false;cb.disabled=true;}card.style.opacity='.45';card.title='This coupon has expired';}})}
- setInterval(sweep,60000);document.addEventListener('DOMContentLoaded',sweep);window.addEventListener('load',sweep);
+ const $=id=>document.getElementById(id);
+ function api(){return window.firebaseDatabaseApi||window.firebaseDBApi||window.dbApi||window.firebase||{get:window.get,ref:window.ref,remove:window.remove,update:window.update,set:window.set};}
+ function founder(){return window.auth?.currentUser?.uid===FOUNDER||window.courseAuth?.currentUser?.uid===FOUNDER;}
+ function db(){return window.db||window.database||null;}
+ function activeProfile(p){if(!p||typeof p!=='object')return false;const s=String(p.status||p.accountStatus||p.adminStatus||'').toLowerCase();return p.active!==false&&p.enabled!==false&&p.disabled!==true&&p.adminDisabled!==true&&s!=='deactivated'&&s!=='disabled'&&s!=='removed'&&s!=='deleted'&&s!=='inactive';}
+ async function get(path){const a=api(),d=db();if(!d||typeof a.ref!=='function'||typeof a.get!=='function')throw Error('Firebase database SDK unavailable');const s=await a.get(a.ref(d,path));return s.exists()?s.val():null;}
+ async function del(path){const a=api(),d=db();if(typeof a.remove!=='function')throw Error('Firebase remove() unavailable');return a.remove(a.ref(d,path));}
+ async function update(path,value){const a=api(),d=db();if(typeof a.update!=='function')throw Error('Firebase update() unavailable');return a.update(a.ref(d,path),value);}
+ function couponOwner(c){return String(c?.adminUid||c?.uid||c?.ownerUid||c?.createdBy||'');}
+ function couponCode(c,k=''){return String(c?.code||c?.couponCode||c?.coupon||k||'').trim().toUpperCase();}
+ async function cleanupRemovedOwnerCoupons(){
+   if(!founder()||!db())return;
+   const a=api(); if(typeof a.get!=='function'||typeof a.ref!=='function'||typeof a.remove!=='function')return;
+   try{
+     const [pub,profiles,team,access,ownCoupons,catalog,courseCoupons]=await Promise.all([
+       get('publicAdminCoupons'),get('adminProfiles'),get('teamProfiles'),get('adminAccess'),get('adminCoupons'),get('courseCatalog'),get('courseCoupons')
+     ]);
+     const invalidUids=new Set();
+     // If a UID has no remaining active admin/profile/access record, invalidate its coupon.
+     const allUids=new Set([...Object.keys(profiles||{}),...Object.keys(team||{}),...Object.keys(access||{}),...Object.keys(ownCoupons||{})]);
+     for(const [code,c] of Object.entries(pub||{})){
+       const uid=couponOwner(c); if(!uid||uid===FOUNDER)continue;
+       const p=profiles?.[uid]||team?.[uid]||ownCoupons?.[uid]||null;
+       const ac=access?.[uid]||Object.values(access||{}).find(v=>String(v?.uid||'')===uid)||null;
+       // An explicit deactivation/removal anywhere disables immediately. Missing profile is considered removed
+       // only when there is no corresponding admin/team/access record at all.
+       const explicitInactive=[p,ac].filter(Boolean).some(v=>!activeProfile(v));
+       const missingEverywhere=!allUids.has(uid);
+       if(c?.active===false||c?.disabled===true||explicitInactive||missingEverywhere)invalidUids.add(uid);
+     }
+     const badCodes=new Set();
+     for(const [key,c] of Object.entries(pub||{}))if(invalidUids.has(couponOwner(c))){const code=couponCode(c,key);if(code)badCodes.add(code);}
+     const jobs=[];
+     for(const [key,c] of Object.entries(pub||{}))if(invalidUids.has(couponOwner(c))||c?.active===false){jobs.push(del('publicAdminCoupons/'+key));}
+     for(const uid of invalidUids){jobs.push(del('adminCoupons/'+uid).catch(()=>{}));if(profiles?.[uid]&&(profiles[uid].couponCode||profiles[uid].code)){const code=String(profiles[uid].couponCode||profiles[uid].code).trim().toUpperCase();if(code)badCodes.add(code);}if(profiles?.[uid])jobs.push(update('adminProfiles/'+uid,{couponCode:null,couponQrUrl:null,couponQrImage:null,couponDisabled:true,couponDisabledAt:Date.now()}).catch(()=>{}));}
+     await Promise.all(jobs);
+     async function strip(node,path,root){
+       if(!node||typeof node!=='object')return;
+       const tasks=[];
+       for(const [k,v] of Object.entries(node)){
+         const code=couponCode(v,k),owner=couponOwner(v),isCouponObj=(/coupon/i.test(path)||/coupon/i.test(k)||v&&typeof v==='object'&&(v.code||v.couponCode));
+         if(isCouponObj&&(badCodes.has(code)||invalidUids.has(owner))){tasks.push(del(path+'/'+k).catch(e=>console.warn('Coupon ref cleanup blocked:',path+'/'+k,e?.message||e)));continue;}
+         if(v&&typeof v==='object')await strip(v,path+'/'+k,root);
+       }
+       await Promise.all(tasks);
+     }
+     if(catalog)await strip(catalog,'courseCatalog','courseCatalog');
+     if(courseCoupons)await strip(courseCoupons,'courseCoupons','courseCoupons');
+     // Filter in-memory picker too, so removed/inactive codes cannot be reattached without a refresh.
+     if(Array.isArray(window.__deSavedCourseCoupons))window.__deSavedCourseCoupons=window.__deSavedCourseCoupons.filter(c=>!badCodes.has(couponCode(c))&&!invalidUids.has(couponOwner(c))&&c.active!==false);
+     window.__renderCourseCouponOptions?.();
+     const select=$('deExistingCouponSelect');if(select){[...select.options].forEach(o=>{const code=String(o.textContent||'').split(' — ')[0].trim().toUpperCase();if(badCodes.has(code))o.remove();});}
+   }catch(e){console.warn('Coupon owner validation/cleanup could not complete. Check read/write rules for publicAdminCoupons, adminProfiles, adminAccess, adminCoupons, courseCatalog and courseCoupons.',e?.message||e);}
+ }
+ // Refresh coupon list only with records owned by an active admin profile.
+ async function filterCouponPicker(){
+   if(!db())return;
+   try{
+     const [pub,profiles,team,access]=await Promise.all([get('publicAdminCoupons'),get('adminProfiles'),get('teamProfiles'),get('adminAccess')]);
+     const valid=[];
+     for(const [key,c] of Object.entries(pub||{})){
+       if(!c||c.active===false||c.disabled===true)continue;
+       const uid=couponOwner(c); if(!uid)continue;
+       if(uid===FOUNDER){valid.push({...c,code:couponCode(c,key),adminUid:uid});continue;}
+       const p=profiles?.[uid]||team?.[uid];
+       const ac=access?.[uid]||Object.values(access||{}).find(v=>String(v?.uid||'')===uid);
+       if(!p||!activeProfile(p)||ac&&!activeProfile(ac))continue;
+       valid.push({...c,code:couponCode(c,key),adminUid:uid});
+     }
+     window.__deValidCouponCodes=new Set(valid.map(c=>couponCode(c)).filter(Boolean));
+     if(Array.isArray(window.__deSavedCourseCoupons))window.__deSavedCourseCoupons=window.__deSavedCourseCoupons.filter(c=>window.__deValidCouponCodes.has(couponCode(c)));
+     window.__renderCourseCouponOptions?.();
+   }catch(e){console.warn('Could not validate coupon owners:',e?.message||e);}
+ }
+ window.deValidateAndCleanupRemovedAdminCoupons=cleanupRemovedOwnerCoupons;
+ window.deFilterCouponsByActiveOwner=filterCouponPicker;
+ function start(){if(founder())cleanupRemovedOwnerCoupons();filterCouponPicker();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,900));else setTimeout(start,900);
+ window.addEventListener('load',()=>setTimeout(start,1400));
+ $('refreshFounderAdminCoupons')?.addEventListener('click',()=>setTimeout(start,500));
 })();
 </script>

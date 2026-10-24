@@ -10474,8 +10474,10 @@ async function goBack(){
  // At the root of course content, Back returns to the course catalogue (Explore list),
  // never opens the details page again. Folder/player Back steps above remain unchanged.
  closeShell();
- if(typeof window.navigateTo==='function')window.navigateTo('coursePage',true);
- else {document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id==='coursePage'));}
+ var __deReturnPage = window.__deCoursePreviousPageId;
+ if(!__deReturnPage || !document.getElementById(__deReturnPage)) __deReturnPage='coursePage';
+ if(typeof window.navigateTo==='function')window.navigateTo(__deReturnPage,false);
+ else {document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===__deReturnPage));}
 }
 // Expose the Course Reader's own hierarchical Back handler.
 window.deCRGoBack = goBack;
@@ -11252,5 +11254,109 @@ window.addEventListener('popstate',function(e){
   if(playerOpen()){if(typeof window.deCRReturnToFolderBrowser==='function')window.deCRReturnToFolderBrowser();return;}
   if(typeof window.deCRGoBack==='function')window.deCRGoBack();
  });
+})();
+</script>
+
+
+<!-- FINAL COURSE PAGE WIDTH + PREVIOUS-PAGE BACK PATCH -->
+<style id="de-course-fullwidth-back-patch">
+  #deCourseShell{
+    width:100vw!important;
+    max-width:none!important;
+    left:0!important;
+    right:0!important;
+    margin:0!important;
+  }
+  #deCourseShell .decr-top{
+    width:100%!important;
+    max-width:none!important;
+    padding-left:clamp(12px,2.2vw,32px)!important;
+    padding-right:clamp(12px,2.2vw,32px)!important;
+  }
+  #deCourseShell .decr-wrap{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding-left:clamp(12px,2.2vw,32px)!important;
+    padding-right:clamp(12px,2.2vw,32px)!important;
+  }
+  #deCourseShell .decr-wrap > *,
+  #deCourseShell .decr-layout,
+  #deCourseShell .decr-browser,
+  #deCourseShell .decr-content{
+    max-width:none;
+  }
+  @media(max-width:600px){
+    #deCourseShell .decr-wrap{padding:12px 10px 42px!important}
+    #deCourseShell .decr-top{padding-left:12px!important;padding-right:12px!important}
+  }
+</style>
+<script id="de-course-previous-page-back-patch">
+(function(){
+  const $ = id => document.getElementById(id);
+  let previousPageId = '';
+  let wasShellOpen = false;
+
+  function shellOpen(){
+    const shell = $('deCourseShell');
+    return !!(shell && shell.classList.contains('de-open') &&
+      getComputedStyle(shell).display !== 'none');
+  }
+  function activePageId(){
+    const page = document.querySelector('.page.active-page');
+    return page ? page.id : '';
+  }
+
+  // Remember the app page that was visible immediately before the reader opens.
+  const shell = $('deCourseShell');
+  if(shell){
+    const observer = new MutationObserver(function(){
+      const open = shellOpen();
+      if(open && !wasShellOpen){
+        previousPageId = activePageId();
+        window.__deCoursePreviousPageId = previousPageId;
+      }
+      wasShellOpen = open;
+    });
+    observer.observe(shell,{attributes:true,attributeFilter:['class','style']});
+  }
+
+  const originalBack = window.deCRGoBack;
+  window.deCRGoBack = function(){
+    if(!shellOpen()){
+      if(typeof originalBack === 'function') return originalBack.apply(this,arguments);
+      return;
+    }
+    const player = $('deCRPlayer');
+    if(player && !player.classList.contains('decr-hidden') &&
+       typeof window.deCRReturnToFolderBrowser === 'function'){
+      return window.deCRReturnToFolderBrowser();
+    }
+
+    // Keep the existing subject/folder navigation; only change the root-level exit.
+    const subject = window.currentSubject;
+    const resourceType = window.currentResourceType;
+    if(subject === '__ALL_PDFS__' || (subject && resourceType === 'pdf') || subject){
+      if(typeof originalBack === 'function') return originalBack.apply(this,arguments);
+    }
+
+    if(typeof window.closeShell === 'function') window.closeShell();
+    const target = previousPageId && $(previousPageId) ? previousPageId : 'coursePage';
+    if(typeof window.navigateTo === 'function') window.navigateTo(target,false);
+    else {
+      document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===target));
+    }
+  };
+
+  // Ensure the desktop header arrow and mobile/app arrow use the same reader back stack.
+  document.addEventListener('click',function(e){
+    const btn=e.target && e.target.closest &&
+      e.target.closest('#headerBackBtn,#deCRBack');
+    if(!btn || !shellOpen()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if(typeof window.deCRGoBack === 'function') window.deCRGoBack();
+  },true);
 })();
 </script>

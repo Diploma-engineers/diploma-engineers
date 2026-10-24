@@ -6379,9 +6379,6 @@ async function getShareIdentity(uid,profile){
 ===================================================== */
 let tsGeneratedTest=null;
 let tsGeneratedTests=[];
-let tsEditingId=null;
-function deContentFounder(){return !!auth?.currentUser && auth.currentUser.uid === "KirLkZUGXoZf0cXHkuCZ4Mfnxam2";}
-function deCanManageContent(record){return !!auth?.currentUser && (deContentFounder() || record?.createdBy === auth.currentUser.uid || (!!record?.createdByEmail && record.createdByEmail.toLowerCase() === String(auth.currentUser.email||"").toLowerCase()));}
 let tsAllTests={};
 let tsLoadedOnce=false;
 const TS=id=>document.getElementById(id);
@@ -6593,7 +6590,7 @@ D) Watt
 **Answer: A) Ohm**`;
 
 function tsFillForm(t){
-  if(!t)return;if(!deCanManageContent(t)){tsToast("सिर्फ uploader या Founder edit कर सकता है।");return;}tsEditingId=t.id||Object.keys(tsAllTests).find(k=>tsAllTests[k]===t)||null;
+  if(!t)return;
   TS("tsFolderName").value=t.folderName||"";TS("tsTestTitle").value=t.title||"";TS("tsBranch").value=t.branch||t.category||"Common";TS("tsSemester").value=t.semester||"";TS("tsSubject").value=t.subject||"";TS("tsTopic").value=t.topic||"";
   TS("tsDuration").value=t.durationMinutes??30;TS("tsMarks").value=t.marksPerQuestion??1;TS("tsNegative").value=t.negativeMark??0;TS("tsPassPercentage").value=t.passPercentage??40;TS("tsDescription").value=t.description||"";TS("tsInstructions").value=t.instructions||"";
   if(t.multiUnit&&Array.isArray(t.units)){
@@ -6646,12 +6643,12 @@ function iqUpdateBranchPreview(){const b=iqEl("iqBranch")?.value||"Common",el=iq
 async function iqSave(isDraft=false){
   if(!auth.currentUser){iqStatus("Please login again to save to Firebase.",true);return;}
   const d=iqCollect(); if(d.content && /\bUNIT\b/i.test(d.content) && d.unitCount>0 && d.questionCount===0){iqStatus("Units detect हुए लेकिन numbered questions नहीं मिले। हर question को 1. या 1) से शुरू करें।",true);return;} if(!d.subject||!d.semester||!d.content){if(!isDraft)iqStatus("Subject भरें, Category 1–6 चुनें और Questions paste करें।",true);return;}
-  try{const now=Date.now();Object.assign(d,{status:isDraft?"draft":"published",updatedAt:now});
-    let r;if(iqCurrentId){r=ref(db,"importantQuestions/"+iqCurrentId);const oldSnap=await get(r),old=oldSnap.val();if(!old)throw new Error("Sheet not found.");if(!deCanManageContent(old))throw new Error("सिर्फ uploader या Founder इस Important Questions sheet को edit कर सकता है।");d.createdBy=old.createdBy||auth.currentUser.uid;d.createdByEmail=old.createdByEmail||auth.currentUser.email||"";d.createdAt=old.createdAt||now;d.id=iqCurrentId;await update(r,d);}else{d.createdBy=auth.currentUser.uid;d.createdByEmail=auth.currentUser.email||"";r=push(ref(db,"importantQuestions"));d.id=r.key;d.createdAt=now;await set(r,d);iqCurrentId=r.key;}
+  try{const now=Date.now();Object.assign(d,{status:isDraft?"draft":"published",createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||"",updatedAt:now});
+    let r;if(iqCurrentId){r=ref(db,"importantQuestions/"+iqCurrentId);const old=await get(r);d.createdAt=old.val()?.createdAt||now;d.id=iqCurrentId;await update(r,d);}else{r=push(ref(db,"importantQuestions"));d.id=r.key;d.createdAt=now;await set(r,d);iqCurrentId=r.key;}
     iqStatus(isDraft?"Draft auto-saved to Firebase.":"Sheet saved successfully to Firebase.");await iqLoadSaved();
   }catch(e){console.error("Important questions save error",e);iqStatus("Save failed: "+(e.message||"Check Firebase Database Rules."),true);}
 }
-async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>v&&(deContentFounder()||v.createdBy===auth.currentUser.uid||String(v.createdByEmail||"").toLowerCase()===String(auth.currentUser.email||"").toLowerCase())).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>`<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"} questions • ${Number(v.unitCount)||0} units</small></div><div style="display:flex;gap:7px;flex-wrap:wrap">${deCanManageContent(v)?`<button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button>`:`<small>Uploaded by another admin • read only</small>`}</div></div>`).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;if(!deCanManageContent(d)){iqStatus("सिर्फ uploader या Founder edit कर सकता है।",true);return;}iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqRenderUnitEditor();iqStatus("Loaded for editing. Edit unit titles/questions below, apply changes, then Save Sheet.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{const target=(await get(ref(db,"importantQuestions/"+b.dataset.iqDelete))).val();if(!target||!deCanManageContent(target)){iqStatus("सिर्फ uploader या Founder delete कर सकता है।",true);return;}if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
+async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>v&& (v.createdBy===auth.currentUser.uid || v.createdByEmail===auth.currentUser.email)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>`<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"} questions • ${Number(v.unitCount)||0} units</small></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button></div></div>`).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqRenderUnitEditor();iqStatus("Loaded for editing. Edit unit titles/questions below, apply changes, then Save Sheet.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
   }catch(e){console.error(e);list.textContent="Unable to load. Check Firebase rules for importantQuestions.";}}
 function iqNew(){const keepBranch=iqEl("iqBranch")?.value||"Common",keepSemester=iqEl("iqSemester")?.value||"";iqCurrentId=null;iqEl("iqTitle").value="";iqEl("iqContent").value="";iqEl("iqSubject").value="";iqEl("iqBranch").value=keepBranch;iqEl("iqSemester").value=keepSemester;iqUpdateBranchPreview();iqEl("iqVisibility").value=keepBranch==="Common"?"all":"branch";iqRenderUnitEditor();iqStatus("Form cleared. Selected branch and semester are preserved.");}
 iqEl("iqBranch")?.addEventListener("change",iqUpdateBranchPreview);iqUpdateBranchPreview();iqRenderUnitEditor();
@@ -6672,18 +6669,14 @@ async function tsSaveTest(status){
   if(!hasUnitHeadings&&(!tsGetValue("tsTestTitle")||!tsGetValue("tsTopic"))){tsToast("Single unit के लिए Test Title और Unit/Topic Title भरें.");(!tsGetValue("tsTestTitle")?TS("tsTestTitle"):TS("tsTopic")).focus();return;}
   try{
     const saved=[];
-    if(tsEditingId){
-      const oldSnap=await get(ref(db,"testSeries/"+tsEditingId)),old=oldSnap.val();
-      if(!old)throw new Error("Test Series not found.");
-      if(!deCanManageContent(old))throw new Error("सिर्फ uploader या Founder इस Test Series को edit कर सकता है।");
-      const g=tsGeneratedTests[0],now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
-      const data={folderName:tsGetValue("tsFolderName")||g.subject||tsGetValue("tsSubject")||"General",category:g.category||selectedCategory,branch:g.category||selectedCategory,availableToAllBranches:(g.category||selectedCategory)==="Common",semester:g.semester||tsGetValue("tsSemester"),subject:g.subject||tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:now,updatedAt:now,createdBy:old.createdBy||auth.currentUser.uid||"",createdByEmail:old.createdByEmail||auth.currentUser.email||"",createdAt:old.createdAt||now};
-      data.id=tsEditingId;data.slug=old.slug||tsSlugify(data.title)+"-"+tsEditingId.slice(-5);if(status==="published")data.publishedAt=now;else delete data.publishedAt;
-      await update(ref(db,"testSeries/"+tsEditingId),data);saved.push(data);tsEditingId=null;
-    }else{
-      for(const g of tsGeneratedTests){
-        const now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
-        const data={folderName:
+    for(const g of tsGeneratedTests){
+      const now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
+      const data={folderName:tsGetValue("tsFolderName")||g.subject||tsGetValue("tsSubject")||"General",category:g.category||selectedCategory,branch:g.category||selectedCategory,availableToAllBranches:(g.category||selectedCategory)==="Common",semester:g.semester||tsGetValue("tsSemester"),subject:g.subject||tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:now,updatedAt:now,createdBy:auth.currentUser.uid||"",createdByEmail:auth.currentUser.email||""};
+      const newRef=push(ref(db,"testSeries"));data.id=newRef.key;data.slug=tsSlugify(data.title)+"-"+newRef.key.slice(-5);if(status==="published")data.publishedAt=now;
+      await set(newRef,data);saved.push(data);
+    }
+    TS("tsGeneratedCode").textContent=JSON.stringify({savedCount:saved.length,tests:saved},null,2);
+    tsToast(`${saved.length} unit test(s) ${status==="published"?"published":"draft में save"} हुए।`);await loadTestSeries(true);
   }catch(e){console.error("Test Series save error:",e);tsToast(tsDbError(e));}
 }
 async function loadTestSeries(force=false){
@@ -6697,25 +6690,24 @@ function tsRenderList(){
   const entries=Object.entries(tsAllTests).sort((a,b)=>Number(b[1]?.createdAt||0)-Number(a[1]?.createdAt||0)),published=entries.filter(([,t])=>t.status==="published"&&t.active!==false).length;
   TS("tsTestCountInfo").innerHTML=`<b>${entries.length}</b> total · <b>${published}</b> published · <b>${entries.length-published}</b> draft`;
   if(!entries.length){TS("tsTestsList").innerHTML='<div class="ts-empty">No Test Series found.</div>';return;}
-  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>`<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0">${deCanManageContent(t)?`<button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}" title="Edit"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}" title="Publish / Unpublish"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}" title="Delete"><i class="fa-solid fa-trash"></i></button>`:`<small>Read only</small>`}</div></td></tr>`).join("")}</tbody></table></div>`;
+  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>`<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0"><button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function tsOpenConfirm(title,msg,action){TS("tsModalTitle").textContent=title;TS("tsModalText").textContent=msg;window.__tsConfirmAction=action;TS("tsConfirmModal").classList.add("show");}
 function tsCloseConfirm(){window.__tsConfirmAction=null;TS("tsConfirmModal").classList.remove("show");}
 async function tsTogglePublish(id){
-  const t=tsAllTests[id];if(!t)return;if(!deCanManageContent(t)){tsToast("सिर्फ uploader या Founder publish/unpublish कर सकता है।");return;}const publishing=t.status!=="published";
+  const t=tsAllTests[id];if(!t)return;const publishing=t.status!=="published";
   tsOpenConfirm(publishing?"Publish Test?":"Unpublish Test?",publishing?"This test will become visible to students.":"This test will be hidden from students.",async()=>{
     try{await update(ref(db,"testSeries/"+id),{status:publishing?"published":"draft",active:publishing,updatedAt:Date.now(),...(publishing?{publishedAt:Date.now()}: {})});tsToast(publishing?"Test published.":"Test unpublished.");await loadTestSeries(true);}
     catch(e){tsToast(tsDbError(e));}
   });
 }
 async function tsDeleteTest(id){
-  const t=tsAllTests[id];if(!t)return;if(!deCanManageContent(t)){tsToast("सिर्फ uploader या Founder delete कर सकता है।");return;}
+  const t=tsAllTests[id];if(!t)return;
   tsOpenConfirm("Delete Test?",`"${t.title||"Untitled"}" permanently delete हो जाएगा. यह action वापस नहीं किया जा सकता।`,async()=>{
     try{await remove(ref(db,"testSeries/"+id));tsToast("Test deleted.");await loadTestSeries(true);}catch(e){tsToast(tsDbError(e));}
   });
 }
 function tsResetForm(){
-  tsEditingId=null;
   ["tsFolderName","tsTestTitle","tsSubject","tsTopic","tsDescription","tsInstructions","tsMcqInput"].forEach(id=>{if(TS(id))TS(id).value="";});
   if(TS("tsBranch"))TS("tsBranch").value="Common";if(TS("tsSemester"))TS("tsSemester").value="";
   TS("tsDuration").value=30;TS("tsMarks").value=1;TS("tsNegative").value=0;TS("tsPassPercentage").value=40;tsGeneratedTest=null;tsGeneratedTests=[];TS("tsStats").classList.add("hidden");TS("tsPreview").innerHTML='<div class="ts-empty"><i class="fa-regular fa-rectangle-list"></i><p>Questions will appear here after Auto Create.</p></div>';TS("tsGeneratedCode").textContent="No test generated yet.";
@@ -10149,119 +10141,5 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
  function apply(){const form=$('courseCreateForm');if(form){form.style.setProperty('width','100%','important');form.style.setProperty('max-width','100%','important');form.style.setProperty('min-width','0','important');}makeScrollable('courseCouponsEditor');makeScrollable('courseSemesterChoices');}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
  let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply();});});observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',apply,{passive:true});
-})();
-</script>
-
-
-<!-- FINAL OVERRIDE: one control bar per slider + fitted responsive course form -->
-<style id="deFinalCourseSliderSingleBarFix">
-html,body{max-width:100%;overflow-x:hidden!important}
-#courseCreateForm,#courseCreateForm *{box-sizing:border-box}
-#courseCreateForm{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
-#courseCreateForm .course-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;max-width:100%!important;min-width:0!important}
-#courseCreateForm .course-field,#courseCreateForm .course-wide{min-width:0!important;max-width:100%!important}
-#courseCreateForm input,#courseCreateForm select,#courseCreateForm textarea{max-width:100%!important;min-width:0!important}
-#courseCreateForm #courseCouponsEditor,#courseCreateForm #courseSemesterChoices{display:flex!important;flex-flow:row nowrap!important;justify-content:flex-start!important;align-items:stretch!important;gap:10px!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;scrollbar-width:thin!important;scroll-behavior:smooth!important;padding:10px 4px 14px!important}
-#courseCreateForm #courseCouponsEditor>*{flex:0 0 170px!important;width:170px!important;min-width:170px!important;max-width:170px!important;min-height:0!important}
-#courseCreateForm #courseSemesterChoices>label{display:flex!important;flex:0 0 138px!important;width:138px!important;min-width:138px!important;max-width:138px!important;white-space:normal!important;overflow-wrap:anywhere!important;cursor:pointer!important}
-#courseCreateForm .de-course-slider-controls{display:flex!important;flex-flow:row nowrap!important;align-items:center!important;gap:8px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:8px 0 5px!important}
-#courseCreateForm .de-course-slider-controls .de-slider-label{flex:1 1 auto!important;min-width:0!important;font-size:12px!important;overflow-wrap:anywhere!important}
-#courseCreateForm .de-course-slider-controls button{flex:0 0 auto!important;width:auto!important;min-width:64px!important;max-width:none!important;white-space:nowrap!important;padding:8px 10px!important}
-@media(max-width:700px){#courseCreateForm .course-form-grid{grid-template-columns:minmax(0,1fr)!important}#courseCreateForm .course-wide{grid-column:1!important}#courseCreateForm #courseCouponsEditor>*{flex-basis:158px!important;width:158px!important;min-width:158px!important;max-width:158px!important}#courseCreateForm #courseSemesterChoices>label{flex-basis:128px!important;width:128px!important;min-width:128px!important;max-width:128px!important}#courseCreateForm .de-course-slider-controls{gap:5px!important}#courseCreateForm .de-course-slider-controls button{min-width:58px!important;padding:8px!important;font-size:12px!important}}
-</style>
-<script id="deFinalCourseSliderSingleBarFixJS">
-(function(){
- const ids=['courseCouponsEditor','courseSemesterChoices'];
- const $=id=>document.getElementById(id);
- function fixOne(id){
-  const el=$(id);if(!el||!el.parentElement)return;
-  const parent=el.parentElement;
-  // Keep exactly one control bar immediately before the slider. Remove duplicates
-  // created by older patch scripts, including bars separated by other elements.
-  let bars=[...parent.querySelectorAll(':scope > .de-course-slider-controls')];
-  let bar=bars.shift()||null;bars.forEach(b=>b.remove());
-  if(!bar){bar=document.createElement('div');bar.className='de-course-slider-controls';parent.insertBefore(bar,el);}
-  if(bar.nextElementSibling!==el)parent.insertBefore(bar,el);
-  if(bar.dataset.finalSliderControls!=='1'){
-   bar.replaceChildren();
-   const label=document.createElement('span');label.className='de-slider-label';label.textContent=id==='courseCouponsEditor'?'Coupon codes — swipe to see more':'Semesters — swipe to see more';
-   const prev=document.createElement('button');prev.type='button';prev.textContent='‹ Prev';prev.setAttribute('aria-label','Previous '+id);
-   const next=document.createElement('button');next.type='button';next.textContent='Next ›';next.setAttribute('aria-label','Next '+id);
-   prev.addEventListener('click',()=>el.scrollBy({left:-Math.max(140,Math.floor(el.clientWidth*.75)),behavior:'smooth'}));
-   next.addEventListener('click',()=>el.scrollBy({left:Math.max(140,Math.floor(el.clientWidth*.75)),behavior:'smooth'}));
-   bar.append(label,prev,next);bar.dataset.finalSliderControls='1';
-  }
-  el.style.setProperty('width','100%','important');el.style.setProperty('max-width','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('overflow-x','auto','important');el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('display','flex','important');el.style.setProperty('flex-flow','row nowrap','important');el.style.setProperty('touch-action','pan-x pan-y','important');el.style.setProperty('-webkit-overflow-scrolling','touch','important');
-  [...el.children].forEach(child=>{
-   if(id==='courseCouponsEditor'){
-    child.style.setProperty('flex','0 0 '+(innerWidth<=700?'158px':'170px'),'important');child.style.setProperty('width',innerWidth<=700?'158px':'170px','important');child.style.setProperty('min-width',innerWidth<=700?'158px':'170px','important');child.style.setProperty('max-width',innerWidth<=700?'158px':'170px','important');
-   }else if(child.tagName==='LABEL'){
-    const w=innerWidth<=700?'128px':'138px';child.style.setProperty('flex','0 0 '+w,'important');child.style.setProperty('width',w,'important');child.style.setProperty('min-width',w,'important');child.style.setProperty('max-width',w,'important');
-   }
-  });
- }
- let queued=false;
- function apply(){queued=false;const form=$('courseCreateForm');if(form){form.style.setProperty('width','100%','important');form.style.setProperty('max-width','100%','important');form.style.setProperty('min-width','0','important');}ids.forEach(fixOne);}
- function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
- const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',schedule,{passive:true});
-})();
-</script>
-
-<!-- FINAL FIX: compact coupon cards, true horizontal scrolling, one control bar per slider -->
-<style id="deCouponSliderFinalFix">
-#courseCreateForm,#courseCreateForm *{box-sizing:border-box}
-#courseCreateForm{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
-#courseCouponsEditor,#courseSemesterChoices{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;gap:10px!important;scroll-snap-type:x proximity!important;scrollbar-width:thin!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x!important;padding:10px!important}
-#courseCouponsEditor>.course-coupon-option,#courseCouponsEditor>.course-coupon-add-card{display:flex!important;flex:0 0 170px!important;width:170px!important;min-width:170px!important;max-width:170px!important;min-height:250px!important;height:auto!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;padding:12px!important;gap:8px!important}
-#courseCouponsEditor .course-coupon-option *{max-width:100%;box-sizing:border-box;white-space:normal!important;writing-mode:horizontal-tb!important;overflow-wrap:anywhere!important;word-break:normal!important}
-#courseCouponsEditor .course-coupon-option label,#courseCouponsEditor .course-coupon-option small,#courseCouponsEditor .course-coupon-option p,#courseCouponsEditor .course-coupon-option b{display:block!important;width:100%!important;line-height:1.4!important}
-#courseCouponsEditor .course-coupon-option input[type=text],#courseCouponsEditor .course-coupon-option input[type=number],#courseCouponsEditor .course-coupon-option input:not([type]){width:100%!important;min-width:0!important;height:34px!important;padding:7px 9px!important;font-size:11px!important}
-#courseCouponsEditor .course-coupon-option input[type=checkbox]{width:16px!important;height:16px!important;align-self:flex-start!important;flex:none!important}
-#courseCouponsEditor .course-coupon-add-card{align-items:center!important;justify-content:center!important;text-align:center!important;border:1px dashed #93c5fd!important;background:#f3f8ff!important}
-#courseCouponsEditor .course-coupon-add-card button{max-width:100%!important;white-space:normal!important;padding:8px!important;font-size:11px!important}
-#courseSemesterChoices>label{flex:0 0 135px!important;width:135px!important;min-width:135px!important;max-width:135px!important;white-space:normal!important;overflow-wrap:anywhere!important}
-.de-course-slider-controls{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;width:100%!important;max-width:100%!important;min-width:0!important;padding:7px 0!important;margin:5px 0!important}
-.de-course-slider-controls .de-slider-label{flex:1 1 auto!important;min-width:0!important;font-size:11px!important;line-height:1.35!important;white-space:normal!important}
-.de-course-slider-controls button{flex:0 0 auto!important;padding:7px 10px!important;border:1px solid #bfdbfe!important;border-radius:10px!important;background:#eff6ff!important;color:#1d4ed8!important;font:700 11px Poppins,Arial,sans-serif!important;white-space:nowrap!important;cursor:pointer!important}
-@media(max-width:600px){
- #courseCouponsEditor>.course-coupon-option,#courseCouponsEditor>.course-coupon-add-card{flex-basis:150px!important;width:150px!important;min-width:150px!important;max-width:150px!important;padding:10px!important;min-height:230px!important}
- #courseCouponsEditor{gap:8px!important;padding:8px!important}
- .de-course-slider-controls button{padding:7px 8px!important;font-size:10px!important}
-}
-</style>
-<script id="deCouponSliderFinalControlDeduplicator">
-(function(){
- const ids=['courseCouponsEditor','courseSemesterChoices'];
- function fix(){
-  const els=ids.map(id=>({id,el:document.getElementById(id)})).filter(x=>x.el&&x.el.parentElement);
-  // Clear duplicate/legacy bars once, then create exactly one immediately before each slider.
-  const scope=document.getElementById('courseCreateForm')||document;
-  [...scope.querySelectorAll('.de-course-slider-controls')].forEach(b=>b.remove());
-  els.forEach(({id,el})=>{
-   const parent=el.parentElement,bar=document.createElement('div');bar.className='de-course-slider-controls';
-   const label=document.createElement('span');label.className='de-slider-label';
-   label.textContent=id==='courseCouponsEditor'?'Coupon codes · swipe or use arrows':'Semesters · swipe or use arrows';
-   const prev=document.createElement('button');prev.type='button';prev.textContent='‹ Previous';
-   const next=document.createElement('button');next.type='button';next.textContent='Next ›';
-   prev.addEventListener('click',()=>el.scrollBy({left:-Math.max(150,Math.floor(el.clientWidth*.8)),behavior:'smooth'}));
-   next.addEventListener('click',()=>el.scrollBy({left:Math.max(150,Math.floor(el.clientWidth*.8)),behavior:'smooth'}));
-   bar.append(label,prev,next);parent.insertBefore(bar,el);
-   ['width','max-width'].forEach(prop=>el.style.setProperty(prop,'100%','important'));
-   el.style.setProperty('min-width','0','important');el.style.setProperty('display','flex','important');
-   el.style.setProperty('flex-flow','row nowrap','important');el.style.setProperty('overflow-x','auto','important');
-   el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('touch-action','pan-x','important');
-   [...el.children].forEach(child=>{
-    if(id==='courseCouponsEditor'&&(child.classList.contains('course-coupon-option')||child.classList.contains('course-coupon-add-card'))){
-     const w=innerWidth<=600?'150px':'170px';
-     ['flex','width','min-width','max-width'].forEach(prop=>child.style.setProperty(prop,prop==='flex'?'0 0 '+w:w,'important'));
-     child.style.setProperty('writing-mode','horizontal-tb','important');
-    }
-   });
-  });
- }
- let timer;function schedule(){clearTimeout(timer);timer=setTimeout(fix,350);}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(fix,700));else setTimeout(fix,700);
- window.addEventListener('load',()=>setTimeout(fix,900));window.addEventListener('resize',schedule,{passive:true});
 })();
 </script>

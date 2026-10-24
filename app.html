@@ -11360,3 +11360,66 @@ window.addEventListener('popstate',function(e){
   },true);
 })();
 </script>
+
+<!-- FINAL IMMEDIATE BACK FIX: player -> previous reader screen, never course details -->
+<script id="de-course-player-immediate-back-fix">
+(function(){
+  'use strict';
+  var handling = false;
+  function el(id){ return document.getElementById(id); }
+  function visible(node){
+    return !!(node && !node.classList.contains('decr-hidden') &&
+      getComputedStyle(node).display !== 'none');
+  }
+  function readerOpen(){
+    var s=el('deCourseShell');
+    return !!(s && s.classList.contains('de-open') && getComputedStyle(s).display!=='none');
+  }
+  function playerOpen(){ return readerOpen() && visible(el('deCRPlayer')); }
+  function browserOpen(){ return readerOpen() && visible(el('deCRBrowser')); }
+  function returnToPreviousReaderScreen(){
+    if(handling) return;
+    handling=true;
+    try{
+      if(playerOpen()){
+        // This is the important step: leave Part-1/Part-2 and return to the
+        // folder/subject browser, not the course-details page.
+        if(typeof window.deCRReturnToFolderBrowser==='function'){
+          window.deCRReturnToFolderBrowser();
+        } else {
+          var p=el('deCRPlayer'), b=el('deCRBrowser'), m=el('deCRMedia');
+          if(m){m.querySelectorAll('iframe').forEach(function(f){try{f.src='about:blank';}catch(_){}});}
+          if(p)p.classList.add('decr-hidden');
+          if(b)b.classList.remove('decr-hidden');
+        }
+        return;
+      }
+      if(browserOpen() && typeof window.deCRGoBack==='function'){
+        window.deCRGoBack();
+      }
+    } finally {
+      // Release on the next frame so multiple legacy handlers cannot double-run.
+      requestAnimationFrame(function(){handling=false;});
+    }
+  }
+  // Capture before legacy handlers; prevent their course-details navigation.
+  document.addEventListener('click',function(e){
+    var btn=e.target && e.target.closest && e.target.closest('#deCRBack');
+    if(!btn || !readerOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    returnToPreviousReaderScreen();
+  },true);
+  // Mobile / Android hardware Back: popstate must also step back within the reader.
+  window.addEventListener('popstate',function(e){
+    if(!readerOpen()) return;
+    if(playerOpen() || browserOpen()){
+      e.preventDefault(); e.stopImmediatePropagation();
+      returnToPreviousReaderScreen();
+    }
+  },true);
+  // Keep the reader's top Back button responsive if opened after this patch runs.
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && playerOpen()) returnToPreviousReaderScreen();
+  },true);
+})();
+</script>

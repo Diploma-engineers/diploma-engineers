@@ -8081,11 +8081,11 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
    if(!confirm(`Delete coupon ${code} for ${nameOf(x.p,x.uid)}? It will be invalidated and removed from saved course coupon references.`))return;
    const btn=$('deleteFounderAdminCoupon');if(btn)btn.disabled=true;
    try{
-     const fb=getFb();if(!fb?.ref||!fb?.get||!fb?.set||!fb?.remove||!window.db)throw Error('Firebase is not initialized or delete permissions are missing.');
+     const fb=getFb();if(!fb?.ref||!fb?.get||!fb?.set||!window.db)throw Error('Firebase SDK/database is not initialized. Please reload the Admin Panel and retry.');
      const uid=String(x.uid||'');const isCustom=uid.startsWith('custom_');
      const marker=code.replace(/[^A-Z0-9_-]/g,'_');
      await fb.set(fb.ref(window.db,'invalidCoupons/'+marker),{code,ownerUid:uid||null,invalid:true,status:'invalid',reason:'founder_deleted_coupon',invalidatedAt:Date.now(),source:'admin_panel'});
-     const jobs=[fb.remove(fb.ref(window.db,'publicAdminCoupons/'+code)),fb.remove(fb.ref(window.db,'publicAdminCoupons/'+marker)),fb.remove(fb.ref(window.db,'adminCoupons/'+uid))];
+     const jobs=[fb.set(fb.ref(window.db,'publicAdminCoupons/'+code),null),fb.set(fb.ref(window.db,'publicAdminCoupons/'+marker),null),fb.set(fb.ref(window.db,'adminCoupons/'+uid),null)];
      if(!isCustom)jobs.push(fb.update(fb.ref(window.db,'adminProfiles/'+uid),{couponCode:null,couponQrUrl:null,couponQrImage:null,couponDisabled:true,couponDisabledAt:Date.now()}));
      await Promise.all(jobs);
      for(const root of ['courseCatalog','courseCoupons']){
@@ -8096,7 +8096,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
      }
      if(Array.isArray(window.__deSavedCourseCoupons))window.__deSavedCourseCoupons=window.__deSavedCourseCoupons.filter(c=>String(c.code||c.couponCode||'').trim().toUpperCase()!==code);
      window.__renderCourseCouponOptions?.();$('founderCouponCodeInput').value='';$('founderCouponQrPreview').hidden=true;status(`Coupon ${code} deleted and marked invalid. Refreshing list…`);await loadAdmins(true);
-   }catch(e){status('Coupon delete failed: '+(e.message||e)+'. Check Firebase Rules for invalidCoupons, publicAdminCoupons, adminCoupons, adminProfiles, courseCatalog and courseCoupons.',true);}
+   }catch(e){status('Coupon delete failed: '+(e.code?e.code+' — ':'')+(e.message||e)+'. If the error says PERMISSION_DENIED, check Founder write access for the exact path shown in the error.',true);}
    finally{if(btn)btn.disabled=false;}
  }
  $('deleteFounderAdminCoupon')?.addEventListener('click',deleteFounderCoupon);

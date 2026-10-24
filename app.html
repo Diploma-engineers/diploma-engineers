@@ -7484,7 +7484,8 @@ async function showTrackingOnCard(courseId){
   if(!o||!body)return;
   body.innerHTML='<div class="payment-tracking-card" style="padding:22px;text-align:center"><i class="fa-solid fa-spinner fa-spin"></i> Loading payment details…</div>';
   o.style.display='flex';o.setAttribute('aria-hidden','false');
-  const purchase=await getLatestPurchase(courseId).catch(()=>null);
+  let purchase=await getLatestPurchase(courseId).catch(()=>null);
+  if(!purchase){try{const raw=localStorage.getItem('de_last_course_purchase_'+currentUid+'_'+courseId);if(raw){const local=JSON.parse(raw);if(String(local.uid)===String(currentUid)&&String(local.courseId)===String(courseId))purchase=local;}}catch(e){console.warn('Local payment tracking fallback failed:',e);}}
   const access=await accessValue(courseId).catch(()=>null);
   const state=isApproved(access)||String(purchase?.status||'').toLowerCase()==='verified'?'verified':'pending';
   body.innerHTML=trackingStatusHtml(courseId,state,purchase);
@@ -7507,8 +7508,15 @@ function setPaidCardState(courseId,state){
     if(explore){explore.innerHTML='<i class="fa-solid fa-compass"></i> Explore';explore.onclick=e=>{e.preventDefault();e.stopPropagation();openCourse(courseId);};}
     if(buy){
       buy.style.display=state==='approved'?'none':'inline-flex';
-      buy.innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course ₹'+getCoursePrice(courseId);
-      buy.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(courseId);};
+      if(state==='pending'){
+        buy.innerHTML='<i class="fa-solid fa-route"></i> Track Payment';
+        buy.setAttribute('aria-label','Track course payment verification');
+        buy.onclick=e=>{e.preventDefault();e.stopPropagation();showTrackingOnCard(courseId);};
+      }else{
+        buy.innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course ₹'+getCoursePrice(courseId);
+        buy.setAttribute('aria-label','Buy course');
+        buy.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(courseId);};
+      }
     }
     card.onclick=e=>{if(e.target.closest('button,a,input,select,textarea'))return;openCourse(courseId);};
     return;
@@ -7623,29 +7631,43 @@ function showVerifyTick(){
   setTimeout(()=>{o.style.display='none';o.setAttribute('aria-hidden','true');},1050);
 }
 function trackingStatusHtml(courseId, state='pending', requestData=null){
-  const safeName=esc(requestData?.courseName||courseNames[courseId]||getCourseDisplayName(courseId)||courseId);
-  const verified=state==='verified';
   const data=requestData&&typeof requestData==='object'?requestData:{};
-  const amount=Number(data.amount);
-  const amountText='₹'+(Number.isFinite(amount)&&amount>=0?amount:(Number(getCoursePrice(courseId))||99));
-  const coupon=String(data.couponCode||'').trim();
-  const couponUsed=Boolean(coupon || data.couponUsed===true);
-  const studentName=String(data.name||data.studentName||currentProfile?.name||'Not available').trim()||'Not available';
-  const utr=String(data.utr||data.transactionId||'').trim();
+  const safeName=esc(data.courseName||data.course_name||courseNames[courseId]||getCourseDisplayName(courseId)||courseId);
+  const verified=String(state||data.status||'pending').toLowerCase()==='verified'||String(data.status||'').toLowerCase()==='approved';
+  const fallbackPrice=Number(getCoursePrice(courseId))||99;
+  const rawOriginal=data.originalAmount??data.originalPrice??data.coursePrice??data.price;
+  const rawAmount=data.amount??data.finalAmount??data.finalPayableAmount;
+  const original=Number(rawOriginal);
+  const finalAmount=Number(rawAmount);
+  const originalValue=Number.isFinite(original)&&original>=0?original:fallbackPrice;
+  const finalValue=Number.isFinite(finalAmount)&&finalAmount>=0?finalAmount:originalValue;
+  const discountRaw=data.discountAmount??data.discount??(originalValue-finalValue);
+  const discount=Number(discountRaw);
+  const coupon=String(data.couponCode||data.coupon_code||data.appliedCouponCode||'').trim();
+  const couponUsed=Boolean(coupon||data.couponUsed===true||String(data.couponUsed||'').toLowerCase()==='yes');
+  const studentName=String(data.name||data.studentName||data.student_name||currentProfile?.name||'Not available').trim()||'Not available';
+  const utr=String(data.utr||data.transactionId||data.transaction_id||data.utrNumber||'').trim();
   const qr=String(data.paymentQrImage||data.qrImage||'').trim();
   const qrSafe=/^https:\/\//i.test(qr)?qr:'';
-  const submittedDate=data.submittedAt?new Date(Number(data.submittedAt)).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'Not available';
-  const submittedTime=data.submittedAt?new Date(Number(data.submittedAt)).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'Not available';
-  const submitted=data.submittedAt?new Date(Number(data.submittedAt)).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}):'Not available';
+  let stamp=Number(data.submittedAt||data.createdAt||data.paymentTimestamp||0);
+  if(!Number.isFinite(stamp)||stamp<=0){const parsed=Date.parse(data.submittedAt||data.createdAt||'');stamp=Number.isFinite(parsed)?parsed:0;}
+  const submittedDate=String(data.submittedDate||data.paymentDate||(stamp?new Date(stamp).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'Not available'));
+  const submittedTime=String(data.submittedTime||data.paymentTime||(stamp?new Date(stamp).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'Not available'));
+  const submitted=stamp?new Date(stamp).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}):((submittedDate!=='Not available'||submittedTime!=='Not available')?submittedDate+' '+submittedTime:'Not available');
+  const purchaseId=String(data.purchaseId||data.key||data.trackingId||data.trackingID||'Not available');
+  const money=n=>'₹'+(Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'0');
   const paymentDetails=`<div class="track-payment-details" style="margin:16px 0;padding:14px;border:1px solid #dbeafe;border-radius:14px;background:#f8fbff">
-    <div style="font-weight:800;font-size:13px;color:#0f172a;margin-bottom:10px"><i class="fa-solid fa-receipt" style="color:#2563eb;margin-right:6px"></i>Your Submitted Payment Details</div>
-    <div style="display:grid;grid-template-columns:minmax(95px,auto) 1fr;gap:8px 10px;font-size:12px;overflow-wrap:anywhere">
+    <div style="font-weight:800;font-size:13px;color:#0f172a;margin-bottom:10px"><i class="fa-solid fa-receipt" style="color:#2563eb;margin-right:6px"></i>Payment Details / Tracking ID</div>
+    <div style="display:grid;grid-template-columns:minmax(110px,auto) minmax(0,1fr);gap:9px 10px;font-size:12px;overflow-wrap:anywhere">
+      <strong>Tracking ID</strong><span style="font-weight:800;color:#1d4ed8">${esc(purchaseId)}</span>
       <strong>Student Name</strong><span>${esc(studentName)}</span>
-      <strong>Course</strong><span>${safeName}</span>
-      <strong>Final Payable Amount</strong><span style="font-weight:900;color:#0f766e">${esc(amountText)}</span>
+      <strong>Course Name</strong><span>${safeName}</span>
       <strong>Coupon Used?</strong><span style="font-weight:800;color:${couponUsed?'#15803d':'#b45309'}">${couponUsed?'YES':'NO'}</span>
       <strong>Coupon Code</strong><span style="font-weight:800;color:${coupon?'#15803d':'#64748b'}">${coupon?esc(coupon):'Not used'}</span>
-      <strong>UTR / Transaction ID</strong><span style="font-weight:800;color:#1d4ed8;letter-spacing:.2px">${utr?esc(utr):'Not found'}</span>
+      <strong>Original Price</strong><span>${esc(money(originalValue))}</span>
+      <strong>Final Payable Amount</strong><span style="font-weight:900;color:#0f766e">${esc(money(finalValue))}</span>
+      <strong>Discount Amount</strong><span style="font-weight:800;color:#15803d">${esc(money(Math.max(0,Number.isFinite(discount)?discount:originalValue-finalValue)))}</span>
+      <strong>UTR / Transaction ID</strong><span style="font-weight:800;color:#1d4ed8;letter-spacing:.2px">${utr?esc(utr):'Not available'}</span>
       <strong>Payment Date</strong><span>${esc(submittedDate)}</span>
       <strong>Payment Time</strong><span>${esc(submittedTime)}</span>
       <strong>Submitted At</strong><span>${esc(submitted)}</span>
@@ -7655,14 +7677,13 @@ function trackingStatusHtml(courseId, state='pending', requestData=null){
   return `<div class="payment-tracking-card" data-tracking-course="${esc(courseId)}">
     <div class="track-head"><div class="track-icon"><i class="fa-solid fa-route"></i></div><div><div class="track-title">Payment Verification Tracking</div><div class="track-sub">${safeName}</div></div></div>
     ${paymentDetails}
-    <div class="track-step done"><div class="track-dot"><i class="fa-solid fa-check"></i></div><div><div class="track-label">Payment Request Submitted</div><div class="track-status">${utr?'UTR received • '+esc(amountText)+' submitted':'Payment details are not available yet'}</div></div></div>
+    <div class="track-step done"><div class="track-dot"><i class="fa-solid fa-check"></i></div><div><div class="track-label">Payment Request Submitted</div><div class="track-status">${utr?'UTR received • '+esc(money(finalValue))+' submitted':'Payment details are not available yet'}</div></div></div>
     <div class="track-step ${verified?'done':'active'}"><div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-clock'}"></i></div><div><div class="track-label">${verified?'Admin Verified':'Admin Verification'}</div><div class="track-status">${verified?'Payment verified successfully':'Waiting for admin to verify your payment'}</div></div></div>
     <div class="track-step ${verified?'done':'pending'}"><div class="track-dot"><i class="fa-solid ${verified?'fa-check':'fa-lock'}"></i></div><div><div class="track-label">Course Access</div><div class="track-status">${verified?'Your course access is active':'Course opens after verification'}</div></div></div>
     ${verified?'<div class="track-success"><i class="fa-solid fa-circle-check"></i> Verification complete. Your course is now accessible.</div>':''}
     <button type="button" class="course-tracking-btn" onclick="closeTracking()">Close Tracking</button>
   </div>`;
 }
-
 function findCourseCard(courseId){return getCourseCard(courseId);}
 function renderCourseTracking(courseId,state='pending',data=null){
   const card=findCourseCard(courseId);
@@ -7682,7 +7703,14 @@ async function getLatestPurchase(courseId){
   }
   // Legacy nested records remain readable for older purchases.
   const s=await get(ref(db,`utrPurchases/${currentUid}/${courseId}`)).catch(()=>null);
-  if(!s||!s.exists())return null;let latest=null;s.forEach(x=>{latest={key:x.key,...(x.val()||{})};});return latest;
+  if(s&&s.exists()){let latest=null;s.forEach(x=>{latest={key:x.key,...(x.val()||{})};});if(latest)return latest;}
+  // Flat purchase records are indexed by userPurchaseIndex. If that index is
+  // temporarily unreadable, use the last submitted details on this device.
+  try{
+    const raw=localStorage.getItem('de_last_course_purchase_'+currentUid+'_'+courseId);
+    if(raw){const local=JSON.parse(raw);if(local&&String(local.uid)===String(currentUid)&&String(local.courseId)===String(courseId))return local;}
+  }catch(e){}
+  return null;
 }
 async function refreshCourseTracking(courseId){await syncPaidCardState(courseId);}
 async function refreshAllCourseTracking(){
@@ -7721,8 +7749,23 @@ window.refreshUploadedCourseCards=async function(){
         if(validityNote){validityNote.hidden=false;validityNote.innerHTML='<i class="fa-regular fa-calendar-check"></i> Course valid till <strong>'+fmtDate(expiry)+'</strong>';validityNote.title=`Approved ${fmtDate(approved)} · Expires ${fmtDate(expiry)}`;}
         card.dataset.unlocked='true';
       }else{
+        // IMPORTANT: the validity refresh used to overwrite the pending-payment
+        // button with Buy Course every time it ran. Preserve the Track Payment
+        // state whenever this student already has a pending purchase request.
+        const pendingPurchase=await getLatestPurchase(id).catch(()=>null);
+        const isPending=!!pendingPurchase && String(pendingPurchase.status||'').toLowerCase()==='pending';
         delete buy.dataset.validityButton;delete buy.dataset.unlocked;buy.disabled=false;buy.style.display='inline-flex';buy.removeAttribute('title');buy.style.cssText='';
-        buy.innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course ₹'+getCoursePrice(id);
+        if(isPending){
+          buy.innerHTML='<i class="fa-solid fa-route"></i> Track Payment';
+          buy.setAttribute('aria-label','Track course payment verification');
+          buy.onclick=e=>{e.preventDefault();e.stopPropagation();showTrackingOnCard(id);};
+          card.dataset.paidCourse=id;card.dataset.paidState='pending';
+        }else{
+          buy.innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course ₹'+getCoursePrice(id);
+          buy.setAttribute('aria-label','Buy course');
+          buy.onclick=e=>{e.preventDefault();e.stopPropagation();openPayment(id);};
+          delete card.dataset.paidState;
+        }
         if(explore) explore.style.display='inline-flex';
         if(validityNote){validityNote.hidden=true;validityNote.textContent='';}
         delete card.dataset.unlocked;
@@ -7769,9 +7812,9 @@ async function submitPurchase(){
     const purchaseDetails={
       purchaseId:p.key,uid:currentUid,courseId:currentCourse,
       courseName:String(courseNames[currentCourse]||getCourseDisplayName(currentCourse)||currentCourse||'Course'),
-      amount:Number(currentPaymentAmount)||Number(getCoursePrice(currentCourse))||99,
-      originalAmount:Number(getCoursePrice(currentCourse))||99,
-      discountAmount:Math.max(0,(Number(getCoursePrice(currentCourse))||99)-(Number(currentPaymentAmount)||Number(getCoursePrice(currentCourse))||99)),
+      amount:Number.isFinite(Number(currentPaymentAmount))&&Number(currentPaymentAmount)>=0?Number(currentPaymentAmount):(Number(getCoursePrice(currentCourse))||99),
+      originalAmount:(()=>{const card=getCourseCard(currentCourse);const catalog=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};const n=Number(catalog.price??catalog.amount??card?.dataset?.price??getCoursePrice(currentCourse));return Number.isFinite(n)&&n>=0?n:99;})(),
+      discountAmount:Math.max(0,((()=>{const card=getCourseCard(currentCourse);const catalog=(window.__deAdminCourseCatalog||{})[String(currentCourse)]||{};const n=Number(catalog.price??catalog.amount??card?.dataset?.price??getCoursePrice(currentCourse));return Number.isFinite(n)&&n>=0?n:99;})())-(Number.isFinite(Number(currentPaymentAmount))&&Number(currentPaymentAmount)>=0?Number(currentPaymentAmount):(Number(getCoursePrice(currentCourse))||99))),
       currency:'INR',utr,couponCode:appliedCoupon?.code||'',couponUsed:!!(appliedCoupon?.code),
       couponOwnerUid:appliedCoupon?.couponOwnerUid||'',couponAdminUid:appliedCoupon?.couponOwnerUid||'',paymentQrImage:appliedCoupon?.qrImage||overlay.querySelector('.payment-qr')?.src||'',
       status:'pending',verified:false,submittedAt:now,submittedDate:new Date(now).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}),submittedTime:new Date(now).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'}),
@@ -7782,6 +7825,7 @@ async function submitPurchase(){
     };
     // Firebase remains the primary admin workflow. Also send a copy of the request to the owner's inbox via FormSubmit.
     await set(p,purchaseDetails);
+    try{localStorage.setItem('de_last_course_purchase_'+currentUid+'_'+currentCourse,JSON.stringify(purchaseDetails));}catch(e){}
     await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now}).catch(e=>console.warn('Could not save private purchase index:',e));
     try{
       const emailPayload={

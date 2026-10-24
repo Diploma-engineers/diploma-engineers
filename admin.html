@@ -10318,7 +10318,15 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
        }
      }
      const jobs=[];
-     for(const [key,c] of Object.entries(pub||{}))if(invalidUids.has(couponOwner(c))||c?.active===false){jobs.push(del('publicAdminCoupons/'+key));}
+     // Persist an invalid marker BEFORE deleting public records, so the app can reject stale codes.
+     for(const [key,c] of Object.entries(pub||{})){
+       const owner=couponOwner(c),code=couponCode(c,key);
+       if(code&&(invalidUids.has(owner)||c?.active===false||c?.disabled===true)){
+         const markerKey=code.replace(/[.#$\[\]/]/g,'_');
+         jobs.push((async()=>{const a=api(),d=db();if(typeof a.set!=='function')throw Error('Firebase set() unavailable');await a.set(a.ref(d,'invalidCoupons/'+markerKey),{code,ownerUid:owner||null,invalid:true,status:'invalid',reason:'owner_removed_or_inactive',invalidatedAt:Date.now(),source:'admin_cleanup'});})().catch(e=>console.warn('Could not persist invalid coupon marker:',code,e?.message||e)));
+         jobs.push(del('publicAdminCoupons/'+key));
+       }
+     }
      for(const uid of invalidUids){jobs.push(del('adminCoupons/'+uid).catch(()=>{}));if(profiles?.[uid]&&(profiles[uid].couponCode||profiles[uid].code)){const code=String(profiles[uid].couponCode||profiles[uid].code).trim().toUpperCase();if(code)badCodes.add(code);}if(profiles?.[uid])jobs.push(update('adminProfiles/'+uid,{couponCode:null,couponQrUrl:null,couponQrImage:null,couponDisabled:true,couponDisabledAt:Date.now()}).catch(()=>{}));}
      await Promise.all(jobs);
      async function strip(node,path,root){

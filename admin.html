@@ -8185,6 +8185,86 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 @media(max-width:600px){#deCourseCouponSelectionHeading{padding:11px 11px 4px}#courseCouponsEditor{padding:10px!important}#courseCouponsEditor .course-coupon-option,#courseCouponsEditor .course-coupon-add-card{flex-basis:178px!important;min-width:178px!important;max-width:178px!important}}
 </style>
 
+
+
+<!-- ===== COURSE SECTION: THREE-PAGE GRID HUB ===== -->
+<style id="deCourseThreeFolderHubStyles">
+#deCourseHub{margin:0 0 20px;padding:clamp(16px,3vw,26px);border:1px solid #dbeafe;border-radius:22px;background:linear-gradient(145deg,#f8fbff,#eef5ff);box-shadow:0 12px 35px rgba(37,99,235,.07)}
+#deCourseHub[hidden],#deCourseApprovalPage[hidden],#deCourseCouponPage[hidden],#deCourseCreatePage[hidden]{display:none!important}
+.de-course-hub-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.de-course-hub-head h2{margin:0;color:#1d4ed8;font-size:clamp(21px,3vw,28px)}.de-course-hub-head p{margin:6px 0 0;color:#64748b;font-size:13px;line-height:1.6}
+.de-course-folder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.de-course-folder{position:relative;min-width:0;min-height:190px;padding:20px;text-align:left;border:1px solid #dbeafe;border-radius:20px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.05);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;color:#0f172a;font-family:inherit}.de-course-folder:hover{transform:translateY(-3px);border-color:#93c5fd;box-shadow:0 14px 30px rgba(37,99,235,.12)}.de-course-folder-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#eff6ff;color:#2563eb;font-size:22px;margin-bottom:15px}.de-course-folder:nth-child(2) .de-course-folder-icon{background:#f3e8ff;color:#7c3aed}.de-course-folder:nth-child(3) .de-course-folder-icon{background:#dcfce7;color:#15803d}.de-course-folder strong{display:block;font-size:16px;font-weight:850}.de-course-folder small{display:block;margin-top:7px;color:#64748b;font-size:11px;line-height:1.6}.de-course-folder .de-folder-open{display:inline-flex;align-items:center;gap:6px;margin-top:15px;color:#2563eb;font-size:11px;font-weight:850}.de-course-page-back{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;border:1px solid #dbeafe;border-radius:11px;padding:10px 14px;background:#fff;color:#1d4ed8;font:800 12px Poppins,Arial,sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(15,23,42,.04)}.de-course-page-back:hover{background:#eff6ff}
+#deCourseCreatePage{margin-bottom:18px}#deCourseCreatePage #courseBuilder{margin-top:0!important}#deCourseApprovalPage{margin-bottom:18px;padding:clamp(14px,2.5vw,22px);border:1px solid #e2e8f0;border-radius:20px;background:#fff;box-shadow:0 8px 28px rgba(15,23,42,.05)}#deCourseApprovalPage .top{margin-top:0!important}
+@media(max-width:760px){.de-course-folder-grid{grid-template-columns:1fr}.de-course-folder{min-height:0;padding:17px;display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:13px;align-items:center}.de-course-folder-icon{grid-row:1/4;width:46px;height:46px;margin:0}.de-course-folder strong{font-size:14px}.de-course-folder small{margin-top:3px}.de-course-folder .de-folder-open{margin-top:7px}}
+</style>
+<script id="deCourseThreeFolderHubLogic">
+(function(){
+ const $=id=>document.getElementById(id);
+ function setup(){
+  const section=$('courseAdminSection'); if(!section||$('deCourseHub'))return;
+  const shell=section.querySelector('.course-admin-shell .wrap')||section.querySelector('.course-admin-shell');
+  const builder=$('courseBuilder'), detail=$('courseDetailPage'); if(!shell||!builder)return;
+  const hub=document.createElement('section');hub.id='deCourseHub';hub.innerHTML=`
+   <div class="de-course-hub-head"><div><span style="display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:900;letter-spacing:.06em"><i class="fa-solid fa-layer-group"></i> COURSE WORKSPACE</span><h2 style="margin-top:11px"><i class="fa-solid fa-graduation-cap"></i> Course Management</h2><p>Choose a workspace below. Add or edit courses, manage coupon codes, and review student course purchase requests from separate pages.</p></div></div>
+   <div class="de-course-folder-grid">
+    <button type="button" class="de-course-folder" data-de-course-page="approval"><span class="de-course-folder-icon"><i class="fa-solid fa-circle-check"></i></span><strong>Course Approval</strong><small>Review student UTR/payment requests, approve or reject access, and refresh pending requests.</small><span class="de-folder-open">Open page <i class="fa-solid fa-arrow-right"></i></span></button>
+    <button type="button" class="de-course-folder" data-de-course-page="coupon"><span class="de-course-folder-icon"><i class="fa-solid fa-ticket"></i></span><strong>Coupon Code Create</strong><small>Create or edit admin coupon codes, assign codes to profiles, upload QR images, and refresh saved coupons.</small><span class="de-folder-open">Open page <i class="fa-solid fa-arrow-right"></i></span></button>
+    <button type="button" class="de-course-folder" data-de-course-page="create"><span class="de-course-folder-icon"><i class="fa-solid fa-folder-plus"></i></span><strong>Course Create</strong><small>Add a new course, edit existing course details, upload content, attach saved coupons, and manage course publishing approvals.</small><span class="de-folder-open">Open page <i class="fa-solid fa-arrow-right"></i></span></button>
+   </div>`;
+  shell.insertBefore(hub,shell.firstChild);
+
+  // Move the existing purchase-approval UI intact into its own page so its IDs and event handlers keep working.
+  const approvalPage=document.createElement('section');approvalPage.id='deCourseApprovalPage';approvalPage.hidden=true;
+  const approvalHead=$('refreshBtn')?.closest('.top');
+  if(approvalHead){let n=approvalHead;while(n){const next=n.nextElementSibling;approvalPage.appendChild(n);if(n.id==='list')break;n=next;}}
+  if(approvalPage.children.length){const back=document.createElement('button');back.type='button';back.className='de-course-page-back';back.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back to Course Workspace';back.addEventListener('click',()=>show('home'));approvalPage.insertBefore(back,approvalPage.firstChild);shell.insertBefore(approvalPage,hub.nextSibling);}
+
+  // Existing standalone coupon manager is created by the coupon setup script; wait for it and then wrap it.
+  let couponPage=null;
+  function ensureCouponPage(){
+   const managerSection=$('deStandaloneFounderCouponManagement');if(!managerSection)return false;
+   // If the coupon manager was initialized after the course form was wrapped, move it back to the section root first.
+   if(createPage.contains(managerSection))shell.insertBefore(managerSection,createPage);
+   if(!couponPage){couponPage=document.createElement('section');couponPage.id='deCourseCouponPage';couponPage.hidden=true;const back=document.createElement('button');back.type='button';back.className='de-course-page-back';back.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back to Course Workspace';back.addEventListener('click',()=>show('home'));couponPage.appendChild(back);managerSection.parentNode.insertBefore(couponPage,managerSection);couponPage.appendChild(managerSection);}
+   return true;
+  }
+  // Wrap the course builder while preserving its IDs and Firebase logic.
+  const createPage=document.createElement('section');createPage.id='deCourseCreatePage';createPage.hidden=true;
+  const createBack=document.createElement('button');createBack.type='button';createBack.className='de-course-page-back';createBack.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back to Course Workspace';createBack.addEventListener('click',()=>show('home'));createPage.appendChild(createBack);
+  builder.parentNode.insertBefore(createPage,builder);createPage.appendChild(builder);
+  if(detail){createPage.appendChild(detail);}
+  function show(which){
+   ensureCouponPage();
+   hub.hidden=which!=='home';
+   if(approvalPage)approvalPage.hidden=which!=='approval';
+   if(couponPage)couponPage.hidden=which!=='coupon';
+   createPage.hidden=which!=='create';
+   if(which==='create'){
+    builder.style.display=''; if(detail)detail.style.display='';
+    if(typeof window.__deActivateCourseTab==='function')window.__deActivateCourseTab('create');
+    const tab=builder.querySelector('[data-course-tab="create"]');if(tab)tab.click();
+   }
+   if(which==='coupon'){
+    const mgr=$('founderAdminCouponManager');if(mgr)mgr.style.display='block';
+    const refresh=$('refreshFounderAdminCoupons');if(refresh)refresh.click();
+   }
+   if(which==='approval'){$('refreshBtn')?.click();}
+   window.scrollTo({top:0,behavior:'smooth'});
+  }
+  hub.querySelectorAll('[data-de-course-page]').forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset.deCoursePage)));
+  // Return to hub after navigating away and re-entering the Course section.
+  window.__deCourseShowHub=()=>show('home');
+  const managerPoll=setInterval(()=>{if(ensureCouponPage())clearInterval(managerPoll);},300);setTimeout(()=>clearInterval(managerPoll),12000);
+  // Course details use the existing Back to Courses control; make sure it returns to the Course Create page.
+  $('courseDetailBack')?.addEventListener('click',()=>{createPage.hidden=false;hub.hidden=true;},true);
+  // Initial landing is the three-card grid. Existing Firebase/admin logic remains attached to original elements.
+  show('home');
+ }
+ let tries=0;function boot(){if($('deCourseHub'))return;setup();if(!$('deCourseHub')&&tries++<35)setTimeout(boot,180);}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,250));else setTimeout(boot,250);
+ window.addEventListener('load',()=>setTimeout(boot,350));
+})();
+</script>
+
 </body>
 
 <style id="profile-full-width-final">

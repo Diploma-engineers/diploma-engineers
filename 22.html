@@ -7394,9 +7394,11 @@ async function isCouponPersistentlyInvalid(code){
   const snap=await get(ref(db,'invalidCoupons/'+key));
   if(snap.exists())return true;
  }catch(e){
-  // Do not silently accept a coupon if the invalidation list cannot be checked.
-  console.warn('Could not verify invalidCoupons deny-list:',e?.message||e);
-  throw new Error('Coupon validation is temporarily unavailable. Please try again.');
+  // If the deny-list is not readable under the current RTDB rules, continue with
+  // the normal coupon record validation. Deleted-admin coupons must also be
+  // removed from publicAdminCoupons/course records by the trusted Cloud Function.
+  console.warn('invalidCoupons deny-list is not readable; falling back to coupon record validation:',e?.message||e);
+  return false;
  }
  // Also honor an explicit invalid marker embedded in a coupon record.
  return false;

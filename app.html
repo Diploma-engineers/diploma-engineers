@@ -10287,7 +10287,7 @@ function renderAdminCourses(data){
   const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
   const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
   const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><span class="free-badge paid-badge de-firebase-course-price">₹${price} • UPI</span><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy</button></div></div></article>`;
+  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><span class="free-badge paid-badge de-firebase-course-price">₹${price} • UPI</span><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions de-firebase-single-action"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
  grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.validityButton==="true")return;const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
@@ -10910,6 +10910,7 @@ window.addEventListener('popstate',function(e){
   <div class="de-fcd-banner" id="deFcdBanner"><span class="de-fcd-price" id="deFcdPrice">₹99 • UPI</span></div>
   <main class="de-fcd-main">
    <h1 class="de-fcd-title" id="deFcdTitle">Course Title</h1><div class="de-fcd-branch" id="deFcdBranch">Diploma Engineering</div>
+   <div class="de-fcd-validity-inline" id="deFcdValidityInline"><strong>Course Validity</strong><span id="deFcdValidityInlineText"></span></div>
    <button class="de-fcd-buy" id="deFcdBuy" type="button"><i class="fa-solid fa-qrcode"></i> Buy Course</button>
    <div class="de-fcd-tabs" role="tablist"><button class="de-fcd-tab active" data-fcd-tab="details" type="button">Course Details</button><button class="de-fcd-tab" data-fcd-tab="content" type="button">Course Content</button></div>
    <section class="de-fcd-panel active" id="deFcdDetailsPanel">
@@ -10959,47 +10960,34 @@ window.addEventListener('popstate',function(e){
  function dateLabel(ms){return ms?new Date(ms).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Not recorded';}
  async function refreshDetailValidity(id){
    const el=$('deFcdValidityText'); if(!el)return;
+   const inline=$('deFcdValidityInline'),inlineText=$('deFcdValidityInlineText'),buy=$('deFcdBuy'),priceBadge=$('deFcdPrice');
+   const showInline=(text,approved)=>{if(inlineText)inlineText.textContent=text;if(inline)inline.style.display=approved?'block':'none';if(buy)buy.classList.toggle('de-access-approved',!!approved);if(priceBadge&&approved)priceBadge.style.display='none';else if(priceBadge)priceBadge.style.display='';};
+   showInline('Sign in to check your approval and expiry date.',false);
    el.textContent='Course validity is 210 days from the admin approval date. Checking your access…';
    try{
      // Access and approval timestamps are read from the student project, diploma-app-9a378.
      const api=await firebaseReady();
      const user=auth?.currentUser;
-     if(!api||!user){el.textContent='Course validity: 210 days from approval. Sign in to view your approval date, expiry date and remaining days.';return;}
+     if(!api||!user){el.textContent='Course validity: 210 days from approval. Sign in to view your approval date, expiry date and remaining days.';showInline('Sign in to view course expiry date.',false);return;}
      const snap=await api.get(api.ref(db,`courseAccess/${user.uid}/${id}`));
-     if(!snap.exists()) {el.textContent='Course validity: 210 days from admin approval. Your approval date and expiry countdown will appear here after your course is approved.';return;}
+     if(!snap.exists()) {el.textContent='Course validity: 210 days from admin approval. Your approval date and expiry countdown will appear here after your course is approved.';showInline('Buy the course and wait for admin approval.',false);return;}
      const v=snap.val()||{};
      let approved=Number(v.approvedAt??v.approvalAt??v.verifiedAt??v.approvedOn??v.grantedAt??0)||0;
      let expiry=Number(v.expiresAt??v.expiryAt??v.validUntil??v.validityEnd??0)||0;
      if(!approved&&expiry)approved=expiry-210*DAY_MS;
      if(!expiry&&approved)expiry=approved+210*DAY_MS;
-     if(!approved||!expiry){el.textContent='Course validity: 210 days from approval. The approval timestamp is missing in this Firebase record; ask the admin to re-approve/update this course access so the dates can be shown accurately.';return;}
+     if(!approved||!expiry){el.textContent='Course validity: 210 days from approval. The approval timestamp is missing in this Firebase record; ask the admin to re-approve/update this course access so the dates can be shown accurately.';showInline('Approval date is missing. Ask admin to update your approval.',false);return;}
      const left=Math.max(0,Math.ceil((expiry-Date.now())/DAY_MS));
      const state=Date.now()>=expiry?'EXPIRED':`${left} day${left===1?'':'s'} remaining`;
      el.innerHTML=`<strong>Validity: 210 days</strong><br>Approval / purchase approval date: ${dateLabel(approved)}<br>Expiry date: ${dateLabel(expiry)}<br><strong style="color:${left?'#166534':'#b91c1c'}">${state}</strong>`;
-   }catch(err){console.warn('[Course Detail validity]',err);el.textContent='Course validity is 210 days from admin approval. Sign in and check your connection to view the exact dates.';}
+     const valid=Date.now()<expiry;showInline(`Valid till ${dateLabel(expiry)} · ${state}`,valid);
+   }catch(err){console.warn('[Course Detail validity]',err);el.textContent='Course validity is 210 days from admin approval. Sign in and check your connection to view the exact dates.';showInline('Could not load validity. Check your connection.',false);}
  }
  window.openFirebaseCourseDetails=async function(id){
   id=String(id||'');
   const c=(window.__deAdminCourseCatalog||{})[id];
   if(!c){if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(id);else window.__dePendingCourseId=id;return;}
-  // Approved purchasers go straight to the content reader when they tap Explore.
-  // The details screen is reserved for students who explicitly choose Course Details.
-  try{
-   const api=await firebaseReady();const user=auth?.currentUser;
-   if(api&&user){
-    const snap=await api.get(api.ref(db,`courseAccess/${user.uid}/${id}`));
-    if(snap.exists()){
-     const v=snap.val()||{},st=String(v.status||v.accessStatus||v.purchaseStatus||'').toLowerCase();
-     const approved=v===true||v.approved===true||v.isApproved===true||v.access===true||v.hasAccess===true||v.paid===true||['approved','verified','active','granted','success'].includes(st);
-     const exp=Number(v.expiresAt??v.expiryAt??v.validUntil??v.validityEnd??0)||0;
-     if(approved&&(!exp||Date.now()<exp)){
-      close();returnToDetail=false;detailHistoryPushed=false;
-      if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(id);else{window.__dePendingCourseId=id;window.dispatchEvent(new CustomEvent('de:open-integrated-course',{detail:{courseId:id}}));}
-      return;
-     }
-    }
-   }
-  }catch(err){console.warn('Could not verify course access before opening details:',err);}
+  // Explore always opens course details so approved students can see the validity date under the title.
   activeId=id;const title=c.title||c.name||c.courseName||'Course',branch=c.branch||c.category||'Diploma Engineering',price=Number(c.price??c.amount??99)||99;
   const banner=c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
   $('deFcdBanner').querySelector('img')?.remove();if(banner){const img=document.createElement('img');img.src=banner;img.alt=title+' banner';img.onerror=()=>img.remove();$('deFcdBanner').prepend(img);}
@@ -11367,26 +11355,35 @@ window.addEventListener('popstate',function(e){
     #deFirebaseCourseDetail .de-fcd-top{padding-left:12px!important;padding-right:12px!important}
     #deFirebaseCourseDetail .de-fcd-banner{border-radius:0 0 14px 14px!important}
   }
+
+/* Firebase course cards have one full-width Explore action. */
+#coursePage .de-firebase-course-card .de-firebase-course-body{width:100%;box-sizing:border-box}
+#coursePage .de-firebase-course-card .de-firebase-single-action{display:flex!important;width:100%;gap:0!important}
+#coursePage .de-firebase-course-card .de-firebase-single-action .admin-course-explore{width:100%!important;flex:1 1 100%!important;display:flex;justify-content:center;align-items:center}
+#deFirebaseCourseDetail .de-fcd-validity-inline{display:none;margin:9px 0 12px;padding:10px 12px;border-radius:11px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:13px;line-height:1.55}
+#deFirebaseCourseDetail .de-fcd-validity-inline strong{display:block;font-size:14px}
+#deFirebaseCourseDetail .de-fcd-buy.de-access-approved{display:none!important}
 </style>
 
 
 <script id="de-course-sections-order-fix">
 (function(){
-  function orderCourseSections(){
-    const builtIn=document.getElementById('builtInCourseGrid');
-    const heading=document.querySelector('.de-firebase-courses-heading');
-    const firebaseGrid=document.getElementById('adminUploadedCourseGrid');
-    if(!builtIn||!heading||!firebaseGrid||!builtIn.parentNode)return;
-    const parent=builtIn.parentNode;
-    // Put the built-in/app-file courses first, then Firebase-uploaded courses.
-    if(heading.previousElementSibling!==builtIn){
-      parent.insertBefore(heading,builtIn.nextSibling);
-      parent.insertBefore(firebaseGrid,heading.nextSibling);
-    }
+ function orderCourseSections(){
+  const builtIn=document.getElementById('builtInCourseGrid');
+  const heading=document.querySelector('.de-firebase-courses-heading');
+  const firebaseGrid=document.getElementById('adminUploadedCourseGrid');
+  if(!builtIn||!heading||!firebaseGrid||!builtIn.parentNode)return;
+  const parent=builtIn.parentNode;
+  // Firebase-uploaded courses first; hardcoded app-file courses slider underneath.
+  if(builtIn.previousElementSibling!==firebaseGrid){
+   parent.insertBefore(heading,builtIn);
+   parent.insertBefore(firebaseGrid,builtIn);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',orderCourseSections);
-  else orderCourseSections();
-  setTimeout(orderCourseSections,250);
+  builtIn.classList.add('de-built-in-course-slider');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',orderCourseSections);
+ else orderCourseSections();
+ setTimeout(orderCourseSections,250);setTimeout(orderCourseSections,900);
 })();
 </script>
 
@@ -11412,6 +11409,14 @@ window.addEventListener('popstate',function(e){
     flex-basis:82vw!important;width:82vw!important;min-width:82vw!important;max-width:82vw!important;
   }
 }
+
+/* Firebase cards: one full-width Explore button. */
+#coursePage .de-firebase-course-card .de-firebase-course-body{width:100%;box-sizing:border-box}
+#coursePage .de-firebase-course-card .de-firebase-single-action{display:flex!important;width:100%;gap:0!important}
+#coursePage .de-firebase-course-card .de-firebase-single-action .admin-course-explore{width:100%!important;flex:1 1 100%!important;display:flex;justify-content:center;align-items:center}
+#deFirebaseCourseDetail .de-fcd-validity-inline{display:none;margin:9px 0 12px;padding:10px 12px;border-radius:11px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:13px;line-height:1.55}
+#deFirebaseCourseDetail .de-fcd-validity-inline strong{display:block;font-size:14px}
+#deFirebaseCourseDetail .de-fcd-buy.de-access-approved{display:none!important}
 </style>
 
 </body>

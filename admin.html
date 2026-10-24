@@ -2038,7 +2038,7 @@ body.campus-hiring-open{overflow:hidden!important;}
 <!-- ========================= APP NAVIGATION ========================= -->
 <nav class="app-shell-nav" id="appShellNav">
   <div class="app-nav-inner">
-    <div class="app-brand-mini"><img id="appNavLogo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers"><strong>Admin Panel</strong></div>
+    <div class="app-brand-mini"><img id="appNavLogo" src="https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg" alt="Diploma Engineers"><button type="button" id="deCourseTopBack" class="de-course-top-back" aria-label="Back to previous page" title="Back" hidden><i class="fa-solid fa-arrow-left"></i></button><strong id="deAdminBrandTitle">Admin Panel</strong></div>
     <div class="app-nav-links">
       <button class="app-nav-link active" data-app-target="home"><i class="fa-solid fa-house"></i>Home</button>
       <button class="app-nav-link" data-app-target="news"><i class="fa-solid fa-newspaper"></i>News</button>
@@ -8196,6 +8196,10 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 
 <!-- ===== COURSE SECTION: THREE-PAGE GRID HUB ===== -->
 <style id="deCourseThreeFolderHubStyles">
+.de-course-top-back{width:36px;height:36px;flex:0 0 36px;display:inline-grid;place-items:center;border:1px solid #dbeafe;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-size:15px;cursor:pointer;box-shadow:0 3px 10px rgba(37,99,235,.08)}
+.de-course-top-back:hover{background:#dbeafe}.de-course-top-back[hidden],#deAdminBrandTitle[hidden]{display:none!important}
+.app-brand-mini{gap:9px}
+@media(max-width:850px){.de-course-top-back{width:34px;height:34px;flex-basis:34px}}
 #deCourseHub{margin:0 0 20px;padding:clamp(16px,3vw,26px);border:1px solid #dbeafe;border-radius:22px;background:linear-gradient(145deg,#f8fbff,#eef5ff);box-shadow:0 12px 35px rgba(37,99,235,.07)}
 #deCourseHub[hidden],#deCourseApprovalPage[hidden],#deCourseCouponPage[hidden],#deCourseCreatePage[hidden]{display:none!important}
 .de-course-hub-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.de-course-hub-head h2{margin:0;color:#1d4ed8;font-size:clamp(21px,3vw,28px)}.de-course-hub-head p{margin:6px 0 0;color:#64748b;font-size:13px;line-height:1.6}
@@ -8239,7 +8243,20 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
   const createBack=document.createElement('button');createBack.type='button';createBack.className='de-course-page-back';createBack.innerHTML='<i class="fa-solid fa-arrow-left"></i> Back to Course Workspace';createBack.addEventListener('click',()=>show('home'));createPage.appendChild(createBack);
   builder.parentNode.insertBefore(createPage,builder);createPage.appendChild(builder);
   if(detail){createPage.appendChild(detail);}
-  function show(which){
+  let currentPage='home';
+  const topBack=$('deCourseTopBack');
+  const brandTitle=$('deAdminBrandTitle');
+  // Keep browser/mobile Back navigation inside the Course workspace first.
+  if(!history.state || !history.state.deCoursePage){
+   history.replaceState({...((history.state&&typeof history.state==='object')?history.state:{}),deCoursePage:'home'},'');
+  }
+  function show(which,fromHistory=false){
+   if(which!==currentPage && !fromHistory){
+    history.pushState({...((history.state&&typeof history.state==='object')?history.state:{}),deCoursePage:which},'');
+   }
+   currentPage=which;
+   if(topBack)topBack.hidden=which==='home';
+   if(brandTitle)brandTitle.hidden=which!=='home';
    ensureCouponPage();
    hub.hidden=which!=='home';
    if(approvalPage)approvalPage.hidden=which!=='approval';
@@ -8258,6 +8275,11 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
    window.scrollTo({top:0,behavior:'smooth'});
   }
   hub.querySelectorAll('[data-de-course-page]').forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset.deCoursePage)));
+  if(topBack)topBack.addEventListener('click',()=>{ if(currentPage!=='home') history.back(); });
+  window.addEventListener('popstate',event=>{
+   const page=event.state&&event.state.deCoursePage;
+   show(['home','approval','coupon','create'].includes(page)?page:'home',true);
+  });
   // Return to hub after navigating away and re-entering the Course section.
   window.__deCourseShowHub=()=>show('home');
   const managerPoll=setInterval(()=>{if(ensureCouponPage())clearInterval(managerPoll);},300);setTimeout(()=>clearInterval(managerPoll),12000);

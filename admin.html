@@ -6277,24 +6277,28 @@ async function loadAdminCertificates(){
       if(!inactive&&!confirm(`${name} is not marked deactivated. Delete this admin's records anyway?`))return;
       if(!confirm(`PERMANENT ACTION
 
-Delete ${name}'s admin profile, activity, team profile, admin access record and their News/Blogs/Books authored under this UID?
+Delete ${name}'s admin/certificate profile, activity, team profile, admin access record, coupons and their course coupon references, plus News/Blogs/Books authored under this UID?
 
 Firebase Authentication login account cannot be deleted from another user's browser session. This action cannot be undone.`))return;
       btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Deleting';
       try{
-        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`teamProfiles/${uid}`,`publicTeamProfiles/${uid}`];
+        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`teamProfiles/${uid}`,`publicTeamProfiles/${uid}`,`certificateProfiles/${uid}`,`admins/${uid}`];
         if(profile.email)paths.push(`adminAccess/${adminEmailKey(profile.email)}`);
+        // Also remove UID-keyed access record when the project stores it that way.
+        paths.push(`adminAccess/${uid}`);
         // Gather this admin's coupon codes before deleting profile records.
         const couponCodes=new Set();
         try{
-          const [pubSnap,ownCouponSnap,profileSnap]=await Promise.all([
+          const [pubSnap,ownCouponSnap,profileSnap,certSnap]=await Promise.all([
             get(ref(db,'publicAdminCoupons')),
             get(ref(db,`adminCoupons/${uid}`)),
-            get(ref(db,`adminProfiles/${uid}`))
+            get(ref(db,`adminProfiles/${uid}`)),
+            get(ref(db,`certificateProfiles/${uid}`))
           ]);
           if(pubSnap.exists()) pubSnap.forEach(ch=>{const v=ch.val()||{};if(String(v.adminUid||v.uid||'')===uid){couponCodes.add(String(v.code||v.couponCode||ch.key||'').trim().toUpperCase());}});
           if(ownCouponSnap.exists()) { const v=ownCouponSnap.val()||{}; if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase()); if(v.code)couponCodes.add(String(v.code).trim().toUpperCase()); }
-          if(profileSnap.exists()){const v=profileSnap.val()||{};if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase());if(v.code)couponCodes.add(String(v.code).trim().toUpperCase());}
+          if(profileSnap.exists()){const v=profileSnap.val()||{};if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase());if(v.code)couponCodes.add(String(v.code).trim().toUpperCase());} 
+          if(certSnap.exists()){const v=certSnap.val()||{};if(v.couponCode)couponCodes.add(String(v.couponCode).trim().toUpperCase());if(v.code)couponCodes.add(String(v.code).trim().toUpperCase());}
         }catch(couponReadErr){console.warn('Could not read every coupon source before admin deletion:',couponReadErr);}
         for(const code of [...couponCodes]) if(!code)couponCodes.delete(code);
         // Remove all coupon records owned by the deleted UID and invalidate its codes.

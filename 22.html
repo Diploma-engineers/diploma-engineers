@@ -7389,18 +7389,18 @@ async function isCouponPersistentlyInvalid(code){
  const normalized=String(code||'').trim().toUpperCase();
  if(!normalized)return true;
  const key=normalized.replace(/[.#$\[\]/]/g,'_');
- // Cloud Function writes this deny-list when the coupon owner's Firebase Auth account is deleted.
+ // Authoritative deny-list populated by the trusted Auth onDelete Cloud Function.
  try{
   const snap=await get(ref(db,'invalidCoupons/'+key));
-  if(snap.exists())return true;
+  if(snap.exists()){
+   const marker=snap.val();
+   if(marker===true || marker===1 || marker?.invalid===true || marker?.active===false || marker?.status==='invalid')return true;
+  }
  }catch(e){
-  // If the deny-list is not readable under the current RTDB rules, continue with
-  // the normal coupon record validation. Deleted-admin coupons must also be
-  // removed from publicAdminCoupons/course records by the trusted Cloud Function.
-  console.warn('invalidCoupons deny-list is not readable; falling back to coupon record validation:',e?.message||e);
-  return false;
+  // Do not block every valid coupon merely because the optional deny-list read is denied.
+  // The Cloud Function must also remove deleted owners' public coupon records.
+  console.warn('invalidCoupons read unavailable; checking current coupon owner record:',e?.message||e);
  }
- // Also honor an explicit invalid marker embedded in a coupon record.
  return false;
 }
 async function applyPaymentCoupon(){

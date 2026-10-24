@@ -7664,12 +7664,40 @@ async function refreshAllCourseTracking(){
 }
 // Called by the admin catalog listener whenever published course cards are rendered.
 window.refreshUploadedCourseCards=async function(){
+  const grid=document.getElementById('adminUploadedCourseGrid');if(!grid)return;
   if(!currentUid)return;
   const ids=Object.keys(window.__deAdminCourseCatalog||{});
   for(const id of ids){try{await syncPaidCardState(id);}catch(e){console.warn('Uploaded course state refresh failed:',id,e);}}
-  const grid=document.getElementById('adminUploadedCourseGrid');if(!grid)return;
   const cards=[...grid.querySelectorAll('[data-paid-course]')];
-  const unlocked=card=>{const b=card.querySelector('[data-admin-course-buy]');const t=(b?.textContent||'').toLowerCase();return /unlocked|purchased|open course|access granted|continue learning/.test(t)||b?.dataset?.unlocked==='true'||card.dataset.unlocked==='true';};
+  const DAY=86400000;
+  const fmtDate=ms=>ms?new Date(ms).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+  // Replace Buy with the expiry date only for courses approved and still valid for this signed-in student.
+  for(const card of cards){
+    const id=card.getAttribute('data-paid-course');
+    const buy=card.querySelector('[data-admin-course-buy]');
+    if(!buy)continue;
+    try{
+      const snap=await get(ref(db,`courseAccess/${currentUid}/${id}`));
+      const v=snap.exists()?snap.val():null;
+      const ok=!!v && isApproved(v,id);
+      let approved=Number(v?.approvedAt??v?.approvalAt??v?.verifiedAt??v?.approvedOn??v?.grantedAt??v?.updatedAt??0)||0;
+      let expiry=Number(v?.expiresAt??v?.expiryAt??v?.validUntil??v?.validityEnd??0)||0;
+      if(!expiry&&approved)expiry=approved+210*DAY;
+      if(!approved&&expiry)approved=expiry-210*DAY;
+      if(ok && expiry>Date.now()){
+        buy.dataset.validityButton='true';buy.dataset.unlocked='true';buy.disabled=true;
+        buy.style.cssText='background:#ecfdf5!important;color:#166534!important;border:1px solid #bbf7d0!important;cursor:default;opacity:1;';
+        buy.innerHTML='<i class="fa-regular fa-calendar-check"></i> Valid Till '+fmtDate(expiry);
+        buy.title=`Approved ${fmtDate(approved)} · Expires ${fmtDate(expiry)}`;
+        card.dataset.unlocked='true';
+      }else{
+        delete buy.dataset.validityButton;delete buy.dataset.unlocked;buy.disabled=false;buy.removeAttribute('title');buy.style.cssText='';
+        buy.innerHTML='<i class="fa-solid fa-qrcode"></i> Buy';
+        delete card.dataset.unlocked;
+      }
+    }catch(e){console.warn('Could not refresh course validity for',id,e);}
+  }
+  const unlocked=card=>card.dataset.unlocked==='true'||card.querySelector('[data-admin-course-buy]')?.dataset?.unlocked==='true';
   cards.sort((a,b)=>Number(unlocked(b))-Number(unlocked(a)));
   cards.forEach(card=>{const isOpen=unlocked(card);card.classList.toggle('de-course-is-unlocked',isOpen);const banner=card.querySelector('.de-firebase-course-banner');if(banner){let badge=banner.querySelector('.de-course-unlocked-badge');if(isOpen&&!badge){badge=document.createElement('span');badge.className='de-course-unlocked-badge';badge.innerHTML='<i class="fa-solid fa-circle-check"></i> UNLOCKED';banner.appendChild(badge);}else if(!isOpen&&badge)badge.remove();}grid.appendChild(card);});
 };
@@ -10262,7 +10290,7 @@ function renderAdminCourses(data){
   return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><span class="free-badge paid-badge de-firebase-course-price">₹${price} • UPI</span><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy</button></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
- grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
+ grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.validityButton==="true")return;const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
   grid.querySelectorAll("[data-admin-course-explore]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();const id=btn.getAttribute("data-admin-course-explore");if(typeof window.openFirebaseCourseDetails==="function")window.openFirebaseCourseDetails(id);else window.__dePendingCourseId=id;});
  if(typeof window.applyCourseFilters==="function")window.applyCourseFilters();
  // Authentication/profile might finish loading before or after this catalog listener.

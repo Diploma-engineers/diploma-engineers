@@ -10462,6 +10462,12 @@ const catalogDb=getDatabase(catalogApp);
 const $=id=>document.getElementById(id), shell=$('deCourseShell');
 let signedInUser=null,currentCourseId='',currentCourse=null,currentSemester='',currentFolder='',currentSubject='',currentResourceType='',currentFolderItems=[],currentLessonIndex=0,lastView='browser',loadingToken=0;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Update the reader's top bar synchronously whenever its navigation level changes.
+function setReaderTopBar(titleText, subtitleText=''){
+ const title=$('deCRTopTitle'), sub=$('deCRTopSub');
+ if(title) title.textContent=String(titleText||'Course Content');
+ if(sub){sub.textContent=String(subtitleText||'');sub.classList.toggle('decr-hidden',!String(subtitleText||'').trim());}
+}
 function msg(text,type=''){const el=$('deCRMessage');el.textContent=text;el.className='decr-message'+(type?' '+type:'');el.classList.remove('decr-hidden');$('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');}
 function hideMsg(){$('deCRMessage').classList.add('decr-hidden');}
 function openShell(){if(!shell)return; shell.classList.add('de-open');shell.setAttribute('aria-hidden','false');shell.style.display='block';document.body.style.overflow='hidden';}
@@ -10625,22 +10631,33 @@ function openFolder(folder){
 function deCRReturnToFolderBrowser(){
   const player=$('deCRPlayer'), browser=$('deCRBrowser'), media=$('deCRMedia');
   if(!player||player.classList.contains('decr-hidden')) return false;
-  // Stop active media so Back really exits the player rather than leaving playback running.
-  if(media){media.querySelectorAll('iframe').forEach(f=>{try{f.src='about:blank'}catch(e){}});media.querySelectorAll('video,audio').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load()}catch(e){}});}
+  // Stop playback before changing the reader view.
+  if(media){media.querySelectorAll('iframe').forEach(f=>{try{f.src='about:blank'}catch(e){}});media.querySelectorAll('video,audio').forEach(v=>{try{v.pause();v.removeAttribute('src');v.querySelectorAll('source').forEach(x=>x.removeAttribute('src'));v.load()}catch(e){}});}
   player.classList.add('decr-hidden');
   if(browser) browser.classList.remove('decr-hidden');
-  if(window.__deCoursePlayerOrigin==='home'){
-    currentSubject='';currentResourceType='';currentFolder='';currentFolderItems=[];currentLessonIndex=0;
-  } else {
-    // Returning from a lesson inside a subject should show that subject's resource list,
-    // but clear the stale player mode so the next folder click starts cleanly.
-    currentResourceType=''; currentFolder=currentSubject||'';
+
+  // Test-Series-style stack: when a subject card launches the player directly,
+  // Back returns to the subject-folder grid so another subject can be opened immediately.
+  // If a lesson was launched from inside a subject's resource list, return to that list.
+  const origin=String(window.__deCoursePlayerOrigin||'home');
+  if(origin==='home'){
+    currentSubject='';
+    currentResourceType='';
+    currentFolder='';
+  }else{
+    currentResourceType='';
+    currentFolder=currentSubject||'';
   }
+  currentFolderItems=[];
+  currentLessonIndex=0;
+  lastView='browser';
+  // Paint the title before rendering the folder grid so the header never stays on the video title.
+  setReaderTopBar(
+    currentSubject||currentCourse?.title||currentCourse?.name||'Course Content',
+    currentSubject?'Videos and PDF folder for this subject':'Choose a subject or folder'
+  );
   renderFolders();
-  hideMsg(); lastView='browser';
-  const title=$('deCRTopTitle'), sub=$('deCRTopSub');
-  if(title) title.textContent=currentSubject||currentCourse?.title||currentCourse?.name||'Course Content';
-  if(sub) sub.textContent=currentSubject?'Videos and PDF folder for this subject':'Choose a subject or folder';
+  hideMsg();
   try{shell?.scrollTo({top:0,behavior:'smooth'})}catch(e){}
   return true;
 }
@@ -10659,7 +10676,7 @@ async function refreshReaderFolderLocks(){
  const unlocked=await readerCourseUnlocked();
  $('deCRFolderGrid')?.querySelectorAll('[data-de-folder]').forEach(btn=>btn.classList.toggle('is-locked',!unlocked));
 }
-function showBrowser(scrollTop=true){lastView='browser';currentFolder='';renderFolders();$('deCRTopTitle').textContent=currentSubject==='__ALL_PDFS__'?'PDF Files':(currentResourceType==='pdf'?(currentSubject+' • PDF Files'):(currentSubject||String(currentCourse?.title||currentCourse?.name||'Course Reader')));$('deCRTopSub').textContent=currentSubject==='__ALL_PDFS__'?'Choose a subject to view its uploaded PDF files':(currentResourceType==='pdf'?'All PDFs uploaded in this subject':(currentSubject?'Videos and PDF folder for this subject':'Choose a subject'));$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
+function showBrowser(scrollTop=true){lastView='browser';currentFolder='';setReaderTopBar(currentSubject==='__ALL_PDFS__'?'PDF Files':(currentResourceType==='pdf'?(currentSubject+' • PDF Files'):(currentSubject||String(currentCourse?.title||currentCourse?.name||'Course Reader'))),currentSubject==='__ALL_PDFS__'?'Choose a subject to view its uploaded PDF files':(currentResourceType==='pdf'?'All PDFs uploaded in this subject':(currentSubject?'Videos and PDF folder for this subject':'Choose a subject')));renderFolders();$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
 function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} video/PDF item${items.length===1?'':'s'} • Select to open`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
 function safeLink(url){try{const u=new URL(url,location.href);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}}
 async function renderLesson(index){if(index<0||index>=currentFolderItems.length)return;currentLessonIndex=index;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';if(!(await readerCourseUnlocked())){$('deCRPlayerDesc').style.display='none';$('deCRPlayerKicker').style.display='none';$('deCRCreditNotice')?.style.setProperty('display','none','important');document.querySelector('.decr-video-feedback')?.style.setProperty('display','none','important');$('deCRMedia').classList.add('decr-locked-media');$('deCRList').style.filter='none';$('deCRList').style.pointerEvents='none';$('deCRList').style.userSelect='none';media.innerHTML=`<div class="decr-lock-preview"><div class="decr-lock-symbol"><i class="fa-solid fa-lock"></i></div><h3>Course content locked</h3><p>Your 210-day course validity may have expired. Course access is available for 210 days from approval; contact the admin if you need help.</p><button type="button" id="deCRUnlockBtn"><i class="fa-solid fa-qrcode"></i> Buy Course</button></div>`;$('deCRUnlockBtn').onclick=()=>{if(typeof window.openCoursePayment==='function')window.openCoursePayment(currentCourseId);else alert('Please return to Courses and tap Buy.');};$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}

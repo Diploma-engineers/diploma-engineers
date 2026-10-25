@@ -8194,18 +8194,59 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
  async function copyMessage(){await copyText(message(),$('deCouponCopyMessage'),'पूरा मैसेज कॉपी हो गया');}
  async function copyOnlyCode(){await copyText(own.code,$('deCouponCopyCode'),'कूपन कोड कॉपी हो गया');}
  async function share(){const text=message();if(navigator.share){try{await navigator.share({title:'Diploma Engineers - 20% Student Discount',text,url:DOWNLOAD});return;}catch(e){if(e?.name==='AbortError')return;}}window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');}
- async function load(){const u=window.auth?.currentUser;if(!u)return;const w=$('deAdminOwnCouponWidget');if(!w)return;try{const fb=window.__adminFirebaseMain;if(!fb?.get||!fb?.ref||!window.db)return;let p={};for(const path of ['adminProfiles/'+u.uid,'teamProfiles/'+u.uid,'certificateProfiles/'+u.uid,'publicTeamProfiles/'+u.uid]){try{const snap=await fb.get(fb.ref(window.db,path));if(snap.exists()){p={...p,...(snap.val()||{})};if(p.couponCode||p.couponQrUrl||p.couponQrImage)break;}}catch(_){}}
-   if(u.uid===F){w.style.display='none';return;}
-   let code=String(p.couponCode||p.code||'').trim().toUpperCase();
-   if(!code){try{const snap=await fb.get(fb.ref(window.db,'publicAdminCoupons'));if(snap.exists())Object.entries(snap.val()||{}).some(([k,v])=>{if(String(v?.adminUid||v?.uid||'')===u.uid){code=String(v?.code||v?.couponCode||k).trim().toUpperCase();p={...p,...v};return true;}return false;});}catch(_){}}
-   own={code,name:String(p.name||p.displayName||p.profileName||u.displayName||'Diploma Engineers Admin'),uid:u.uid,qr:String(p.couponQrUrl||p.couponQrImage||p.qrUrl||'')};
-   // Put the coupon card at the top of the signed-in admin homepage, directly below the welcome/ranking hero.
-   const home=document.querySelector('#homePage, #adminHome, .home-shell');const hero=home?.querySelector('.home-hero');if(hero&&w.parentElement!==hero.parentElement)hero.insertAdjacentElement('afterend',w);else if(hero&&w.previousElementSibling!==hero)hero.insertAdjacentElement('afterend',w);
-   w.style.display='block';$('deAdminOwnCouponCode').textContent=own.code||'अभी कूपन असाइन नहीं हुआ';$('deAdminOwnCouponNote').textContent=own.code?'यह आपका Founder द्वारा दिया गया कूपन है। इसे स्टूडेंट्स के साथ शेयर करें।':'Founder से अपना Coupon Code असाइन करवाएँ।';$('deAdminCouponBenefit').innerHTML='Diploma Engineers पर Courses Batches खरीदने पर स्टूडेंट्स को <b style="color:#15803d">20% छूट</b> मिलेगी। अभी ऐप डाउनलोड करें और कूपन कोड स्टूडेंट्स के साथ शेयर करें!';const wrap=$('deAdminOwnCouponQrWrap');if(wrap)wrap.style.display='none';const enabled=!!own.code;$('deAdminCouponCopy')?.toggleAttribute('disabled',!enabled);$('deAdminCouponShare')?.toggleAttribute('disabled',!enabled);ensureModal();
-  }catch(e){console.warn('Admin coupon widget:',e.message||e);}}
+ async function load(){
+   const u=window.auth?.currentUser;
+   if(!u)return;
+   const w=$('deAdminOwnCouponWidget');
+   if(!w)return;
+   try{
+     const fb=window.__adminFirebaseMain;
+     if(!fb?.get||!fb?.ref||!window.db)return;
+     let p={};
+     // Read every supported profile source; do not stop at the first partial profile.
+     for(const path of ['adminProfiles/'+u.uid,'teamProfiles/'+u.uid,'certificateProfiles/'+u.uid,'publicTeamProfiles/'+u.uid,'adminCoupons/'+u.uid]){
+       try{const snap=await fb.get(fb.ref(window.db,path));if(snap.exists())p={...p,...(snap.val()||{})};}catch(_){}
+     }
+     // publicAdminCoupons is the canonical public listing used by the Founder coupon manager.
+     try{
+       const snap=await fb.get(fb.ref(window.db,'publicAdminCoupons'));
+       if(snap.exists()){
+         const all=snap.val()||{};
+         const match=Object.entries(all).find(([key,v])=>String(v?.adminUid||v?.uid||v?.ownerUid||'')===u.uid || (key===u.uid && v));
+         if(match)p={...p,...match[1]};
+       }
+     }catch(_){}
+     // Some older records are keyed by UID while others are keyed by coupon code.
+     let code=String(p.couponCode||p.code||p.coupon||'').trim().toUpperCase();
+     if(!code){
+       try{
+         const snap=await fb.get(fb.ref(window.db,'adminCoupons'));
+         if(snap.exists()){
+           const all=snap.val()||{};
+           const found=all[u.uid] || Object.values(all).find(v=>String(v?.adminUid||v?.uid||v?.ownerUid||'')===u.uid);
+           if(found){p={...p,...found};code=String(found.couponCode||found.code||found.coupon||'').trim().toUpperCase();}
+         }
+       }catch(_){}
+     }
+     own={code,name:String(p.name||p.displayName||p.profileName||p.adminName||u.displayName||'Diploma Engineers Admin'),uid:u.uid,qr:String(p.couponQrUrl||p.couponQrImage||p.qrUrl||'')};
+     // Show each signed-in admin their own assigned coupon card at the top of Home.
+     const home=document.querySelector('#homePage, #adminHome, .home-shell, #adminDashboard');
+     const hero=home?.querySelector('.home-hero, .welcome, .dashboard-hero');
+     if(hero && w.parentElement!==hero.parentElement)hero.insertAdjacentElement('afterend',w);
+     w.style.display='block';
+     $('deAdminOwnCouponCode').textContent=own.code||'अभी कूपन असाइन नहीं हुआ';
+     $('deAdminOwnCouponNote').textContent=own.code?'यह आपका Founder द्वारा दिया गया कूपन है। इसे स्टूडेंट्स के साथ शेयर करें।':'Founder से अपना Coupon Code असाइन करवाएँ।';
+     $('deAdminCouponBenefit').innerHTML='Diploma Engineers पर Courses Batches खरीदने पर स्टूडेंट्स को <b style="color:#15803d">20% छूट</b> मिलेगी। अभी ऐप डाउनलोड करें और कूपन कोड स्टूडेंट्स के साथ शेयर करें!';
+     const wrap=$('deAdminOwnCouponQrWrap');if(wrap)wrap.style.display='none';
+     const enabled=!!own.code;
+     $('deAdminCouponCopy')?.toggleAttribute('disabled',!enabled);
+     $('deAdminCouponShare')?.toggleAttribute('disabled',!enabled);
+     ensureModal();
+   }catch(e){console.warn('Admin coupon widget:',e.message||e);}
+ }
  async function copy(){if(!own.code){alert('Founder has not assigned your coupon code yet.');return;}showCard();}
  $('deAdminCouponCopy')?.addEventListener('click',copy);$('deAdminCouponShare')?.addEventListener('click',()=>{showCard();});$('deAdminYourCodeUsers')?.addEventListener('click',loadYourCodeUsers);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('deYourCodeUsersPage'))$('deYourCodeUsersPage').style.display='none';});
- window.addEventListener('load',()=>setTimeout(load,900));document.addEventListener('click',e=>{if(e.target.closest('#loginBtn'))setTimeout(load,900);});window.addEventListener('adminProfileUpdated',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
+ window.addEventListener('load',()=>{setTimeout(load,900);setTimeout(load,2200);setTimeout(load,4500);});document.addEventListener('click',e=>{if(e.target.closest('#loginBtn'))setTimeout(load,900);});window.addEventListener('adminProfileUpdated',load);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
 })();
 </script>
 

@@ -8581,11 +8581,26 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
    window.scrollTo({top:0,behavior:'smooth'});
   }
   hub.querySelectorAll('[data-de-course-page]').forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset.deCoursePage)));
-  if(topBack)topBack.addEventListener('click',()=>{ if(currentPage!=='home') history.back(); });
+  // Reliable in-app Back: always return to the previous Course workspace page,
+  // rather than accidentally leaving the admin panel when browser history is short.
+  if(topBack)topBack.addEventListener('click',()=>{
+   if(currentPage!=='home'){
+    const target=(history.state&&history.state.deCoursePage&&history.state.deCoursePage!=='home')?'home':'home';
+    show(target);
+   } else if(typeof window.appGo==='function') {
+    window.appGo('home');
+   }
+  });
+  // Android/iOS browser back and device back gesture: restore the prior in-app page.
   window.addEventListener('popstate',event=>{
    const page=event.state&&event.state.deCoursePage;
    show(['home','approval','coupon','create'].includes(page)?page:'home',true);
   });
+  // Keep a valid course-workspace history entry so the first device-back action
+  // returns to the workspace instead of navigating away from the admin page.
+  if(!history.state || !history.state.deCoursePage){
+   history.replaceState({...((history.state&&typeof history.state==='object')?history.state:{}),deCoursePage:'home'},'',location.href);
+  }
   // Return to hub after navigating away and re-entering the Course section.
   window.__deCourseShowHub=()=>show('home');
   const managerPoll=setInterval(()=>{if(ensureCouponPage())clearInterval(managerPoll);},300);setTimeout(()=>clearInterval(managerPoll),12000);
@@ -8600,6 +8615,23 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 })();
 </script>
 
+
+
+<script id="de-course-back-navigation-stability">
+(function(){
+  // Ensure mobile/browser back controls always navigate within the admin course pages first.
+  let lastCoursePage = 'home';
+  const valid = ['home','approval','coupon','create'];
+  window.addEventListener('popstate', function(e){
+    const p = e.state && e.state.deCoursePage;
+    if (valid.includes(p)) lastCoursePage = p;
+  });
+  document.addEventListener('click', function(e){
+    const b = e.target && e.target.closest && e.target.closest('.de-course-page-back');
+    if (b) { lastCoursePage = 'home'; }
+  }, true);
+})();
+</script>
 
 <!-- FINAL COURSE MANAGEMENT FIX: compact coupon cards, true horizontal slider, one control bar per slider -->
 <style id="deCourseCompactSliderFinal">
@@ -11453,3 +11485,14 @@ body{padding-bottom:68px!important}
  document.addEventListener('DOMContentLoaded',applyMenuBanner);
 })();
 </script>
+
+
+<!-- Final user request: remove the swipe/slider semester UI completely; keep the stable dropdown selector. -->
+<style id="deRemoveSemesterSwipeSliderFinal">
+#courseCreateForm #courseSemesterChoices,
+#deCourseCreatePage #courseSemesterChoices,
+#courseSemesterChoices { display:none !important; visibility:hidden !important; width:0 !important; height:0 !important; min-height:0 !important; max-height:0 !important; overflow:hidden !important; padding:0 !important; margin:0 !important; border:0 !important; }
+#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] { display:block !important; width:100% !important; max-width:100% !important; min-width:0 !important; }
+#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] .de-course-select-menu { position:relative !important; max-width:100% !important; overflow-y:auto !important; overflow-x:hidden !important; }
+#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] summary { transform:none !important; animation:none !important; transition:none !important; }
+</style>

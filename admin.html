@@ -8528,7 +8528,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
   next.onclick=()=>el.scrollBy({left:Math.max(145,el.clientWidth*.75),behavior:'smooth'});
   if(el.previousElementSibling!==bar)el.parentElement.insertBefore(bar,el);
   el.style.setProperty('scrollbar-width','thin','important');
-  if(!el.dataset.finalDragSlider){el.dataset.finalDragSlider='1';let down=false,start=0,left=0,moved=false;el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;down=true;start=e.clientX;left=el.scrollLeft;moved=false;},{passive:true});el.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-start;if(Math.abs(dx)>5)moved=true;if(moved)el.scrollLeft=left-dx;},{passive:true});['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,()=>down=false,{passive:true}));el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});}
+  if(!el.dataset.finalDragSlider){el.dataset.finalDragSlider='1';let down=false,start=0,left=0,moved=false;el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;down=true;start=e.clientX;left=el.scrollLeft;moved=false;},{passive:true});el.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-start;if(Math.abs(dx)>5)moved=true;if(moved)el.scrollLeft=left-dx;},{passive:true});['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,()=>down=false,{passive:true}));}
   [...el.children].forEach(c=>{if(id==='courseCouponsEditor'&&(c.classList.contains('course-coupon-option')||c.classList.contains('course-coupon-add-card'))){c.style.setProperty('flex','0 0 145px','important');c.style.setProperty('width','145px','important');c.style.setProperty('min-width','145px','important');c.style.setProperty('max-width','145px','important');c.style.setProperty('writing-mode','horizontal-tb','important');}else if(id==='courseSemesterChoices'&&c.tagName==='LABEL'){c.style.setProperty('flex','0 0 125px','important');c.style.setProperty('width','125px','important');c.style.setProperty('min-width','125px','important');c.style.setProperty('max-width','125px','important');}});
  }
  let busy=false;function apply(){if(busy)return;busy=true;try{ids.forEach(([id,title])=>setup(id,title));}finally{busy=false;}}
@@ -8734,6 +8734,29 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 @media(min-width:721px){#mobileBottomNav{display:none!important}}
 @media(prefers-reduced-motion:reduce){#deHomeHamburgerMenu,#deHomeHamburgerOverlay{transition:none!important}}
 </style>
+
+
+<style id="bottom-nav-icons-size-only">
+/* Only enlarge bottom navigation icons; preserve bar, covers, spacing, and labels. */
+#mobileBottomNav > button > .nav-icon i { font-size: 25px !important; line-height: 1 !important; }
+#mobileBottomNav > button > .nav-upload-circle i { font-size: 28px !important; line-height: 1 !important; }
+</style>
+
+
+<!-- Final fix: Course coupon and included-semester sliders move only on user input -->
+<style id="de-course-sliders-manual-only">
+#courseCreateForm #courseCouponsEditor,
+#courseCreateForm #courseSemesterChoices{scroll-behavior:auto!important;scroll-snap-type:none!important;overscroll-behavior-x:contain!important;animation:none!important;transition:none!important;}
+#courseCreateForm #courseCouponsEditor>*,
+#courseCreateForm #courseSemesterChoices>*{animation:none!important;transition:none!important;scroll-snap-align:none!important;}
+</style>
+<script id="de-course-sliders-manual-only-js">
+(function(){
+ function fix(){['courseCouponsEditor','courseSemesterChoices'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.style.setProperty('scroll-behavior','auto','important');el.style.setProperty('scroll-snap-type','none','important');});}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
+ window.addEventListener('load',fix,{once:true});
+})();
+</script>
 
 </body>
 
@@ -10346,7 +10369,7 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
  function setup(){
   const coupon=document.getElementById('courseCouponsEditor');
   const semesters=document.getElementById('courseSemesterChoices');
-  [coupon,semesters].forEach(el=>{if(!el||el.dataset.swipeHotfix==='1')return;el.dataset.swipeHotfix='1';el.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&el.scrollWidth>el.clientWidth){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});});
+  [coupon,semesters].forEach(el=>{if(!el||el.dataset.swipeHotfix==='1')return;el.dataset.swipeHotfix='1';});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
  setTimeout(setup,500);setTimeout(setup,1400);
@@ -10376,10 +10399,6 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
    el.style.setProperty('display','flex','important');el.style.setProperty('flex-direction','row','important');el.style.setProperty('flex-wrap','nowrap','important');el.style.setProperty('overflow-x','scroll','important');el.style.setProperty('overflow-y','hidden','important');el.style.setProperty('max-width','100%','important');el.style.setProperty('width','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('touch-action','pan-x','important');el.style.setProperty('-webkit-overflow-scrolling','touch','important');
    if(!el.dataset.realSliderReady){el.dataset.realSliderReady='1';
      let startX=0,startLeft=0,active=false;
-     el.addEventListener('touchstart',e=>{if(e.touches.length){startX=e.touches[0].clientX;startLeft=el.scrollLeft;active=true;}},{passive:true});
-     el.addEventListener('touchmove',e=>{if(!active||!e.touches.length)return;const dx=e.touches[0].clientX-startX;if(Math.abs(dx)>4){el.scrollLeft=startLeft-dx;}},{passive:true});
-     el.addEventListener('touchend',()=>{active=false;},{passive:true});
-     el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
    }
    let bar=el.previousElementSibling;
    if(!bar||!bar.classList.contains('de-course-slider-controls')){
@@ -10403,7 +10422,7 @@ body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
  const observer=new MutationObserver(()=>refresh());observer.observe(document.documentElement,{childList:true,subtree:true});
- window.addEventListener('resize',refresh);setInterval(refresh,1200);
+ window.addEventListener('resize',refresh);
 })();
 </script>
 
@@ -10506,7 +10525,6 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
    el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;down=true;moved=false;start=e.clientX;left=el.scrollLeft;},{passive:true});
    el.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-start;if(Math.abs(dx)>5)moved=true;if(moved){el.scrollLeft=left-dx;if(e.pointerType==='mouse'&&e.cancelable)e.preventDefault();}},{passive:false});
    ['pointerup','pointercancel','pointerleave'].forEach(type=>el.addEventListener(type,()=>{down=false;},{passive:true}));
-   el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
   }
   let controls=el.previousElementSibling;
   if(!controls||!controls.classList.contains('de-course-slider-controls')){
@@ -11095,5 +11113,89 @@ body{padding-bottom:68px!important}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();
  [250,700,1400].forEach(t=>setTimeout(fix,t));
+})();
+</script>
+
+
+<!-- FINAL FIX: reliable inline SVG drawer icons and single Logout action -->
+<style id="de-drawer-inline-svg-final-css">
+#deHomeHamburgerMenu button[data-de-menu-mode],
+#deHomeHamburgerMenu a.de-drawer-extra-link,
+#deHomeHamburgerMenu button.de-drawer-logout{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex-direction:row!important;gap:14px!important;width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;text-align:left!important;white-space:nowrap!important;
+ overflow:visible!important;word-break:normal!important;overflow-wrap:normal!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode] > svg.de-menu-svg,
+#deHomeHamburgerMenu a.de-drawer-extra-link > svg.de-menu-svg,
+#deHomeHamburgerMenu button.de-drawer-logout > svg.de-menu-svg{
+ display:block!important;flex:0 0 22px!important;width:22px!important;min-width:22px!important;
+ max-width:22px!important;height:22px!important;min-height:22px!important;margin:0!important;
+ padding:0!important;color:#2563eb!important;stroke:#2563eb!important;fill:none!important;
+ visibility:visible!important;opacity:1!important;position:static!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode] > span,
+#deHomeHamburgerMenu a.de-drawer-extra-link > span,
+#deHomeHamburgerMenu button.de-drawer-logout > span{
+ display:block!important;flex:1 1 auto!important;min-width:0!important;width:auto!important;
+ max-width:none!important;margin:0!important;padding:0!important;position:static!important;
+ text-align:left!important;white-space:nowrap!important;word-break:normal!important;
+ overflow-wrap:normal!important;line-height:1.4!important;color:#26364f!important;
+}
+/* Prevent any legacy profile-level logout control from duplicating the drawer action. */
+#profileDisplayLogout,#profileLogoutBtn,#profileDisplayClose{display:none!important}
+</style>
+<script id="de-drawer-inline-svg-final-js">
+(function(){
+ const paths={
+  home:'<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
+  news:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  blog:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  books:'<path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v18H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 5h12M9 7v8M9 11h6"/>',
+  course:'<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 3 9 3 12 0v-5M22 9v6"/>',
+  profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 4.4 1.9c-1.2 1-1.9 1.4-1.9 3M12 17h.01"/>',
+  'how-to-use':'<path d="M5 3h11l3 3v15H5z"/><path d="M15 3v5h4M8 12h8M8 16h8"/>',
+  policy:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>',
+  logout:'<path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>'
+ };
+ const labels={home:'Home',news:'News',blog:'Blog',books:'Books',course:'Courses',profile:'My Profile',help:'Help','how-to-use':'How to Use',policy:'Policy',logout:'Logout'};
+ function svg(key){return '<svg class="de-menu-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(paths[key]||paths.help)+'</svg>';}
+ function setRow(el,key,label){
+   if(!el)return;
+   el.querySelectorAll(':scope > i,:scope > svg.de-menu-svg').forEach(n=>n.remove());
+   let span=el.querySelector(':scope > span');
+   if(!span){span=document.createElement('span');el.appendChild(span)}
+   span.textContent=label||labels[key]||key;
+   el.insertAdjacentHTML('afterbegin',svg(key));
+   el.style.setProperty('display','flex','important');
+   el.style.setProperty('flex-direction','row','important');
+   el.style.setProperty('align-items','center','important');
+   el.style.setProperty('justify-content','flex-start','important');
+   el.style.setProperty('text-align','left','important');
+ }
+ function fix(){
+   const menu=document.getElementById('deHomeHamburgerMenu');
+   if(menu){
+     Object.keys(labels).filter(k=>!['help','how-to-use','policy','logout'].includes(k)).forEach(key=>{
+       setRow(menu.querySelector('button[data-de-menu-mode="'+key+'"]'),key,labels[key]);
+     });
+     ['help','how-to-use','policy'].forEach(key=>setRow(menu.querySelector('a[data-de-extra-link="'+key+'"]'),key,labels[key]));
+     // Keep exactly one drawer Logout button, preserving the original wired button when available.
+     let logouts=Array.from(menu.querySelectorAll('button')).filter(b=>/logout/i.test((b.innerText||b.textContent||'').trim())||b.classList.contains('de-drawer-logout'));
+     let logout=menu.querySelector('button.de-drawer-logout')||logouts[0];
+     if(!logout){logout=document.createElement('button');logout.type='button';logout.className='de-drawer-logout';menu.appendChild(logout);}
+     logouts.forEach(b=>{if(b!==logout)b.remove()});
+     logout.classList.add('de-drawer-logout');
+     setRow(logout,'logout','Logout');
+   }
+   // Remove duplicate profile-page controls only; do not touch the drawer Logout.
+   document.getElementById('profileDisplayLogout')?.remove();
+   document.getElementById('profileLogoutBtn')?.remove();
+   document.getElementById('profileDisplayClose')?.remove();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();
+ [250,700,1400,2400].forEach(t=>setTimeout(fix,t));
 })();
 </script>

@@ -10966,3 +10966,69 @@ body{padding-bottom:68px!important}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
 </script>
+
+<!-- FINAL FIX: show a blue icon before every drawer menu label -->
+<style id="de-blue-menu-icons-final-style">
+#deHomeHamburgerMenu button[data-de-menu-mode],
+#deHomeHamburgerMenu a.de-drawer-extra-link,
+#deHomeHamburgerMenu .de-drawer-logout{
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+  gap:12px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;
+  text-align:left!important;white-space:nowrap!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode] > i,
+#deHomeHamburgerMenu a.de-drawer-extra-link > i,
+#deHomeHamburgerMenu .de-drawer-logout > i{
+  display:inline-flex!important;flex:0 0 22px!important;width:22px!important;min-width:22px!important;
+  height:22px!important;align-items:center!important;justify-content:center!important;
+  color:#2563eb!important;font-size:17px!important;line-height:1!important;margin:0!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode] > span,
+#deHomeHamburgerMenu a.de-drawer-extra-link > span,
+#deHomeHamburgerMenu .de-drawer-logout > span{
+  display:block!important;position:static!important;flex:1 1 auto!important;min-width:0!important;width:auto!important;
+  margin:0!important;padding:0!important;text-align:left!important;white-space:nowrap!important;
+  word-break:normal!important;overflow-wrap:normal!important;color:#26364f!important;line-height:1.35!important;
+}
+#deHomeHamburgerMenu .de-drawer-extra-link:hover{background:#eff6ff!important}
+</style>
+<script id="de-blue-menu-icons-final-script">
+(function(){
+ const definitions={
+  home:{label:'Home',icon:'fa-house'},
+  news:{label:'News',icon:'fa-newspaper'},
+  blog:{label:'Blog',icon:'fa-pen-to-square'},
+  books:{label:'Books',icon:'fa-book'},
+  course:{label:'Courses',icon:'fa-graduation-cap'},
+  profile:{label:'My Profile',icon:'fa-user'}
+ };
+ function fixMenuIcons(){
+  const menu=document.getElementById('deHomeHamburgerMenu');
+  if(!menu)return;
+  menu.querySelectorAll('button[data-de-menu-mode]').forEach(btn=>{
+   const item=definitions[btn.getAttribute('data-de-menu-mode')];
+   if(!item)return;
+   // The menu uses delegated click handling, so normalize only its child markup.
+   btn.innerHTML='<i class="fa-solid '+item.icon+'" aria-hidden="true"></i><span>'+item.label+'</span>';
+   btn.style.setProperty('display','flex','important');
+   btn.style.setProperty('flex-direction','row','important');
+   btn.style.setProperty('align-items','center','important');
+   btn.style.setProperty('justify-content','flex-start','important');
+   btn.style.setProperty('text-align','left','important');
+  });
+  menu.querySelectorAll('a.de-drawer-extra-link').forEach(a=>{
+   const label=(a.getAttribute('data-de-extra-link')||'').toLowerCase();
+   const extra={help:{label:'Help',icon:'fa-circle-question'},'how-to-use':{label:'How to Use',icon:'fa-book-open'},policy:{label:'Policy',icon:'fa-shield-halved'}}[label];
+   if(extra)a.innerHTML='<i class="fa-solid '+extra.icon+'" aria-hidden="true"></i><span>'+extra.label+'</span>';
+  });
+  const logout=menu.querySelector('.de-drawer-logout');
+  if(logout){
+   const label=logout.querySelector('span')?.textContent?.trim()||'Logout';
+   if(!logout.querySelector(':scope > i'))logout.insertAdjacentHTML('afterbegin','<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>');
+   if(!logout.querySelector(':scope > span'))logout.insertAdjacentHTML('beforeend','<span>'+label+'</span>');
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fixMenuIcons);else fixMenuIcons();
+ setTimeout(fixMenuIcons,300);setTimeout(fixMenuIcons,900);setTimeout(fixMenuIcons,1800);
+})();
+</script>

@@ -8171,45 +8171,17 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
      const paths=['adminProfiles','teamProfiles','publicTeamProfiles','adminActivity','adminAccess','adminCoupons','publicAdminCoupons','certificateProfiles','users','admins'];
      const results=await Promise.all(paths.map(path=>fb.get(fb.ref(window.db,path)).then(s=>({path,data:s.val()||{}})).catch(error=>({path,error,data:{}}))));
      const merged=new Map();
-     // Merge every admin-related database node. Firebase Authentication passwords are never readable
-     // from the client; only admin profile email/name/UID metadata is shown here.
-     const add=(uid,raw,path)=>{
-       if(!uid||raw==null)return;
-       let p;
-       if(typeof raw==='object'&&!Array.isArray(raw))p=raw;
-       else if(path==='admins' && typeof raw==='string' && raw.includes('@'))p={email:raw,role:'admin'};
-       else if(path==='admins' && (raw===true||raw===1||raw==='true'))p={role:'admin',active:true};
-       else return;
-       const id=String(p.uid||p.userId||p.adminUid||uid);
-       const old=merged.get(id)||{uid:id,p:{},sources:[]};
-       old.p={...p,...old.p,uid:id};
-       if(!old.sources.includes(path))old.sources.push(path);
-       merged.set(id,old);
-     };
-     results.forEach(({path,data,error})=>{
-       if(error){console.warn('Cannot read diplomaengineers-869df/'+path,error.message);return;}
-       Object.entries(data||{}).forEach(([uid,raw])=>{
-         if(path==='publicAdminCoupons'&&raw&&(raw.adminUid||raw.uid)){
-           const id=String(raw.adminUid||raw.uid);
-           add(id,{...raw,couponCode:raw.couponCode||raw.code,couponQrUrl:raw.couponQrUrl||raw.qrUrl},path);
-         } else add(uid,raw,path);
-       });
-     });
+     const add=(uid,raw,path)=>{if(!uid||!raw||typeof raw!=='object')return;const p=Array.isArray(raw)?{}:raw;const id=String(p.uid||p.userId||p.adminUid||uid);const old=merged.get(id)||{uid:id,p:{},sources:[]};old.p={...p,...old.p,uid:id};old.sources.push(path);merged.set(id,old);};
+     results.forEach(({path,data,error})=>{if(error){console.warn('Cannot read diplomaengineers-869df/'+path,error.message);return;}Object.entries(data||{}).forEach(([uid,raw])=>{if(path==='publicAdminCoupons'&&raw&&(raw.adminUid||raw.uid)){const id=String(raw.adminUid||raw.uid);add(id,{...raw,couponCode:raw.couponCode||raw.code,couponQrUrl:raw.couponQrUrl||raw.qrUrl},path);}else add(uid,raw,path);});});
      const priorFounder=merged.get(FOUNDER_UID)?.p||{};
      merged.set(FOUNDER_UID,{uid:FOUNDER_UID,p:{name:'Anubhav Gangwar',displayName:'Anubhav Gangwar',designation:'FOUNDER',email:'astar22072006@gmail.com',...priorFounder,uid:FOUNDER_UID},sources:[...(merged.get(FOUNDER_UID)?.sources||[]),'Founder']});
      // Show all active account/profile records available in Realtime Database.
      // Firebase client SDK cannot list Authentication users directly; a trusted Admin-SDK backend is needed for accounts with no database profile.
-     const adminSources=new Set(['adminProfiles','teamProfiles','publicTeamProfiles','adminActivity','adminAccess','adminCoupons','publicAdminCoupons','certificateProfiles','admins']);
-     const rows=[...merged.values()].filter(x=>{
-       const p=x.p||{};const role=String(p.role||p.designation||p.accountType||p.userType||'').toLowerCase();
-       const hasAdminSource=(x.sources||[]).some(src=>adminSources.has(src));
-       const explicitlyAdmin=/admin|founder|moderator|faculty|team/.test(role);
-       return (x.uid===FOUNDER_UID || (active(p) && (hasAdminSource||explicitlyAdmin))) && !String(x.uid).startsWith('public_');
-     }).sort((a,b)=>a.uid===FOUNDER_UID?-1:b.uid===FOUNDER_UID?1:nameOf(a.p,a.uid).localeCompare(nameOf(b.p,b.uid))).map(x=>({...x,code:codeOf(x.p,x.uid)}));
+     const rows=[...merged.values()].filter(x=>(x.uid===FOUNDER_UID||active(x.p)) && !String(x.uid).startsWith('public_')).sort((a,b)=>a.uid===FOUNDER_UID?-1:b.uid===FOUNDER_UID?1:nameOf(a.p,a.uid).localeCompare(nameOf(b.p,b.uid))).map(x=>({...x,code:codeOf(x.p,x.uid)}));
      window.__founderCouponAdminRows=rows;
-     const sel=$('founderAdminCouponSelect');if(sel)sel.innerHTML=rows.map(x=>`<option value="${esc(x.uid)}">${esc(nameOf(x.p,x.uid))}${x.uid===FOUNDER_UID?' — FOUNDER':''} · ${esc(x.p.email||'email not in profile')} · ${esc(x.uid)}</option>`).join('');
-     if(cards)cards.innerHTML=rows.length?rows.map(x=>{const p=x.p||{},photo=p.photoURL||p.photoUrl||p.photo||p.profilePhoto||p.image||'',initial=nameOf(p,x.uid).trim().charAt(0).toUpperCase()||'?',code=p.couponCode||'',src=[...new Set(x.sources||[])].join(', ');return `<button type="button" data-founder-admin-card="${esc(x.uid)}" style="flex:0 0 clamp(220px,78vw,255px);min-width:0;max-width:100%;text-align:left;scroll-snap-align:start;border:1px solid ${x.uid===FOUNDER_UID?'#fbbf24':'#dbeafe'};border-radius:15px;padding:14px;background:#fff;cursor:pointer;box-shadow:0 4px 16px #0f172a0a;touch-action:manipulation"><span style="display:flex;align-items:center;gap:10px"><span style="width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:800">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:esc(initial)}</span><span style="min-width:0;overflow-wrap:anywhere"><b style="display:block;color:#0f172a">${esc(nameOf(p,x.uid))}${x.uid===FOUNDER_UID?' 👑':''}</b><small style="display:block;color:#64748b;overflow-wrap:anywhere">UID: ${esc(x.uid)}</small><small style="display:block;color:#64748b;overflow-wrap:anywhere">${esc(p.email||'Email not saved in profile')}${p.designation||p.role?' · '+esc(p.designation||p.role):''}</small></span></span><strong style="display:block;margin-top:12px;color:#1d4ed8;overflow-wrap:anywhere">${code?'✓ '+esc(code):'+ Assign Coupon Code'}</strong><small style="display:block;margin-top:5px;color:#64748b;overflow-wrap:anywhere">${esc(src||'Firebase profile')}${p.couponQrUrl||p.couponQrImage?' · QR uploaded':' · QR not uploaded'}</small></button>`;}).join(''):'<div style="padding:15px;color:#64748b">No active Admin profiles found in diplomaengineers-869df.</div>';
-     adminsLoadedAt=Date.now();status(`${rows.length} admin profiles found in diplomaengineers-869df. Select any Admin to create or update a coupon. Email is shown when stored in the database; Firebase passwords are not accessible or displayed.`);
+     const sel=$('founderAdminCouponSelect');if(sel)sel.innerHTML=rows.map(x=>`<option value="${esc(x.uid)}">${esc(nameOf(x.p,x.uid))}${x.uid===FOUNDER_UID?' — FOUNDER':''} — ${esc(x.uid)}</option>`).join('');
+     if(cards)cards.innerHTML=rows.length?rows.map(x=>{const p=x.p||{},photo=p.photoURL||p.photoUrl||p.photo||p.profilePhoto||p.image||'',initial=nameOf(p,x.uid).trim().charAt(0).toUpperCase()||'?',code=p.couponCode||'',src=[...new Set(x.sources||[])].join(', ');return `<button type="button" data-founder-admin-card="${esc(x.uid)}" style="flex:0 0 clamp(220px,78vw,255px);min-width:0;max-width:100%;text-align:left;scroll-snap-align:start;border:1px solid ${x.uid===FOUNDER_UID?'#fbbf24':'#dbeafe'};border-radius:15px;padding:14px;background:#fff;cursor:pointer;box-shadow:0 4px 16px #0f172a0a;touch-action:manipulation"><span style="display:flex;align-items:center;gap:10px"><span style="width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:800">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:esc(initial)}</span><span style="min-width:0;overflow-wrap:anywhere"><b style="display:block;color:#0f172a">${esc(nameOf(p,x.uid))}${x.uid===FOUNDER_UID?' 👑':''}</b><small style="display:block;color:#64748b;overflow-wrap:anywhere">UID: ${esc(x.uid)}</small><small style="display:block;color:#64748b;overflow-wrap:anywhere">${esc(p.email||p.designation||p.role||'Firebase profile')}</small></span></span><strong style="display:block;margin-top:12px;color:#1d4ed8;overflow-wrap:anywhere">${code?'✓ '+esc(code):'+ Assign Coupon Code'}</strong><small style="display:block;margin-top:5px;color:#64748b;overflow-wrap:anywhere">${esc(src||'Firebase profile')}${p.couponQrUrl||p.couponQrImage?' · QR uploaded':' · QR not uploaded'}</small></button>`;}).join(''):'<div style="padding:15px;color:#64748b">No active Admin profiles found in diplomaengineers-869df.</div>';
+     adminsLoadedAt=Date.now();status(`${rows.length} active account profiles found in the connected database. Select a card to create or update a coupon.`);
     }catch(e){if(cards)cards.innerHTML='<div style="color:#b91c1c;padding:12px">Could not load profiles. Check diplomaengineers-869df Firebase read rules.</div>';status('Could not read diplomaengineers-869df records: '+(e.message||e),true);}
    })();
    try{await adminsLoadPromise;}finally{adminsLoadPromise=null;}

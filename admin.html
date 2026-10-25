@@ -10742,3 +10742,72 @@ body.admin-logged-in{padding-bottom:66px!important}
  document.addEventListener('click',()=>setTimeout(sync,40),true);setTimeout(sync,0);setTimeout(sync,400);
 })();
 </script>
+
+
+<style id="DE_FORCE_HIDE_HOME_HEADER_ACTIONS">
+/* HARD RULE: Home-only controls are hidden unless the header is explicitly in Home state. */
+#adminTopBar #deHeaderMenuBtn,
+#adminTopBar #deHeaderProfileAction,
+#adminTopBar #deHeaderRankingAction,
+#adminTopBar #deHeaderActivityAction,
+#adminTopBar #deHeaderCertificateAction,
+#adminTopBar #topProfileBtn,
+#adminTopBar #topRankBtn,
+#adminTopBar #deTopActivityBtnTop { display:none !important; }
+#adminTopBar.de-home-only #deHeaderMenuBtn,
+#adminTopBar.de-home-only #deHeaderProfileAction,
+#adminTopBar.de-home-only #deHeaderRankingAction,
+#adminTopBar.de-home-only #deHeaderActivityAction,
+#adminTopBar.de-home-only #deHeaderCertificateAction { display:inline-flex !important; }
+#adminTopBar.de-home-only #deHeaderBackBtn,
+#adminTopBar.de-home-only #deHeaderAdminBtn { display:none !important; }
+#adminTopBar.de-nonhome #deHeaderMenuBtn,
+#adminTopBar.de-nonhome #deHeaderProfileAction,
+#adminTopBar.de-nonhome #deHeaderRankingAction,
+#adminTopBar.de-nonhome #deHeaderActivityAction,
+#adminTopBar.de-nonhome #deHeaderCertificateAction,
+#adminTopBar.de-nonhome #topProfileBtn,
+#adminTopBar.de-nonhome #topRankBtn,
+#adminTopBar.de-nonhome #deTopActivityBtnTop { display:none !important; }
+#adminTopBar.de-nonhome #deHeaderBackBtn { display:inline-flex !important; }
+#adminTopBar.de-nonhome #deHeaderAdminBtn { display:inline-flex !important; }
+</style>
+<script id="DE_FORCE_HIDE_HOME_HEADER_ACTIONS_SCRIPT">
+(function(){
+ const top=document.getElementById('adminTopBar'); if(!top)return;
+ let current='home';
+ const known={homeAdminSection:'home',profileAdminSection:'profile',rankingAdminSection:'ranking',rankAdminSection:'ranking',newsAdminSection:'news',blogAdminSection:'blog',booksAdminSection:'books',courseAdminSection:'course',testAdminSection:'test',importantQuestionsSection:'important'};
+ function activePage(){
+   const sections=Array.from(document.querySelectorAll('.admin-mode-section'));
+   const active=sections.find(el=>el.classList.contains('active') && getComputedStyle(el).display!=='none');
+   if(active && known[active.id]) return known[active.id];
+   // If home is the only visible/active app section, explicitly classify it as Home.
+   const home=document.getElementById('homeAdminSection');
+   if(home && home.classList.contains('active') && getComputedStyle(home).display!=='none') return 'home';
+   return current;
+ }
+ function paint(page){
+   if(page)current=page;
+   const home=current==='home';
+   top.classList.toggle('de-home-only',home);
+   top.classList.toggle('de-nonhome',!home);
+   const set=(id,show)=>{const el=document.getElementById(id);if(el)el.style.setProperty('display',show?'inline-flex':'none','important')};
+   set('deHeaderMenuBtn',home);set('deHeaderBackBtn',!home);
+   ['deHeaderProfileAction','deHeaderRankingAction','deHeaderActivityAction','deHeaderCertificateAction'].forEach(id=>set(id,home));
+   set('deHeaderAdminBtn',!home);
+   ['topProfileBtn','topRankBtn','deTopActivityBtnTop'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.setProperty('display','none','important')});
+   const title=top.querySelector('.admin-brand-top strong');if(title)title.style.setProperty('display',home?'inline':'none','important');
+   const admin=document.getElementById('deHeaderAdminBtn');if(admin)admin.innerHTML='<span>Admin Panel</span>';
+ }
+ const old=window.appGo;
+ if(typeof old==='function'&&!old.__forceHomeHeaderVisibility){
+   const wrapped=function(mode){if(typeof mode==='string')current=mode;const result=old.apply(this,arguments);setTimeout(()=>paint(activePage()),0);setTimeout(()=>paint(activePage()),120);return result};
+   wrapped.__forceHomeHeaderVisibility=true;window.appGo=wrapped;
+ }
+ const observer=new MutationObserver(()=>{const p=activePage();if(p)paint(p)});
+ const panel=document.getElementById('adminPanel');if(panel)observer.observe(panel,{subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
+ document.addEventListener('click',()=>setTimeout(()=>paint(activePage()),30),true);
+ setInterval(()=>paint(activePage()),500);
+ paint(activePage());setTimeout(()=>paint(activePage()),300);setTimeout(()=>paint(activePage()),1000);
+})();
+</script>

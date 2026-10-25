@@ -2070,6 +2070,13 @@ body.campus-hiring-open{overflow:hidden!important;}
 <section id="homeAdminSection" class="admin-mode-section active">
   <div class="home-shell">
     <div class="home-top-actions">
+      <div class="home-top-left-tools" aria-label="Home shortcuts">
+        <button type="button" class="home-shortcut-btn" id="homeProfileShortcut" onclick="appGo('profile')"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+        <button type="button" class="home-shortcut-btn" onclick="document.getElementById('homeRankCard')?.scrollIntoView({behavior:'smooth',block:'center'})"><i class="fa-solid fa-ranking-star"></i><span>Ranking</span></button>
+        <button type="button" class="home-shortcut-btn" onclick="document.getElementById('adminActivityDashboard')?.scrollIntoView({behavior:'smooth',block:'center'})"><i class="fa-solid fa-fire"></i><span>Streak / Activity</span></button>
+        <button type="button" class="home-shortcut-btn" id="homeCertificateShortcut" onclick="document.getElementById('homeCertificateCard')?.scrollIntoView({behavior:'smooth',block:'center'})"><i class="fa-solid fa-certificate"></i><span>Certificate</span></button>
+      </div>
+      <button type="button" class="home-hamburger-btn" id="homeHamburgerBtn" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
       <div class="home-top-action-group">
         <button class="home-certificate-btn" id="homeCertificateBtn" type="button" title="Digital Leadership Certificate" aria-label="Digital Leadership Certificate">
           <i class="fa-solid fa-certificate"></i><span>Certificate</span>
@@ -6002,7 +6009,19 @@ function initHomeReveal(){document.querySelectorAll("#homeAdminSection .reveal")
 function syncAppNav(mode){
   document.querySelectorAll(".app-nav-link, #mobileBottomNav [data-app-target]").forEach(b=>b.classList.toggle("active",b.dataset.appTarget===mode));
 }
+let __adminCurrentMode = 'home';
+let __adminHandlingPopState = false;
 function appGo(mode){
+  mode = mode || 'home';
+  // Keep in-app navigation in browser history so Android/mobile Back and the
+  // visible Back button return to the actual previous admin section.
+  if (!__adminHandlingPopState && mode !== __adminCurrentMode) {
+    try {
+      const currentState = history.state || {};
+      if (!currentState.__deAdminNav) history.replaceState({...currentState, __deAdminNav:true, adminMode:__adminCurrentMode}, '', location.href);
+      history.pushState({__deAdminNav:true, adminMode:mode}, '', '#admin-' + encodeURIComponent(mode));
+    } catch (_) {}
+  }
   /* Warn before leaving an active Create/Edit form. If user confirms,
      cancel/close the editor first, then continue navigation. */
   const createModalOpen = !!document.getElementById('contentCreateModal')?.classList.contains('show');
@@ -6024,6 +6043,7 @@ function appGo(mode){
       window.__navWarningInProgress = false;
     }
   }
+  __adminCurrentMode = mode;
   if(mode==="home"){showAdminMode("home");syncAppNav("home");window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="profile"){showAdminMode("profile");syncAppNav("profile");window.scrollTo({top:0,behavior:"auto"});return;}
   if(mode==="news"){showAdminMode("news");}
@@ -6039,10 +6059,30 @@ function appGo(mode){
   else {showAdminMode("news");mode="news";}
   syncAppNav(mode);window.scrollTo({top:0,behavior:"auto"});
 }
-document.getElementById('adminTopBackBtn')?.addEventListener('click',()=>{
+// Back button and device/browser Back share one history-aware behaviour.
+function __deAdminGoBack(){
   const modal=document.getElementById('uploadHubModal');
-  if(modal && modal.classList.contains('show')) { modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); return; }
-  appGo('home');
+  if(modal && modal.classList.contains('show')) { modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; return; }
+  if (__adminCurrentMode !== 'home' && history.state && history.state.__deAdminNav) {
+    history.back();
+  } else if (__adminCurrentMode !== 'home') {
+    __adminHandlingPopState=true;
+    try { appGo('home'); } finally { __adminHandlingPopState=false; }
+  } else {
+    // Already on Home: do not accidentally leave the admin page.
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+document.getElementById('adminTopBackBtn')?.addEventListener('click',__deAdminGoBack);
+window.addEventListener('popstate',function(event){
+  if (event.state && event.state.__deAdminNav) {
+    const target=event.state.adminMode || 'home';
+    __adminHandlingPopState=true;
+    try { appGo(target); } finally { __adminHandlingPopState=false; }
+  } else if (__adminCurrentMode !== 'home') {
+    __adminHandlingPopState=true;
+    try { appGo('home'); } finally { __adminHandlingPopState=false; }
+  }
 });
 document.querySelectorAll("[data-app-target]").forEach(btn=>btn.addEventListener("click",()=>appGo(btn.dataset.appTarget)));
 document.querySelectorAll("[data-home-nav]").forEach(btn=>btn.addEventListener("click",()=>appGo(btn.dataset.homeNav)));
@@ -7099,6 +7139,19 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
     </div>
     <p class="upload-hub-note"><i class="fa-solid fa-circle-info"></i> Select a section; its existing form and Firebase save flow will be used.</p>
   </section>
+</div>
+<div id="homeSideMenuOverlay" class="home-side-menu-overlay" aria-hidden="true">
+  <aside class="home-side-menu" role="dialog" aria-label="Admin menu">
+    <div class="home-side-menu-head"><strong><i class="fa-solid fa-layer-group"></i> Admin Menu</strong><button type="button" id="closeHomeSideMenu" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button></div>
+    <button data-menu-target="home"><i class="fa-solid fa-house"></i> Home</button>
+    <button data-menu-target="news"><i class="fa-solid fa-newspaper"></i> News Section</button>
+    <button data-menu-target="books"><i class="fa-solid fa-book-open"></i> Book Section</button>
+    <button data-menu-target="test"><i class="fa-solid fa-clipboard-question"></i> Test Series</button>
+    <button data-menu-target="important"><i class="fa-solid fa-file-circle-question"></i> Important Questions</button>
+    <button data-menu-target="blog"><i class="fa-solid fa-pen-nib"></i> Blog</button>
+    <button data-menu-target="course"><i class="fa-solid fa-graduation-cap"></i> Courses</button>
+    <button data-menu-target="profile"><i class="fa-solid fa-user"></i> Profile</button>
+  </aside>
 </div>
 <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Admin navigation">
   <button type="button" class="active" data-app-target="home"><span class="nav-icon"><i class="fa-solid fa-house"></i></span><span>Home</span></button>
@@ -8589,6 +8642,45 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 })();
 </script>
 
+
+<style id="home-header-menu-and-nav-icon-update">
+/* Home shortcuts remain on the left; only the hamburger is on the right. */
+.home-top-actions{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important;}
+.home-top-left-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.home-shortcut-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid #e2e8f0;background:#fff;color:#25324a;border-radius:12px;padding:9px 11px;font:700 11px Poppins,Arial,sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(15,23,42,.04)}
+.home-shortcut-btn i{color:#2563eb;font-size:14px}
+.home-hamburger-btn{margin-left:auto;width:44px;height:44px;flex:0 0 44px;border:1px solid #e2e8f0;border-radius:13px;background:#fff;color:#172033;display:grid;place-items:center;font-size:22px;cursor:pointer;box-shadow:0 4px 14px rgba(15,23,42,.07)}
+.home-side-menu-overlay{position:fixed;inset:0;background:rgba(15,23,42,.38);z-index:100000;opacity:0;visibility:hidden;transition:.2s ease}
+.home-side-menu-overlay.open{opacity:1;visibility:visible}
+.home-side-menu{position:absolute;right:0;top:0;height:100%;width:min(310px,86vw);background:#fff;padding:18px 14px;box-shadow:-15px 0 45px rgba(15,23,42,.18);transform:translateX(100%);transition:transform .24s ease;overflow:auto}
+.home-side-menu-overlay.open .home-side-menu{transform:translateX(0)}
+.home-side-menu-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 16px;margin-bottom:8px;border-bottom:1px solid #edf0f5;color:#172033}
+.home-side-menu-head strong{font-size:15px}.home-side-menu-head strong i{color:#2563eb;margin-right:7px}
+.home-side-menu-head button{border:0;background:#f1f5f9;border-radius:10px;width:36px;height:36px;font-size:17px;cursor:pointer}
+.home-side-menu>button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 12px;margin:3px 0;border:0;border-radius:12px;background:#fff;color:#263348;text-align:left;font:600 13px Poppins,Arial,sans-serif;cursor:pointer}
+.home-side-menu>button:hover{background:#eff6ff;color:#2563eb}.home-side-menu>button i{width:20px;text-align:center;color:#2563eb;font-size:16px}
+/* Keep ranking, certificate and activity visible on Home. */
+#homeAdminSection .home-rank{display:flex!important}
+#homeAdminSection #homeCertificateCard,#homeAdminSection #adminActivityDashboard{display:block!important;visibility:visible!important}
+/* Slightly enlarge bottom navigation icons without increasing text size too much. */
+#mobileBottomNav button .nav-icon i{font-size:21px!important}
+#mobileBottomNav button .nav-upload-circle i{font-size:24px!important}
+#mobileBottomNav button{font-size:9px!important}
+@media(max-width:600px){.home-top-left-tools{gap:5px}.home-shortcut-btn{padding:8px 8px;font-size:9px;gap:5px}.home-shortcut-btn i{font-size:13px}.home-hamburger-btn{width:42px;height:42px;flex-basis:42px}.home-top-actions .home-top-action-group{display:none!important}#mobileBottomNav button .nav-icon i{font-size:22px!important}#mobileBottomNav button .nav-upload-circle i{font-size:25px!important}}
+</style>
+<script id="home-side-menu-behavior">
+(function(){
+ const overlay=document.getElementById('homeSideMenuOverlay');
+ const openBtn=document.getElementById('homeHamburgerBtn');
+ const closeBtn=document.getElementById('closeHomeSideMenu');
+ function closeMenu(){overlay?.classList.remove('open');overlay?.setAttribute('aria-hidden','true');openBtn?.setAttribute('aria-expanded','false')}
+ openBtn?.addEventListener('click',()=>{overlay?.classList.add('open');overlay?.setAttribute('aria-hidden','false');openBtn.setAttribute('aria-expanded','true')});
+ closeBtn?.addEventListener('click',closeMenu);
+ overlay?.addEventListener('click',e=>{if(e.target===overlay)closeMenu()});
+ overlay?.querySelectorAll('[data-menu-target]').forEach(btn=>btn.addEventListener('click',()=>{closeMenu();if(typeof window.appGo==='function')window.appGo(btn.dataset.menuTarget)}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
+})();
+</script>
 </body>
 
 <style id="profile-full-width-final">
@@ -10492,5 +10584,98 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,900));else setTimeout(start,900);
  window.addEventListener('load',()=>setTimeout(start,1400));
  $('refreshFounderAdminCoupons')?.addEventListener('click',()=>setTimeout(start,500));
+})();
+</script>
+
+<style id="home-only-profile-ranking-menu-update">
+/* Profile, ranking and certificate/activity controls are visible on Home only. */
+#adminTopBar .admin-top-right{display:none!important}
+#adminPanel.home-view #adminTopBar .admin-top-right{display:flex!important;align-items:center;gap:8px}
+#adminPanel.home-view .navbar .profile-area{display:flex!important}
+#adminPanel:not(.home-view) .navbar .profile-area{display:none!important}
+#adminPanel.home-view .navbar .profile-area{display:flex!important}
+#adminPanel .admin-top-left{display:flex;align-items:center;gap:10px}
+#adminHamburgerBtn{width:40px;height:40px;flex:0 0 40px;border:1px solid #e5eaf2;background:#fff;color:#172033;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 3px 10px rgba(15,23,42,.05)}
+#adminSlideMenuOverlay{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:99990;opacity:0;visibility:hidden;transition:.22s}
+#adminSlideMenuOverlay.open{opacity:1;visibility:visible}
+#adminSlideMenu{position:absolute;left:0;top:0;bottom:0;width:min(310px,84vw);background:#fff;padding:20px 15px;box-shadow:20px 0 60px rgba(15,23,42,.18);transform:translateX(-105%);transition:transform .24s;overflow:auto}
+#adminSlideMenuOverlay.open #adminSlideMenu{transform:translateX(0)}
+#adminSlideMenu .slide-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:8px 5px 16px;border-bottom:1px solid #edf0f5;font-weight:900;color:#14213d}
+#adminSlideMenu .slide-menu-close{border:0;background:#f1f5f9;border-radius:10px;width:36px;height:36px;font-size:18px;cursor:pointer}
+#adminSlideMenu .slide-menu-item{width:100%;display:flex;align-items:center;gap:12px;padding:13px 12px;margin:4px 0;border:0;border-radius:12px;background:#fff;color:#263247;text-align:left;font:700 13px Poppins,Arial,sans-serif;cursor:pointer}
+#adminSlideMenu .slide-menu-item:hover{background:#eff6ff;color:#2563eb}
+#adminSlideMenu .slide-menu-item i{width:20px;text-align:center;color:#2563eb}
+@media(max-width:600px){#adminHamburgerBtn{width:36px;height:36px;flex-basis:36px;border-radius:11px}#adminPanel.home-view #adminTopBar .admin-top-right{gap:4px}}
+</style>
+<script id="home-only-profile-ranking-menu-script">
+(()=>{
+ const panel=document.getElementById('adminPanel'),bar=document.getElementById('adminTopBar');if(!panel||!bar)return;
+ const left=bar.querySelector('.admin-top-left');
+ if(left&&!document.getElementById('adminHamburgerBtn')){const b=document.createElement('button');b.type='button';b.id='adminHamburgerBtn';b.title='Open menu';b.setAttribute('aria-label','Open menu');b.innerHTML='<i class="fa-solid fa-bars"></i>';left.insertBefore(b,left.firstChild);}
+ if(!document.getElementById('adminSlideMenuOverlay')){const ov=document.createElement('div');ov.id='adminSlideMenuOverlay';ov.innerHTML='<aside id="adminSlideMenu" aria-label="Admin navigation"><div class="slide-menu-head"><span><i class="fa-solid fa-shield-halved"></i> Admin Menu</span><button class="slide-menu-close" type="button" aria-label="Close menu">×</button></div><button class="slide-menu-item" data-menu-target="home"><i class="fa-solid fa-house"></i> Home</button><button class="slide-menu-item" data-menu-target="news"><i class="fa-regular fa-newspaper"></i> News Section</button><button class="slide-menu-item" data-menu-target="books"><i class="fa-solid fa-book"></i> Book Section</button><button class="slide-menu-item" data-menu-target="test"><i class="fa-solid fa-clipboard-list"></i> Test Series</button><button class="slide-menu-item" data-menu-target="course"><i class="fa-solid fa-graduation-cap"></i> Courses</button><button class="slide-menu-item" data-menu-target="blog"><i class="fa-solid fa-pen"></i> Blog</button><button class="slide-menu-item" data-menu-target="important"><i class="fa-solid fa-circle-question"></i> Important Questions</button></aside>';document.body.appendChild(ov);}
+ const ov=document.getElementById('adminSlideMenuOverlay');
+ const close=()=>ov.classList.remove('open');document.getElementById('adminHamburgerBtn')?.addEventListener('click',()=>ov.classList.add('open'));ov.querySelector('.slide-menu-close')?.addEventListener('click',close);ov.addEventListener('click',e=>{if(e.target===ov)close()});
+ ov.querySelectorAll('[data-menu-target]').forEach(b=>b.addEventListener('click',()=>{close();const target=b.dataset.menuTarget;if(typeof window.appGo==='function')window.appGo(target);else if(typeof window.showAdminMode==='function')window.showAdminMode(target);}));
+ function syncHomeVisibility(){const home=document.getElementById('homeAdminSection');const active=!!home&&getComputedStyle(home).display!=='none'&&!home.hidden;panel.classList.toggle('home-view',active);}
+ const observer=new MutationObserver(syncHomeVisibility);observer.observe(panel,{subtree:true,attributes:true,attributeFilter:['style','class','hidden']});
+ document.addEventListener('click',e=>{if(e.target.closest('[data-home-nav], [data-app-target], #mobileBottomNav button, .app-nav-link'))setTimeout(syncHomeVisibility,80)});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(syncHomeVisibility,100));else setTimeout(syncHomeVisibility,100);
+ setInterval(syncHomeVisibility,1200);
+})();
+</script>
+
+<style id="final-home-actions-left-menu-right-and-larger-bottom-icons">
+/* Home: profile/rank/certificate actions on the LEFT; hamburger alone on the RIGHT. */
+#adminTopBar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;}
+#adminTopBar .admin-top-left{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1 1 auto!important;}
+#adminTopBar .admin-top-left .admin-top-right{display:none!important;}
+#adminTopBar .admin-home-actions-left{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;order:0!important;}
+#adminTopBar .admin-brand-top{order:1!important;min-width:0!important;}
+#adminTopBar .admin-brand-top strong{white-space:nowrap!important;}
+#adminTopBar #adminHamburgerBtn{position:relative!important;left:auto!important;right:auto!important;top:auto!important;order:3!important;flex:0 0 42px!important;width:42px!important;height:42px!important;margin-left:auto!important;font-size:21px!important;}
+#adminPanel.home-view #adminTopBar .admin-home-actions-left{display:flex!important;}
+#adminPanel:not(.home-view) #adminTopBar .admin-home-actions-left{display:none!important;}
+#adminPanel.home-view #adminTopBar .admin-top-right{display:none!important;}
+#adminPanel:not(.home-view) #adminTopBar .admin-top-right{display:none!important;}
+#adminTopBar .top-streak,#adminTopBar .de-top-activity-btn,#adminTopBar .top-profile-icon{flex:0 0 auto!important;}
+#adminTopBar .top-streak{min-height:38px!important;padding:7px 10px!important;border-radius:12px!important;}
+#adminTopBar .de-top-activity-btn,#adminTopBar .top-profile-icon{width:38px!important;height:38px!important;border-radius:12px!important;}
+#adminTopBar .top-profile-icon img{width:30px!important;height:30px!important;}
+/* Slightly larger bottom navigation icons, preserving the existing five-button layout. */
+#mobileBottomNav button i,#mobileBottomNav button .nav-icon i{font-size:20px!important;line-height:1.1!important;}
+#mobileBottomNav button{font-size:9px!important;gap:5px!important;min-height:54px!important;}
+#mobileBottomNav .nav-upload-circle i{font-size:22px!important;}
+@media(max-width:600px){
+ #adminTopBar{padding-left:10px!important;padding-right:10px!important;gap:7px!important;}
+ #adminTopBar .admin-top-left{gap:7px!important;}
+ #adminTopBar .admin-brand-top strong{font-size:12px!important;}
+ #adminTopBar .admin-home-actions-left{gap:5px!important;}
+ #adminTopBar .top-streak{min-height:34px!important;padding:6px 7px!important;font-size:11px!important;}
+ #adminTopBar .de-top-activity-btn,#adminTopBar .top-profile-icon{width:34px!important;height:34px!important;}
+ #adminTopBar .top-profile-icon img{width:27px!important;height:27px!important;}
+ #adminTopBar #adminHamburgerBtn{width:38px!important;height:38px!important;flex-basis:38px!important;font-size:20px!important;}
+ #mobileBottomNav button i,#mobileBottomNav button .nav-icon i{font-size:21px!important;}
+ #mobileBottomNav button{font-size:9px!important;}
+}
+</style>
+<script id="final-home-actions-left-menu-right-script">
+(function(){
+ function arrange(){
+  const bar=document.getElementById('adminTopBar');
+  if(!bar)return;
+  const left=bar.querySelector('.admin-top-left');
+  const actions=bar.querySelector('.admin-top-right');
+  const brand=bar.querySelector('.admin-brand-top');
+  const hamburger=document.getElementById('adminHamburgerBtn');
+  if(left&&actions&&!left.contains(actions)){
+   actions.classList.add('admin-home-actions-left');
+   if(brand)left.insertBefore(actions,brand);
+   else left.appendChild(actions);
+  }else if(actions){actions.classList.add('admin-home-actions-left');}
+  if(hamburger&&hamburger.parentElement!==bar)bar.appendChild(hamburger);
+  else if(hamburger&&hamburger.parentElement===left)bar.appendChild(hamburger);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arrange,{once:true});else arrange();
+ setTimeout(arrange,250);
 })();
 </script>

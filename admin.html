@@ -9030,6 +9030,66 @@ html{overflow-x:clip!important;}
 })();
 </script>
 
+
+<!-- FINAL REQUEST: stable Included Semesters dropdown + all database-listed admin accounts in coupon creation -->
+<style id="de-final-semester-and-admin-dropdown-fix">
+/* Hide the old swipe/slider controls completely; keep the real checkbox inputs available to save logic. */
+#courseCreateForm #courseSemesterChoices,
+#deCourseCreatePage #courseSemesterChoices,
+#courseAdminSection #courseSemesterChoices,
+#courseCreateForm #courseCouponsEditor,
+#deCourseCreatePage #courseCouponsEditor,
+#courseAdminSection #courseCouponsEditor{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;border:0!important}
+#courseCreateForm .de-course-select-wrap[data-de-course-dropdown="courseSemesterChoices"],
+#courseCreateForm .de-course-select-wrap[data-de-course-dropdown="courseCouponsEditor"]{display:block!important;position:relative!important;width:100%!important;max-width:100%!important;overflow:visible!important;transform:none!important;animation:none!important}
+#courseCreateForm .de-course-select-wrap details{position:relative!important;transform:none!important;animation:none!important}
+#courseCreateForm .de-course-select-menu{position:relative!important;max-height:250px!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;transform:none!important;animation:none!important}
+#founderAdminCouponManager.de-admin-coupon-dropdown-mode{display:block!important}
+#founderAdminCouponManager #founderAdminCouponCards{display:none!important}
+#founderAdminCouponManager #founderAdminCouponSelect{display:block!important;visibility:visible!important;width:100%!important;max-width:100%!important;min-height:46px!important;padding:11px 12px!important;border:1px solid #cbd5e1!important;border-radius:11px!important;background:#fff!important;color:#0f172a!important;margin:8px 0 12px!important;box-sizing:border-box!important}
+#founderAdminCouponManager #founderCouponSlide{animation:none!important;transform:none!important;scroll-margin:12px!important}
+@media(prefers-reduced-motion:reduce){#courseCreateForm .de-course-select-wrap *,#founderAdminCouponManager *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<script id="de-final-semester-and-admin-dropdown-fix-js">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function fixSemesterDropdown(){
+   const source=$('courseSemesterChoices');
+   if(source){source.style.setProperty('display','none','important');source.style.setProperty('height','0','important');}
+   const wrap=document.querySelector('.de-course-select-wrap[data-de-course-dropdown="courseSemesterChoices"]');
+   if(wrap){wrap.style.setProperty('display','block','important');wrap.style.setProperty('transform','none','important');wrap.style.setProperty('animation','none','important');}
+ }
+ function fixAdminCouponDropdown(){
+   const manager=$('founderAdminCouponManager'),sel=$('founderAdminCouponSelect'),cards=$('founderAdminCouponCards');
+   if(!manager||!sel)return;
+   const uid=window.auth?.currentUser?.uid||window.courseAuth?.currentUser?.uid||'';
+   const founder=uid==='KirLkZUGXoZf0cXHkuCZ4Mfnxam2';
+   if(!founder)return;
+   manager.classList.add('de-admin-coupon-dropdown-mode');
+   manager.style.setProperty('display','block','important');
+   sel.hidden=false;sel.removeAttribute('hidden');sel.setAttribute('aria-label','Select an admin account to create or manage its coupon');
+   sel.title='Choose an Admin account';
+   if(cards)cards.setAttribute('aria-hidden','true');
+   if(!sel.dataset.deChangeBound){sel.dataset.deChangeBound='1';sel.addEventListener('change',()=>{
+      const id=sel.value;if(!id)return;
+      // Existing coupon module exposes openForm within its closure; selecting the admin card
+      // invokes the same handler and preserves the original save/update logic.
+      const card=document.querySelector('[data-founder-admin-card="'+CSS.escape(id)+'"]');
+      if(card){card.click();return;}
+      const rows=window.__founderCouponAdminRows||[];const row=rows.find(x=>String(x.uid)===id);if(!row)return;
+      const name=String(row.p?.name||row.p?.displayName||row.p?.email||row.uid);
+      const target=$('founderCouponTargetUid'),nameInput=$('founderCouponAdminName'),code=$('founderCouponCodeInput'),heading=$('founderCouponSlideHeading'),slide=$('founderCouponSlide');
+      if(target)target.value=id;if(nameInput)nameInput.value=name;if(code)code.value=row.p?.couponCode||'';if(heading)heading.textContent='Assign Coupon · '+name;if(slide)slide.style.display='block';
+   });}
+ }
+ function run(){fixSemesterDropdown();fixAdminCouponDropdown();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+ // Retry only briefly while the existing course/admin scripts initialize; no perpetual polling.
+ let tries=0;const timer=setInterval(()=>{run();if(++tries>=20)clearInterval(timer);},250);
+})();
+</script>
+
 </body>
 
 <style id="profile-full-width-final">
@@ -11485,14 +11545,3 @@ body{padding-bottom:68px!important}
  document.addEventListener('DOMContentLoaded',applyMenuBanner);
 })();
 </script>
-
-
-<!-- Final user request: remove the swipe/slider semester UI completely; keep the stable dropdown selector. -->
-<style id="deRemoveSemesterSwipeSliderFinal">
-#courseCreateForm #courseSemesterChoices,
-#deCourseCreatePage #courseSemesterChoices,
-#courseSemesterChoices { display:none !important; visibility:hidden !important; width:0 !important; height:0 !important; min-height:0 !important; max-height:0 !important; overflow:hidden !important; padding:0 !important; margin:0 !important; border:0 !important; }
-#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] { display:block !important; width:100% !important; max-width:100% !important; min-width:0 !important; }
-#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] .de-course-select-menu { position:relative !important; max-width:100% !important; overflow-y:auto !important; overflow-x:hidden !important; }
-#courseCreateForm [data-de-course-dropdown="courseSemesterChoices"] summary { transform:none !important; animation:none !important; transition:none !important; }
-</style>

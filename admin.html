@@ -8631,6 +8631,42 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 })();
 </script>
 
+
+<style id="de-home-hamburger-menu-style">
+#deHomeHamburgerBtn{display:none;align-items:center;justify-content:center;flex-direction:column;gap:4px;width:40px;height:40px;flex:0 0 40px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;color:#1e293b;cursor:pointer;padding:9px;box-shadow:0 3px 10px rgba(15,23,42,.06);margin-left:auto;order:-1}
+#deHomeHamburgerBtn span{display:block;width:19px;height:2px;border-radius:3px;background:currentColor}
+#adminPanel.de-home-page #deHomeHamburgerBtn{display:flex!important}
+#adminPanel.de-inner-page #deHomeHamburgerBtn{display:none!important}
+#deHomeHamburgerMenu{display:none;position:fixed;top:54px;right:12px;z-index:100100;width:210px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:15px;box-shadow:0 16px 45px rgba(15,23,42,.18)}
+#deHomeHamburgerMenu.open{display:block}
+#deHomeHamburgerMenu button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:#1e293b;text-align:left;font-size:13px;font-weight:700;cursor:pointer}
+#deHomeHamburgerMenu button:hover{background:#eff6ff;color:#2563eb}
+#adminPanel.de-inner-page #deHomeHamburgerMenu{display:none!important}
+@media(max-width:600px){#deHomeHamburgerBtn{width:36px;height:36px;flex-basis:36px;border-radius:10px}#deHomeHamburgerMenu{top:48px;right:8px;width:190px}}
+</style>
+<script id="de-home-hamburger-menu-script">
+(function(){
+ const panel=document.getElementById('adminPanel');
+ const topbar=document.getElementById('adminTopBar');
+ const right=topbar?.querySelector('.admin-top-right');
+ if(!panel||!topbar||!right||document.getElementById('deHomeHamburgerBtn'))return;
+ const btn=document.createElement('button');
+ btn.type='button';btn.id='deHomeHamburgerBtn';btn.setAttribute('aria-label','Open menu');btn.setAttribute('aria-expanded','false');btn.title='Menu';
+ btn.innerHTML='<span></span><span></span><span></span>';
+ right.insertBefore(btn,right.firstChild);
+ const menu=document.createElement('div');menu.id='deHomeHamburgerMenu';menu.setAttribute('aria-label','Admin navigation menu');
+ const items=[['home','Home','fa-house'],['news','News','fa-newspaper'],['blog','Blog','fa-pen-to-square'],['books','Books','fa-book'],['course','Courses','fa-graduation-cap'],['profile','Profile','fa-user']];
+ menu.innerHTML=items.map(([mode,label,icon])=>'<button type="button" data-de-menu-mode="'+mode+'"><i class="fa-solid '+icon+'"></i><span>'+label+'</span></button>').join('');
+ document.body.appendChild(menu);
+ function sync(){const home=panel.classList.contains('de-home-page')||document.getElementById('homeAdminSection')?.classList.contains('active');btn.style.display=home?'flex':'none';if(!home){menu.classList.remove('open');btn.setAttribute('aria-expanded','false')}}
+ btn.addEventListener('click',function(e){e.stopPropagation();if(!panel.classList.contains('de-home-page'))return;menu.classList.toggle('open');btn.setAttribute('aria-expanded',menu.classList.contains('open')?'true':'false')});
+ menu.addEventListener('click',function(e){const item=e.target.closest('[data-de-menu-mode]');if(!item)return;const mode=item.dataset.deMenuMode;menu.classList.remove('open');btn.setAttribute('aria-expanded','false');if(typeof window.appGo==='function')window.appGo(mode);else if(typeof window.showAdminMode==='function')window.showAdminMode(mode);setTimeout(sync,80)});
+ document.addEventListener('click',e=>{if(!menu.contains(e.target)&&!btn.contains(e.target)){menu.classList.remove('open');btn.setAttribute('aria-expanded','false')}});
+ const observer=new MutationObserver(sync);observer.observe(panel,{subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
+ window.addEventListener('load',sync);sync();setInterval(sync,700);
+})();
+</script>
+
 </body>
 
 <style id="profile-full-width-final">

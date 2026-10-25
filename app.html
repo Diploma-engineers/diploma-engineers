@@ -2389,6 +2389,29 @@ html,body{max-width:100%;overflow-x:hidden}
 .app-admin-switch:hover{transform:translateY(-1px);background:#2563eb;color:#fff;box-shadow:0 7px 16px rgba(37,99,235,.20)}
 .app-admin-switch i{font-size:15px;line-height:1}
 @media(max-width:600px){.app-admin-switch{width:34px;height:34px}.app-admin-switch i{font-size:14px}}
+
+/* SINGLE-FILE NEWS READER */
+#deNewsReaderOverlay{position:fixed;inset:0;z-index:100000;background:#f7f9fc;color:#111827;overflow-y:auto;display:none;font-family:Arial,Helvetica,sans-serif}
+#deNewsReaderOverlay *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+#deNewsReaderOverlay .de-nr-wrap{width:100%;max-width:850px;margin:0 auto;padding:14px}
+#deNewsReaderOverlay .de-nr-back{display:flex;align-items:center;gap:8px;border:1px solid #e5e7eb;background:#fff;color:#0f172a;border-radius:11px;padding:10px 14px;font-weight:800;cursor:pointer;margin-bottom:12px}
+#deNewsReaderOverlay .de-nr-article{background:#fff;border:1px solid #e6ebf1;border-radius:20px;overflow:hidden;box-shadow:0 5px 20px rgba(15,23,42,.05)}
+#deNewsReaderOverlay .de-nr-hero{width:100%;aspect-ratio:16/8;object-fit:cover;background:#eef2f7;display:block}
+#deNewsReaderOverlay .de-nr-content{padding:22px}
+#deNewsReaderOverlay .de-nr-category{display:inline-flex;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:900;text-transform:uppercase}
+#deNewsReaderOverlay .de-nr-title{font-size:30px;line-height:1.18;margin:13px 0 14px;color:#0f172a;font-weight:800}
+#deNewsReaderOverlay .de-nr-meta{display:flex;flex-wrap:wrap;gap:12px;color:#64748b;font-size:13px;font-weight:700;margin-bottom:18px}
+#deNewsReaderOverlay .de-nr-desc{font-size:16px;line-height:1.75;color:#334155;white-space:pre-wrap;overflow-wrap:anywhere}
+#deNewsReaderOverlay .de-nr-desc a{color:#2563eb}
+#deNewsReaderOverlay .de-nr-links{margin-top:20px;padding:15px;border:1px solid #dbeafe;background:#f8fbff;border-radius:15px}
+#deNewsReaderOverlay .de-nr-links h3,#deNewsReaderOverlay .de-nr-share h3{margin:0 0 10px;font-size:16px;font-weight:800}
+#deNewsReaderOverlay .de-nr-links a{display:block;word-break:break-word;color:#2563eb;font-weight:700;text-decoration:none;margin:7px 0}
+#deNewsReaderOverlay .de-nr-share{border-top:1px solid #edf0f3;margin-top:22px;padding-top:18px}
+#deNewsReaderOverlay .de-nr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+#deNewsReaderOverlay .de-nr-grid button{border:1px solid #e5e7eb;background:#f8fafc;color:#0f172a;border-radius:13px;padding:12px 8px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+#deNewsReaderOverlay .de-nr-grid .primary{background:#2563eb!important;color:#fff!important;border-color:#2563eb!important}
+#deNewsReaderOverlay .de-nr-state{text-align:center;padding:70px 20px;color:#64748b}
+@media(max-width:600px){#deNewsReaderOverlay .de-nr-wrap{padding:8px}#deNewsReaderOverlay .de-nr-content{padding:15px}#deNewsReaderOverlay .de-nr-title{font-size:23px}#deNewsReaderOverlay .de-nr-desc{font-size:14px;line-height:1.7}#deNewsReaderOverlay .de-nr-grid{grid-template-columns:repeat(2,1fr)}#deNewsReaderOverlay .de-nr-hero{aspect-ratio:16/10}}
 </style>
 
 <style id="app-team-slider-fix">
@@ -6838,8 +6861,80 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function newsReaderUrl(id) {
-    return new URL(`news-reader.html?id=${encodeURIComponent(id)}`, window.location.href).href;
+    const u = new URL(window.location.href);
+    u.searchParams.set('newsId', String(id));
+    return u.href;
   }
+
+  function deNewsValidUrl(value) {
+    try { const u = new URL(String(value || '')); return /^https?:$/.test(u.protocol) ? u.href : ''; }
+    catch (_) { return ''; }
+  }
+  function deNewsLinks(n) {
+    let arr = n.links || n.externalLinks || n.external || [];
+    if (!Array.isArray(arr)) arr = arr && typeof arr === 'object' ? Object.values(arr) : (typeof arr === 'string' ? [arr] : []);
+    const single = n.link || n.externalLink || n.url || n.pdf || n.fileUrl || n.file;
+    if (single) arr.push(single);
+    return [...new Set(arr.map(deNewsValidUrl).filter(Boolean))];
+  }
+  window.openNewsReader = async function(id, suppliedData) {
+    const overlay = document.getElementById('deNewsReaderOverlay');
+    const content = document.getElementById('deNewsReaderContent');
+    if (!overlay || !content) return;
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    const oldTitle = document.title;
+    window.__deNewsReaderPreviousTitle = oldTitle;
+    content.innerHTML = '<div class="de-nr-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading news...</p></div>';
+    try {
+      let n = suppliedData;
+      if (!n) {
+        const snap = await get(ref(newsDb, 'news/' + id));
+        if (!snap.exists()) throw new Error('News not found');
+        n = snap.val() || {};
+      }
+      const title = n.title || 'Untitled News';
+      const desc = n.text || n.desc || n.description || n.details || '';
+      const cat = n.cat || n.category || 'NOTIFICATION';
+      const image = deNewsValidUrl(n.thumb || n.image || n.thumbnail || n.thumbnailUrl || '');
+      const date = n.date || n.createdDate || formatNewsDate(n.timestamp || n.createdAt || n.uploadedAt) || 'Recent';
+      const by = n.by || n.authorName || n.author || n.uploaderName || n.uploadedBy || n.createdBy || 'Diploma Engineers';
+      const links = deNewsLinks(n);
+      const url = newsReaderUrl(id);
+      window.__deNewsShare = {title, desc, url, id};
+      document.title = title + ' | Diploma Engineers';
+      content.innerHTML = `${image ? `<img class="de-nr-hero" src="${escapeHTML(image)}" alt="${escapeHTML(title)}" onerror="this.style.display='none'">` : ''}
+        <div class="de-nr-content"><span class="de-nr-category">${escapeHTML(cat)}</span><h1 class="de-nr-title">${escapeHTML(title)}</h1>
+        <div class="de-nr-meta"><span><i class="fa-regular fa-calendar"></i> ${escapeHTML(date)}</span><span><i class="fa-solid fa-user-pen"></i> By ${escapeHTML(by)}</span></div>
+        <div class="de-nr-desc">${escapeHTML(desc).replace(/\n/g,'<br>')}</div>
+        ${links.length ? `<div class="de-nr-links"><h3><i class="fa-solid fa-link"></i> External Links</h3>${links.map(u=>`<a href="${escapeHTML(u)}" target="_blank" rel="noopener noreferrer">${escapeHTML(u)}</a>`).join('')}</div>` : ''}
+        <div class="de-nr-share"><h3><i class="fa-solid fa-share-nodes"></i> Share this news</h3><div class="de-nr-grid">
+        <button class="primary" onclick="shareNewsReaderNative()"><i class="fa-solid fa-share-nodes"></i> Share</button>
+        <button onclick="shareNewsReaderWA()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+        <button onclick="shareNewsReaderTG()"><i class="fa-brands fa-telegram"></i> Telegram</button>
+        <button onclick="shareNewsReaderFB()"><i class="fa-brands fa-facebook"></i> Facebook</button>
+        <button onclick="shareNewsReaderIG()"><i class="fa-brands fa-instagram"></i> Instagram</button>
+        <button onclick="copyNewsReaderLink()"><i class="fa-regular fa-copy"></i> Copy Link</button></div></div></div>`;
+      const u = new URL(location.href); u.searchParams.set('newsId', String(id)); history.pushState({deNewsReader:true,id:String(id)}, '', u.href);
+    } catch (err) {
+      console.error('News reader error:', err);
+      content.innerHTML = '<div class="de-nr-state"><h2>Unable to load news</h2><p>Please check your internet connection and try again.</p></div>';
+    }
+  };
+  window.closeNewsReader = function() {
+    const overlay = document.getElementById('deNewsReaderOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    document.title = window.__deNewsReaderPreviousTitle || 'Diploma Engineers Portal';
+    const u = new URL(location.href); u.searchParams.delete('newsId');
+    history.replaceState({}, '', u.href);
+  };
+  window.shareNewsReaderNative = async function() { const n=window.__deNewsShare||{}; if(navigator.share){try{await navigator.share({title:n.title,text:n.desc||'Read this news on Diploma Engineers',url:n.url});return}catch(_){}} window.copyNewsReaderLink(); };
+  window.shareNewsReaderWA = function(){const n=window.__deNewsShare||{};window.open('https://wa.me/?text='+encodeURIComponent((n.title||'News')+'\n'+n.url),'_blank','noopener');};
+  window.shareNewsReaderTG = function(){const n=window.__deNewsShare||{};window.open('https://t.me/share/url?url='+encodeURIComponent(n.url||location.href)+'&text='+encodeURIComponent(n.title||'News'),'_blank','noopener');};
+  window.shareNewsReaderFB = function(){const n=window.__deNewsShare||{};window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(n.url||location.href),'_blank','noopener');};
+  window.shareNewsReaderIG = async function(){window.copyNewsReaderLink();alert('News link copied. Open Instagram and share it.');};
+  window.copyNewsReaderLink = async function(){const n=window.__deNewsShare||{};try{await navigator.clipboard.writeText(n.url||location.href);alert('News link copied!');}catch(_){prompt('Copy News Link:',n.url||location.href);}};
 
   function createNewsCard(id, n, container) {
     const title = n.title || "Untitled News";
@@ -6875,9 +6970,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const readBtn = card.querySelector('[data-read]');
     const shareBtn = card.querySelector('[data-share]');
-    if (readBtn) readBtn.addEventListener('click', e => { e.stopPropagation(); window.location.href = readerUrl; });
+    if (readBtn) readBtn.addEventListener('click', e => { e.stopPropagation(); window.openNewsReader(id, n); });
     if (shareBtn) shareBtn.addEventListener('click', e => { e.stopPropagation(); openNewsShare(id, n); });
-    card.addEventListener('click', () => { window.location.href = readerUrl; });
+    card.addEventListener('click', () => { window.openNewsReader(id, n); });
     container.appendChild(card);
   }
 
@@ -11171,7 +11266,15 @@ async function iqDownloadPdf(el,name){
   @media print{.iq-sheet-head{break-inside:avoid;page-break-inside:avoid}.iq-sheet-q{orphans:3;widows:3}}
  `;
  printWin.document.open();
- printWin.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeTitle+'</title><style>'+css+'</style></head><body><main id="iqPrintRoot">'+content.innerHTML+'</main><script>window.onload=function(){var imgs=Array.from(document.images);Promise.all(imgs.map(function(i){if(i.complete)return Promise.resolve();return new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,2500)})})).then(function(){setTimeout(function(){window.focus();window.print()},250)});};window.onafterprint=function(){setTimeout(function(){window.close()},300)};<\/script></body></html>');
+ printWin.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeTitle+'</title><style>'+css+'</style></head><body><main id="iqPrintRoot">'+content.innerHTML+'</main><script>window.onload=function(){var imgs=Array.from(document.images);Promise.all(imgs.map(function(i){if(i.complete)return Promise.resolve();return new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,2500)})})).then(function(){setTimeout(function(){window.focus();window.print()},250)});};window.onafterprint=function(){setTimeout(function(){window.close()},300)};<\/script>
+<div id="deNewsReaderOverlay" role="dialog" aria-modal="true" aria-label="News Reader">
+  <div class="de-nr-wrap">
+    <button class="de-nr-back" type="button" onclick="closeNewsReader()"><i class="fa-solid fa-arrow-left"></i> Back to News</button>
+    <main id="deNewsReaderContent" class="de-nr-article"><div class="de-nr-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading news...</p></div></main>
+  </div>
+</div>
+
+</body></html>');
  printWin.document.close();
 }
 onValue(ref(iqDb,'importantQuestions'),snap=>{const data=snap.val()||{};iqRecords=Object.entries(data).map(([id,v])=>({...v,id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&r.status!=='unpublished');iqLoaded=true;iqPopulateFilters();if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders()},err=>{iqLoaded=true;iqEl('iqAppFolders').hidden=true;iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty">Could not load Important Questions. Please check your connection and try again.</div>';console.error('Important Questions load failed',err)});

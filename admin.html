@@ -997,6 +997,9 @@ img { -webkit-user-drag: none !important; user-drag: none !important; }
 .course-detail-page.open{display:block}.course-detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid #e8edf5;margin-bottom:16px}.course-detail-title{font-size:22px;font-weight:850;color:#0f172a}.course-detail-sub{font-size:12px;color:#64748b;margin-top:4px}.course-detail-form{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-bottom:18px}.course-detail-form h3{margin:0 0 13px;font-size:16px}.course-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.course-detail-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:750;color:#334155}.course-detail-grid input,.course-detail-grid select{width:100%;padding:11px 12px;border:1px solid #d7dfeb;border-radius:10px;background:#fff;font:500 13px Poppins,Arial,sans-serif;min-width:0}.course-detail-wide{grid-column:1/-1}.course-detail-notice{font-size:12px;margin-top:10px;padding:10px 12px;border-radius:9px;background:#eff6ff;color:#1d4ed8;display:none}.course-detail-notice.show{display:block}.course-detail-notice.err{background:#fef2f2;color:#991b1b}.course-folder{border:1px solid #e2e8f0;border-radius:15px;margin:12px 0;overflow:hidden}.course-folder-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f1f5f9;padding:13px 15px;font-size:14px;font-weight:850}.course-folder-items{padding:8px 12px}.course-resource-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid #edf1f6}.course-resource-row:last-child{border-bottom:0}.course-resource-name{font-size:13px;font-weight:800;color:#0f172a;overflow-wrap:anywhere}.course-resource-type{font-size:10px;color:#64748b;margin-top:4px}.course-resource-actions{display:flex;gap:6px;flex-shrink:0}.course-resource-actions a,.course-resource-actions button{border:0;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:800;text-decoration:none;cursor:pointer}.course-resource-open{background:#dbeafe;color:#1d4ed8}.course-resource-delete{background:#fee2e2;color:#b91c1c}.course-open-btn{background:#0f2747!important;color:#fff!important}.course-detail-empty{padding:28px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:13px;font-size:12px}
 @media(max-width:620px){.course-detail-page{padding:12px}.course-detail-title{font-size:19px}.course-detail-grid{grid-template-columns:1fr}.course-detail-wide{grid-column:1}.course-resource-row{align-items:flex-start;flex-direction:column}.course-resource-actions{width:100%}.course-resource-actions a,.course-resource-actions button{flex:1;text-align:center}}
 
+/* Hide login/dashboard until Firebase has restored the saved session; loader is shown above them. */
+body:not(.admin-logged-in) #loginPage { visibility: visible; }
+#page-loader:not(.hide) { z-index: 999999 !important; }
 </style>
 
 
@@ -3583,14 +3586,20 @@ profileSave.addEventListener("click",async()=>{
   }
 });
 
-/* ADMIN_LOADER_SAFETY_FALLBACK: prevent an infinite overlay only if Firebase never responds. */
+/* FAST AUTO-LOGIN: keep the startup loader visible while Firebase restores and
+   verifies a saved session. Never reveal the login screen just because profile
+   or admin verification is still running. Fallback applies only if Firebase
+   never starts the auth-state callback at all. */
+let __adminAuthCallbackStarted = false;
 setTimeout(() => {
-    if (pageLoader && !pageLoader.classList.contains("hide")) {
-        console.warn("Firebase auth session check is taking longer than expected.");
+    if (!__adminAuthCallbackStarted && pageLoader && !pageLoader.classList.contains("hide")) {
+        console.warn("Firebase auth state did not initialize; showing login as a recovery path.");
+        loginPage.style.display = "flex";
+        adminPanel.style.display = "none";
         pageLoader.classList.add("hide");
         document.body.style.overflow = "";
     }
-}, 18000);
+}, 45000);
 
 /* =====================================================
    SINGLE LOGIN FOR NEWS + COURSE ADMIN
@@ -4087,8 +4096,11 @@ loginBtn.addEventListener("click", async () => {
    AUTH STATE MANAGEMENT
 ===================================================== */
 onAuthStateChanged(auth, async (user) => {
-    // Keep the startup loader visible while Firebase restores/scans the saved
-    // login session and checks the account before deciding which screen to show.
+    __adminAuthCallbackStarted = true;
+
+    // FAST STARTUP: Firebase has restored the session. Select the correct screen
+    // immediately; profile/access bookkeeping runs in the background so a slow
+    // Realtime Database request cannot keep the admin waiting at the loader.
     try {
         syncMasterCertificateButton();
 
@@ -4096,7 +4108,6 @@ onAuthStateChanged(auth, async (user) => {
             const registered = await isRegisteredAdmin(user);
             if (!registered) {
                 try { await signOut(auth); } catch (_) {}
-                try { await signOut(courseAuth); } catch (_) {}
                 loginPage.style.display = "flex";
                 adminPanel.style.display = "none";
                 document.body.classList.remove("admin-logged-in");
@@ -4104,19 +4115,32 @@ onAuthStateChanged(auth, async (user) => {
                 return;
             }
 
-            /* Restore the already signed-in admin session without asking for login again. */
-            await ensureAdminProfileAndTeam(user);
-            await publishAdminAccessRecord(user);
+            // Restore the saved session in the UI first; don't wait for optional
+            // profile creation/access logging reads and writes.
             loginPage.style.display = "none";
             adminPanel.style.display = "block";
             document.body.classList.add("admin-logged-in");
             applyCourseVisibility();
-            loadAdminProfile();
-            loadHomeUploads();
-            getAdminIdentityInfo(user.uid, {}).then(info => { window.__currentAdminIdentity = info; }).catch(() => {});
+            if (pageLoader) pageLoader.classList.add("hide");
+            document.body.style.overflow = "";
+
+            // Run background tasks independently. Existing session remains usable
+            // even if profile/access logging is slow or temporarily unavailable.
+            Promise.allSettled([
+                ensureAdminProfileAndTeam(user),
+                publishAdminAccessRecord(user)
+            ]).then(() => {
+                if (auth.currentUser?.uid === user.uid) {
+                    try { loadAdminProfile(); } catch (e) { console.warn("Profile load delayed:", e); }
+                    try { loadHomeUploads(); } catch (e) { console.warn("Home uploads delayed:", e); }
+                    getAdminIdentityInfo(user.uid, {}).then(info => {
+                        if (auth.currentUser?.uid === user.uid) window.__currentAdminIdentity = info;
+                    }).catch(() => {});
+                }
+            });
 
             if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") {
-                connectCourseAdmin();
+                try { connectCourseAdmin(); } catch (e) { console.warn("Course admin connection delayed:", e); }
             }
         } else {
             loginPage.style.display = "flex";
@@ -4130,7 +4154,6 @@ onAuthStateChanged(auth, async (user) => {
         document.body.classList.remove("admin-logged-in");
         if (errorBox && !auth.currentUser) errorBox.innerText = "Checking saved login failed. Please log in again.";
     } finally {
-        // Hide loader only after the saved account has been checked and UI selected.
         if (pageLoader) pageLoader.classList.add("hide");
         document.body.style.overflow = "";
     }
@@ -6427,6 +6450,7 @@ async function getShareIdentity(uid,profile){
 let tsGeneratedTest=null;
 let tsGeneratedTests=[];
 let tsAllTests={};
+let tsEditingId=null;
 let tsLoadedOnce=false;
 const TS=id=>document.getElementById(id);
 const tsGetValue=id=>String(TS(id)?.value??"").trim();
@@ -6652,6 +6676,10 @@ function tsFillForm(t){
 /* Important Questions uploader: Firebase Realtime Database, autosave draft + single-sheet saves */
 let iqCurrentId=null, iqDraftTimer=null;
 const iqEl=id=>document.getElementById(id);
+const DE_FOUNDER_UID="KirLkZUGXoZf0cXHkuCZ4Mfnxam2";
+function deIsFounder(){return !!auth.currentUser && auth.currentUser.uid===DE_FOUNDER_UID;}
+function deOwnsContent(record){return !!auth.currentUser && (deIsFounder() || (!!record && record.createdBy===auth.currentUser.uid));}
+function deNoPermission(){alert("यह content दूसरे Admin ने बनाया है। इसे केवल बनाने वाला Admin या Founder ही Edit/Delete कर सकता है।");}
 function iqStatus(msg,isError=false){const el=iqEl("iqStatus");if(el){el.textContent=msg;el.style.color=isError?"#b91c1c":"#2563eb";}}
 function iqParseContent(raw){
   const text=String(raw||"").replace(/\r/g,"").trim();
@@ -6690,12 +6718,13 @@ function iqUpdateBranchPreview(){const b=iqEl("iqBranch")?.value||"Common",el=iq
 async function iqSave(isDraft=false){
   if(!auth.currentUser){iqStatus("Please login again to save to Firebase.",true);return;}
   const d=iqCollect(); if(d.content && /\bUNIT\b/i.test(d.content) && d.unitCount>0 && d.questionCount===0){iqStatus("Units detect हुए लेकिन numbered questions नहीं मिले। हर question को 1. या 1) से शुरू करें।",true);return;} if(!d.subject||!d.semester||!d.content){if(!isDraft)iqStatus("Subject भरें, Category 1–6 चुनें और Questions paste करें।",true);return;}
-  try{const now=Date.now();Object.assign(d,{status:isDraft?"draft":"published",createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||"",updatedAt:now});
-    let r;if(iqCurrentId){r=ref(db,"importantQuestions/"+iqCurrentId);const old=await get(r);d.createdAt=old.val()?.createdAt||now;d.id=iqCurrentId;await update(r,d);}else{r=push(ref(db,"importantQuestions"));d.id=r.key;d.createdAt=now;await set(r,d);iqCurrentId=r.key;}
+  try{const now=Date.now();
+    let r;
+    if(iqCurrentId){r=ref(db,"importantQuestions/"+iqCurrentId);const oldSnap=await get(r),old=oldSnap.val();if(!old||!deOwnsContent(old)){deNoPermission();iqStatus("Only the creator Admin or Founder can edit this sheet.",true);return;}Object.assign(d,{status:isDraft?"draft":"published",createdBy:old.createdBy||auth.currentUser.uid,createdByEmail:old.createdByEmail||auth.currentUser.email||"",updatedBy:auth.currentUser.uid,updatedAt:now,createdAt:old.createdAt||now,id:iqCurrentId});await update(r,d);}else{Object.assign(d,{status:isDraft?"draft":"published",createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||"",updatedBy:auth.currentUser.uid,updatedAt:now});r=push(ref(db,"importantQuestions"));d.id=r.key;d.createdAt=now;await set(r,d);iqCurrentId=r.key;}
     iqStatus(isDraft?"Draft auto-saved to Firebase.":"Sheet saved successfully to Firebase.");await iqLoadSaved();
   }catch(e){console.error("Important questions save error",e);iqStatus("Save failed: "+(e.message||"Check Firebase Database Rules."),true);}
 }
-async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>v&& (v.createdBy===auth.currentUser.uid || v.createdByEmail===auth.currentUser.email)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>`<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"} questions • ${Number(v.unitCount)||0} units</small></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button></div></div>`).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqRenderUnitEditor();iqStatus("Loaded for editing. Edit unit titles/questions below, apply changes, then Save Sheet.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
+async function iqLoadSaved(){const list=iqEl("iqSavedList");if(!list)return;if(!auth.currentUser){list.textContent="Please login to view saved sheets.";return;}list.innerHTML="Loading saved sheets…";try{const snap=await get(ref(db,"importantQuestions"));const val=snap.val()||{};const rows=Object.entries(val).filter(([k,v])=>!!v).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));if(!rows.length){list.innerHTML='<div style="color:#64748b">No saved sheets yet.</div>';return;}list.innerHTML=rows.map(([id,v])=>{const canManage=deOwnsContent(v);return `<div class="iq-row"><div><b>${escapeHTML(v.title||"Untitled sheet")}</b><small>${escapeHTML(v.subject||"")} • ${escapeHTML(v.status||"draft")} • ${Number(v.questionCount)||"Content saved"} questions • ${Number(v.unitCount)||0} units${canManage?"":" • Read only"}</small></div><div style="display:flex;gap:7px;flex-wrap:wrap">${canManage?`<button type="button" class="iq-btn iq-secondary" data-iq-edit="${id}">Edit</button><button type="button" data-iq-delete="${id}">Delete</button>`:`<span style="font-size:11px;color:#64748b;align-self:center">Creator / Founder only</span>`}</div></div>`}).join("");list.querySelectorAll("[data-iq-edit]").forEach(b=>b.onclick=async()=>{const d=(await get(ref(db,"importantQuestions/"+b.dataset.iqEdit))).val();if(!d)return;if(!deOwnsContent(d)){deNoPermission();return;}iqCurrentId=b.dataset.iqEdit;iqEl("iqTitle").value=d.title||"";iqEl("iqSubject").value=d.subject||"";iqEl("iqBranch").value=d.branch||d.category||(d.visibility==="all"?"Common":"Other");iqUpdateBranchPreview();iqEl("iqSemester").value=d.semester||"";iqEl("iqVisibility").value=d.visibility||"all";iqEl("iqContent").value=d.content||"";iqRenderUnitEditor();iqStatus("Loaded for editing. Edit unit titles/questions below, apply changes, then Save Sheet.");window.scrollTo({top:0,behavior:"smooth"});});list.querySelectorAll("[data-iq-delete]").forEach(b=>b.onclick=async()=>{const target=(await get(ref(db,"importantQuestions/"+b.dataset.iqDelete))).val();if(!target||!deOwnsContent(target)){deNoPermission();return;}if(!confirm("Delete this important-questions sheet permanently?"))return;try{await remove(ref(db,"importantQuestions/"+b.dataset.iqDelete));if(iqCurrentId===b.dataset.iqDelete)iqNew();iqStatus("Sheet deleted.");await iqLoadSaved();}catch(e){iqStatus("Delete failed: "+e.message,true);}});
   }catch(e){console.error(e);list.textContent="Unable to load. Check Firebase rules for importantQuestions.";}}
 function iqNew(){const keepBranch=iqEl("iqBranch")?.value||"Common",keepSemester=iqEl("iqSemester")?.value||"";iqCurrentId=null;iqEl("iqTitle").value="";iqEl("iqContent").value="";iqEl("iqSubject").value="";iqEl("iqBranch").value=keepBranch;iqEl("iqSemester").value=keepSemester;iqUpdateBranchPreview();iqEl("iqVisibility").value=keepBranch==="Common"?"all":"branch";iqRenderUnitEditor();iqStatus("Form cleared. Selected branch and semester are preserved.");}
 iqEl("iqBranch")?.addEventListener("change",iqUpdateBranchPreview);iqUpdateBranchPreview();iqRenderUnitEditor();
@@ -6718,9 +6747,8 @@ async function tsSaveTest(status){
     const saved=[];
     for(const g of tsGeneratedTests){
       const now=Date.now(),qs=g.questions,selectedCategory=tsGetValue("tsBranch")||"Common";
-      const data={folderName:tsGetValue("tsFolderName")||g.subject||tsGetValue("tsSubject")||"General",category:g.category||selectedCategory,branch:g.category||selectedCategory,availableToAllBranches:(g.category||selectedCategory)==="Common",semester:g.semester||tsGetValue("tsSemester"),subject:g.subject||tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:now,updatedAt:now,createdBy:auth.currentUser.uid||"",createdByEmail:auth.currentUser.email||""};
-      const newRef=push(ref(db,"testSeries"));data.id=newRef.key;data.slug=tsSlugify(data.title)+"-"+newRef.key.slice(-5);if(status==="published")data.publishedAt=now;
-      await set(newRef,data);saved.push(data);
+      const data={folderName:tsGetValue("tsFolderName")||g.subject||tsGetValue("tsSubject")||"General",category:g.category||selectedCategory,branch:g.category||selectedCategory,availableToAllBranches:(g.category||selectedCategory)==="Common",semester:g.semester||tsGetValue("tsSemester"),subject:g.subject||tsGetValue("tsSubject"),topic:g.topic||g.unitTitle||tsGetValue("tsTopic"),unit:g.unitTitle||"",title:g.title||tsGetValue("tsTestTitle"),durationMinutes:Number(TS("tsDuration").value)||30,marksPerQuestion:Number(TS("tsMarks").value)||1,negativeMark:Number(TS("tsNegative").value)||0,passPercentage:Number(TS("tsPassPercentage").value)||40,description:tsGetValue("tsDescription"),instructions:tsGetValue("tsInstructions"),questionCount:qs.length,questions:qs.map(q=>({id:q.id,question:q.question,options:q.options,answer:q.answer})),status,active:status==="published",createdAt:now,updatedAt:now,createdBy:auth.currentUser.uid||"",createdByEmail:auth.currentUser.email||"",updatedBy:auth.currentUser.uid||""};
+      if(tsEditingId){const old=tsAllTests[tsEditingId];if(!old||!deOwnsContent(old)){deNoPermission();return;}data.createdAt=old.createdAt||now;data.createdBy=old.createdBy||auth.currentUser.uid||"";data.createdByEmail=old.createdByEmail||auth.currentUser.email||"";data.id=tsEditingId;data.slug=old.slug||tsSlugify(data.title)+"-"+tsEditingId.slice(-5);if(status==="published")data.publishedAt=now;await update(ref(db,"testSeries/"+tsEditingId),data);saved.push(data);tsEditingId=null;}else{const newRef=push(ref(db,"testSeries"));data.id=newRef.key;data.slug=tsSlugify(data.title)+"-"+newRef.key.slice(-5);if(status==="published")data.publishedAt=now;await set(newRef,data);saved.push(data);}
     }
     TS("tsGeneratedCode").textContent=JSON.stringify({savedCount:saved.length,tests:saved},null,2);
     tsToast(`${saved.length} unit test(s) ${status==="published"?"published":"draft में save"} हुए।`);await loadTestSeries(true);
@@ -6737,24 +6765,25 @@ function tsRenderList(){
   const entries=Object.entries(tsAllTests).sort((a,b)=>Number(b[1]?.createdAt||0)-Number(a[1]?.createdAt||0)),published=entries.filter(([,t])=>t.status==="published"&&t.active!==false).length;
   TS("tsTestCountInfo").innerHTML=`<b>${entries.length}</b> total · <b>${published}</b> published · <b>${entries.length-published}</b> draft`;
   if(!entries.length){TS("tsTestsList").innerHTML='<div class="ts-empty">No Test Series found.</div>';return;}
-  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>`<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0"><button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
+  TS("tsTestsList").innerHTML=`<div class="ts-table-wrap"><table class="ts-table"><thead><tr><th>Test</th><th>Branch</th><th>Semester</th><th>Questions</th><th>Status</th><th>Action</th></tr></thead><tbody>${entries.map(([id,t])=>`<tr><td><b>${tsEscape(t.title||"Untitled")}</b><div style="font-size:10px;color:#7a8495">${tsEscape(t.subject||"")} · ${tsEscape(t.topic||"")}</div></td><td>${tsEscape(t.branch||"-")}</td><td>${tsEscape(t.semester||"-")}</td><td>${Number(t.questionCount||t.questions?.length||0)}</td><td><span class="ts-badge ${t.status==="published"?"ts-badge-published":"ts-badge-draft"}">${t.status==="published"?"Published":"Draft"}</span></td><td><div class="ts-actions" style="margin:0">${deOwnsContent(t)?`<button class="ts-btn ts-btn-light" data-ts-action="edit" data-ts-id="${tsEscape(id)}" title="Edit"><i class="fa-solid fa-pen"></i></button><button class="ts-btn ts-btn-warning" data-ts-action="toggle" data-ts-id="${tsEscape(id)}" title="Publish / Unpublish"><i class="fa-solid ${t.status==="published"?"fa-eye-slash":"fa-rocket"}"></i></button><button class="ts-btn ts-btn-danger" data-ts-action="delete" data-ts-id="${tsEscape(id)}" title="Delete"><i class="fa-solid fa-trash"></i></button>`:`<span style="font-size:11px;color:#64748b">Read only</span>`}</div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function tsOpenConfirm(title,msg,action){TS("tsModalTitle").textContent=title;TS("tsModalText").textContent=msg;window.__tsConfirmAction=action;TS("tsConfirmModal").classList.add("show");}
 function tsCloseConfirm(){window.__tsConfirmAction=null;TS("tsConfirmModal").classList.remove("show");}
 async function tsTogglePublish(id){
-  const t=tsAllTests[id];if(!t)return;const publishing=t.status!=="published";
+  const t=tsAllTests[id];if(!t)return;if(!deOwnsContent(t)){deNoPermission();return;}const publishing=t.status!=="published";
   tsOpenConfirm(publishing?"Publish Test?":"Unpublish Test?",publishing?"This test will become visible to students.":"This test will be hidden from students.",async()=>{
     try{await update(ref(db,"testSeries/"+id),{status:publishing?"published":"draft",active:publishing,updatedAt:Date.now(),...(publishing?{publishedAt:Date.now()}: {})});tsToast(publishing?"Test published.":"Test unpublished.");await loadTestSeries(true);}
     catch(e){tsToast(tsDbError(e));}
   });
 }
 async function tsDeleteTest(id){
-  const t=tsAllTests[id];if(!t)return;
+  const t=tsAllTests[id];if(!t)return;if(!deOwnsContent(t)){deNoPermission();return;}
   tsOpenConfirm("Delete Test?",`"${t.title||"Untitled"}" permanently delete हो जाएगा. यह action वापस नहीं किया जा सकता।`,async()=>{
     try{await remove(ref(db,"testSeries/"+id));tsToast("Test deleted.");await loadTestSeries(true);}catch(e){tsToast(tsDbError(e));}
   });
 }
 function tsResetForm(){
+  tsEditingId=null;
   ["tsFolderName","tsTestTitle","tsSubject","tsTopic","tsDescription","tsInstructions","tsMcqInput"].forEach(id=>{if(TS(id))TS(id).value="";});
   if(TS("tsBranch"))TS("tsBranch").value="Common";if(TS("tsSemester"))TS("tsSemester").value="";
   TS("tsDuration").value=30;TS("tsMarks").value=1;TS("tsNegative").value=0;TS("tsPassPercentage").value=40;tsGeneratedTest=null;tsGeneratedTests=[];TS("tsStats").classList.add("hidden");TS("tsPreview").innerHTML='<div class="ts-empty"><i class="fa-regular fa-rectangle-list"></i><p>Questions will appear here after Auto Create.</p></div>';TS("tsGeneratedCode").textContent="No test generated yet.";
@@ -6767,7 +6796,7 @@ TS("tsParseBtn")?.addEventListener("click",tsParseAndPreview);TS("tsClearBtn")?.
 TS("tsCopyCodeBtn")?.addEventListener("click",async()=>{const text=TS("tsGeneratedCode").textContent;if(!text||text==="No test generated yet.")return tsToast("Generate a test first.");try{await navigator.clipboard.writeText(text);tsToast("Test data copied.");}catch(e){tsToast("Copy failed.");}});
 TS("tsDownloadCodeBtn")?.addEventListener("click",()=>{const text=TS("tsGeneratedCode").textContent;if(!text||text==="No test generated yet.")return tsToast("Generate a test first.");const blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=(tsSlugify(tsGetValue("tsTestTitle"))||"test-series")+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);});
 TS("tsLoadJsonBtn")?.addEventListener("click",()=>TS("tsJsonFileInput").click());TS("tsJsonFileInput")?.addEventListener("change",async e=>{const file=e.target.files?.[0];if(!file)return;try{tsFillForm(JSON.parse(await file.text()));tsToast("JSON test loaded successfully.");}catch(err){console.error(err);tsToast("Invalid JSON file.");}finally{e.target.value="";}});
-TS("tsTestsList")?.addEventListener("click",e=>{const b=e.target.closest("[data-ts-action]");if(!b)return;const id=b.dataset.tsId;if(b.dataset.tsAction==="edit")tsFillForm(tsAllTests[id]);if(b.dataset.tsAction==="toggle")tsTogglePublish(id);if(b.dataset.tsAction==="delete")tsDeleteTest(id);});
+TS("tsTestsList")?.addEventListener("click",e=>{const b=e.target.closest("[data-ts-action]");if(!b)return;const id=b.dataset.tsId;if(!deOwnsContent(tsAllTests[id])){deNoPermission();return;}if(b.dataset.tsAction==="edit"){tsEditingId=id;tsFillForm(tsAllTests[id]);}if(b.dataset.tsAction==="toggle")tsTogglePublish(id);if(b.dataset.tsAction==="delete")tsDeleteTest(id);});
 ["tsFolderName","tsTestTitle","tsBranch","tsSemester","tsSubject","tsTopic","tsDuration","tsMarks","tsNegative","tsPassPercentage","tsDescription","tsInstructions"].forEach(id=>TS(id)?.addEventListener("input",tsUpdateGeneratedCode));
 TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm")?.addEventListener("click",async()=>{const action=window.__tsConfirmAction;tsCloseConfirm();if(action)await action();});TS("tsConfirmModal")?.addEventListener("click",e=>{if(e.target.id==="tsConfirmModal")tsCloseConfirm();});
 
@@ -11197,5 +11226,46 @@ body{padding-bottom:68px!important}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();
  [250,700,1400,2400].forEach(t=>setTimeout(fix,t));
+})();
+</script>
+
+
+<!-- Menu branding update: use only the original 2000x667 banner image; remove adjacent text. -->
+<style id="de-menu-banner-logo-only">
+#deHomeHamburgerMenu .de-drawer-head{
+  min-height:0!important;height:auto!important;align-items:center!important;
+  gap:10px!important;padding:14px 10px!important;
+}
+#deHomeHamburgerMenu .de-drawer-brand{
+  flex:1 1 auto!important;width:auto!important;min-width:0!important;
+  display:flex!important;align-items:center!important;gap:0!important;
+}
+#deHomeHamburgerMenu .de-drawer-brand img{
+  display:block!important;width:100%!important;max-width:100%!important;
+  height:auto!important;aspect-ratio:2000 / 667!important;object-fit:contain!important;
+  object-position:left center!important;flex:1 1 auto!important;min-width:0!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+#deHomeHamburgerMenu .de-drawer-brand strong,
+#deHomeHamburgerMenu .de-drawer-brand small{display:none!important}
+#deHomeHamburgerMenu .de-drawer-close{flex:0 0 36px!important;width:36px!important;height:36px!important;min-height:36px!important}
+</style>
+<script id="de-menu-banner-logo-only-js">
+(function(){
+ const applyMenuBanner=()=>{
+  const menu=document.getElementById('deHomeHamburgerMenu');
+  const brand=menu&&menu.querySelector('.de-drawer-brand');
+  if(!brand)return;
+  let img=brand.querySelector('img');
+  if(!img){img=document.createElement('img');brand.prepend(img)}
+  img.src='https://diplomaengineers.vercel.app/certificate%20logo.png';
+  img.alt='Diploma Engineers';
+  img.removeAttribute('width');img.removeAttribute('height');
+  [...brand.children].forEach(el=>{if(el!==img)el.remove()});
+ };
+ applyMenuBanner();
+ const menu=document.getElementById('deHomeHamburgerMenu');
+ if(menu)new MutationObserver(applyMenuBanner).observe(menu,{childList:true,subtree:true});
+ document.addEventListener('DOMContentLoaded',applyMenuBanner);
 })();
 </script>

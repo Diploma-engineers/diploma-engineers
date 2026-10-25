@@ -6849,7 +6849,8 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       window.__DE_NEWS_IDS = newsArray.map(item=>String(item.id));
       updateNewsBadge(window.__DE_NEWS_IDS, true);
-      newsArray.forEach(item => createNewsCard(item.id, item.data, newsList));
+      window.__DE_NEWS_CACHE = window.__DE_NEWS_CACHE || {};
+      newsArray.forEach(item => { window.__DE_NEWS_CACHE[String(item.id)] = item.data; createNewsCard(item.id, item.data, newsList); });
     }, error => {
       console.error(error);
       newsList.innerHTML = `
@@ -6880,7 +6881,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.openNewsReader = async function(id, suppliedData) {
     const overlay = document.getElementById('deNewsReaderOverlay');
     const content = document.getElementById('deNewsReaderContent');
-    if (!overlay || !content) return;
+    if (!overlay || !content) { console.error('News Reader overlay is missing from the page DOM.'); alert('News reader could not open. Please refresh the app and try again.'); return; }
     overlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
     const oldTitle = document.title;
@@ -6929,12 +6930,47 @@ window.addEventListener('DOMContentLoaded', () => {
     const u = new URL(location.href); u.searchParams.delete('newsId');
     history.replaceState({}, '', u.href);
   };
+  window.addEventListener('popstate', function(){
+    const overlay = document.getElementById('deNewsReaderOverlay');
+    const params = new URLSearchParams(location.search);
+    const newsId = params.get('newsId');
+    if (newsId) { window.openNewsReader(newsId); }
+    else if (overlay && overlay.style.display === 'block') {
+      overlay.style.display = 'none'; document.body.style.overflow = '';
+      document.title = window.__deNewsReaderPreviousTitle || 'Diploma Engineers Portal';
+    }
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    const directNewsId = new URLSearchParams(location.search).get('newsId');
+    if (directNewsId) window.openNewsReader(directNewsId);
+  });
   window.shareNewsReaderNative = async function() { const n=window.__deNewsShare||{}; if(navigator.share){try{await navigator.share({title:n.title,text:n.desc||'Read this news on Diploma Engineers',url:n.url});return}catch(_){}} window.copyNewsReaderLink(); };
   window.shareNewsReaderWA = function(){const n=window.__deNewsShare||{};window.open('https://wa.me/?text='+encodeURIComponent((n.title||'News')+'\n'+n.url),'_blank','noopener');};
   window.shareNewsReaderTG = function(){const n=window.__deNewsShare||{};window.open('https://t.me/share/url?url='+encodeURIComponent(n.url||location.href)+'&text='+encodeURIComponent(n.title||'News'),'_blank','noopener');};
   window.shareNewsReaderFB = function(){const n=window.__deNewsShare||{};window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(n.url||location.href),'_blank','noopener');};
   window.shareNewsReaderIG = async function(){window.copyNewsReaderLink();alert('News link copied. Open Instagram and share it.');};
   window.copyNewsReaderLink = async function(){const n=window.__deNewsShare||{};try{await navigator.clipboard.writeText(n.url||location.href);alert('News link copied!');}catch(_){prompt('Copy News Link:',n.url||location.href);}};
+
+  // Reliable delegated click handler: also supports news cards rendered dynamically by other app code.
+  // Keep Share buttons independent; every other click inside a news card opens the reader.
+  document.addEventListener('click', function(event) {
+    const shareButton = event.target && event.target.closest ? event.target.closest('[data-share]') : null;
+    if (shareButton) return;
+    const readButton = event.target && event.target.closest ? event.target.closest('[data-read]') : null;
+    const card = event.target && event.target.closest ? event.target.closest('.news-card') : null;
+    if (!readButton && !card) return;
+    const targetCard = readButton ? readButton.closest('.news-card') : card;
+    if (!targetCard) return;
+    const id = String(targetCard.id || '').replace(/^card-/, '');
+    if (!id) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof window.openNewsReader === 'function') {
+      // Prefer data already rendered into the card when available; otherwise fetch by ID.
+      const cached = window.__DE_NEWS_CACHE && window.__DE_NEWS_CACHE[id];
+      window.openNewsReader(id, cached || undefined);
+    }
+  }, true);
 
   function createNewsCard(id, n, container) {
     const title = n.title || "Untitled News";
@@ -11267,13 +11303,6 @@ async function iqDownloadPdf(el,name){
  `;
  printWin.document.open();
  printWin.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeTitle+'</title><style>'+css+'</style></head><body><main id="iqPrintRoot">'+content.innerHTML+'</main><script>window.onload=function(){var imgs=Array.from(document.images);Promise.all(imgs.map(function(i){if(i.complete)return Promise.resolve();return new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,2500)})})).then(function(){setTimeout(function(){window.focus();window.print()},250)});};window.onafterprint=function(){setTimeout(function(){window.close()},300)};<\/script>
-<div id="deNewsReaderOverlay" role="dialog" aria-modal="true" aria-label="News Reader">
-  <div class="de-nr-wrap">
-    <button class="de-nr-back" type="button" onclick="closeNewsReader()"><i class="fa-solid fa-arrow-left"></i> Back to News</button>
-    <main id="deNewsReaderContent" class="de-nr-article"><div class="de-nr-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading news...</p></div></main>
-  </div>
-</div>
-
 </body></html>');
  printWin.document.close();
 }
@@ -11926,5 +11955,11 @@ import {getDatabase, ref, get, push, set} from 'https://www.gstatic.com/firebase
 })();
 </script>
 
+<div id="deNewsReaderOverlay" role="dialog" aria-modal="true" aria-label="News Reader">
+  <div class="de-nr-wrap">
+    <button class="de-nr-back" type="button" onclick="closeNewsReader()"><i class="fa-solid fa-arrow-left"></i> Back to News</button>
+    <main id="deNewsReaderContent" class="de-nr-article"><div class="de-nr-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading news...</p></div></main>
+  </div>
+</div>
 </body>
 </html>

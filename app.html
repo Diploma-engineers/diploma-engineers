@@ -9936,21 +9936,30 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   }
 
   async function load(){
-    if(deTsLoaded||deTsLoading) return;
+    if(deTsLoading) return;
+    // Render the last successful list immediately; refresh from Firebase in background.
+    // Keep this cache limited to the listing data and refresh it after each successful fetch.
+    if(!deTsLoaded){
+      try {
+        const cached=localStorage.getItem("deTsPublishedListCacheV2");
+        if(cached){
+          const parsed=JSON.parse(cached);
+          if(Array.isArray(parsed) && parsed.length){
+            deTsTests=parsed; deTsLoaded=true;
+            fillSelect("deTsBranch",deTsTests.map(t=>t.branch));
+            fillSelect("deTsSemester",deTsTests.map(t=>t.semester));
+            fillSelect("deTsSubject",deTsTests.map(t=>t.subject));
+            render();
+          }
+        }
+      } catch(cacheError) { console.warn("Test Series cache unavailable", cacheError); }
+    }
     deTsLoading=true;
     try{
-      /* IMPORTANT: Home app has two Firebase projects.
-         testSeries belongs to diplomaengineers-869df (newsApp),
-         NOT the student's diploma-app-9a378 database. */
+      /* Test Series is stored in the newsApp Firebase project. */
       let newsAppForTests;
-      try {
-        newsAppForTests = getApp("newsApp");
-      } catch (appError) {
-        /* The named app is created by the main Home script. Retry briefly
-           in case this module executes before that script finishes. */
-        await new Promise(resolve => setTimeout(resolve, 250));
-        newsAppForTests = getApp("newsApp");
-      }
+      try { newsAppForTests = getApp("newsApp"); }
+      catch (appError) { await new Promise(resolve => setTimeout(resolve, 250)); newsAppForTests = getApp("newsApp"); }
       const database=getDatabase(newsAppForTests);
       const snap=await get(ref(database,"testSeries"));
       const data=snap.val()||{};
@@ -9958,18 +9967,18 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
         .map(([id,t])=>({...t,id}))
         .filter(t=>t.status==="published" && t.active!==false)
         .sort((a,b)=>(b.publishedAt||b.createdAt||0)-(a.publishedAt||a.createdAt||0));
+      try { localStorage.setItem("deTsPublishedListCacheV2", JSON.stringify(deTsTests)); } catch(cacheError) { console.warn("Could not save Test Series cache",cacheError); }
       fillSelect("deTsBranch",deTsTests.map(t=>t.branch));
       fillSelect("deTsSemester",deTsTests.map(t=>t.semester));
       fillSelect("deTsSubject",deTsTests.map(t=>t.subject));
+      deTsLoaded=true;
       render();
-      deTsLoaded=true;
     }catch(e){
-      deTsLoaded=true;
       console.error("Test Series load error:",e);
       const error=$("deTsErrorBox");
-      if(error){error.style.display="block";error.textContent="Test Series load नहीं हो सकी: "+(e.message||"Firebase error");}
+      if(error && !deTsLoaded){error.style.display="block";error.textContent="Test Series load नहीं हो सकी: "+(e.message||"Firebase error");}
       const list=$("deTsList");
-      if(list) list.innerHTML='<div class="de-ts-empty"><i class="fa-solid fa-triangle-exclamation"></i><p>Could not load data. Please check your connection and try again.</p></div>';
+      if(list && !deTsLoaded) list.innerHTML='<div class="de-ts-empty"><i class="fa-solid fa-triangle-exclamation"></i><p>Could not load data. Please check your connection and try again.</p><button type="button" class="de-ts-btn" onclick="window.initEmbeddedTestSeries&&window.initEmbeddedTestSeries()">Retry</button></div>';
     }finally{deTsLoading=false;}
   }
 
@@ -11141,7 +11150,9 @@ async function iqDownloadPdf(el,name){
   html,body{margin:0;padding:0;background:#fff;color:#172033;font-family:Arial,"Noto Sans Devanagari","Mangal",sans-serif;font-size:11pt;line-height:1.55}
   body{width:100%}
   #iqPrintRoot{position:relative;width:100%;margin:0 auto;background:#fff;overflow:visible}
-  #iqPrintRoot:before{content:"";position:fixed;left:50%;top:50%;width:125mm;height:125mm;transform:translate(-50%,-50%);background:url("https://diplomaengineers.vercel.app/pdf-logo.png") center/contain no-repeat;opacity:.055;z-index:-1;pointer-events:none}
+  #iqPrintRoot:before{content:"";position:fixed;left:50%;top:50%;width:105mm;height:105mm;transform:translate(-50%,-50%);background:url("https://diplomaengineers.vercel.app/certificate%20logo.png") center/contain no-repeat;opacity:.075;z-index:0;pointer-events:none}
+  #iqPrintRoot>*{position:relative;z-index:1}
+  @media print{#iqPrintRoot:before{position:fixed;display:block;print-color-adjust:exact;-webkit-print-color-adjust:exact;opacity:.09}}
   .iq-sheet-head{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;margin:0 auto 8mm;padding:0 0 5mm;border:0;border-bottom:1px solid #d7dee8;overflow:visible;break-inside:avoid;page-break-inside:avoid;background:#fff}
   .iq-sheet-brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;text-align:center!important;margin:0 auto 4mm!important;padding:0!important}
   .iq-sheet-brand img{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:36mm!important;object-fit:contain!important;object-position:center!important;margin:0 auto!important}
@@ -11150,8 +11161,8 @@ async function iqDownloadPdf(el,name){
   .iq-sheet-meta{font-size:9.5pt;line-height:1.45;color:#475569;text-align:center;margin:2mm auto 0;overflow-wrap:anywhere}
   .iq-sheet-head>div:last-child{font-size:9pt!important;text-align:center!important;margin:2mm auto 0!important}
   section{display:block;width:100%;margin:0 0 5mm}
-  .iq-sheet-unit{font-size:13pt;line-height:1.35;font-weight:800;color:#991b1b;margin:6mm 0 3mm;break-after:avoid;page-break-after:avoid;overflow-wrap:anywhere}
-  .iq-sheet-q{font-size:11pt;line-height:1.55;color:#111827;margin:0 0 4mm;padding:0 0 0 1mm;break-inside:avoid;page-break-inside:avoid;overflow-wrap:anywhere;word-break:normal}
+  .iq-sheet-unit{font-size:13pt;line-height:1.35;font-weight:800;color:#991b1b;margin:6mm 4mm 3mm;padding:0 2mm;break-after:avoid;page-break-after:avoid;overflow-wrap:anywhere}
+  .iq-sheet-q{font-size:11pt;line-height:1.55;color:#111827;margin:0 4mm 4mm;padding:0 3mm;break-inside:avoid;page-break-inside:avoid;overflow-wrap:anywhere;word-break:normal}
   .iq-sheet-q .iq-hi{display:block;font-size:11pt;line-height:1.55;font-weight:700;color:#111827;white-space:pre-wrap;overflow-wrap:anywhere}
   .iq-sheet-q .iq-en{display:block;font-size:10.5pt;line-height:1.55;margin:1mm 0 0 5mm;color:#1f2937;white-space:pre-wrap;overflow-wrap:anywhere}
   .iq-sheet-empty{padding:5mm;text-align:center;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:3mm}

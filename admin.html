@@ -3995,6 +3995,21 @@ loginBtn.addEventListener("click", async () => {
             "Main Firebase login timed out. Check your internet connection and Firebase Authentication."
         );
 
+        // FAST LOGIN UX: as soon as the main Firebase session is authenticated,
+        // reveal the Admin Panel immediately. Secondary-project sign-in and profile
+        // bookkeeping continue below; they must not make the user wait at Login.
+        if (auth.currentUser && auth.currentUser.email) {
+            loginPage.style.display = "none";
+            adminPanel.style.display = "block";
+            document.body.classList.add("admin-logged-in");
+            if (pageLoader) pageLoader.classList.add("hide");
+            document.body.style.overflow = "";
+            applyCourseVisibility();
+            syncMasterCertificateButton();
+            try { loadAdminProfile(); } catch (_) {}
+            try { loadHomeUploads(); } catch (_) {}
+        }
+
         // Authenticate against the student purchase project too, because /utrPurchases
         // and /courseAccess live in diploma-app-9a378, not the admin/catalog project.
         try {
@@ -4120,6 +4135,7 @@ onAuthStateChanged(auth, async (user) => {
             loginPage.style.display = "none";
             adminPanel.style.display = "block";
             document.body.classList.add("admin-logged-in");
+            try { localStorage.setItem("de_admin_session_hint", "1"); } catch (_) {}
             applyCourseVisibility();
             if (pageLoader) pageLoader.classList.add("hide");
             document.body.style.overflow = "";
@@ -4143,6 +4159,7 @@ onAuthStateChanged(auth, async (user) => {
                 try { connectCourseAdmin(); } catch (e) { console.warn("Course admin connection delayed:", e); }
             }
         } else {
+            try { localStorage.removeItem("de_admin_session_hint"); } catch (_) {}
             loginPage.style.display = "flex";
             adminPanel.style.display = "none";
             document.body.classList.remove("admin-logged-in");
@@ -8787,6 +8804,53 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
 })();
 </script>
 
+
+<!-- CREATE COURSE STABLE LAYOUT PATCH: prevent the editor and its controls from shifting the whole page -->
+<style id="deCreateCourseStableLayoutPatch">
+#deCourseCreatePage{display:block;width:100%;max-width:100%;min-width:0;position:relative;box-sizing:border-box;overflow-x:clip;overflow-y:visible;contain:layout style;}
+#deCourseCreatePage[hidden],#deCourseCreatePage[style*="display: none"]{display:none!important;}
+#deCourseCreatePage #courseBuilder,#deCourseCreatePage #courseCreateForm,#deCourseCreatePage .course-builder,#deCourseCreatePage .course-builder-head,#deCourseCreatePage .course-builder-tabs,#deCourseCreatePage .course-builder-panel{width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+#deCourseCreatePage #courseCreateForm{overflow:clip!important;}
+#deCourseCreatePage .course-form-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start;gap:14px!important;}
+#deCourseCreatePage .course-field{min-width:0!important;max-width:100%!important;align-self:start;overflow-wrap:anywhere;}
+#deCourseCreatePage .course-field input,#deCourseCreatePage .course-field select,#deCourseCreatePage .course-field textarea{display:block;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
+#deCourseCreatePage .course-wide{grid-column:1/-1!important;min-width:0!important;}
+#deCourseCreatePage .course-item-builder,#deCourseCreatePage .course-item-card,#deCourseCreatePage .course-builder-notice{min-width:0;max-width:100%;overflow-wrap:anywhere;}
+#deCourseCreatePage .course-builder-tabs{position:relative;left:auto;right:auto;transform:none!important;}
+#deCourseCreatePage *{scroll-margin-top:18px;}
+#deCourseCreatePage .course-builder-tab,#deCourseCreatePage .course-builder-btn,#deCourseCreatePage .de-course-slider-controls button{transform:none!important;}
+#deCourseCreatePage #courseCouponsEditor,#deCourseCreatePage #courseSemesterChoices{flex-flow:row nowrap!important;justify-content:flex-start!important;align-items:stretch!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;scrollbar-gutter:stable;}
+html{overflow-x:clip!important;}
+@media(max-width:700px){
+ #deCourseCreatePage{padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important;}
+ #deCourseCreatePage .course-form-grid{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+ #deCourseCreatePage .course-wide{grid-column:1!important;}
+ #deCourseCreatePage .course-form-actions{display:grid!important;grid-template-columns:minmax(0,1fr)!important;}
+ #deCourseCreatePage .course-form-actions button{width:100%;min-width:0;}
+}
+@media(prefers-reduced-motion:reduce){#deCourseCreatePage *,#deCourseCreatePage *::before,#deCourseCreatePage *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
+</style>
+<script id="deCreateCourseStableLayoutPatchJS">
+(function(){
+ 'use strict';
+ function stabilize(){
+  const page=document.getElementById('deCourseCreatePage');
+  const form=document.getElementById('courseCreateForm');
+  if(!page||!form)return;
+  page.style.setProperty('width','100%','important');
+  page.style.setProperty('max-width','100%','important');
+  page.style.setProperty('min-width','0','important');
+  form.style.setProperty('width','100%','important');
+  form.style.setProperty('max-width','100%','important');
+  form.style.setProperty('min-width','0','important');
+  form.style.setProperty('box-sizing','border-box','important');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stabilize,{once:true});else stabilize();
+ window.addEventListener('resize',stabilize,{passive:true});
+ // Avoid the browser re-positioning the entire document while dynamic course cards are updated.
+ if('scrollRestoration' in history)history.scrollRestoration='manual';
+})();
+</script>
 </body>
 
 <style id="profile-full-width-final">

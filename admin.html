@@ -5760,9 +5760,13 @@ function showAdminMode(mode) {
       backBtn.style.display = isSubpage ? 'inline-flex' : 'none';
       backBtn.setAttribute('aria-hidden', isSubpage ? 'false' : 'true');
     }
-    // Never show profile/rank/certificate shortcuts while switching admin pages.
-    document.querySelectorAll('#topRankBtn,#deTopActivityBtnTop,#topProfileBtn,#topCertificateBtn,#topRankingBtn,.admin-top-right,.profile-ranking-shortcuts').forEach(el=>{el.style.setProperty('display','none','important');});
+    // Home: show profile/rank/activity/certificate actions on the RIGHT.
+    // Subpages: keep the right side clean and show the Admin Panel title.
     document.body.classList.toggle('admin-subpage-open', isSubpage);
+    const topRight = document.querySelector('#adminTopBar .admin-top-right');
+    if (topRight) topRight.style.display = isSubpage ? 'none' : 'flex';
+    const brand = document.querySelector('#adminTopBar .admin-brand-top');
+    if (brand) { brand.style.display = 'block'; brand.querySelector('strong').textContent = 'Admin Panel'; }
     applyRankingVisibility();
     adminSwitcher.classList.remove("books-active", "test-active", "course-active", "rank-active");
     adminSwitcher.classList.add("test-enabled");
@@ -10677,5 +10681,113 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arrange,{once:true});else arrange();
  setTimeout(arrange,250);
+})();
+</script>
+
+<style id="admin-page-header-layout-final">
+/* Home shortcuts stay on the left only on Home; other sections get a clean Admin Panel header. */
+.home-top-actions{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.home-top-left-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.home-hamburger-btn{margin-left:auto;flex:0 0 auto;position:relative;z-index:100002;width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e2e8f0;border-radius:14px;background:#fff;color:#172033;box-shadow:0 4px 14px rgba(15,23,42,.08);font-size:22px;cursor:pointer}
+/* Keep the sliding menu above both the top header and the bottom navigation. */
+#homeSideMenuOverlay{position:fixed!important;inset:0!important;z-index:2147483000!important}
+#homeSideMenuOverlay .home-side-menu{z-index:2147483001!important;max-height:100dvh!important;padding-bottom:calc(22px + env(safe-area-inset-bottom))!important}
+#deAdminBrandTitle{display:inline-block}
+#deCourseTopBack{margin-left:auto;order:3}
+@media(max-width:760px){
+ .home-top-actions{gap:8px;min-height:48px}
+ .home-top-left-tools{gap:5px;max-width:calc(100% - 54px)}
+ .home-shortcut-btn{font-size:11px!important;padding:7px 8px!important}
+ .home-hamburger-btn{width:44px;height:44px;font-size:23px}
+ .app-brand-mini{display:flex!important;align-items:center!important;width:100%;gap:10px}
+ #deAdminBrandTitle{font-size:15px}
+ #deCourseTopBack{margin-left:auto!important}
+}
+</style>
+<script id="admin-page-header-layout-behavior-final">
+(function(){
+ const home=document.getElementById('homeAdminSection');
+ const homeShortcuts=document.querySelector('.home-top-left-tools');
+ const hamburger=document.getElementById('homeHamburgerBtn');
+ const homeActions=document.querySelector('.home-top-actions');
+ const brandTitle=document.getElementById('deAdminBrandTitle');
+ const topBack=document.getElementById('deCourseTopBack');
+ const homeOnlyTargets=new Set(['home','dashboard','index']);
+ function activePageIsHome(){
+   if(home && home.classList.contains('active') && home.hidden!==true) return true;
+   const active=document.querySelector('.admin-mode-section.active, .admin-section.active, .page-section.active');
+   return !!(active && (active.id==='homeAdminSection' || active.dataset.appTarget==='home'));
+ }
+ function updateHeader(){
+   const isHome=activePageIsHome();
+   if(homeShortcuts) homeShortcuts.style.display=isHome?'flex':'none';
+   if(homeActions) homeActions.style.display=isHome?'flex':'none';
+   if(brandTitle){brandTitle.hidden=false;brandTitle.textContent='Admin Panel';}
+   if(topBack){topBack.hidden=isHome;topBack.style.display=isHome?'none':'inline-flex';}
+   if(hamburger){hamburger.style.display='inline-flex';hamburger.setAttribute('aria-label','Open sliding menu');}
+ }
+ // Keep the header in sync with appGo section switches and delayed page rendering.
+ const originalAppGo=window.appGo;
+ if(typeof originalAppGo==='function' && !originalAppGo.__headerLayoutWrapped){
+   const wrapped=function(mode,...args){
+     const result=originalAppGo.call(this,mode,...args);
+     setTimeout(updateHeader,0);setTimeout(updateHeader,100);
+     return result;
+   };
+   wrapped.__headerLayoutWrapped=true;window.appGo=wrapped;
+ }
+ document.addEventListener('click',e=>{
+   if(e.target.closest('[data-app-target],[data-home-nav],[data-menu-target]')){setTimeout(updateHeader,50);setTimeout(updateHeader,180);}
+ });
+ window.addEventListener('popstate',()=>{setTimeout(updateHeader,80)});
+ window.addEventListener('hashchange',()=>setTimeout(updateHeader,80));
+ new MutationObserver(()=>updateHeader()).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','hidden','style']});
+ updateHeader();setTimeout(updateHeader,300);setTimeout(updateHeader,1000);
+})();
+</script>
+
+<style id="final-admin-header-positioning-v2">
+#adminTopBar{position:sticky!important;top:0!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-height:54px!important;height:54px!important;padding:0 14px!important;z-index:100001!important;background:#fff!important;box-sizing:border-box!important}
+#adminTopBar .admin-top-left{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important}
+#adminTopBar .admin-top-back{display:none;align-items:center;justify-content:center;width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;color:#172033;font-size:18px;cursor:pointer;padding:0!important}
+#adminTopBar .admin-top-back span{display:none!important}
+#adminTopBar .admin-brand-top{display:block!important;white-space:nowrap!important}
+#adminTopBar .admin-brand-top strong{font-size:15px!important;font-weight:800!important}
+#adminTopBar .admin-top-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+#adminTopBar .top-streak,#adminTopBar .de-top-activity-btn,#adminTopBar .top-profile-icon{display:inline-flex!important;align-items:center;justify-content:center}
+#adminTopBar .top-profile-icon{width:40px!important;height:40px!important;border:0!important;border-radius:50%!important;overflow:hidden!important}
+#adminTopBar .top-profile-icon img{width:100%!important;height:100%!important;object-fit:cover!important}
+#homeHamburgerBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;position:static!important;flex:0 0 40px!important;width:40px!important;height:40px!important;border:0!important;border-radius:12px!important;background:#f1f5f9!important;color:#172033!important;font-size:21px!important;cursor:pointer!important;order:-1!important}
+#adminTopBar .admin-top-left #homeHamburgerBtn{display:inline-flex!important}
+.home-top-actions #homeHamburgerBtn{display:none!important}
+.home-top-left-tools{display:none!important}
+.home-side-menu-overlay{position:fixed!important;inset:0!important;z-index:200000!important}
+.home-side-menu{z-index:200001!important}
+.mobile-bottom-nav{z-index:5000!important}
+@media(max-width:600px){#adminTopBar{height:52px!important;min-height:52px!important;padding:0 10px!important}#adminTopBar .admin-brand-top strong{font-size:14px!important}#adminTopBar .admin-top-right{gap:6px!important}#adminTopBar .top-streak{height:34px!important;min-width:38px!important;padding:0 8px!important}#adminTopBar .de-top-activity-btn{width:34px!important;height:34px!important}#adminTopBar .top-profile-icon{width:34px!important;height:34px!important}#homeHamburgerBtn{width:36px!important;height:36px!important;flex-basis:36px!important;font-size:20px!important}}
+body.admin-subpage-open #adminTopBar .admin-top-right{display:none!important}
+body:not(.admin-subpage-open) #adminTopBar .admin-top-right{display:flex!important}
+</style>
+<script id="final-admin-header-positioning-v2-js">
+(function(){
+ const headerLeft=document.querySelector('#adminTopBar .admin-top-left');
+ const hamburger=document.getElementById('homeHamburgerBtn');
+ const back=document.getElementById('adminTopBackBtn');
+ if(headerLeft && hamburger && hamburger.parentElement!==headerLeft){headerLeft.insertBefore(hamburger,headerLeft.firstChild);}
+ function sync(){
+   const home=document.getElementById('homeAdminSection');
+   const isHome=!!(home && home.classList.contains('active'));
+   document.body.classList.toggle('admin-subpage-open',!isHome);
+   if(back){back.style.display=isHome?'none':'inline-flex';back.setAttribute('aria-label','Back to previous page');back.title='Back to previous page';}
+   const right=document.querySelector('#adminTopBar .admin-top-right');
+   if(right) right.style.display=isHome?'flex':'none';
+   const brand=document.querySelector('#adminTopBar .admin-brand-top strong');
+   if(brand) brand.textContent='Admin Panel';
+ }
+ const old=window.appGo; if(typeof old==='function'&&!old.__finalHeaderWrap){const wrapped=function(mode,...args){const r=old.apply(this,[mode,...args]);setTimeout(sync,0);setTimeout(sync,100);return r};wrapped.__finalHeaderWrap=true;window.appGo=wrapped;}
+ document.addEventListener('click',e=>{if(e.target.closest('#adminTopBackBtn'))setTimeout(sync,100)});
+ new MutationObserver(sync).observe(document.getElementById('homeAdminSection')||document.body,{attributes:true,attributeFilter:['class','hidden']});
+ window.addEventListener('popstate',()=>setTimeout(sync,50));
+ sync();setTimeout(sync,300);
 })();
 </script>

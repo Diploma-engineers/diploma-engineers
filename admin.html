@@ -3924,19 +3924,44 @@ async function fetchAdminActivity(user){
         get(booksQuery)
     ]);
     const activity=new Set();
-    const collect=(snap)=>{
+    const activityDetails={};
+    const collect=(snap,category)=>{
         if(!snap?.exists())return;
         snap.forEach(ch=>{
             const v=ch.val()||{};
             if(activityOwner(v,user.uid,user.email)){
-                const ts=Number(v.timestamp||v.createdAt||v.updatedAt||0);
+                const ts=Number(v.timestamp||v.createdAt||v.updatedAt||v.publishedAt||0);
                 const key=activityDateKey(ts);
-                if(key && key>=createdKey) activity.add(key);
+                if(key && key>=createdKey){
+                    activity.add(key);
+                    if(!activityDetails[key]) activityDetails[key]={date:key,uid:user.uid,email:String(user.email||'').toLowerCase(),categories:{},items:{},lastUploadAt:0};
+                    activityDetails[key].categories[category]=true;
+                    activityDetails[key].items[category]=(activityDetails[key].items[category]||0)+1;
+                    activityDetails[key].lastUploadAt=Math.max(activityDetails[key].lastUploadAt,ts);
+                }
             }
         });
     };
-    collect(newsSnap); collect(blogSnap); collect(booksSnap);
-    return {createdKey,activity,profile};
+    collect(newsSnap,'news'); collect(blogSnap,'blogs'); collect(booksSnap,'books');
+
+    // Persist derived upload-day records for the activity calendar. These are
+    // based only on verified owned content; login/heartbeat alone never turns a day green.
+    // If rules deny this optional mirror, the calendar still derives dates from content.
+    try{
+        const jobs=Object.entries(activityDetails).map(([day,detail])=>
+            set(ref(db,`adminActivity/${user.uid}/days/${day}`),detail)
+        );
+        if(jobs.length) await Promise.all(jobs);
+        await update(ref(db,`adminActivity/${user.uid}`),{
+            uid:user.uid,email:String(user.email||'').toLowerCase(),
+            profileCreatedAt:Number(profile.profileCreatedAt||profile.createdAt||createdTs),
+            lastScanAt:Date.now(),lastUploadDay:activity.size?Array.from(activity).sort().pop():'',
+            activeUploadDays:activity.size
+        });
+    }catch(activitySaveError){
+        console.warn('Activity mirror save failed. Check Realtime Database rules for /adminActivity/$uid:',activitySaveError?.code||activitySaveError?.message||activitySaveError);
+    }
+    return {createdKey,activity,profile,activityDetails};
 }
 
 function findFourteenDayGap(createdKey,activity,todayKey){
@@ -4203,7 +4228,12 @@ loginBtn.addEventListener("click", async () => {
         applyCourseVisibility();
         loadAdminProfile();
         loadHomeUploads();
-        /* 14-day activity enforcement disabled here to prevent accidental login lockouts. */
+        // Run the 14-day activity policy after the admin UI is visible. Upload dates
+        // are read from Firebase content and mirrored into /adminActivity/{uid}/days.
+        checkAndApplyAdminActivityPolicy(auth.currentUser,{render:true}).then(result=>{
+            if(result?.blocked) return blockDeactivatedAdminSession(auth.currentUser,result);
+            startAdminActivityWatcher(auth.currentUser);
+        }).catch(e=>console.warn('Initial admin activity check failed:',e?.message||e));
         getAdminIdentityInfo(auth.currentUser.uid,{}).then(info=>{window.__currentAdminIdentity=info;}).catch(()=>{});
         if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") connectCourseAdmin();
 
@@ -4266,13 +4296,18 @@ onAuthStateChanged(auth, async (user) => {
             Promise.allSettled([
                 ensureAdminProfileAndTeam(user),
                 publishAdminAccessRecord(user)
-            ]).then(() => {
+            ]).then(async () => {
                 if (auth.currentUser?.uid === user.uid) {
                     try { loadAdminProfile(); } catch (e) { console.warn("Profile load delayed:", e); }
                     try { loadHomeUploads(); } catch (e) { console.warn("Home uploads delayed:", e); }
                     getAdminIdentityInfo(user.uid, {}).then(info => {
                         if (auth.currentUser?.uid === user.uid) window.__currentAdminIdentity = info;
                     }).catch(() => {});
+                    try {
+                        const activityResult = await checkAndApplyAdminActivityPolicy(user,{render:true});
+                        if(activityResult?.blocked){ await blockDeactivatedAdminSession(user,activityResult); return; }
+                        startAdminActivityWatcher(user);
+                    } catch(activityError) { console.warn("Saved-session activity check failed:",activityError?.message||activityError); }
                 }
             });
 

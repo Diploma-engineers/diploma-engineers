@@ -10697,3 +10697,48 @@ body.admin-logged-in{padding-bottom:84px!important}
  update();
 })();
 </script>
+
+<style id="DE_LAST_REQUEST_OVERRIDE">
+/* Reduce bottom bar's white cover height while retaining its white surface. */
+#mobileBottomNav{height:62px!important;min-height:62px!important;grid-template-rows:62px!important;padding:2px 5px calc(2px + env(safe-area-inset-bottom))!important;background:#fff!important;background-color:#fff!important;box-sizing:border-box!important;overflow:visible!important}
+#mobileBottomNav>button{height:56px!important;min-height:56px!important;padding:3px 3px 2px!important;gap:3px!important;font-size:10px!important}
+#mobileBottomNav .nav-icon{width:29px!important;height:29px!important;flex-basis:29px!important}
+#mobileBottomNav .nav-icon svg{width:27px!important;height:27px!important}
+#mobileBottomNav .nav-icon i,#mobileBottomNav>button>i{font-size:24px!important}
+#mobileBottomNav .nav-upload-circle{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;margin-top:-13px!important}
+#mobileBottomNav .nav-books-circle{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important}
+body.admin-logged-in{padding-bottom:66px!important}
+@media(max-width:600px){#mobileBottomNav{height:62px!important;min-height:62px!important;grid-template-rows:62px!important}#mobileBottomNav>button{height:56px!important;min-height:56px!important}body.admin-logged-in{padding-bottom:66px!important}}
+/* Non-home header must contain only Back at left and plain Admin Panel text at right. */
+#adminTopBar.de-nonhome .admin-brand-top strong{display:none!important}
+#adminTopBar.de-nonhome #deHeaderMenuBtn{display:none!important}
+#adminTopBar.de-nonhome #deHeaderBackBtn{display:inline-flex!important}
+#adminTopBar.de-nonhome #deHeaderProfileAction,#adminTopBar.de-nonhome #deHeaderRankingAction,#adminTopBar.de-nonhome #deHeaderActivityAction,#adminTopBar.de-nonhome #deHeaderCertificateAction{display:none!important}
+#adminTopBar.de-nonhome #deHeaderAdminBtn{display:inline-flex!important;background:transparent!important;color:#172033!important;border:0!important;box-shadow:none!important;padding:0 8px!important;font-size:14px!important;font-weight:800!important}
+#adminTopBar.de-nonhome #deHeaderAdminBtn svg{display:none!important}
+#adminTopBar.de-nonhome .admin-top-right{margin-left:auto!important}
+#adminTopBar.de-nonhome #topRankBtn,#adminTopBar.de-nonhome #deTopActivityBtnTop,#adminTopBar.de-nonhome #topProfileBtn{display:none!important}
+#adminTopBar:not(.de-nonhome) #deHeaderMenuBtn{display:inline-flex!important}
+</style>
+<script id="DE_LAST_REQUEST_OVERRIDE_SCRIPT">
+(function(){
+ const top=document.getElementById('adminTopBar'); if(!top)return;
+ const map={homeAdminSection:'home',profileAdminSection:'profile',rankingAdminSection:'ranking',newsAdminSection:'news',blogAdminSection:'blog',booksAdminSection:'books',courseAdminSection:'course',testAdminSection:'test',importantQuestionsSection:'important'};
+ function sync(){
+   let next=null;
+   const active=document.querySelector('.admin-mode-section.active');
+   if(active&&map[active.id]) next=map[active.id];
+   if(!next){const home=document.getElementById('homeAdminSection');if(home&&home.classList.contains('active'))next='home'}
+   if(next){top.classList.toggle('de-nonhome',next!=='home');
+    const menu=document.getElementById('deHeaderMenuBtn'),back=document.getElementById('deHeaderBackBtn'),admin=document.getElementById('deHeaderAdminBtn');
+    if(menu)menu.style.setProperty('display',next==='home'?'inline-flex':'none','important');
+    if(back)back.style.setProperty('display',next==='home'?'none':'inline-flex','important');
+    ['deHeaderProfileAction','deHeaderRankingAction','deHeaderActivityAction','deHeaderCertificateAction'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.setProperty('display',next==='home'?'inline-flex':'none','important')});
+    if(admin){admin.style.setProperty('display',next==='home'?'none':'inline-flex','important');admin.innerHTML='<span>Admin Panel</span>'}
+   }
+ }
+ const panel=document.getElementById('adminPanel');if(panel)new MutationObserver(sync).observe(panel,{subtree:true,attributes:true,attributeFilter:['class','style']});
+ if(typeof window.appGo==='function'&&!window.appGo.__deLastOverride){const old=window.appGo;const wrapped=function(mode){const result=old.apply(this,arguments);setTimeout(sync,0);return result};wrapped.__deLastOverride=true;window.appGo=wrapped}
+ document.addEventListener('click',()=>setTimeout(sync,40),true);setTimeout(sync,0);setTimeout(sync,400);
+})();
+</script>

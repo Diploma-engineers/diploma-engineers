@@ -11032,3 +11032,79 @@ body{padding-bottom:68px!important}
  setTimeout(fixMenuIcons,300);setTimeout(fixMenuIcons,900);setTimeout(fixMenuIcons,1800);
 })();
 </script>
+
+
+<!-- FINAL HARD OVERRIDE: consistent icon + label rows in the admin drawer -->
+<style id="de-final-menu-row-alignment-fix">
+#deHomeHamburgerMenu{
+  box-sizing:border-box!important;display:none;flex-direction:column!important;align-items:stretch!important;
+  text-align:left!important;overflow-x:hidden!important;overflow-y:auto!important;
+  padding:14px!important;width:min(330px,88vw)!important;max-width:88vw!important;
+}
+#deHomeHamburgerMenu.open{display:flex!important}
+#deHomeHamburgerMenu .de-drawer-section{
+  display:block!important;position:static!important;float:none!important;width:100%!important;box-sizing:border-box!important;
+  text-align:left!important;padding:13px 10px 7px!important;margin:0!important;
+  white-space:nowrap!important;line-height:1.25!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode],
+#deHomeHamburgerMenu a.de-drawer-extra-link,
+#deHomeHamburgerMenu button.de-drawer-logout{
+  box-sizing:border-box!important;position:relative!important;float:none!important;
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+  gap:12px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  min-height:46px!important;height:auto!important;flex:0 0 auto!important;
+  margin:0 0 3px 0!important;padding:11px 12px!important;
+  text-align:left!important;text-indent:0!important;white-space:nowrap!important;
+  overflow:hidden!important;transform:none!important;left:auto!important;right:auto!important;
+  border:0!important;border-radius:10px!important;background:transparent!important;
+  color:#26364f!important;font-family:inherit!important;font-size:14px!important;font-weight:600!important;line-height:1.35!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode]::before,
+#deHomeHamburgerMenu button[data-de-menu-mode]::after,
+#deHomeHamburgerMenu a.de-drawer-extra-link::before,
+#deHomeHamburgerMenu a.de-drawer-extra-link::after,
+#deHomeHamburgerMenu button.de-drawer-logout::before,
+#deHomeHamburgerMenu button.de-drawer-logout::after{content:none!important;display:none!important}
+#deHomeHamburgerMenu button[data-de-menu-mode] > i,
+#deHomeHamburgerMenu a.de-drawer-extra-link > i,
+#deHomeHamburgerMenu button.de-drawer-logout > i{
+  display:inline-flex!important;visibility:visible!important;opacity:1!important;position:static!important;
+  float:none!important;flex:0 0 22px!important;width:22px!important;min-width:22px!important;max-width:22px!important;
+  height:22px!important;align-items:center!important;justify-content:center!important;
+  margin:0!important;padding:0!important;color:#2563eb!important;font-size:17px!important;line-height:1!important;
+}
+#deHomeHamburgerMenu button[data-de-menu-mode] > span,
+#deHomeHamburgerMenu a.de-drawer-extra-link > span,
+#deHomeHamburgerMenu button.de-drawer-logout > span{
+  display:block!important;visibility:visible!important;opacity:1!important;position:static!important;float:none!important;
+  flex:1 1 auto!important;width:auto!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;margin:0!important;padding:0!important;left:auto!important;right:auto!important;
+  text-align:left!important;text-indent:0!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important;
+  color:#26364f!important;line-height:1.35!important;font-size:14px!important;font-weight:600!important;
+}
+#deHomeHamburgerMenu #deAdminHelpPolicyLinks{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+#deHomeHamburgerMenu .de-drawer-brand{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;width:100%!important;box-sizing:border-box!important}
+#deHomeHamburgerMenu .de-drawer-logout{margin-top:auto!important;border-top:1px solid #e2e8f0!important;border-radius:0!important;padding-top:16px!important}
+#deHomeHamburgerMenu button[data-de-menu-mode]:hover,
+#deHomeHamburgerMenu a.de-drawer-extra-link:hover,
+#deHomeHamburgerMenu button.de-drawer-logout:hover{background:#eff6ff!important}
+@media(max-width:600px){#deHomeHamburgerMenu{width:min(330px,88vw)!important;max-width:88vw!important;padding:14px!important}#deHomeHamburgerMenu button[data-de-menu-mode],#deHomeHamburgerMenu a.de-drawer-extra-link,#deHomeHamburgerMenu button.de-drawer-logout{padding:11px 12px!important;gap:12px!important}}
+</style>
+<script id="de-final-menu-row-alignment-fix-js">
+(function(){
+ const rows={home:['Home','fa-house'],news:['News','fa-newspaper'],blog:['Blog','fa-pen-to-square'],books:['Books','fa-book'],course:['Courses','fa-graduation-cap'],profile:['My Profile','fa-user']};
+ const extras={help:['Help','fa-circle-question'],'how-to-use':['How to Use','fa-book-open'],policy:['Policy','fa-shield-halved']};
+ function repair(){
+  const menu=document.getElementById('deHomeHamburgerMenu');if(!menu)return;
+  Object.keys(rows).forEach(mode=>{const b=menu.querySelector('button[data-de-menu-mode="'+mode+'"]');if(!b)return;const [label,icon]=rows[mode];if(!b.querySelector(':scope > i')||!b.querySelector(':scope > span')||b.querySelectorAll(':scope > *').length!==2)b.innerHTML='<i class="fa-solid '+icon+'" aria-hidden="true"></i><span>'+label+'</span>';else {b.querySelector(':scope > i').className='fa-solid '+icon;b.querySelector(':scope > span').textContent=label;}});
+  Object.keys(extras).forEach(key=>{const a=menu.querySelector('a[data-de-extra-link="'+key+'"]');if(!a)return;const [label,icon]=extras[key];if(!a.querySelector(':scope > i')||!a.querySelector(':scope > span'))a.innerHTML='<i class="fa-solid '+icon+'" aria-hidden="true"></i><span>'+label+'</span>';else{a.querySelector(':scope > i').className='fa-solid '+icon;a.querySelector(':scope > span').textContent=label;}});
+  const logout=menu.querySelector('button.de-drawer-logout');if(logout){logout.innerHTML='<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Logout</span>';}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',repair);else repair();
+ [200,600,1200,2200].forEach(t=>setTimeout(repair,t));
+ const obs=new MutationObserver(()=>repair());
+ function watch(){const m=document.getElementById('deHomeHamburgerMenu');if(m)obs.observe(m,{childList:true,subtree:true});}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
+})();
+</script>

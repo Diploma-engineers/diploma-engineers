@@ -11337,17 +11337,22 @@ async function iqLoadData(force=false){
  iqEl('iqAppStatus').innerHTML='<div class="de-student-loading" role="status"><i class="fas fa-spinner fa-spin de-loader-ring"></i><div class="de-loader-brand">Diploma Engineers</div><div class="de-loader-sub">Loading Important Questions…</div></div>';
  iqEl('iqAppFolders').hidden=true;
  iqLoadPromise=(async()=>{try{
-   const snap=await get(ref(iqDb,'importantQuestions'));
+   // Stop the UI from spinning forever if Firebase is offline, blocked by rules, or the
+   // collection is too large to return promptly. A timeout does not change Firebase data.
+   const snap=await Promise.race([
+     get(ref(iqDb,'importantQuestions')),
+     new Promise((_,reject)=>setTimeout(()=>reject(new Error('Loading timed out after 15 seconds. Check internet, Firebase Realtime Database rules, and the importantQuestions path.')),15000))
+   ]);
    const data=snap.exists()?(snap.val()||{}):{};
    iqRecords=Object.entries(data).map(([id,v])=>({...((v&&typeof v==='object')?v:{}),id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&String(r.status||'published').toLowerCase()!=='unpublished');
    iqLoaded=true;iqPopulateFilters();
    if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
- }catch(err){iqLoaded=false;iqEl('iqAppFolders').hidden=true;iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty">Could not load Important Questions. Check internet connection and Firebase read rules, then tap to retry.</div><button type="button" id="iqRetryLoad" style="margin-top:12px;border:0;border-radius:10px;padding:10px 16px;background:#2563eb;color:white;font-weight:800">Retry Loading</button>';document.getElementById('iqRetryLoad')?.addEventListener('click',()=>{iqLoadPromise=null;iqLoadData(true)});console.error('Important Questions load failed',err);
+ }catch(err){iqLoaded=false;iqEl('iqAppFolders').hidden=true;const msg=String(err?.message||err||'Unknown error');iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty"><strong>Important Questions could not be loaded.</strong><br>'+iqTxt(msg)+'<br><small>Check your internet connection and Firebase Realtime Database read rules for /importantQuestions.</small></div><button type="button" id="iqRetryLoad" style="margin-top:12px;border:0;border-radius:10px;padding:10px 16px;background:#2563eb;color:white;font-weight:800">Retry Loading</button>';document.getElementById('iqRetryLoad')?.addEventListener('click',()=>{iqLoadPromise=null;iqLoadData(true)});console.error('Important Questions load failed',err);
  }finally{if(!iqLoaded)iqLoadPromise=null;}})();return iqLoadPromise;
 }
 // Fetch only when the student opens Important Questions; avoid downloading the full collection during app startup.
 const iqPageNode=iqEl('importantQuestionsPage');
-if(iqPageNode){const iqPageObserver=new MutationObserver(()=>{if(iqPageNode.classList.contains('active-page')||getComputedStyle(iqPageNode).display!=='none'){iqLoadData();}});iqPageObserver.observe(iqPageNode,{attributes:true,attributeFilter:['class','style']});if(iqPageNode.classList.contains('active-page'))iqLoadData();}
+if(iqPageNode){const iqPageObserver=new MutationObserver(()=>{if(iqPageNode.classList.contains('active-page'))iqLoadData();});iqPageObserver.observe(iqPageNode,{attributes:true,attributeFilter:['class','style']});if(iqPageNode.classList.contains('active-page'))iqLoadData();}
 
 window.shareDiplomaEngineersApp = async function(){
  const shareUrl='https://diplomaengineers.vercel.app/';

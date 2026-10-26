@@ -10722,7 +10722,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 const courseAdminConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
 const existing=getApps().find(a=>a.name==="studentCourseCatalog");
 const catalogApp=existing||initializeApp(courseAdminConfig,"studentCourseCatalog");
@@ -10734,6 +10734,7 @@ const isPublishedCourse=c=>{
  if(["rejected","draft","pending","unpublished","disabled","inactive"].includes(st))return false;
  return ["approved","published","live","active"].includes(st)||c?.approved===true||c?.published===true;
 };
+const COURSE_CACHE_KEY="de_course_catalog_cache_v2";
 function renderAdminCourses(data){
  const grid=document.getElementById("adminUploadedCourseGrid");if(!grid)return;
  const entries=Object.entries(data||{}).filter(([id,c])=>id&&c&&typeof c==="object"&&isPublishedCourse(c)&&(c.title||c.name||c.courseName));
@@ -10756,9 +10757,17 @@ function renderAdminCourses(data){
  // Authentication/profile might finish loading before or after this catalog listener.
  setTimeout(()=>window.refreshUploadedCourseCards?.(),100);
 }
-onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=>{
+// Render the last successful course list immediately so returning students do not wait for Firebase.
+try{const cached=localStorage.getItem(COURSE_CACHE_KEY);if(cached){const parsed=JSON.parse(cached);if(parsed&&typeof parsed==="object")renderAdminCourses(parsed);}}catch(e){console.warn("Course cache unavailable",e);}
+// Keep the catalogue live. Firebase's first value refreshes the local cache and UI.
+onValue(ref(catalogDb,"courseCatalog"),snap=>{
+ const data=snap.val()||{};
+ try{localStorage.setItem(COURSE_CACHE_KEY,JSON.stringify(data));}catch(e){console.warn("Course cache save skipped",e);}
+ renderAdminCourses(data);
+},err=>{
  const grid=document.getElementById("adminUploadedCourseGrid");
- if(grid)grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1;padding:18px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#b91c1c">Could not load courses. Please check your connection and Firebase read permissions, then try again.</div>';
+ // Keep cached cards visible if offline; show an error only when there is no cached data.
+ if(grid&&!Object.keys(window.__deAdminCourseCatalog||{}).length)grid.innerHTML='<div class="course-no-results show" style="display:block;grid-column:1/-1;padding:18px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#b91c1c">Could not connect to Firebase. Check internet and courseCatalog read permission, then tap Retry or reopen.</div>';
  console.error("Admin course catalog load failed",err);
 });
 </script>
@@ -11240,7 +11249,7 @@ if(window.__dePendingCourseId){const id=window.__dePendingCourseId;window.__dePe
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-const iqConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
+const iqConfig={apiKey:"AIzaSyCxe9H7zSxJQzgM8bN_UAdOnDHr5myH6CQ",authDomain:"diploma-app-9a378.firebaseapp.com",databaseURL:"https://diploma-app-9a378-default-rtdb.firebaseio.com",projectId:"diploma-app-9a378",storageBucket:"diploma-app-9a378.firebasestorage.app",messagingSenderId:"160233059797",appId:"1:160233059797:web:be38130ed64f8bd0afb95c"};
 const iqAppFirebase=getApps().find(a=>a.name==='importantQuestionsReaderApp')||initializeApp(iqConfig,'importantQuestionsReaderApp');const iqDb=getDatabase(iqAppFirebase);
 let iqRecords=[],iqChosen=null,iqLevel=0,iqPath=[],iqLoaded=false;
 const iqEl=id=>document.getElementById(id);const iqTxt=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11331,24 +11340,41 @@ async function iqDownloadPdf(el,name){
  printWin.document.close();
 }
 let iqLoadPromise=null;
+const IQ_CACHE_KEY="de_important_questions_cache_diploma_app_v2";
+function iqApplyData(data,saveCache=true){
+ const source=(data&&typeof data==="object")?data:{};
+ iqRecords=Object.entries(source).map(([id,v])=>({...((v&&typeof v==="object")?v:{}),id})).filter(r=>!['draft','unpublished'].includes(String(r.status||'published').toLowerCase()));
+ iqLoaded=true;
+ if(saveCache){try{localStorage.setItem(IQ_CACHE_KEY,JSON.stringify(source));}catch(e){console.warn('Important Questions cache save skipped',e);}}
+ iqPopulateFilters();
+ if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
+}
 async function iqLoadData(force=false){
- if(iqLoaded&&!force)return;
+ // First paint from local cache in milliseconds; Firebase refreshes in the background.
+ if(!iqLoaded){
+  try{const raw=localStorage.getItem(IQ_CACHE_KEY);if(raw){const cached=JSON.parse(raw);if(cached&&typeof cached==='object')iqApplyData(cached,false);}}
+  catch(e){console.warn('Important Questions cache read skipped',e);}
+ }
  if(iqLoadPromise&&!force)return iqLoadPromise;
- iqEl('iqAppStatus').innerHTML='<div class="de-student-loading" role="status"><i class="fas fa-spinner fa-spin de-loader-ring"></i><div class="de-loader-brand">Diploma Engineers</div><div class="de-loader-sub">Loading Important Questions…</div></div>';
- iqEl('iqAppFolders').hidden=true;
- iqLoadPromise=(async()=>{try{
-   // Stop the UI from spinning forever if Firebase is offline, blocked by rules, or the
-   // collection is too large to return promptly. A timeout does not change Firebase data.
+ if(!iqLoaded){iqEl('iqAppStatus').innerHTML='<div class="de-student-loading" role="status"><i class="fas fa-spinner fa-spin de-loader-ring"></i><div class="de-loader-brand">Diploma Engineers</div><div class="de-loader-sub">Loading Important Questions…</div></div>';iqEl('iqAppFolders').hidden=true;}
+ iqLoadPromise=(async()=>{
+  let timeoutId;
+  try{
    const snap=await Promise.race([
-     get(ref(iqDb,'importantQuestions')),
-     new Promise((_,reject)=>setTimeout(()=>reject(new Error('Loading timed out after 15 seconds. Check internet, Firebase Realtime Database rules, and the importantQuestions path.')),15000))
+    get(ref(iqDb,'importantQuestions')),
+    new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error('Firebase took too long to respond. Cached content remains available; check connection and /importantQuestions rules.')),8000);})
    ]);
-   const data=snap.exists()?(snap.val()||{}):{};
-   iqRecords=Object.entries(data).map(([id,v])=>({...((v&&typeof v==='object')?v:{}),id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&String(r.status||'published').toLowerCase()!=='unpublished');
-   iqLoaded=true;iqPopulateFilters();
-   if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
- }catch(err){iqLoaded=false;iqEl('iqAppFolders').hidden=true;const msg=String(err?.message||err||'Unknown error');iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty"><strong>Important Questions could not be loaded.</strong><br>'+iqTxt(msg)+'<br><small>Check your internet connection and Firebase Realtime Database read rules for /importantQuestions.</small></div><button type="button" id="iqRetryLoad" style="margin-top:12px;border:0;border-radius:10px;padding:10px 16px;background:#2563eb;color:white;font-weight:800">Retry Loading</button>';document.getElementById('iqRetryLoad')?.addEventListener('click',()=>{iqLoadPromise=null;iqLoadData(true)});console.error('Important Questions load failed',err);
- }finally{if(!iqLoaded)iqLoadPromise=null;}})();return iqLoadPromise;
+   clearTimeout(timeoutId);
+   iqApplyData(snap.exists()?(snap.val()||{}):{},true);
+  }catch(err){
+   clearTimeout(timeoutId);
+   const msg=String(err?.message||err||'Unknown error');
+   if(!iqLoaded){iqEl('iqAppFolders').hidden=true;iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty"><strong>Important Questions could not be loaded.</strong><br>'+iqTxt(msg)+'<br><small>Check internet and Firebase read permission for /importantQuestions in diploma-app-9a378.</small></div><button type="button" id="iqRetryLoad" style="margin-top:12px;border:0;border-radius:10px;padding:10px 16px;background:#2563eb;color:white;font-weight:800">Retry Loading</button>';document.getElementById('iqRetryLoad')?.addEventListener('click',()=>{iqLoadPromise=null;iqLoadData(true)});}
+   else {const status=iqEl('iqAppStatus');if(status)status.innerHTML='<small style="color:#64748b">Showing saved questions. Could not refresh from Firebase; check connection.</small>';}
+   console.error('Important Questions refresh failed',err);
+  }finally{iqLoadPromise=null;}
+ })();
+ return iqLoadPromise;
 }
 // Fetch only when the student opens Important Questions; avoid downloading the full collection during app startup.
 const iqPageNode=iqEl('importantQuestionsPage');

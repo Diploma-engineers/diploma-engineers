@@ -8139,14 +8139,14 @@ async function submitPurchase(){
   const typedCoupon=String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase();
   if(typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
   // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
-  if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
+  if(utr.length<6 || utr.length>40){showStatus('Please enter a valid UTR / Transaction ID (6–40 characters).','err');utrEl.focus();return;}
   /* DIRECT PAYMENT SUCCESS SOUND */
   if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
-    const purchaseRoot=ref(db,'utrPurchases');
-    // Do not read the entire private purchase database from a student session.
-    // Founder/admin verifies the request; each new request is written as one flat record.
+    // IMPORTANT: Realtime Database Rules require purchases under /utrPurchases/{uid}/{courseId}/{purchaseId}.
+    // Writing to the old flat /utrPurchases/{pushId} path is denied by those rules.
+    const purchaseRoot=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);
     const approved=await accessValue(currentCourse).catch(()=>null);
     if(isApproved(approved)){openCourse(currentCourse);return;}
     const p=push(purchaseRoot),now=Date.now();
@@ -8213,7 +8213,8 @@ async function submitPurchase(){
     watchAccess(submittedCourseId);
   }catch(e){
     console.error(e);
-    showStatus('Could not submit: '+e.message,'err');
+    const errText=String(e?.code||e?.message||e||'');
+    showStatus(/PERMISSION_DENIED|permission_denied/i.test(errText)?'Firebase Rules ने UTR को रोक दिया. Check करें कि आप लॉगिन हैं और सही diploma-app-9a378 Rules प्रकाशित हैं.':'Could not submit: '+String(e?.message||e),'err');
     submitEl.disabled=false;
   }
 }

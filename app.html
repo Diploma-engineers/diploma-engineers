@@ -5171,6 +5171,32 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Login history for the Founder Student Tracker. Uses the existing student
+  // profile record, so no second login system is introduced. Historical
+  // sign-ins cannot be reconstructed; tracking starts after this update.
+  async function recordStudentLogin(user, method = "email") {
+    if (!user || !user.uid) return;
+    const now = Date.now();
+    const profileRef = ref(db, "users/" + user.uid);
+    try {
+      const snap = await get(profileRef);
+      const existing = snap.exists() ? snap.val() : {};
+      const updates = {
+        email: user.email || existing.email || "",
+        firstLoginAt: existing.firstLoginAt || existing.createdAt || now,
+        lastLoginAt: now,
+        lastLoginMethod: method,
+        loginCount: (Number(existing.loginCount) || 0) + 1
+      };
+      if (!existing.name && user.displayName) updates.name = user.displayName;
+      if (!existing.profilePic && user.photoURL) updates.profilePic = user.photoURL;
+      await update(profileRef, updates);
+    } catch (err) {
+      // Do not block login if tracking is denied or the connection is offline.
+      console.warn("Login history could not be saved:", err);
+    }
+  }
+
   window.submitAuthForm = async function() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
@@ -5197,14 +5223,16 @@ window.addEventListener('DOMContentLoaded', () => {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await set(ref(db, "users/" + cred.user.uid), { 
           name, email, branch, mobile, coins: 0,
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
+          college: "", enrollment: "", address: "", semester: "", profilePic: "",
+          firstLoginAt: Date.now(), lastLoginAt: Date.now(), lastLoginMethod: "email-registration", loginCount: 1
         });
         showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
         // App authentication is the only login step. Admin access is then
         // verified separately by EXACT EMAIL against the Admin Firebase
         // public access registry. Password/name are NOT compared.
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await recordStudentLogin(cred.user, "email");
         setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
       }
     } catch (e) {
@@ -5229,6 +5257,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.googleLogin = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
+      await recordStudentLogin(result.user, "google");
       const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
       if (!snapshot.exists()) {
         await set(ref(db, "users/" + result.user.uid), {
@@ -8139,14 +8168,14 @@ async function submitPurchase(){
   const typedCoupon=String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase();
   if(typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
   // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
-  if(utr.length<6 || utr.length>40){showStatus('Please enter a valid UTR / Transaction ID (6–40 characters).','err');utrEl.focus();return;}
+  if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
   /* DIRECT PAYMENT SUCCESS SOUND */
   if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
-    // IMPORTANT: Realtime Database Rules require purchases under /utrPurchases/{uid}/{courseId}/{purchaseId}.
-    // Writing to the old flat /utrPurchases/{pushId} path is denied by those rules.
-    const purchaseRoot=ref(db,`utrPurchases/${currentUid}/${currentCourse}`);
+    const purchaseRoot=ref(db,'utrPurchases');
+    // Do not read the entire private purchase database from a student session.
+    // Founder/admin verifies the request; each new request is written as one flat record.
     const approved=await accessValue(currentCourse).catch(()=>null);
     if(isApproved(approved)){openCourse(currentCourse);return;}
     const p=push(purchaseRoot),now=Date.now();
@@ -8213,8 +8242,7 @@ async function submitPurchase(){
     watchAccess(submittedCourseId);
   }catch(e){
     console.error(e);
-    const errText=String(e?.code||e?.message||e||'');
-    showStatus(/PERMISSION_DENIED|permission_denied/i.test(errText)?'Firebase Rules ने UTR को रोक दिया. Check करें कि आप लॉगिन हैं और सही diploma-app-9a378 Rules प्रकाशित हैं.':'Could not submit: '+String(e?.message||e),'err');
+    showStatus('Could not submit: '+e.message,'err');
     submitEl.disabled=false;
   }
 }

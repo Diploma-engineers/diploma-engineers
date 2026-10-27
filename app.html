@@ -5180,19 +5180,28 @@ window.addEventListener('DOMContentLoaded', () => {
     const profileRef = ref(db, "users/" + user.uid);
     try {
       const snap = await get(profileRef);
-      const existing = snap.exists() ? snap.val() : {};
+      const existing = snap.exists() && snap.val() && typeof snap.val() === "object"
+        ? snap.val() : {};
+      // Keep existing profile values untouched; fill only missing basics.
       const updates = {
         email: user.email || existing.email || "",
-        firstLoginAt: existing.firstLoginAt || existing.createdAt || now,
+        firstLoginAt: Number(existing.firstLoginAt) || Number(existing.createdAt) || now,
         lastLoginAt: now,
         lastLoginMethod: method,
         loginCount: (Number(existing.loginCount) || 0) + 1
       };
-      if (!existing.name && user.displayName) updates.name = user.displayName;
-      if (!existing.profilePic && user.photoURL) updates.profilePic = user.photoURL;
+      if (!existing.name) updates.name = user.displayName || "Engineer";
+      if (!existing.profilePic) updates.profilePic = user.photoURL || "";
+      if (!existing.branch) updates.branch = "Civil Engineering";
+      if (!existing.mobile) updates.mobile = "N/A";
+      if (existing.coins === undefined) updates.coins = 0;
+      if (existing.college === undefined) updates.college = "";
+      if (existing.enrollment === undefined) updates.enrollment = "";
+      if (existing.address === undefined) updates.address = "";
+      if (existing.semester === undefined) updates.semester = "";
       await update(profileRef, updates);
     } catch (err) {
-      // Do not block login if tracking is denied or the connection is offline.
+      // Tracking failures must never block login or disturb app navigation.
       console.warn("Login history could not be saved:", err);
     }
   }

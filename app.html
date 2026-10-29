@@ -11459,7 +11459,7 @@ async function iqDownloadPdf(el,name){
    if(logo.naturalWidth){const ratio=Math.min(700/logo.naturalWidth,700/logo.naturalHeight);const w=logo.naturalWidth*ratio,h=logo.naturalHeight*ratio;ctx.drawImage(logo,(900-w)/2,(900-h)/2,w,h);}
    else {ctx.fillStyle='#7890ad';ctx.font='bold 72px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.translate(450,450);ctx.rotate(-Math.PI/5);ctx.fillText('DIPLOMA ENGINEERS',0,-20);ctx.font='bold 54px Arial';ctx.fillText('@diploma_engineers7',0,60);}
    const watermark=markCanvas.toDataURL('image/png');
-   for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');/* Professional single-line border on every generated question page */pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');}
+   for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');/* Professional single-line border on every generated question page */pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');/* Bottom-center page number on question pages only; final image page is appended later and remains unnumbered. */pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.setTextColor(71,85,105);pdf.text(String(page),pw/2,ph-8,{align:'center'});}
    // Append the supplied full-page image as the FINAL page of every downloaded PDF.
    // Source image is 1054 x 1492 (A4-like portrait ratio); fit edge-to-edge to A4.
    const lastPageImageUrl='https://diplomaengineers.vercel.app/9ee54b14-2728-42f0-88cf-62b5d9acbb51.jpeg';
@@ -11471,8 +11471,7 @@ async function iqDownloadPdf(el,name){
    pdf.addPage('a4','portrait');
    const lastPw=pdf.internal.pageSize.getWidth(),lastPh=pdf.internal.pageSize.getHeight();
    pdf.addImage(lastPageImageData,'JPEG',0,0,lastPw,lastPh,undefined,'FAST');
-   // Match the professional single-line border on the final full-page image too.
-   pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,lastPw-10,lastPh-10,'S');
+   // Intentionally do NOT draw a border on the final image page.
    pdf.save(filename);
    return filename;
  } finally {holder.remove();}

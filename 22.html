@@ -7908,7 +7908,7 @@ function setPaidCardState(courseId,state){
   card.dataset.paidCourse=courseId;
   card.dataset.paidState=state;
   card.classList.add('paid-course-card');
-  const badge=card.querySelector('.free-badge');
+  const badge=card.querySelector('.free-badge:not(.de-firebase-course-price)');
   const isFirebaseCourse=card.classList.contains('admin-uploaded-course');
   if(isFirebaseCourse){
     const buy=card.querySelector('[data-admin-course-buy]');
@@ -10815,7 +10815,7 @@ function renderAdminCourses(data){
   const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
   const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
   const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><button type="button" class="free-badge paid-badge de-firebase-course-price" data-course-share="${sid}" aria-label="Share course poster" title="Share course poster"><i class="fa-solid fa-share-nodes"></i></button><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy Course ₹${price}</button></div><div class="de-course-validity-note" data-course-validity-note="${sid}" hidden></div></div></article>`;
+  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><button type="button" class="de-firebase-course-price" data-course-share="${sid}" aria-label="Share course poster" title="Share course poster"><i class="fa-solid fa-share-nodes"></i></button><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy Course ₹${price}</button></div><div class="de-course-validity-note" data-course-validity-note="${sid}" hidden></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
  grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.validityButton==="true")return;const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
@@ -11716,11 +11716,40 @@ window.addEventListener('popstate',function(e){
    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
    if(!blob){await shareCourseText(message,title);return;}
    const file=new File([blob],(title.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'course')+'.png',{type:'image/png'});
-   try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:title+' | Diploma Engineers',text:message,files:[file]});return;}}catch(e){if(e.name==='AbortError')return;}
-   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-   await shareCourseText(message,title,true);
+   // Best path: send the PNG and the full caption together through the device share sheet.
+   try{
+     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+       await navigator.share({title:title+' | Diploma Engineers',text:message,files:[file]});
+       return;
+     }
+   }catch(e){if(e && e.name==='AbortError')return;}
+   // Fallback: save the PNG, then open WhatsApp with the complete caption pre-filled.
+   const objectUrl=URL.createObjectURL(blob);
+   const a=document.createElement('a');a.href=objectUrl;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(objectUrl),2000);
+   shareCourseText(message,title,true);
  }
- async function shareCourseText(message,title,downloaded=false){try{if(navigator.share){await navigator.share({title:title+' | Diploma Engineers',text:message,url:'https://diplomaengineers.vercel.app/'});return;}}catch(e){if(e.name==='AbortError')return;}try{await navigator.clipboard.writeText(message);alert((downloaded?'Course poster PNG downloaded. ':'')+'Course details copied. Paste them into WhatsApp to share.');}catch(e){window.prompt('Copy course details:',message);}}
+ async function shareCourseText(message,title,downloaded=false){
+   // Text caption includes course description, price, app URL, course URL and support contact.
+   const waUrl='https://wa.me/?text='+encodeURIComponent(message);
+   try{
+     if(navigator.share){
+       await navigator.share({title:title+' | Diploma Engineers',text:message,url:'https://diplomaengineers.vercel.app/'});
+       return;
+     }
+   }catch(e){if(e && e.name==='AbortError')return;}
+   try{
+     if(navigator.clipboard && window.isSecureContext){
+       await navigator.clipboard.writeText(message);
+       const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Course caption copied. Open WhatsApp to share the caption with the downloaded PNG?');
+       if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+       return;
+     }
+   }catch(e){}
+   const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Open WhatsApp with course details? Attach the downloaded PNG to the message.');
+   if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+   else window.prompt('Copy course details:',message);
+ }
  $('deFcdPrice').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(false);});
  $('deFcdShareText').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(true);});
  document.addEventListener('click',async function(e){const btn=e.target.closest&&e.target.closest('[data-course-share]');if(!btn)return;e.preventDefault();e.stopPropagation();const id=String(btn.getAttribute('data-course-share')||'');if(!id)return;if(typeof window.openFirebaseCourseDetails==='function'){await window.openFirebaseCourseDetails(id);setTimeout(()=>makeCoursePoster(false),180);}},true);
@@ -11873,7 +11902,7 @@ window.addEventListener('popstate',function(e){
 #coursePage .de-firebase-course-banner.has-image{background-color:#10203a}
 #coursePage .de-firebase-course-banner-image{position:absolute;inset:0;width:100%;height:100%;min-width:100%;min-height:100%;object-fit:cover;object-position:center center;z-index:-2;background:linear-gradient(135deg,#e8eef8,#cbd8e9);display:block}
 #coursePage .de-firebase-course-banner-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,18,38,.05) 5%,rgba(8,18,38,.16) 38%,rgba(8,18,38,.88) 100%);pointer-events:none}
-#coursePage .de-firebase-course-price{position:absolute;right:12px;top:12px;z-index:2;border:0;border-radius:999px;width:42px;height:42px;display:grid;place-items:center;padding:0;font-size:17px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer;background:#fff;color:#1d4ed8}
+#coursePage .de-firebase-course-price{position:absolute;right:12px;top:12px;z-index:2;border:0;border-radius:50%;width:44px;height:44px;display:grid;place-items:center;padding:0;font-size:19px;font-weight:900;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer;background:#fff;color:#1d4ed8;appearance:none;-webkit-appearance:none}#coursePage .de-firebase-course-price i{display:block;line-height:1;color:#1d4ed8;font-size:19px}#coursePage .de-firebase-course-price:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
 #coursePage .de-firebase-course-banner-copy{position:relative;z-index:1;max-width:100%;padding-right:70px;text-shadow:0 2px 8px rgba(0,0,0,.28)}
 #coursePage .de-firebase-course-kicker{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:900;letter-spacing:.09em;color:#fff;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 8px;margin-bottom:7px;backdrop-filter:blur(6px)}
 #coursePage .de-firebase-course-banner-copy h2{margin:0 0 4px;font-size:clamp(17px,2vw,23px);font-weight:900;line-height:1.2;color:#fff;overflow-wrap:anywhere}

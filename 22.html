@@ -11680,83 +11680,81 @@ window.addEventListener('popstate',function(e){
  $('deFcdBuy').addEventListener('click',async(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;for(let i=0;i<25&&typeof window.openCoursePayment!=='function';i++)await new Promise(r=>setTimeout(r,80));if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{console.error('[Diploma Engineers] Payment module did not initialize; check Firebase module/network errors.');alert('Payment system is still loading. Please refresh the app and try again.');}});
  async function makeCoursePoster(shareTextOnly=false){
    const c=(window.__deAdminCourseCatalog||{})[String(activeId)]||{};
-   const title=String(c.title||c.name||c.courseName||$('deFcdTitle').textContent||'Course').trim();
-   const branch=String(c.branch||c.category||$('deFcdBranch').textContent||'Diploma Engineering').trim();
-   const rawPrice=c.price??c.amount??99;
-   const price=Number.isFinite(Number(rawPrice))?Number(rawPrice):99;
-   const desc=String(c.description||'Video lectures, PDF notes and study resources.').trim();
+   const title=String(c.title||c.name||c.courseName||$('deFcdTitle').textContent||'Course');
+   const branch=String(c.branch||c.category||'Diploma Engineering');
+   const price=Number(c.price??c.amount??99)||99;
+   const desc=String(c.description||'Video lectures, PDF notes and study resources.');
    const appUrl='https://diplomaengineers.vercel.app/';
    const courseUrl=appUrl+'?courseId='+encodeURIComponent(activeId);
-   const message=[
-     '🎓 DIPLOMA ENGINEERS','',
-     '📚 Course: '+title,
-     '🏫 Branch: '+branch,'',
-     '📝 About Course:',desc,'',
-     '💰 Course Price: ₹'+price,'',
-     '🔎 Explore Course: '+courseUrl,'',
-     '🛒 Buy Course: Diploma Engineers App खोलें और अपना कोर्स चुनें।','',
-     '🌐 App Link:',appUrl,'',
-     '📲 More Information / WhatsApp: 9795810987',
-     'https://wa.me/919795810987','',
-     '🚀 The Students\' Trusted Learning Platform',
-     'Learn Today, Build Tomorrow!'
-   ].join('\n');
-   if(shareTextOnly){await shareCourseText(message,title,false);return;}
+   const message='🎓 DIPLOMA ENGINEERS\n\n📚 Course: '+title+'\n🏫 Branch: '+branch+'\n\n📝 About Course:\n'+desc+'\n\n💰 Course Price: ₹'+price+'\n\n🔎 Explore Course: '+courseUrl+'\n🛒 Buy Course: Diploma Engineers App खोलें और अपना कोर्स चुनें।\n\n🌐 App Link:\n'+appUrl+'\n\n📲 More Information / WhatsApp:\nhttps://wa.me/919795810987\n\n🚀 The Students’ Trusted Learning Platform\nLearn Today, Build Tomorrow!';
+   if(shareTextOnly){await shareCourseText(message,title);return;}
 
-   // Build a screenshot-style PNG: course artwork first, then title/details and Explore/Buy buttons.
-   const W=1200,H=900,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+   // Make the PNG from ONLY the upper course banner shown in the app.
+   // Do not include the Explore / Buy buttons or the page below the banner.
+   const W=1200,H=635,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
    const ctx=canvas.getContext('2d');
-   if(!ctx){await shareCourseText(message,title,false);return;}
-   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-   function wrap(text,x,y,maxWidth,lineHeight,maxLines,font,colour){ctx.font=font;ctx.fillStyle=colour;const words=String(text||'').split(/\s+/);let line='',row=0;for(let i=0;i<words.length;i++){const test=line?line+' '+words[i]:words[i];if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,y+row*lineHeight);line=words[i];row++;if(row>=maxLines-1)break;}else line=test;}if(row<maxLines)ctx.fillText((line+(row===maxLines-1?'…':'')).slice(0,260),x,y+row*lineHeight);}
-   // White base + course banner artwork. If remote images block CORS, use a clean branded fallback.
-   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
-   const imgUrl=String(c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||c.image||'').trim();
+   const bannerEl=$('deFcdBanner');
+   const visibleImg=bannerEl?.querySelector('img');
+   const imageUrl=(visibleImg&&visibleImg.currentSrc)||c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
    let imageDrawn=false;
-   if(imgUrl){try{const img=new Image();img.crossOrigin='anonymous';await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=imgUrl;});const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;const scale=Math.max(W/iw,660/ih),dw=iw*scale,dh=ih*scale;ctx.save();ctx.beginPath();ctx.rect(0,0,W,660);ctx.clip();ctx.drawImage(img,(W-dw)/2,(660-dh)/2,dw,dh);ctx.restore();imageDrawn=true;}catch(e){imageDrawn=false;}}
-   if(!imageDrawn){const g=ctx.createLinearGradient(0,0,W,660);g.addColorStop(0,'#08264d');g.addColorStop(.58,'#1764c0');g.addColorStop(1,'#f28b20');ctx.fillStyle=g;ctx.fillRect(0,0,W,660);ctx.fillStyle='rgba(255,255,255,.09)';for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(90+i*125,110+(i%3)*55,66,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#fff';ctx.font='900 43px Arial';ctx.fillText('DIPLOMA ENGINEERS',54,78);ctx.font='700 20px Arial';ctx.fillText("THE STUDENTS' TRUSTED LEARNING PLATFORM",58,112);}
-   // Shade the lower banner so course name stays readable over any course thumbnail.
-   const shade=ctx.createLinearGradient(0,350,0,660);shade.addColorStop(0,'rgba(3,15,36,0)');shade.addColorStop(1,'rgba(3,15,36,.88)');ctx.fillStyle=shade;ctx.fillRect(0,350,W,310);
-   ctx.fillStyle='rgba(255,255,255,.96)';rr(42,36,310,44,22);ctx.fill();ctx.fillStyle='#123b72';ctx.font='800 17px Arial';ctx.fillText('🎓  DIPLOMA ENGINEERS COURSE',60,64);
-   wrap(title,52,510,W-104,58,2,'900 48px Arial','#ffffff');
-   ctx.font='700 25px Arial';ctx.fillStyle='#dbeafe';ctx.fillText(branch.slice(0,70),56,625);
-   // Description card
-   ctx.fillStyle='#ffffff';rr(30,680,W-60,172,24);ctx.fill();ctx.strokeStyle='#dbeafe';ctx.lineWidth=2;ctx.stroke();
-   ctx.fillStyle='#0f172a';ctx.font='900 21px Arial';ctx.fillText('ABOUT THIS COURSE',55,715);
-   wrap(desc,55,746,W-110,22,2,'500 16px Arial','#475569');
-   // CTA buttons are included in the PNG as visual labels, with live URLs in the accompanying caption.
-   ctx.fillStyle='#eaf2ff';rr(48,790,500,48,14);ctx.fill();ctx.fillStyle='#1d4ed8';ctx.font='900 20px Arial';ctx.fillText('◉  Explore Course',82,821);
-   ctx.fillStyle='#2457e8';rr(565,790,585,48,14);ctx.fill();ctx.fillStyle='#ffffff';ctx.font='900 20px Arial';ctx.fillText('▦  Buy Course  ₹'+price,600,821);
-   // Tiny contact strip at the bottom edge
-   ctx.fillStyle='#0b1e3a';ctx.fillRect(0,864,W,36);ctx.fillStyle='#ffdc76';ctx.font='800 17px Arial';ctx.fillText('More information / WhatsApp: 9795810987',45,888);
+   if(imageUrl){
+     try{
+       const img=new Image();img.crossOrigin='anonymous';
+       await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=imageUrl;});
+       const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+       if(iw&&ih){const scale=Math.max(W/iw,H/ih),sw=W/scale,sh=H/scale,sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H);imageDrawn=true;}
+     }catch(err){console.warn('[Course share] Banner image could not be embedded; using a clean fallback poster.',err);}
+   }
+   if(!imageDrawn){
+     const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#08264d');grad.addColorStop(.58,'#1262b5');grad.addColorStop(1,'#f28a20');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+     ctx.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<12;i++){ctx.beginPath();ctx.arc(70+i*100,90+(i%3)*45,62,0,Math.PI*2);ctx.fill();}
+     ctx.fillStyle='#fff';ctx.font='900 48px Arial';ctx.fillText('DIPLOMA ENGINEERS',55,95);
+     ctx.fillStyle='#ffdb36';ctx.font='800 22px Arial';ctx.fillText('THE STUDENTS’ TRUSTED LEARNING PLATFORM',58,133);
+   }
+   // Match the app card's bottom title overlay while keeping the PNG image-only.
+   const shade=ctx.createLinearGradient(0,H*.52,0,H);shade.addColorStop(0,'rgba(2,10,28,0)');shade.addColorStop(1,'rgba(2,10,28,.82)');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+   // Share icon at top-right, as seen on the course card; no UPI or price badge.
+   const sx=W-88,sy=82;ctx.save();ctx.shadowColor='rgba(0,0,0,.20)';ctx.shadowBlur=18;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,sy,43,0,Math.PI*2);ctx.fill();ctx.restore();
+   ctx.strokeStyle='#245be8';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-11,sy);ctx.lineTo(sx+10,sy-12);ctx.moveTo(sx-11,sy);ctx.lineTo(sx+10,sy+12);ctx.stroke();
+   [[sx-14,sy,7],[sx+14,sy-16,7],[sx+14,sy+16,7]].forEach(([x,y,r])=>{ctx.fillStyle='#245be8';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
+   ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='900 43px Arial';
+   const titleLines=[];let line='';for(const word of title.split(/\s+/)){const test=line?line+' '+word:word;if(ctx.measureText(test).width>W-100&&line){titleLines.push(line);line=word;}else line=test;}if(line)titleLines.push(line);
+   const shown=titleLines.slice(-2);const titleY=H-105-(shown.length-1)*49;shown.forEach((t,i)=>ctx.fillText(t,48,titleY+i*49));
+   ctx.fillStyle='#e2e8f0';ctx.font='700 25px Arial';ctx.fillText(branch.slice(0,90),50,H-30);
 
-   let blob;
-   try{blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));}catch(e){blob=null;}
-   if(!blob){await shareCourseText(message,title,false);return;}
-   const safeName=(title.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'course');
-   const file=new File([blob],safeName+'.png',{type:'image/png'});
-   // Native share sends the PNG and caption together wherever the receiving app supports both.
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob){await shareCourseText(message,title);return;}
+   const file=new File([blob],(title.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'course')+'.png',{type:'image/png'});
    try{
-     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
        await navigator.share({title:title+' | Diploma Engineers',text:message,files:[file]});
        return;
      }
-   }catch(e){if(e&&e.name==='AbortError')return;console.warn('Course file sharing failed; opening fallback.',e);}
-   // Reliable fallback: save the PNG, then open WhatsApp with the complete caption pre-filled.
-   const objectUrl=URL.createObjectURL(blob);const a=document.createElement('a');a.href=objectUrl;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),5000);
-   const openWA=confirm('Course poster PNG download शुरू हो गया है। अब WhatsApp में पूरा course message खोलें? PNG को WhatsApp message में attach कर दें।');
-   if(openWA){const wa='https://wa.me/?text='+encodeURIComponent(message);const link=document.createElement('a');link.href=wa;link.target='_blank';link.rel='noopener noreferrer';document.body.appendChild(link);link.click();link.remove();}
+   }catch(e){if(e&&e.name==='AbortError')return;}
+   // Unsupported file sharing: download the banner-only PNG, then open the caption in WhatsApp.
+   const objectUrl=URL.createObjectURL(blob);const a=document.createElement('a');a.href=objectUrl;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),2000);
+   shareCourseText(message,title,true);
  }
  async function shareCourseText(message,title,downloaded=false){
+   // Text caption includes course description, price, app URL, course URL and support contact.
    const waUrl='https://wa.me/?text='+encodeURIComponent(message);
    try{
-     if(navigator.share){await navigator.share({title:title+' | Diploma Engineers',text:message});return;}
-   }catch(e){if(e&&e.name==='AbortError')return;}
+     if(navigator.share){
+       await navigator.share({title:title+' | Diploma Engineers',text:message,url:'https://diplomaengineers.vercel.app/'});
+       return;
+     }
+   }catch(e){if(e && e.name==='AbortError')return;}
    try{
-     if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(message);const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Course details copied. Open WhatsApp with this message?');if(go){const a=document.createElement('a');a.href=waUrl;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();}return;}
+     if(navigator.clipboard && window.isSecureContext){
+       await navigator.clipboard.writeText(message);
+       const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Course caption copied. Open WhatsApp to share the caption with the downloaded PNG?');
+       if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+       return;
+     }
    }catch(e){}
-   const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Open WhatsApp with the complete course details?');
-   if(go){const a=document.createElement('a');a.href=waUrl;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();}else window.prompt('Copy course details:',message);
+   const go=confirm((downloaded?'Course poster PNG downloaded.\n':'')+'Open WhatsApp with course details? Attach the downloaded PNG to the message.');
+   if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+   else window.prompt('Copy course details:',message);
  }
  $('deFcdPrice').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(false);});
  $('deFcdShareText').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(true);});

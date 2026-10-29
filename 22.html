@@ -4099,6 +4099,8 @@ html,body{max-width:100%;overflow-x:hidden}
       <div id="iqAppStatus" class="iq-app-status"><div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div></div>
       <div id="iqAppFolders" class="iq-app-folder-grid" hidden></div>
       <article id="iqAppReader" class="iq-app-reader" hidden><div class="iq-app-reader-toolbar"><button id="iqAppBackFolders"><i class="fas fa-arrow-left"></i> All Questions</button><button id="iqAppPdf"><i class="fas fa-file-pdf"></i> Download PDF</button></div><div id="iqAppSheet"></div></article>
+<button type="button" id="iqAppFloatingShare" class="iq-floating-share" aria-label="Share all Important Questions" title="Share all Important Questions" hidden><i class="fas fa-share-nodes"></i><span>Share</span></button>
+<style id="iq-floating-share-style">.iq-floating-share{position:fixed!important;right:max(18px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));z-index:10050;border:0;border-radius:999px;padding:13px 18px;display:flex;align-items:center;gap:9px;background:linear-gradient(135deg,#16a34a,#047857);color:#fff;font:800 14px/1.1 Poppins,Arial,sans-serif;box-shadow:0 10px 28px #04785745;cursor:pointer;transition:transform .2s,box-shadow .2s}.iq-floating-share:hover{transform:translateY(-3px);box-shadow:0 14px 32px #04785755}.iq-floating-share[hidden]{display:none!important}.iq-floating-share i{font-size:17px}@media(max-width:480px){.iq-floating-share{right:14px;bottom:18px;padding:12px 16px;font-size:13px}}</style>
     </section>
   </div>
   <style>
@@ -11345,7 +11347,7 @@ function iqOpen(index){
  const sem=iqField(r,'semester','year')||'';
  const subject=iqField(r,'subject','subjectName')||'Important Questions';
  const units=iqUnits(r);
- iqEl('iqAppFolders').style.display='none';iqEl('iqAppStatus').textContent='';iqEl('iqAppReader').hidden=false;
+ iqEl('iqAppFolders').style.display='none';iqEl('iqAppStatus').textContent='';iqEl('iqAppReader').hidden=false;if(iqEl('iqAppFloatingShare'))iqEl('iqAppFloatingShare').hidden=false;
  document.title=[subject,branch,'Imp. Questions by diploma_engineers7'].filter(Boolean).join('_');
  const header='<div class="iq-sheet-watermark">@diploma_engineers7</div><header class="iq-sheet-head"><div class="iq-sheet-brand"><img crossorigin="anonymous" src="https://diplomaengineers.vercel.app/certificate%20logo.png" alt="Diploma Engineers Certificate Logo"></div><div class="iq-sheet-branch">'+iqTxt(branch.toUpperCase())+(sem?' • '+iqTxt(sem.toUpperCase()):'')+'</div><div class="iq-sheet-subject">'+iqTxt(subject.toUpperCase())+'</div><div class="iq-sheet-meta">Branch: '+iqTxt(branch)+' | Semester: '+iqTxt(sem||'Not specified')+' | Subject: '+iqTxt(subject)+'</div><div style="font-size:12px;font-weight:800;color:#2563eb;margin-top:6px">@diploma_engineers7</div></header>';
  const body=units.length?units.map((u,i)=>'<section><h2 class="iq-sheet-unit">'+iqTxt(iqUnitTitle(u.title,i))+'</h2>'+(u.questions.length?u.questions.map((q,j)=>'<div class="iq-sheet-q">'+iqQuestionPairHtml(q.text,q.number||j+1)+'</div>').join(''):'<div class="iq-sheet-empty">Questions are not stored inside this unit in Firebase.</div>')+'</section>').join(''):'<div class="iq-sheet-empty">No units/questions found. Please check the Admin Panel saved record.</div>';
@@ -11357,6 +11359,7 @@ function iqNavigateBack(){
  if(iqChosen){
    iqChosen=null;
    iqEl('iqAppReader').hidden=true;
+   if(iqEl('iqAppFloatingShare'))iqEl('iqAppFloatingShare').hidden=true;
    iqEl('iqAppFolders').style.display='grid';
    iqRenderFolders();
    return;
@@ -11379,6 +11382,7 @@ window.openImportantQuestionsHome=function(){
     iqChosen=null;
     const reader=iqEl('iqAppReader'), folders=iqEl('iqAppFolders');
     if(reader)reader.hidden=true;
+    if(iqEl('iqAppFloatingShare'))iqEl('iqAppFloatingShare').hidden=true;
     if(folders){folders.hidden=false;folders.style.display='grid';}
     if(iqLoaded){iqRenderFolders();}
     else{
@@ -11397,9 +11401,14 @@ window.iqRestoreState=function(state){
  if(state.chosen!==null&&state.chosen!==undefined&&iqRecords[Number(state.chosen)]){
    iqOpen(Number(state.chosen));
  }else{
-   iqChosen=null;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders();
+   iqChosen=null;iqEl('iqAppReader').hidden=true;if(iqEl('iqAppFloatingShare'))iqEl('iqAppFloatingShare').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders();
  }
 };
+function iqFancyBold(text){return String(text||'').replace(/[A-Za-z0-9]/g,ch=>{const c=ch.charCodeAt(0);if(c>=65&&c<=90)return String.fromCodePoint(0x1D5D4+(c-65));if(c>=97&&c<=122)return String.fromCodePoint(0x1D5EE+(c-97));if(c>=48&&c<=57)return String.fromCodePoint(0x1D7EC+(c-48));return ch;});}
+function iqShareQuestionLines(raw,number){const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const en=[],hi=[];lines.forEach(line=>{let t=line.replace(/^(?:English|Eng|EN)\s*[:：-]\s*/i,'').trim();const hm=t.match(/^(?:Hindi|हिंदी|हिन्दी|HI)\s*[:：-]\s*(.*)$/i);if(hm){hi.push(hm[1]||'');return;}if(/[\u0900-\u097F]/.test(t))hi.push(t);else en.push(t);});const out=[];if(en.length)out.push('Q'+number+'. '+en.join(' '));if(hi.length)out.push(hi.join(' '));if(!out.length)out.push('Q'+number+'. '+String(raw||''));return out.join('\n');}
+function iqBuildShareText(){if(!iqChosen)return '';const r=iqChosen,branch=iqField(r,'branch','branchName','category','courseBranch')||'Diploma Engineering',semester=iqGroupKey(r,'semester'),subject=iqField(r,'subject','subjectName','paperName')||'Important Questions',units=iqUnits(r);const lines=[];lines.push('🚀⚙️ '+iqFancyBold('DIPLOMA ENGINEERS')+' ⚙️🚀','', '　　　📚 '+iqFancyBold(subject.toUpperCase())+' 📚','', '🎯 '+iqFancyBold('MOST IMPORTANT QUESTIONS')+' 🎯','', '　　　　📝 '+iqFancyBold('BTEUP DIPLOMA EXAM')+' 📝','', '━━━━━━━━━━━━━━━━━━━━','', '🌐 '+iqFancyBold('Bilingual Edition (English + Hindi)'),'','━━━━━━━━━━━━━━━━━━━━','', '📌 '+iqFancyBold('BRANCH')+': '+branch,'📌 '+iqFancyBold('SEMESTER')+': '+semester,'📌 '+iqFancyBold('SUBJECT')+': '+subject,'','━━━━━━━━━━━━━━━━━━━━','');units.forEach((u,i)=>{lines.push('📘 '+iqFancyBold(iqUnitTitle(u.title,i).toUpperCase()),'━━━━━━━━━━━━━━━━━━━━','');u.questions.forEach((q,j)=>{lines.push(iqShareQuestionLines(q.text,q.number||j+1),'');});lines.push('━━━━━━━━━━━━━━━━━━━━','');});lines.push('🎯 '+iqFancyBold('EXAM PREPARATION TIPS'),'','✅ Prepare all units.','✅ Learn definitions, causes, effects and preventive measures.','✅ Practise writing answers in points with suitable headings.','','━━━━━━━━━━━━━━━━━━━━','','📢 '+iqFancyBold('FREE STUDY MATERIAL'),'📚 Notes • Books • PYQs • Mock Tests • Exam Guidance','','🌐 '+iqFancyBold('WEBSITE')+':','https://diplomaengineers.vercel.app','','📲 '+iqFancyBold('JOIN OUR WHATSAPP CHANNEL')+':','https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w','','━━━━━━━━━━━━━━━━━━━━','','　　　　🚀⚙️ '+iqFancyBold('DIPLOMA ENGINEERS')+' ⚙️🚀','','　　　'+iqFancyBold("Students' Trusted Learning Platform"),'','❤️ '+iqFancyBold('Learn Together • Grow Together • Succeed Together')+' ❤️');return lines.join('\n');}
+async function iqShareAllQuestions(){const text=iqBuildShareText();if(!text)return;const subject=iqField(iqChosen,'subject','subjectName')||'Important Questions';const data={title:'Diploma Engineers | '+subject+' Important Questions',text:text};try{if(navigator.share){await navigator.share(data);return;}const wa='https://wa.me/?text='+encodeURIComponent(text);const w=window.open(wa,'_blank','noopener,noreferrer');if(!w){if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);alert('All Important Questions copied. Paste them into WhatsApp or any chat.');}else window.prompt('Copy all Important Questions:',text);}}catch(err){if(err&&err.name!=='AbortError'){const wa='https://wa.me/?text='+encodeURIComponent(text);window.open(wa,'_blank','noopener,noreferrer');}}}
+iqEl('iqAppFloatingShare')?.addEventListener('click',iqShareAllQuestions);
 iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Preparing clear PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='PDF downloaded ✓'}catch(e){console.error('PDF generation failed',e);alert((e&&e.message)||'Unable to open PDF print window. Please allow popups and try again.');btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='PDF downloaded ✓')btn.textContent=old},2200)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
 async function iqDownloadPdf(el,name){
  if(!el)throw new Error('Question sheet not found');
@@ -11459,7 +11468,19 @@ async function iqDownloadPdf(el,name){
    if(logo.naturalWidth){const ratio=Math.min(700/logo.naturalWidth,700/logo.naturalHeight);const w=logo.naturalWidth*ratio,h=logo.naturalHeight*ratio;ctx.drawImage(logo,(900-w)/2,(900-h)/2,w,h);}
    else {ctx.fillStyle='#7890ad';ctx.font='bold 72px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.translate(450,450);ctx.rotate(-Math.PI/5);ctx.fillText('DIPLOMA ENGINEERS',0,-20);ctx.font='bold 54px Arial';ctx.fillText('@diploma_engineers7',0,60);}
    const watermark=markCanvas.toDataURL('image/png');
-   for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');/* Professional single-line border on every generated PDF page */pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');}
+   for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');/* Professional single-line border on every generated question page */pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');}
+   // Append the supplied full-page image as the FINAL page of every downloaded PDF.
+   // Source image is 1054 x 1492 (A4-like portrait ratio); fit edge-to-edge to A4.
+   const lastPageImageUrl='https://diplomaengineers.vercel.app/9ee54b14-2728-42f0-88cf-62b5d9acbb51.jpeg';
+   const lastPageImage=new Image();lastPageImage.crossOrigin='anonymous';lastPageImage.src=lastPageImageUrl;
+   await new Promise((resolve,reject)=>{if(lastPageImage.complete&&lastPageImage.naturalWidth)return resolve();lastPageImage.onload=resolve;lastPageImage.onerror=()=>reject(new Error('Last-page PDF image could not be loaded. Please check the internet connection and try again.'));setTimeout(()=>{if(!lastPageImage.naturalWidth)reject(new Error('Last-page PDF image loading timed out. Please try again.'));},10000)});
+   const lastCanvas=document.createElement('canvas');lastCanvas.width=lastPageImage.naturalWidth||1054;lastCanvas.height=lastPageImage.naturalHeight||1492;
+   const lastCtx=lastCanvas.getContext('2d');lastCtx.drawImage(lastPageImage,0,0,lastCanvas.width,lastCanvas.height);
+   const lastPageImageData=lastCanvas.toDataURL('image/jpeg',0.98);
+   pdf.addPage('a4','portrait');
+   const lastPw=pdf.internal.pageSize.getWidth(),lastPh=pdf.internal.pageSize.getHeight();
+   pdf.addImage(lastPageImageData,'JPEG',0,0,lastPw,lastPh,undefined,'FAST');
+   // Intentionally do NOT draw a border on the final image page.
    pdf.save(filename);
    return filename;
  } finally {holder.remove();}

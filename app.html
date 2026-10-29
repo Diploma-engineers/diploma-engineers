@@ -3068,7 +3068,7 @@ html,body{max-width:100%;overflow-x:hidden}
         <i class="fas fa-clipboard-check"></i>
         <p>Test Series</p>
       </div>
-      <div class="card-box" onclick="navigateTo('importantQuestionsPage')">
+      <div class="card-box" onclick="navigateTo('importantQuestionsPage'); if(window.openImportantQuestionsHome) window.openImportantQuestionsHome();">
         <i class="fas fa-folder-open" style="color:#dc2626;"></i>
         <p>Imp. Questions</p>
       </div>
@@ -11341,6 +11341,23 @@ function iqNavigateBack(){
  if(typeof navigateTo==='function')navigateTo('homePage');
 }
 window.iqNavigateBack=iqNavigateBack;
+// Always open Important Questions at its root branch-folder level from Home.
+window.openImportantQuestionsHome=function(){
+  try{
+    iqCourseRequest=null;
+    iqPath=[];
+    iqChosen=null;
+    const reader=iqEl('iqAppReader'), folders=iqEl('iqAppFolders');
+    if(reader)reader.hidden=true;
+    if(folders){folders.hidden=false;folders.style.display='grid';}
+    if(iqLoaded){iqRenderFolders();}
+    else{
+      const status=iqEl('iqAppStatus');
+      if(status)status.innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">Diploma Engineers</div><div class="de-loader-sub">Loading Important Questions folders…</div></div>';
+      if(typeof iqStartLoad==='function')iqStartLoad();
+    }
+  }catch(err){console.error('Could not open Important Questions folders:',err);}
+};
 let iqCourseRequest=null;
 function iqNormMatch(a,b){const x=String(a||'').toLowerCase().replace(/[^a-z0-9]/g,''),y=String(b||'').toLowerCase().replace(/[^a-z0-9]/g,'');return !!x&&!!y&&(x===y||x.includes(y)||y.includes(x))}
 function iqApplyCourseRequest(){if(!iqLoaded||!iqCourseRequest)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch)&&(!req.subject||/^all\s*subjects?$/i.test(req.subject)||iqNormMatch(iqField(r,'subject','subjectName'),req.subject)));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const pick=candidates[0];iqPath=pick?[iqGroupKey(pick,'branch'),iqGroupKey(pick,'semester'),iqGroupKey(pick,'subject')]:[req.branch||'Common / All Branches',iqSemesterLabel(req.semester),req.subject||'Subject not set'];iqChosen=null;iqRenderFolders();}

@@ -7581,7 +7581,7 @@ window.addEventListener('DOMContentLoaded', () => {
   <div class="payment-body">
    <div class="payment-course" id="paymentCourseName">Course</div>
    <div class="payment-price">₹99 INR</div>
-   <div class="coupon-box" id="paymentCouponBox">
+   <div class="coupon-box" id="paymentCouponBox" style="display:none!important" aria-hidden="true">
     <label class="payment-field-label" for="paymentCouponCode">Coupon Code (Optional)</label>
     <div class="coupon-row"><input id="paymentCouponCode" class="utr-input coupon-input" type="text" maxlength="40" autocomplete="off" placeholder="Enter coupon code"><button id="applyCouponBtn" class="coupon-apply" type="button">Apply</button></div>
     <div id="couponStatus" class="coupon-status" aria-live="polite"></div>
@@ -7646,6 +7646,31 @@ const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2
 const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2","civil-year-3-course":"Civil Engineering Year 3","mechanical-year-3-course":"Mechanical Engineering Year 3","electrical-year-3-course":"Electrical Engineering Year 3","electronics-year-3-course":"Electronics Engineering Year 3","cs-year-3-course":"Computer Science Engineering Year 3","it-year-3-course":"Information Technology Year 3","dairy-year-3-course":"Dairy Technology Year 3","dairy-year-2-course":"Dairy Technology Year 2","agriculture-year-3-course":"Agriculture Engineering Year 3","chemical-year-3-course":"Chemical Engineering Year 3"};
 const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus');
 let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null,homeAccessUnsub=null,appliedCoupon=null,currentPaymentAmount=99,defaultPaymentQR='https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png';
+// Coupon entry is enabled ONLY for courses loaded from the Admin Firebase catalog.
+// Hardcoded/direct-code courses never show or submit coupon data.
+function isFirebaseUploadedCourse(courseId){
+ const id=String(courseId||'');
+ if(!id)return false;
+ const catalog=(window.__deAdminCourseCatalog||{});
+ if(catalog[id] && typeof catalog[id]==='object' && Object.keys(catalog[id]).length>0)return true;
+ try{
+  const card=Array.from(document.querySelectorAll('#adminUploadedCourseGrid .admin-uploaded-course, .admin-uploaded-course'))
+   .find(el=>String(el.dataset.paidCourse||el.getAttribute('data-admin-course-buy')||'')===id || !!el.querySelector(`[data-admin-course-buy="${CSS.escape(id)}"]`));
+  if(card)return true;
+ }catch(e){}
+ return false;
+}
+function setCouponVisibility(courseId){
+ const box=document.getElementById('paymentCouponBox');
+ const enabled=isFirebaseUploadedCourse(courseId);
+ if(box){box.style.setProperty('display',enabled?'block':'none','important');box.setAttribute('aria-hidden',enabled?'false':'true');}
+ const input=document.getElementById('paymentCouponCode');
+ const apply=document.getElementById('applyCouponBtn');
+ if(input){input.disabled=!enabled;if(!enabled)input.value='';}
+ if(apply){apply.disabled=!enabled;}
+ if(!enabled){appliedCoupon=null;couponStatus('');}
+ return enabled;
+}
 const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const COURSE_VALIDITY_DAYS=210;
 function courseExpiryInfo(v,courseId='',uid=currentUid){
@@ -7787,6 +7812,7 @@ async function findCouponRecord(courseId,code){
  return null;
 }
 async function applyPaymentCoupon(){
+ if(!currentCourse || !isFirebaseUploadedCourse(currentCourse)){appliedCoupon=null;setCouponVisibility(currentCourse);return;}
  const input=document.getElementById('paymentCouponCode');
  const btn=document.getElementById('applyCouponBtn');
  const code=String(input?.value||'').trim().toUpperCase();
@@ -7840,12 +7866,12 @@ async function openPayment(courseId){
    const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
    const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}
  }
- currentCourse=courseId;courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
+ currentCourse=courseId;setCouponVisibility(courseId);courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
  const courseRecord=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
  const priceRaw=Number(courseRecord.price??courseRecord.amount??99);
  const price=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:99;
  const priceEl=overlay.querySelector('.payment-price');if(priceEl)priceEl.textContent='₹'+price+' INR';const head=overlay.querySelector('.payment-head h3');if(head)head.textContent='Course Purchase • ₹'+price;
- utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
+ utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;setCouponVisibility(courseId);const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
  overlay.style.setProperty('display','flex','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');overlay.style.setProperty('z-index','2147483646','important');overlay.setAttribute('aria-hidden','false');
  const modal=overlay.querySelector('.payment-modal');if(modal){modal.style.setProperty('display','block','important');modal.style.setProperty('position','relative','important');modal.style.setProperty('z-index','1','important');}
  await loadAdminUploadedPaymentQR(courseId);if(qrImg){qrImg.dataset.baseQr=qrImg.src;qrImg.onerror=null;}
@@ -8174,12 +8200,13 @@ async function submitPurchase(){
   const studentMobile=document.getElementById('paymentStudentMobile').value.trim();
   const studentEmail=document.getElementById('paymentStudentEmail').value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
-  const typedCoupon=String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase();
-  if(typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
+  const couponEnabled=isFirebaseUploadedCourse(currentCourse);
+  const typedCoupon=couponEnabled?String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase():'';
+  if(couponEnabled && typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
+  if(!couponEnabled)appliedCoupon=null;
   // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
-  /* DIRECT PAYMENT SUCCESS SOUND */
-  if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
+  // Never play success sound before Firebase confirms the request was saved.
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
     const purchaseRoot=ref(db,'utrPurchases');
@@ -8202,10 +8229,33 @@ async function submitPurchase(){
       college:String(currentProfile.college||''),semester:String(currentProfile.semester||''),
       profilePic:String(currentProfile.profilePic||'')
     };
-    // Firebase remains the primary admin workflow. Also send a copy of the request to the owner's inbox via FormSubmit.
-    await set(p,purchaseDetails);
+    // Write the flat admin queue first. Some deployments intentionally allow
+    // student writes only inside their own UID branch, so retry there if the
+    // flat queue is blocked by the current Realtime Database rules.
+    let savedPurchasePath='utrPurchases/'+p.key;
+    try{
+      await set(p,purchaseDetails);
+    }catch(flatWriteError){
+      const isPermissionError=/PERMISSION_DENIED|permission_denied|permission denied/i.test(String(flatWriteError?.code||flatWriteError?.message||flatWriteError));
+      if(!isPermissionError)throw flatWriteError;
+      console.warn('[Diploma Engineers] Flat purchase queue write denied; trying the signed-in user path.',flatWriteError);
+      savedPurchasePath=`utrPurchases/${currentUid}/${currentCourse}/${p.key}`;
+      try{
+        await set(ref(db,savedPurchasePath),purchaseDetails);
+      }catch(userWriteError){
+        console.error('[Diploma Engineers] Both purchase write paths were denied.',userWriteError);
+        throw new Error('Firebase Rules denied the purchase request. Your rules require the record at /utrPurchases/'+currentUid+'/'+currentCourse+'/'+p.key+' with matching uid and courseId. Check that you are signed in and that Realtime Database Rules are published.');
+      }
+    }
+    // Confirm the database actually contains the submitted record before showing success.
+    const savedSnapshot = await get(ref(db, savedPurchasePath));
+    if(!savedSnapshot.exists()){
+      throw new Error('Firebase write returned but the purchase record could not be confirmed. Please check your connection and try again.');
+    }
+    purchaseDetails.databasePath=savedPurchasePath;
     try{localStorage.setItem('de_last_course_purchase_'+currentUid+'_'+currentCourse,JSON.stringify(purchaseDetails));}catch(e){}
-    await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now}).catch(e=>console.warn('Could not save private purchase index:',e));
+    // The private index is optional. Keep the saved purchase if index rules differ.
+    await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now,databasePath:savedPurchasePath}).catch(e=>console.warn('Optional private purchase index could not be saved:',e));
     try{
       const emailPayload={
         _subject:'New Course Purchase / Approval Request - '+purchaseDetails.courseName,
@@ -8238,6 +8288,8 @@ async function submitPurchase(){
     currentProfile={...currentProfile,name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member')};
     showVerifyTick();
     showStatus('Request submitted successfully ✓','ok');
+    // Sound is triggered only after the Firebase record is confirmed as saved.
+    if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
     const submittedCourseId=currentCourse;
     setPaidCardState(submittedCourseId,'pending');
 

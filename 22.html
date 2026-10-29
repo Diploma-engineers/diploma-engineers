@@ -3068,7 +3068,7 @@ html,body{max-width:100%;overflow-x:hidden}
         <i class="fas fa-clipboard-check"></i>
         <p>Test Series</p>
       </div>
-      <div class="card-box" onclick="navigateTo('importantQuestionsPage')">
+      <div class="card-box" onclick="navigateTo('importantQuestionsPage'); if(window.openImportantQuestionsHome) window.openImportantQuestionsHome();">
         <i class="fas fa-folder-open" style="color:#dc2626;"></i>
         <p>Imp. Questions</p>
       </div>
@@ -4096,8 +4096,8 @@ html,body{max-width:100%;overflow-x:hidden}
       <header class="iq-app-hero"><button class="iq-app-back" onclick="iqNavigateBack()" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div><small>DIPLOMA ENGINEERS • STUDY HUB</small><h1>Important Questions</h1><p>Branch Folder • Semester Folder • Subject PDF</p></div></header>
       <div class="iq-app-filters"><input id="iqAppSearch" placeholder="Search branch, semester, subject or question..."><select id="iqAppBranch" hidden><option value="">All Branches</option></select><select id="iqAppSemester" hidden><option value="">All Semesters</option></select><select id="iqAppSubject" hidden><option value="">All Subjects</option></select></div>
       <div id="iqAppCrumbs" class="iq-app-crumbs"></div>
-      <div id="iqAppStatus" class="iq-app-status"><div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div></div>
-      <div id="iqAppFolders" class="iq-app-folder-grid" hidden></div>
+      <div id="iqAppStatus" class="iq-app-status" aria-live="polite"></div>
+      <div id="iqAppFolders" class="iq-app-folder-grid"></div>
       <article id="iqAppReader" class="iq-app-reader" hidden><div class="iq-app-reader-toolbar"><button id="iqAppBackFolders"><i class="fas fa-arrow-left"></i> All Questions</button><button id="iqAppPdf"><i class="fas fa-file-pdf"></i> Download PDF</button></div><div id="iqAppSheet"></div></article>
     </section>
   </div>
@@ -5171,6 +5171,41 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Login history for the Founder Student Tracker. Uses the existing student
+  // profile record, so no second login system is introduced. Historical
+  // sign-ins cannot be reconstructed; tracking starts after this update.
+  async function recordStudentLogin(user, method = "email") {
+    if (!user || !user.uid) return;
+    const now = Date.now();
+    const profileRef = ref(db, "users/" + user.uid);
+    try {
+      const snap = await get(profileRef);
+      const existing = snap.exists() && snap.val() && typeof snap.val() === "object"
+        ? snap.val() : {};
+      // Keep existing profile values untouched; fill only missing basics.
+      const updates = {
+        email: user.email || existing.email || "",
+        firstLoginAt: Number(existing.firstLoginAt) || Number(existing.createdAt) || now,
+        lastLoginAt: now,
+        lastLoginMethod: method,
+        loginCount: (Number(existing.loginCount) || 0) + 1
+      };
+      if (!existing.name) updates.name = user.displayName || "Engineer";
+      if (!existing.profilePic) updates.profilePic = user.photoURL || "";
+      if (!existing.branch) updates.branch = "Civil Engineering";
+      if (!existing.mobile) updates.mobile = "N/A";
+      if (existing.coins === undefined) updates.coins = 0;
+      if (existing.college === undefined) updates.college = "";
+      if (existing.enrollment === undefined) updates.enrollment = "";
+      if (existing.address === undefined) updates.address = "";
+      if (existing.semester === undefined) updates.semester = "";
+      await update(profileRef, updates);
+    } catch (err) {
+      // Tracking failures must never block login or disturb app navigation.
+      console.warn("Login history could not be saved:", err);
+    }
+  }
+
   window.submitAuthForm = async function() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
@@ -5197,14 +5232,16 @@ window.addEventListener('DOMContentLoaded', () => {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await set(ref(db, "users/" + cred.user.uid), { 
           name, email, branch, mobile, coins: 0,
-          college: "", enrollment: "", address: "", semester: "", profilePic: "" 
+          college: "", enrollment: "", address: "", semester: "", profilePic: "",
+          firstLoginAt: Date.now(), lastLoginAt: Date.now(), lastLoginMethod: "email-registration", loginCount: 1
         });
         showAuthNotice("Your registration is complete. Your account is ready to use.", "success", "Registration complete");
       } else {
         // App authentication is the only login step. Admin access is then
         // verified separately by EXACT EMAIL against the Admin Firebase
         // public access registry. Password/name are NOT compared.
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await recordStudentLogin(cred.user, "email");
         setTimeout(() => { if(auth.currentUser) refreshAdminAccess(auth.currentUser); }, 0);
       }
     } catch (e) {
@@ -5229,6 +5266,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.googleLogin = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
+      await recordStudentLogin(result.user, "google");
       const snapshot = await get(child(ref(db), `users/${result.user.uid}`));
       if (!snapshot.exists()) {
         await set(ref(db, "users/" + result.user.uid), {
@@ -7543,7 +7581,7 @@ window.addEventListener('DOMContentLoaded', () => {
   <div class="payment-body">
    <div class="payment-course" id="paymentCourseName">Course</div>
    <div class="payment-price">₹99 INR</div>
-   <div class="coupon-box" id="paymentCouponBox">
+   <div class="coupon-box" id="paymentCouponBox" style="display:none!important" aria-hidden="true">
     <label class="payment-field-label" for="paymentCouponCode">Coupon Code (Optional)</label>
     <div class="coupon-row"><input id="paymentCouponCode" class="utr-input coupon-input" type="text" maxlength="40" autocomplete="off" placeholder="Enter coupon code"><button id="applyCouponBtn" class="coupon-apply" type="button">Apply</button></div>
     <div id="couponStatus" class="coupon-status" aria-live="polite"></div>
@@ -7608,6 +7646,31 @@ const paidCourseIds=["civil-year-2-course","mechanical-year-2-course","cs-year-2
 const courseNames={"civil-year-2-course":"Civil Engineering Year 2","mechanical-year-2-course":"Mechanical Engineering Year 2","cs-year-2-course":"Computer Science Engineering Year 2","it-year-2-course":"Information Technology Year 2","electrical-year-2-course":"Electrical Engineering Year 2","electronics-year-2-course":"Electronics Engineering Year 2","agriculture-year-2-course":"Agriculture Engineering Year 2","chemical-year-2-course":"Chemical Engineering Year 2","civil-year-3-course":"Civil Engineering Year 3","mechanical-year-3-course":"Mechanical Engineering Year 3","electrical-year-3-course":"Electrical Engineering Year 3","electronics-year-3-course":"Electronics Engineering Year 3","cs-year-3-course":"Computer Science Engineering Year 3","it-year-3-course":"Information Technology Year 3","dairy-year-3-course":"Dairy Technology Year 3","dairy-year-2-course":"Dairy Technology Year 2","agriculture-year-3-course":"Agriculture Engineering Year 3","chemical-year-3-course":"Chemical Engineering Year 3"};
 const overlay=document.getElementById('paymentOverlay'),courseEl=document.getElementById('paymentCourseName'),utrEl=document.getElementById('paymentUTR'),submitEl=document.getElementById('paymentSubmit'),statusEl=document.getElementById('paymentStatus');
 let db=null,auth2=null,currentUid=null,currentProfile={},currentCourse=null,accessUnsub=null,homeAccessUnsub=null,appliedCoupon=null,currentPaymentAmount=99,defaultPaymentQR='https://anubhavfinance.wordpress.com/wp-content/uploads/2026/08/img_20260825_1112204877039392245140523.png';
+// Coupon entry is enabled ONLY for courses loaded from the Admin Firebase catalog.
+// Hardcoded/direct-code courses never show or submit coupon data.
+function isFirebaseUploadedCourse(courseId){
+ const id=String(courseId||'');
+ if(!id)return false;
+ const catalog=(window.__deAdminCourseCatalog||{});
+ if(catalog[id] && typeof catalog[id]==='object' && Object.keys(catalog[id]).length>0)return true;
+ try{
+  const card=Array.from(document.querySelectorAll('#adminUploadedCourseGrid .admin-uploaded-course, .admin-uploaded-course'))
+   .find(el=>String(el.dataset.paidCourse||el.getAttribute('data-admin-course-buy')||'')===id || !!el.querySelector(`[data-admin-course-buy="${CSS.escape(id)}"]`));
+  if(card)return true;
+ }catch(e){}
+ return false;
+}
+function setCouponVisibility(courseId){
+ const box=document.getElementById('paymentCouponBox');
+ const enabled=isFirebaseUploadedCourse(courseId);
+ if(box){box.style.setProperty('display',enabled?'block':'none','important');box.setAttribute('aria-hidden',enabled?'false':'true');}
+ const input=document.getElementById('paymentCouponCode');
+ const apply=document.getElementById('applyCouponBtn');
+ if(input){input.disabled=!enabled;if(!enabled)input.value='';}
+ if(apply){apply.disabled=!enabled;}
+ if(!enabled){appliedCoupon=null;couponStatus('');}
+ return enabled;
+}
 const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const COURSE_VALIDITY_DAYS=210;
 function courseExpiryInfo(v,courseId='',uid=currentUid){
@@ -7749,6 +7812,7 @@ async function findCouponRecord(courseId,code){
  return null;
 }
 async function applyPaymentCoupon(){
+ if(!currentCourse || !isFirebaseUploadedCourse(currentCourse)){appliedCoupon=null;setCouponVisibility(currentCourse);return;}
  const input=document.getElementById('paymentCouponCode');
  const btn=document.getElementById('applyCouponBtn');
  const code=String(input?.value||'').trim().toUpperCase();
@@ -7802,12 +7866,12 @@ async function openPayment(courseId){
    const a=await accessValue(courseId).catch(()=>null);if(isApproved(a)){setPaidCardState(courseId,'approved');openCourse(courseId);return;}
    const latest=await getLatestPurchase(courseId);if(latest&&String(latest.status||'').toLowerCase()==='pending'){setPaidCardState(courseId,'pending');showTrackingOnCard(courseId);watchAccess(courseId);return;}
  }
- currentCourse=courseId;courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
+ currentCourse=courseId;setCouponVisibility(courseId);courseEl.textContent=courseNames[courseId]||getCourseDisplayName(courseId)||courseId;
  const courseRecord=(window.__deAdminCourseCatalog||{})[String(courseId)]||{};
  const priceRaw=Number(courseRecord.price??courseRecord.amount??99);
  const price=Number.isFinite(priceRaw)&&priceRaw>=0?priceRaw:99;
  const priceEl=overlay.querySelector('.payment-price');if(priceEl)priceEl.textContent='₹'+price+' INR';const head=overlay.querySelector('.payment-head h3');if(head)head.textContent='Course Purchase • ₹'+price;
- utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
+ utrEl.value='';appliedCoupon=null;currentPaymentAmount=price;setCouponVisibility(courseId);const couponInput=document.getElementById('paymentCouponCode');if(couponInput)couponInput.value='';couponStatus('');const qrImg=overlay.querySelector('.payment-qr');if(qrImg){qrImg.dataset.baseQr='';qrImg.dataset.qrSource='';}document.getElementById('paymentStudentName').value=currentProfile.name||'';document.getElementById('paymentStudentBranch').value=currentProfile.branch||'';document.getElementById('paymentStudentMobile').value=currentProfile.mobile||'';document.getElementById('paymentStudentEmail').value=currentProfile.email||'';showStatus('');submitEl.disabled=false;
  overlay.style.setProperty('display','flex','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');overlay.style.setProperty('z-index','2147483646','important');overlay.setAttribute('aria-hidden','false');
  const modal=overlay.querySelector('.payment-modal');if(modal){modal.style.setProperty('display','block','important');modal.style.setProperty('position','relative','important');modal.style.setProperty('z-index','1','important');}
  await loadAdminUploadedPaymentQR(courseId);if(qrImg){qrImg.dataset.baseQr=qrImg.src;qrImg.onerror=null;}
@@ -8136,12 +8200,13 @@ async function submitPurchase(){
   const studentMobile=document.getElementById('paymentStudentMobile').value.trim();
   const studentEmail=document.getElementById('paymentStudentEmail').value.trim();
   if(!currentUid||!currentCourse){showStatus('Please login first.','err');return;}
-  const typedCoupon=String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase();
-  if(typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
+  const couponEnabled=isFirebaseUploadedCourse(currentCourse);
+  const typedCoupon=couponEnabled?String(document.getElementById('paymentCouponCode')?.value||'').trim().toUpperCase():'';
+  if(couponEnabled && typedCoupon && (!appliedCoupon || appliedCoupon.code!==typedCoupon)){showStatus('Please apply and verify your coupon code before submitting the UTR.','err');document.getElementById('paymentCouponCode')?.focus();return;}
+  if(!couponEnabled)appliedCoupon=null;
   // Only UTR is required in the purchase card. Other student details are taken from the signed-in profile.
   if(utr.length<4){showStatus('Please enter a valid UTR / Transaction ID.','err');utrEl.focus();return;}
-  /* DIRECT PAYMENT SUCCESS SOUND */
-  if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
+  // Never play success sound before Firebase confirms the request was saved.
   submitEl.disabled=true;showStatus('Submitting…','warn');
   try{
     const purchaseRoot=ref(db,'utrPurchases');
@@ -8164,10 +8229,33 @@ async function submitPurchase(){
       college:String(currentProfile.college||''),semester:String(currentProfile.semester||''),
       profilePic:String(currentProfile.profilePic||'')
     };
-    // Firebase remains the primary admin workflow. Also send a copy of the request to the owner's inbox via FormSubmit.
-    await set(p,purchaseDetails);
+    // Write the flat admin queue first. Some deployments intentionally allow
+    // student writes only inside their own UID branch, so retry there if the
+    // flat queue is blocked by the current Realtime Database rules.
+    let savedPurchasePath='utrPurchases/'+p.key;
+    try{
+      await set(p,purchaseDetails);
+    }catch(flatWriteError){
+      const isPermissionError=/PERMISSION_DENIED|permission_denied|permission denied/i.test(String(flatWriteError?.code||flatWriteError?.message||flatWriteError));
+      if(!isPermissionError)throw flatWriteError;
+      console.warn('[Diploma Engineers] Flat purchase queue write denied; trying the signed-in user path.',flatWriteError);
+      savedPurchasePath=`utrPurchases/${currentUid}/${currentCourse}/${p.key}`;
+      try{
+        await set(ref(db,savedPurchasePath),purchaseDetails);
+      }catch(userWriteError){
+        console.error('[Diploma Engineers] Both purchase write paths were denied.',userWriteError);
+        throw new Error('Firebase Rules denied the purchase request. Your rules require the record at /utrPurchases/'+currentUid+'/'+currentCourse+'/'+p.key+' with matching uid and courseId. Check that you are signed in and that Realtime Database Rules are published.');
+      }
+    }
+    // Confirm the database actually contains the submitted record before showing success.
+    const savedSnapshot = await get(ref(db, savedPurchasePath));
+    if(!savedSnapshot.exists()){
+      throw new Error('Firebase write returned but the purchase record could not be confirmed. Please check your connection and try again.');
+    }
+    purchaseDetails.databasePath=savedPurchasePath;
     try{localStorage.setItem('de_last_course_purchase_'+currentUid+'_'+currentCourse,JSON.stringify(purchaseDetails));}catch(e){}
-    await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now}).catch(e=>console.warn('Could not save private purchase index:',e));
+    // The private index is optional. Keep the saved purchase if index rules differ.
+    await set(ref(db,`userPurchaseIndex/${currentUid}/${currentCourse}`),{purchaseId:p.key,updatedAt:now,databasePath:savedPurchasePath}).catch(e=>console.warn('Optional private purchase index could not be saved:',e));
     try{
       const emailPayload={
         _subject:'New Course Purchase / Approval Request - '+purchaseDetails.courseName,
@@ -8200,6 +8288,8 @@ async function submitPurchase(){
     currentProfile={...currentProfile,name:String(studentName||currentProfile.name||'Student'),email:String(studentEmail||currentProfile.email||''),mobile:String(studentMobile||currentProfile.mobile||''),branch:String(studentBranch||currentProfile.branch||'Diploma Member')};
     showVerifyTick();
     showStatus('Request submitted successfully ✓','ok');
+    // Sound is triggered only after the Firebase record is confirmed as saved.
+    if(typeof window.playPaymentSuccessSound==='function') window.playPaymentSuccessSound();
     const submittedCourseId=currentCourse;
     setPaidCardState(submittedCourseId,'pending');
 
@@ -10698,7 +10788,7 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 const courseAdminConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
 const existing=getApps().find(a=>a.name==="studentCourseCatalog");
 const catalogApp=existing||initializeApp(courseAdminConfig,"studentCourseCatalog");
@@ -11215,7 +11305,7 @@ if(window.__dePendingCourseId){const id=window.__dePendingCourseId;window.__dePe
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 const iqConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
 const iqAppFirebase=getApps().find(a=>a.name==='importantQuestionsReaderApp')||initializeApp(iqConfig,'importantQuestionsReaderApp');const iqDb=getDatabase(iqAppFirebase);
 let iqRecords=[],iqChosen=null,iqLevel=0,iqPath=[],iqLoaded=false;
@@ -11230,7 +11320,7 @@ function iqSemesterLabel(value){let s=String(value||'').trim().replace(/[_-]+/g,
 function iqGroupKey(r,key){return key==='title'?(r.title||'Untitled Important Questions'):key==='branch'?(iqField(r,'branch','branchName')||'Common / All Branches'):key==='semester'?iqSemesterLabel(iqField(r,'semester','year')):(iqField(r,'subject','subjectName')||'Subject not set')}
 function iqHierarchyList(){let list=iqRecords.slice();const keys=['branch','semester','subject'];iqPath.forEach((v,i)=>{list=list.filter(r=>iqGroupKey(r,keys[i])===v)});return list}
 function iqRenderCrumbs(){const labels=['Branches','Semesters','Subjects','Files'];iqEl('iqAppCrumbs').innerHTML='<button data-iq-root="1">'+labels[0]+'</button>'+iqPath.map((v,i)=>'<span>›</span><button data-iq-crumb="'+i+'">'+iqTxt(v)+'</button>').join('')+(iqPath.length?'<span>›</span><b>'+labels[Math.min(iqPath.length,4)]+'</b>':'');iqEl('iqAppCrumbs').querySelector('[data-iq-root]').onclick=()=>{iqPath=[];iqRenderFolders()};iqEl('iqAppCrumbs').querySelectorAll('[data-iq-crumb]').forEach(b=>b.onclick=()=>{iqPath=iqPath.slice(0,Number(b.dataset.iqCrumb)+1);iqRenderFolders()})}
-function iqRenderFolders(){if(!iqLoaded){iqEl('iqAppStatus').innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div>';iqEl('iqAppFolders').hidden=true;return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
+function iqRenderFolders(){if(!iqLoaded){iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppFolders').style.display='grid';iqEl('iqAppFolders').innerHTML='';return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
 function iqOpen(index){let r=iqRecords[index];if(!r)return;iqChosen=r;let branch=iqField(r,'branch','branchName')||'Diploma Engineering',sem=iqField(r,'semester','year')||'',subject=iqField(r,'subject','subjectName')||'Important Questions',units=iqUnits(r);iqEl('iqAppFolders').style.display='none';iqEl('iqAppStatus').textContent='';iqEl('iqAppReader').hidden=false;document.title=[subject,branch,'Imp. Questions by diploma_engineers7'].filter(Boolean).join('_');iqEl('iqAppSheet').innerHTML='<div class="iq-sheet-watermark">@diploma_engineers7</div><header class="iq-sheet-head"><div class="iq-sheet-brand"><img crossorigin="anonymous" src="https://diplomaengineers.vercel.app/certificate%20logo.png" alt="Diploma Engineers Certificate Logo"></div><div class="iq-sheet-branch">'+iqTxt(branch.toUpperCase())+(sem?' • '+iqTxt(sem.toUpperCase()):'')+'</div><div class="iq-sheet-subject">'+iqTxt(subject.toUpperCase())+'</div><div class="iq-sheet-meta">Branch: '+iqTxt(branch)+' | Semester: '+iqTxt(sem||'Not specified')+' | Subject: '+iqTxt(subject)+'</div><div style="font-size:12px;font-weight:800;color:#2563eb;margin-top:6px">@diploma_engineers7</div></header>'+(units.length?units.map((u,i)=>'<section><h2 class="iq-sheet-unit">'+iqTxt((/^\s*(?:UNIT\s*[-–:]?\s*(?:\d+|[IVX]+)|(?:\d+|[IVX]+)\s*[.):\-])/i.test(String(u.title||''))?String(u.title):('UNIT '+(i+1)+': '+String(u.title||'Unit'))))+'</h2>'+(u.questions.length?u.questions.map((q,j)=>{let parts=String(q.text||'').split(/\n/);return '<div class="iq-sheet-q"><span class="iq-hi">'+iqTxt((q.number||j+1)+'. '+(parts[0]||''))+'</span>'+(parts.slice(1).map(t=>'<span class="iq-en">'+iqTxt(t)+'</span>').join(''))+'</div>'}).join(''):'<div class="iq-sheet-empty">Questions are not stored inside this unit in Firebase.</div>')+'</section>').join(''):'<div class="iq-sheet-empty">No units/questions found. Please check the Admin Panel saved record.</div>')+'<footer style="text-align:center;color:#94a3b8;font-size:11px;margin-top:22px">The Students’ Trusted Learning Platform • @diploma_engineers7</footer>'}
 function iqNavigateBack(){
  // Local folder stack only: File -> Subject -> Semester -> Branch -> Home.
@@ -11251,6 +11341,23 @@ function iqNavigateBack(){
  if(typeof navigateTo==='function')navigateTo('homePage');
 }
 window.iqNavigateBack=iqNavigateBack;
+// Always open Important Questions at its root branch-folder level from Home.
+window.openImportantQuestionsHome=function(){
+  try{
+    iqCourseRequest=null;
+    iqPath=[];
+    iqChosen=null;
+    const reader=iqEl('iqAppReader'), folders=iqEl('iqAppFolders');
+    if(reader)reader.hidden=true;
+    if(folders){folders.hidden=false;folders.style.display='grid';}
+    if(iqLoaded){iqRenderFolders();}
+    else{
+      const status=iqEl('iqAppStatus');
+      if(status)status.innerHTML='';
+      if(typeof iqStartLoad==='function')iqStartLoad();
+    }
+  }catch(err){console.error('Could not open Important Questions folders:',err);}
+};
 let iqCourseRequest=null;
 function iqNormMatch(a,b){const x=String(a||'').toLowerCase().replace(/[^a-z0-9]/g,''),y=String(b||'').toLowerCase().replace(/[^a-z0-9]/g,'');return !!x&&!!y&&(x===y||x.includes(y)||y.includes(x))}
 function iqApplyCourseRequest(){if(!iqLoaded||!iqCourseRequest)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch)&&(!req.subject||/^all\s*subjects?$/i.test(req.subject)||iqNormMatch(iqField(r,'subject','subjectName'),req.subject)));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const pick=candidates[0];iqPath=pick?[iqGroupKey(pick,'branch'),iqGroupKey(pick,'semester'),iqGroupKey(pick,'subject')]:[req.branch||'Common / All Branches',iqSemesterLabel(req.semester),req.subject||'Subject not set'];iqChosen=null;iqRenderFolders();}
@@ -11306,54 +11413,42 @@ async function iqDownloadPdf(el,name){
 </body></html>');
  printWin.document.close();
 }
-const IQ_CACHE_KEY='de_important_questions_cache_v3';
-const IQ_CACHE_TTL=24*60*60*1000;
-let iqLoadSequence=0;
+const IQ_CACHE_KEY='de_important_questions_cache_v2';
+const IQ_CACHE_TTL=6*60*60*1000;
 function iqAcceptData(data,fromCache=false){
-  const rows=Array.isArray(data)?data:Object.entries(data||{}).map(([id,v])=>v&&typeof v==='object'?({...v,id:v.id||id}):null).filter(Boolean);
-  iqRecords=rows.filter(r=>!['draft','unpublished','deleted'].includes(String(r.status||'published').toLowerCase()));
+  iqRecords=Object.entries(data||{}).map(([id,v])=>({...v,id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&String(r.status||'published').toLowerCase()!=='unpublished');
   iqLoaded=true;
   iqPopulateFilters();
   if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
   if(fromCache){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<span style="color:#64748b;font-size:12px">Showing saved questions while checking for updates…</span>';}
-  if(!iqRecords.length && !fromCache){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<div class="de-ts-empty">Firebase connected, but no published Important Questions were found at <b>importantQuestions</b>. Check the Admin Panel publish status and saved database path.</div>';}
 }
 function iqShowLoadError(err){
   console.error('Important Questions load failed:',err);
-  if(iqRecords.length){iqLoaded=true;iqRenderFolders();const st=iqEl('iqAppStatus');if(st)st.innerHTML='<span style="color:#64748b;font-size:12px">Showing saved questions. Live update check failed.</span>';return;}
+  if(iqRecords.length){iqLoaded=true;iqRenderFolders();return;}
   iqLoaded=true;iqEl('iqAppFolders').hidden=true;
-  const message=/PERMISSION_DENIED|permission_denied/i.test(String(err?.code||err?.message||err))?'Firebase read permission denied for importantQuestions. Check the deployed Rules in project diplomaengineers-869df.':'Important Questions could not load. Check internet connection, Firebase path and project settings.';
-  iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty">'+iqTxt(message)+'<br><button type="button" id="iqRetryLoad" style="margin-top:12px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';
+  iqEl('iqAppStatus').innerHTML='<div class="de-ts-empty">Could not load Important Questions. Check your internet connection or Firebase database permissions, then tap Retry.<br><button type="button" id="iqRetryLoad" style="margin-top:12px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';
   iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqRenderFolders();iqStartLoad(true)});
 }
-async function iqStartLoad(force=false){
+function iqStartLoad(force=false){
   if(iqStartLoad.running&&!force)return;
-  iqStartLoad.running=true;const seq=++iqLoadSequence;
-  const timeout=(ms)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error('Firebase request timed out after '+ms+' ms')),ms));
-  try{
-    let data;
-    // First use the Firebase SDK. Race it against a timeout so the page never spins forever.
-    try{
-      const snap=await Promise.race([get(ref(iqDb,'importantQuestions')),timeout(9000)]);
-      data=snap.val()||{};
-    }catch(primaryErr){
-      console.warn('Firebase SDK read failed; trying direct RTDB REST read:',primaryErr);
-      // This node is public-read according to the Rules supplied with the app.
-      const url=iqConfig.databaseURL.replace(/\/$/,'')+'/importantQuestions.json';
-      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),7000);
-      try{const response=await fetch(url,{method:'GET',cache:'no-store',signal:controller.signal});if(!response.ok)throw new Error('Realtime Database HTTP '+response.status);data=await response.json()||{};}
-      finally{clearTimeout(timer);}
-    }
-    if(seq!==iqLoadSequence)return;
+  iqStartLoad.running=true;
+  const timeout=setTimeout(()=>{if(!iqLoaded)iqShowLoadError(new Error('Firebase request timed out'));},10000);
+  onValue(ref(iqDb,'importantQuestions'),snap=>{
+    clearTimeout(timeout);iqStartLoad.running=false;
+    const data=snap.val()||{};
     try{localStorage.setItem(IQ_CACHE_KEY,JSON.stringify({savedAt:Date.now(),data}));}catch(e){console.warn('Question cache unavailable',e)}
-    iqStartLoad.running=false;iqAcceptData(data,false);
-  }catch(err){if(seq!==iqLoadSequence)return;iqStartLoad.running=false;iqShowLoadError(err);}
+    iqAcceptData(data,false);
+  },err=>{clearTimeout(timeout);iqStartLoad.running=false;iqShowLoadError(err)},{onlyOnce:true});
 }
 try{
  const cached=JSON.parse(localStorage.getItem(IQ_CACHE_KEY)||'null');
- if(cached&&cached.data&&typeof cached.data==='object'&&Date.now()-Number(cached.savedAt||0)<IQ_CACHE_TTL){iqAcceptData(cached.data,true);}
+ if(cached&&cached.data&&typeof cached.data==='object'){
+   iqAcceptData(cached.data,true);
+ }
 }catch(e){console.warn('Could not read saved Important Questions',e)}
-if(!iqLoaded)iqRenderFolders();
+if(!iqLoaded){
+ iqRenderFolders();
+}
 iqStartLoad();
 window.shareDiplomaEngineersApp = async function(){
  const shareUrl='https://diplomaengineers.vercel.app/';

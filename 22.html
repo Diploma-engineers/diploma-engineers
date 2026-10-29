@@ -4096,8 +4096,8 @@ html,body{max-width:100%;overflow-x:hidden}
       <header class="iq-app-hero"><button class="iq-app-back" onclick="iqNavigateBack()" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div><small>DIPLOMA ENGINEERS • STUDY HUB</small><h1>Important Questions</h1><p>Branch Folder • Semester Folder • Subject PDF</p></div></header>
       <div class="iq-app-filters"><input id="iqAppSearch" placeholder="Search branch, semester, subject or question..."><select id="iqAppBranch" hidden><option value="">All Branches</option></select><select id="iqAppSemester" hidden><option value="">All Semesters</option></select><select id="iqAppSubject" hidden><option value="">All Subjects</option></select></div>
       <div id="iqAppCrumbs" class="iq-app-crumbs"></div>
-      <div id="iqAppStatus" class="iq-app-status" aria-live="polite"></div>
-      <div id="iqAppFolders" class="iq-app-folder-grid"></div>
+      <div id="iqAppStatus" class="iq-app-status"><div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div></div>
+      <div id="iqAppFolders" class="iq-app-folder-grid" hidden></div>
       <article id="iqAppReader" class="iq-app-reader" hidden><div class="iq-app-reader-toolbar"><button id="iqAppBackFolders"><i class="fas fa-arrow-left"></i> All Questions</button><button id="iqAppPdf"><i class="fas fa-file-pdf"></i> Download PDF</button></div><div id="iqAppSheet"></div></article>
     </section>
   </div>
@@ -11313,14 +11313,20 @@ const iqEl=id=>document.getElementById(id);const iqTxt=v=>String(v??'').replace(
 function iqNorm(v){return String(v||'').trim()}
 function iqParseRaw(raw){let units=[],cur=null;String(raw||'').split(/\r?\n/).forEach(line=>{let t=line.trim();if(!t)return;let m=t.match(/^#{0,3}\s*(UNIT\s*[-–:]?\s*(?:[IVX]+|[0-9]+)\s*[:.\-–]?\s*.*)$/i);if(m){cur={title:m[1].replace(/^#+\s*/,''),questions:[]};units.push(cur);return}let q=t.match(/^(?:Q\s*)?(\d{1,3})[.)、:-]\s*(.+)$/i);if(q){if(!cur){cur={title:'Questions',questions:[]};units.push(cur)}cur.questions.push({number:q[1],text:q[2]});}else if(cur&&cur.questions.length){cur.questions[cur.questions.length-1].text+='\n'+t}});return units}
 function iqUnits(rec){if(Array.isArray(rec.units)&&rec.units.length)return rec.units.map((u,i)=>({title:u.title||u.name||('Unit '+(i+1)),questions:Array.isArray(u.questions)?u.questions.map((q,j)=>typeof q==='string'?{number:j+1,text:q}:{number:q.number||j+1,text:q.text||q.question||q.hindi||''}):[]}));return iqParseRaw(rec.content||rec.rawContent||rec.questionsText||rec.text||'')}
-function iqField(rec,...keys){for(const k of keys){if(rec[k]!==undefined&&rec[k]!==null&&String(rec[k]).trim())return String(rec[k]).trim()}return ''}
+function iqField(rec,...keys){
+  // Support current Admin uploader fields and older compatible records.
+  const aliases={branch:['branch','branchName','category','department'],semester:['semester','year','sem'],subject:['subject','subjectName','subjectTitle'],title:['title','name','fileName','filename']};
+  const candidates=[...keys,...keys.flatMap(k=>aliases[k]||[])];
+  for(const k of [...new Set(candidates)]){if(rec&&rec[k]!==undefined&&rec[k]!==null&&String(rec[k]).trim())return String(rec[k]).trim()}
+  return ''
+}
 function iqPopulateFilters(){[['iqAppBranch','branch','All Branches'],['iqAppSemester','semester','All Semesters'],['iqAppSubject','subject','All Subjects']].forEach(([id,key,placeholder])=>{let el=iqEl(id),old=el.value,vals=[...new Set(iqRecords.map(r=>key==='semester'?iqGroupKey(r,'semester'):iqField(r,key,key==='branch'?'branchName':key==='subject'?'subjectName':'year')).filter(Boolean))].sort();el.innerHTML='<option value="">'+placeholder+'</option>'+vals.map(v=>'<option value="'+iqTxt(v)+'">'+iqTxt(v)+'</option>').join('');if(vals.includes(old))el.value=old})}
-function iqFiltered(){let b=iqEl('iqAppBranch').value,s=iqEl('iqAppSemester').value,sub=iqEl('iqAppSubject').value,term=iqEl('iqAppSearch').value.trim().toLowerCase();return iqRecords.filter(r=>{let rb=iqField(r,'branch','branchName'),rs=iqGroupKey(r,'semester'),rt=iqField(r,'subject','subjectName');return(!b||rb===b)&&(!s||rs===s)&&(!sub||rt===sub)&&(!term||[r.title,rb,rs,rt,r.content].join(' ').toLowerCase().includes(term))})}
+function iqFiltered(){let b=iqEl('iqAppBranch').value,s=iqEl('iqAppSemester').value,sub=iqEl('iqAppSubject').value,term=iqEl('iqAppSearch').value.trim().toLowerCase();return iqRecords.filter(r=>{let rb=iqField(r,'branch','branchName'),rs=iqGroupKey(r,'semester'),rt=iqField(r,'subject','subjectName');return(!b||rb===b)&&(!s||rs===s)&&(!sub||rt===sub)&&(!term||[iqField(r,'title'),rb,rs,rt,r.content,r.rawContent,r.questionsText].join(' ').toLowerCase().includes(term))})}
 function iqSemesterLabel(value){let s=String(value||'').trim().replace(/[_-]+/g,' ').replace(/\s+/g,' ');if(!s)return 'Semester not set';if(/^(?:common|all semesters?)$/i.test(s))return s.replace(/\b\w/g,c=>c.toUpperCase());let m=s.match(/^(?:semester\s*)?(\d+)(?:st|nd|rd|th)?(?:\s*semester)?$/i)||s.match(/^semester\s*(\d+)$/i);if(m){let n=Number(m[1]),suffix=n%100>=11&&n%100<=13?'th':n%10===1?'st':n%10===2?'nd':n%10===3?'rd':'th';return n+suffix+' Semester'}let m2=s.match(/^(\d+)(st|nd|rd|th)\s*(?:sem|semester)$/i);if(m2)return Number(m2[1])+m2[2].toLowerCase()+' Semester';return s.replace(/\bsemester\b/i,'Semester').replace(/\b(st|nd|rd|th)\s+semester\b/i,'$1 Semester')}
-function iqGroupKey(r,key){return key==='title'?(r.title||'Untitled Important Questions'):key==='branch'?(iqField(r,'branch','branchName')||'Common / All Branches'):key==='semester'?iqSemesterLabel(iqField(r,'semester','year')):(iqField(r,'subject','subjectName')||'Subject not set')}
+function iqGroupKey(r,key){return key==='title'?(iqField(r,'title')||'Untitled Important Questions'):key==='branch'?(iqField(r,'branch','branchName')||'Common / All Branches'):key==='semester'?iqSemesterLabel(iqField(r,'semester','year')):(iqField(r,'subject','subjectName')||'Subject not set')}
 function iqHierarchyList(){let list=iqRecords.slice();const keys=['branch','semester','subject'];iqPath.forEach((v,i)=>{list=list.filter(r=>iqGroupKey(r,keys[i])===v)});return list}
 function iqRenderCrumbs(){const labels=['Branches','Semesters','Subjects','Files'];iqEl('iqAppCrumbs').innerHTML='<button data-iq-root="1">'+labels[0]+'</button>'+iqPath.map((v,i)=>'<span>›</span><button data-iq-crumb="'+i+'">'+iqTxt(v)+'</button>').join('')+(iqPath.length?'<span>›</span><b>'+labels[Math.min(iqPath.length,4)]+'</b>':'');iqEl('iqAppCrumbs').querySelector('[data-iq-root]').onclick=()=>{iqPath=[];iqRenderFolders()};iqEl('iqAppCrumbs').querySelectorAll('[data-iq-crumb]').forEach(b=>b.onclick=()=>{iqPath=iqPath.slice(0,Number(b.dataset.iqCrumb)+1);iqRenderFolders()})}
-function iqRenderFolders(){if(!iqLoaded){iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppFolders').style.display='grid';iqEl('iqAppFolders').innerHTML='';return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
+function iqRenderFolders(){if(!iqLoaded){iqEl('iqAppStatus').innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div>';iqEl('iqAppFolders').hidden=true;return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
 function iqOpen(index){let r=iqRecords[index];if(!r)return;iqChosen=r;let branch=iqField(r,'branch','branchName')||'Diploma Engineering',sem=iqField(r,'semester','year')||'',subject=iqField(r,'subject','subjectName')||'Important Questions',units=iqUnits(r);iqEl('iqAppFolders').style.display='none';iqEl('iqAppStatus').textContent='';iqEl('iqAppReader').hidden=false;document.title=[subject,branch,'Imp. Questions by diploma_engineers7'].filter(Boolean).join('_');iqEl('iqAppSheet').innerHTML='<div class="iq-sheet-watermark">@diploma_engineers7</div><header class="iq-sheet-head"><div class="iq-sheet-brand"><img crossorigin="anonymous" src="https://diplomaengineers.vercel.app/certificate%20logo.png" alt="Diploma Engineers Certificate Logo"></div><div class="iq-sheet-branch">'+iqTxt(branch.toUpperCase())+(sem?' • '+iqTxt(sem.toUpperCase()):'')+'</div><div class="iq-sheet-subject">'+iqTxt(subject.toUpperCase())+'</div><div class="iq-sheet-meta">Branch: '+iqTxt(branch)+' | Semester: '+iqTxt(sem||'Not specified')+' | Subject: '+iqTxt(subject)+'</div><div style="font-size:12px;font-weight:800;color:#2563eb;margin-top:6px">@diploma_engineers7</div></header>'+(units.length?units.map((u,i)=>'<section><h2 class="iq-sheet-unit">'+iqTxt((/^\s*(?:UNIT\s*[-–:]?\s*(?:\d+|[IVX]+)|(?:\d+|[IVX]+)\s*[.):\-])/i.test(String(u.title||''))?String(u.title):('UNIT '+(i+1)+': '+String(u.title||'Unit'))))+'</h2>'+(u.questions.length?u.questions.map((q,j)=>{let parts=String(q.text||'').split(/\n/);return '<div class="iq-sheet-q"><span class="iq-hi">'+iqTxt((q.number||j+1)+'. '+(parts[0]||''))+'</span>'+(parts.slice(1).map(t=>'<span class="iq-en">'+iqTxt(t)+'</span>').join(''))+'</div>'}).join(''):'<div class="iq-sheet-empty">Questions are not stored inside this unit in Firebase.</div>')+'</section>').join(''):'<div class="iq-sheet-empty">No units/questions found. Please check the Admin Panel saved record.</div>')+'<footer style="text-align:center;color:#94a3b8;font-size:11px;margin-top:22px">The Students’ Trusted Learning Platform • @diploma_engineers7</footer>'}
 function iqNavigateBack(){
  // Local folder stack only: File -> Subject -> Semester -> Branch -> Home.
@@ -11353,7 +11359,7 @@ window.openImportantQuestionsHome=function(){
     if(iqLoaded){iqRenderFolders();}
     else{
       const status=iqEl('iqAppStatus');
-      if(status)status.innerHTML='';
+      if(status)status.innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">Diploma Engineers</div><div class="de-loader-sub">Loading Important Questions folders…</div></div>';
       if(typeof iqStartLoad==='function')iqStartLoad();
     }
   }catch(err){console.error('Could not open Important Questions folders:',err);}
@@ -11416,12 +11422,15 @@ async function iqDownloadPdf(el,name){
 const IQ_CACHE_KEY='de_important_questions_cache_v2';
 const IQ_CACHE_TTL=6*60*60*1000;
 function iqAcceptData(data,fromCache=false){
-  iqRecords=Object.entries(data||{}).map(([id,v])=>({...v,id})).filter(r=>String(r.status||'published').toLowerCase()!=='draft'&&String(r.status||'published').toLowerCase()!=='unpublished');
-  iqLoaded=true;
-  iqPopulateFilters();
-  if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
-  if(fromCache){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<span style="color:#64748b;font-size:12px">Showing saved questions while checking for updates…</span>';}
-}
+   // Admin uploads are stored under importantQuestions/{pushId}; support legacy field names too.
+   const source=(data&&typeof data==='object')?data:{};
+   iqRecords=Object.entries(source).filter(([,v])=>v&&typeof v==='object').map(([id,v])=>({...v,id}))
+     .filter(r=>!['draft','unpublished','deleted'].includes(String(r.status||'published').trim().toLowerCase()));
+   iqLoaded=true;
+   iqPopulateFilters();
+   if(iqCourseRequest)iqApplyCourseRequest();else iqRenderFolders();
+   if(fromCache){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<span style="color:#64748b;font-size:12px">Showing saved questions while checking for updates…</span>';}
+ }
 function iqShowLoadError(err){
   console.error('Important Questions load failed:',err);
   if(iqRecords.length){iqLoaded=true;iqRenderFolders();return;}
@@ -11430,16 +11439,17 @@ function iqShowLoadError(err){
   iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqRenderFolders();iqStartLoad(true)});
 }
 function iqStartLoad(force=false){
-  if(iqStartLoad.running&&!force)return;
-  iqStartLoad.running=true;
-  const timeout=setTimeout(()=>{if(!iqLoaded)iqShowLoadError(new Error('Firebase request timed out'));},10000);
-  onValue(ref(iqDb,'importantQuestions'),snap=>{
-    clearTimeout(timeout);iqStartLoad.running=false;
-    const data=snap.val()||{};
-    try{localStorage.setItem(IQ_CACHE_KEY,JSON.stringify({savedAt:Date.now(),data}));}catch(e){console.warn('Question cache unavailable',e)}
-    iqAcceptData(data,false);
-  },err=>{clearTimeout(timeout);iqStartLoad.running=false;iqShowLoadError(err)},{onlyOnce:true});
-}
+   if(iqStartLoad.running&&!force)return;
+   iqStartLoad.running=true;
+   const timeout=setTimeout(()=>{if(!iqLoaded)iqShowLoadError(new Error('Firebase request timed out'));},10000);
+   // Realtime listener: new published Admin uploads appear without stale-cache delays.
+   onValue(ref(iqDb,'importantQuestions'),snap=>{
+     clearTimeout(timeout);iqStartLoad.running=false;
+     const data=snap.val()||{};
+     try{localStorage.setItem(IQ_CACHE_KEY,JSON.stringify({savedAt:Date.now(),data}));}catch(e){console.warn('Question cache unavailable',e)}
+     iqAcceptData(data,false);
+   },err=>{clearTimeout(timeout);iqStartLoad.running=false;iqShowLoadError(err)});
+ }
 try{
  const cached=JSON.parse(localStorage.getItem(IQ_CACHE_KEY)||'null');
  if(cached&&cached.data&&typeof cached.data==='object'){

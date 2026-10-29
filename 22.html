@@ -11370,47 +11370,59 @@ window.iqRestoreState=function(state){
    iqChosen=null;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderFolders();
  }
 };
-iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Preparing clear PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='Save as PDF opened ✓'}catch(e){console.error('PDF generation failed',e);alert((e&&e.message)||'Unable to open PDF print window. Please allow popups and try again.');btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='Save as PDF opened ✓')btn.textContent=old},2200)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
+iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Preparing clear PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='PDF downloaded ✓'}catch(e){console.error('PDF generation failed',e);alert((e&&e.message)||'Unable to open PDF print window. Please allow popups and try again.');btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='PDF downloaded ✓')btn.textContent=old},2200)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
 async function iqDownloadPdf(el,name){
  if(!el)throw new Error('Question sheet not found');
- // Use the browser's native print engine instead of html2canvas. Native printing
- // keeps all question text as real selectable text (not a blurry screenshot),
- // supports Hindi/Unicode fonts, and centers the header/logo on A4 pages.
- const printWin=window.open('','_blank');
- if(!printWin)throw new Error('Popup blocked. Please allow popups for this site and try again.');
- const safeTitle=String(name||'Important Questions').replace(/[<>"']/g,'');
- const content=el.cloneNode(true);
- content.querySelectorAll('.iq-sheet-watermark').forEach(w=>w.remove());
- content.querySelectorAll('#iqAppPdf,#iqAppBackFolders,.iq-app-reader-toolbar').forEach(n=>n.remove());
- const css=`
-  @page{size:A4 portrait;margin:12mm 13mm 14mm}
-  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  html,body{margin:0;padding:0;background:#fff;color:#172033;font-family:Arial,"Noto Sans Devanagari","Mangal",sans-serif;font-size:11pt;line-height:1.55}
-  body{width:100%}
-  #iqPrintRoot{position:relative;width:100%;margin:0 auto;background:#fff;overflow:visible}
-  #iqPrintRoot:before{content:"";position:fixed;left:50%;top:50%;width:105mm;height:105mm;transform:translate(-50%,-50%);background:url("https://diplomaengineers.vercel.app/pdf-logo.png") center/contain no-repeat;opacity:.12;z-index:0;pointer-events:none}
-  #iqPrintRoot>*{position:relative;z-index:1}
-  @media print{#iqPrintRoot:before{position:fixed;display:block;print-color-adjust:exact;-webkit-print-color-adjust:exact;opacity:.09}}
-  .iq-sheet-head{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;margin:0 auto 8mm;padding:0 0 5mm;border:0;border-bottom:1px solid #d7dee8;overflow:visible;break-inside:avoid;page-break-inside:avoid;background:#fff}
-  .iq-sheet-brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;text-align:center!important;margin:0 auto 4mm!important;padding:0!important}
-  .iq-sheet-brand img{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:36mm!important;object-fit:contain!important;object-position:center!important;margin:0 auto!important}
-  .iq-sheet-branch{display:inline-block;margin:2mm auto;padding:1.5mm 3mm;background:#e8f7f7;color:#12452b;font-size:13pt;font-weight:800;text-align:center}
-  .iq-sheet-subject{width:100%;text-align:center;font-size:17pt;line-height:1.3;font-weight:800;color:#8a6500;margin:2mm auto 0;overflow-wrap:anywhere}
-  .iq-sheet-meta{font-size:9.5pt;line-height:1.45;color:#475569;text-align:center;margin:2mm auto 0;overflow-wrap:anywhere}
-  .iq-sheet-head>div:last-child{font-size:9pt!important;text-align:center!important;margin:2mm auto 0!important}
-  section{display:block;width:100%;margin:0 0 5mm}
-  .iq-sheet-unit{font-size:13pt;line-height:1.35;font-weight:800;color:#991b1b;margin:6mm 4mm 3mm;padding:0 2mm;break-after:avoid;page-break-after:avoid;overflow-wrap:anywhere}
-  .iq-sheet-q{font-size:11pt;line-height:1.55;color:#111827;margin:0 4mm 4mm;padding:0 3mm;break-inside:avoid;page-break-inside:avoid;overflow-wrap:anywhere;word-break:normal}
-  .iq-sheet-q .iq-hi{display:block;font-size:11pt;line-height:1.55;font-weight:700;color:#111827;white-space:pre-wrap;overflow-wrap:anywhere}
-  .iq-sheet-q .iq-en{display:block;font-size:10.5pt;line-height:1.55;margin:1mm 0 0 5mm;color:#1f2937;white-space:pre-wrap;overflow-wrap:anywhere}
-  .iq-sheet-empty{padding:5mm;text-align:center;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:3mm}
-  #iqPrintRoot footer{font-size:8.5pt!important;text-align:center!important;color:#64748b!important;margin:7mm auto 0!important;break-inside:avoid}
-  @media screen{body{background:#eef2f7;padding:12px}#iqPrintRoot{max-width:184mm;min-height:260mm;padding:12mm 13mm 14mm;background:white;box-shadow:0 2px 16px #0002}}
-  @media print{.iq-sheet-head{break-inside:avoid;page-break-inside:avoid}.iq-sheet-q{orphans:3;widows:3}}
+ // Create a real downloadable, selectable-quality A4 PDF (no print dialog).
+ async function loadScript(src,test){if(test())return;await new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src=src;sc.onload=resolve;sc.onerror=()=>reject(new Error('PDF library load nahi hui. Internet connection check karke retry karein.'));document.head.appendChild(sc)});if(!test())throw new Error('PDF library initialize nahi hui.');}
+ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',()=>typeof window.html2pdf==='function');
+ const safe=(v)=>String(v||'').normalize('NFKD').replace(/[<>:"/\\|?*\x00-\x1F]/g,' ').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,90);
+ const branch=iqField(iqChosen||{},'branch','branchName')||'Diploma_Engineering';
+ const semester=iqField(iqChosen||{},'semester','year')||'Semester';
+ const subject=iqField(iqChosen||{},'subject','subjectName')||'Important_Questions';
+ const filename=[safe(subject), 'Important_Questions', safe(semester), safe(branch), 'by_diploma_engineers7'].filter(Boolean).join('_')+'.pdf';
+ const clone=el.cloneNode(true);
+ clone.querySelectorAll('.iq-sheet-watermark,#iqAppPdf,#iqAppBackFolders,.iq-app-reader-toolbar').forEach(n=>n.remove());
+ clone.querySelectorAll('img').forEach(img=>{img.style.maxWidth='100%';img.style.height='auto';});
+ const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-12000px;top:0;width:794px;background:#fff;z-index:-1;';
+ const css=document.createElement('style');css.textContent=`
+  *{box-sizing:border-box!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #iqPdfExport{position:relative;width:794px;padding:38px 48px 45px;background:#fff;color:#172033;font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif;font-size:14px;line-height:1.55;overflow:visible}
+  #iqPdfExport .iq-sheet-head{display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;margin:0 auto 28px;padding:0 0 20px;border:0;border-bottom:2px solid #dbe3ef;overflow:visible;break-inside:avoid}
+  #iqPdfExport .iq-sheet-brand{display:block;width:100%;text-align:center;margin:0 auto 14px;font-size:26px;font-weight:900}
+  #iqPdfExport .iq-sheet-brand img{display:block;width:auto!important;height:auto!important;max-width:100%!important;max-height:125px!important;object-fit:contain;margin:0 auto 12px!important}
+  #iqPdfExport .iq-sheet-branch{display:inline-block;margin:8px auto;padding:7px 14px;background:#e8f7f7;color:#12452b;font-size:19px;font-weight:900;text-align:center}
+  #iqPdfExport .iq-sheet-subject{width:100%;text-align:center;font-size:25px;line-height:1.3;font-weight:900;color:#8a6500;margin:9px auto;overflow-wrap:anywhere}
+  #iqPdfExport .iq-sheet-meta{font-size:13px;line-height:1.5;color:#475569;text-align:center;margin:8px auto;overflow-wrap:anywhere}
+  #iqPdfExport .iq-sheet-unit{font-size:19px;line-height:1.35;font-weight:900;color:#991b1b;margin:25px 0 13px;padding:0 4px;break-after:avoid;overflow-wrap:anywhere}
+  #iqPdfExport .iq-sheet-q{font-size:15px;line-height:1.65;color:#111827;margin:0 0 16px;padding:0 4px;overflow-wrap:anywhere;word-break:normal}
+  #iqPdfExport .iq-sheet-q .iq-hi{display:block;font-size:15px;line-height:1.65;font-weight:700;color:#111827;white-space:pre-wrap;overflow-wrap:anywhere}
+  #iqPdfExport .iq-sheet-q .iq-en{display:block;font-size:14px;line-height:1.6;margin:4px 0 0 18px;color:#1f2937;white-space:pre-wrap;overflow-wrap:anywhere}
+  #iqPdfExport .iq-sheet-empty{padding:20px;text-align:center;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0}
+  #iqPdfExport footer{font-size:12px!important;text-align:center!important;color:#64748b!important;margin:28px auto 0!important}
  `;
- printWin.document.open();
- printWin.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeTitle+'</title><style>'+css+'</style></head><body><main id="iqPrintRoot">'+content.innerHTML+'</main><script>window.onload=function(){var imgs=Array.from(document.images);Promise.all(imgs.map(function(i){if(i.complete)return Promise.resolve();return new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,2500)})})).then(function(){setTimeout(function(){window.focus();window.print()},250)});};window.onafterprint=function(){setTimeout(function(){window.close()},300)};<\/script>\n</body></html>');
- printWin.document.close();
+ holder.appendChild(css);clone.id='iqPdfExport';holder.appendChild(clone);document.body.appendChild(holder);
+ try{
+   // Wait for brand/logo images before rasterizing the page.
+   await Promise.all(Array.from(clone.querySelectorAll('img')).map(img=>{if(img.complete&&img.naturalWidth)return Promise.resolve();return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,4000)});}));
+   const opt={margin:[10,10,12,10],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.iq-sheet-q','.iq-sheet-head','.iq-sheet-unit']}};
+   const worker=window.html2pdf().set(opt).from(clone).toPdf();
+   const pdf=await worker.get('pdf');
+   // Apply a large, faint branded watermark to EVERY page. Its low-opacity
+   // treatment preserves legibility of the questions underneath.
+   const total=pdf.internal.getNumberOfPages();
+   const markCanvas=document.createElement('canvas');markCanvas.width=900;markCanvas.height=900;
+   const ctx=markCanvas.getContext('2d');ctx.clearRect(0,0,900,900);
+   ctx.globalAlpha=0.075;
+   const logo=new Image();logo.crossOrigin='anonymous';logo.src='https://diplomaengineers.vercel.app/pdf-logo.png';
+   await new Promise(resolve=>{if(logo.complete)return resolve();logo.onload=resolve;logo.onerror=resolve;setTimeout(resolve,2500)});
+   if(logo.naturalWidth){const ratio=Math.min(700/logo.naturalWidth,700/logo.naturalHeight);const w=logo.naturalWidth*ratio,h=logo.naturalHeight*ratio;ctx.drawImage(logo,(900-w)/2,(900-h)/2,w,h);}
+   else {ctx.fillStyle='#7890ad';ctx.font='bold 72px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.translate(450,450);ctx.rotate(-Math.PI/5);ctx.fillText('DIPLOMA ENGINEERS',0,-20);ctx.font='bold 54px Arial';ctx.fillText('@diploma_engineers7',0,60);}
+   const watermark=markCanvas.toDataURL('image/png');
+   for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');}
+   pdf.save(filename);
+   return filename;
+ } finally {holder.remove();}
 }
 const IQ_CACHE_KEY='de_important_questions_cache_v2';
 const IQ_CACHE_TTL=6*60*60*1000;

@@ -709,91 +709,105 @@ async function generateNotesPDF(){
   const button=document.getElementById('pdfButton');
   const status=document.getElementById('pdfStatus');
   const original=button.innerHTML;
+  const source=document.querySelector('main');
+  if(!source){alert('Notes content not found.');return;}
   button.disabled=true;
   button.innerHTML='Preparing PDF…';
-  status.textContent='Preparing clear, high-resolution PDF. Please wait…';
+  status.textContent='Preparing notes and diagrams for PDF…';
   status.style.display='block';
+
+  // Render a visible, isolated copy so html2canvas captures both text and diagrams.
+  const exportRoot=document.createElement('div');
+  exportRoot.id='pdf-export-final';
+  exportRoot.style.cssText='position:relative;display:block;width:794px;max-width:none;margin:0 auto;padding:28px 34px;background:#fff;color:#172033;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;box-sizing:border-box;z-index:99999';
+  const title=document.createElement('h1');
+  title.textContent='ENGINEERING CHEMISTRY — DETAILED NOTES';
+  title.style.cssText='font-size:22px;text-align:center;color:#12284a;border-bottom:2px solid #244b78;padding:0 0 14px;margin:0 0 20px';
+  exportRoot.appendChild(title);
+  const content=source.cloneNode(true);
+  content.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#172033!important;font-size:14px!important;line-height:1.55!important';
+  content.querySelectorAll('.pdf-float,#pdfStatus,.language-box,#google_translate_element').forEach(el=>el.remove());
+  content.querySelectorAll('*').forEach(el=>{
+    el.style.visibility='visible';
+    el.style.opacity='1';
+    if(getComputedStyle(el).display==='none') el.style.display='';
+    el.style.color=el.style.color || '#172033';
+  });
+  content.querySelectorAll('.unit').forEach((el,i)=>{
+    el.style.cssText+=';display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;background:#fff!important;color:#172033!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0 0 16px!important;margin:0 0 20px!important;overflow:visible!important';
+    if(i>0){el.style.breakBefore='page';el.style.pageBreakBefore='always';}
+  });
+  content.querySelectorAll('.diagram').forEach(el=>{
+    el.style.cssText+=';display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow:visible!important;break-inside:avoid!important;page-break-inside:avoid!important;background:#fff!important;color:#172033!important';
+  });
+  content.querySelectorAll('svg').forEach(svg=>{
+    const vb=(svg.getAttribute('viewBox')||'').trim().split(/[ ,]+/).map(Number);
+    svg.style.cssText+=';display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:160mm!important;overflow:visible!important;break-inside:avoid!important;page-break-inside:avoid!important';
+    if(vb.length===4&&vb[2]>0&&vb[3]>0){svg.setAttribute('width',vb[2]);svg.setAttribute('height',vb[3]);}
+  });
+  content.querySelectorAll('img').forEach(img=>{
+    img.style.cssText+=';display:block!important;max-width:100%!important;max-height:160mm!important;width:auto!important;height:auto!important;margin:8px auto!important;break-inside:avoid!important;page-break-inside:avoid!important';
+  });
+  content.querySelectorAll('p,li,h2,h3,td,th').forEach(el=>{
+    el.style.color='#172033';
+    el.style.visibility='visible';
+  });
+  exportRoot.appendChild(content);
+  const footer=document.createElement('div');
+  footer.textContent='Engineering Chemistry Notes | Notes by diploma_engineers7';
+  footer.style.cssText='text-align:center;font-size:10px;color:#68768b;border-top:1px solid #aab7c7;padding-top:12px;margin-top:20px';
+  exportRoot.appendChild(footer);
+  document.body.appendChild(exportRoot);
+
   try{
-    if(typeof html2pdf==='undefined') throw new Error('PDF library could not load. Check your internet connection and retry.');
-    const target=document.querySelector('main');
+    // Allow the browser to finish layout and SVG sizing before capture.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const options={
       margin:[12,12,15,12],
       filename:'Engineering_Chemistry_Notes_by_diploma_engineers7.pdf',
-      image:{type:'jpeg',quality:0.98},
-      html2canvas:{
-        scale:2.2,
-        useCORS:true,
-        allowTaint:false,
-        backgroundColor:'#ffffff',
-        logging:false,
-        scrollY:0,
-        windowWidth:Math.max(document.documentElement.clientWidth,1050)
-      },
+      image:{type:'jpeg',quality:0.99},
+      html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:860},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-      pagebreak:{mode:['css','legacy'],avoid:['.diagram','table tr','h2','h3','.definition','.formula']}
+      pagebreak:{mode:['css','legacy'],avoid:['.diagram','svg','img','tr','.definition','.note','.warning']}
     };
-    const worker=html2pdf().set(options).from(target).toPdf();
+    status.textContent='Rendering complete notes into PDF…';
+    const worker=html2pdf().set(options).from(exportRoot).toCanvas().toPdf();
     const pdf=await worker.get('pdf');
     const pages=pdf.internal.getNumberOfPages();
-    const pageW=pdf.internal.pageSize.getWidth();
-    const pageH=pdf.internal.pageSize.getHeight();
+    const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight();
 
-    // Prepare a faint, centered logo watermark for each PDF page.
-    const logo=new Image();
-    logo.crossOrigin='anonymous';
-    logo.src='https://diplomaengineers.vercel.app/pdf-logo.png';
-    let watermarkData=null;
+    let watermark=null;
     try{
-      await new Promise((resolve,reject)=>{
-        logo.onload=resolve;
-        logo.onerror=reject;
-        if(logo.complete && logo.naturalWidth) resolve();
-      });
-      const canvas=document.createElement('canvas');
-      const ctx=canvas.getContext('2d');
-      canvas.width=logo.naturalWidth;
-      canvas.height=logo.naturalHeight;
-      ctx.globalAlpha=0.085;
-      ctx.drawImage(logo,0,0,canvas.width,canvas.height);
-      watermarkData=canvas.toDataURL('image/png');
-    }catch(e){ console.warn('Watermark image could not be loaded:',e); }
-
+      const response=await fetch('https://diplomaengineers.vercel.app/pdf-logo.png',{mode:'cors'});
+      if(response.ok){
+        const blob=await response.blob();
+        watermark=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);
+        });
+      }
+    }catch(e){console.warn('Watermark unavailable:',e);}
     for(let page=1;page<=pages;page++){
       pdf.setPage(page);
-      if(watermarkData){
-        const maxW=82, maxH=82;
-        const ratio=logo.naturalWidth/logo.naturalHeight;
-        let w=maxW,h=w/ratio;
-        if(h>maxH){h=maxH;w=h*ratio;}
-        pdf.addImage(watermarkData,'PNG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
+      if(watermark){
+        try{pdf.saveGraphicsState();pdf.setGState(new pdf.GState({opacity:0.075}));pdf.addImage(watermark,'PNG',(pageW-78)/2,(pageH-78)/2,78,78,undefined,'FAST');pdf.restoreGraphicsState();}catch(e){console.warn(e);}
       }
-      // Fine border on every page.
-      pdf.setDrawColor(95,125,160);
-      pdf.setLineWidth(0.35);
-      pdf.rect(7,7,pageW-14,pageH-14);
-      // Consistent footer branding and page number.
-      pdf.setFont('helvetica','normal');
-      pdf.setFontSize(7);
-      pdf.setTextColor(85,100,120);
+      pdf.setDrawColor(95,125,160);pdf.setLineWidth(0.35);pdf.rect(7,7,pageW-14,pageH-14);
+      pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(85,100,120);
       pdf.text('Engineering Chemistry Notes | Notes by diploma_engineers7',pageW/2,pageH-8,{align:'center'});
-      pdf.text(String(page)+' / '+pages,pageW-10,pageH-8,{align:'right'});
+      pdf.text(page+' / '+pages,pageW-10,pageH-8,{align:'right'});
     }
-    // Put the official logo URL in PDF metadata for traceability.
-    pdf.setProperties({
-      title:'Engineering Chemistry Detailed Notes',
-      subject:'Diploma Engineers - Engineering Chemistry',
-      author:'diploma_engineers7',
-      creator:'Diploma Engineers'
-    });
+    pdf.setProperties({title:'Engineering Chemistry Detailed Notes',subject:'Diploma Engineers - Engineering Chemistry',author:'diploma_engineers7',creator:'Diploma Engineers'});
     pdf.save(options.filename);
-    status.textContent='Your PDF download has started.';
+    status.textContent='PDF downloaded successfully.';
   }catch(error){
     console.error(error);
-    status.textContent='PDF could not be generated: '+error.message;
+    status.textContent='PDF generation failed: '+error.message;
+    alert('PDF generation failed. Please reload the page and try again.');
   }finally{
+    exportRoot.remove();
     button.disabled=false;
     button.innerHTML=original;
-    setTimeout(()=>status.style.display='none',4500);
+    setTimeout(()=>status.style.display='none',4000);
   }
 }
 </script>

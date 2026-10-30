@@ -4117,13 +4117,21 @@ html,body{max-width:100%;overflow-x:hidden}
       <div id="snStatus" class="sn-status"><i class="fas fa-spinner fa-spin"></i> Loading notes…</div>
       <div id="snFolders" class="sn-grid" hidden></div>
       <article id="snReader" class="sn-reader" hidden>
-        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p></div><div class="sn-reader-actions"><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Print / Save PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div></div>
+        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p><div class="sn-language-tools" role="group" aria-label="Notes language"><button type="button" id="snLangEn" class="active" aria-pressed="true">English</button><button type="button" id="snLangHi" aria-pressed="false">हिन्दी</button><span id="snLangStatus" aria-live="polite">English version</span></div></div><div class="sn-reader-actions"><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Generate PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div></div>
         <iframe id="snFrame" title="Notes preview" sandbox="allow-same-origin" loading="eager"></iframe>
       </article>
     </section>
   </div>
   <style>
   .sn-shell{max-width:1100px;margin:0 auto;padding:14px 12px 35px;color:#172033}.sn-hero{display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#0e7490);color:#fff;box-shadow:0 9px 24px #0f766e22}.sn-hero h1{font-size:clamp(23px,4vw,32px);margin:3px 0}.sn-hero p{margin:0;font-size:13px;opacity:.88}.sn-hero small{font-size:10px;letter-spacing:1px;font-weight:800}.sn-back{width:42px;height:42px;border:0;border-radius:12px;background:#ffffff25;color:#fff;font-size:18px;cursor:pointer}.sn-tools{display:flex;gap:9px;margin:15px 0}.sn-tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid #dbe3ed;border-radius:12px;font:inherit;background:#fff}.sn-tools button,.sn-reader-actions button{border:0;border-radius:11px;padding:11px 14px;background:#0f766e;color:#fff;font-weight:800;cursor:pointer}.sn-crumbs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px}.sn-crumbs button{border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}.sn-crumbs span{align-self:center;color:#94a3b8}.sn-status{text-align:center;padding:22px;color:#64748b}.sn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sn-item{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:15px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;color:#172033;box-shadow:0 5px 18px #0f172a0a;cursor:pointer}.sn-item:hover{border-color:#5eead4;transform:translateY(-1px)}.sn-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;display:grid;place-items:center;background:#ccfbf1;color:#0f766e;font-size:21px}.sn-item strong{display:block;font-size:14px;line-height:1.4}.sn-item small{display:block;color:#64748b;margin-top:5px;line-height:1.5}.sn-reader{margin-top:12px;border:1px solid #dbe3ed;border-radius:15px;background:#fff;padding:13px}.sn-reader-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.sn-reader-head h2{margin:0;font-size:19px}.sn-reader-head p{margin:5px 0 0;color:#64748b;font-size:12px}.sn-reader-actions{display:flex;gap:8px;flex-wrap:wrap}.sn-reader-actions .secondary{background:#e2e8f0;color:#334155}.sn-reader iframe{width:100%;height:76vh;border:1px solid #dbe3ed;border-radius:11px;background:#fff}.sn-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;text-align:center;grid-column:1/-1}@media(max-width:650px){.sn-shell{padding:10px 9px 30px}.sn-grid{grid-template-columns:1fr}.sn-tools{flex-direction:column}.sn-reader-head{align-items:flex-start;flex-direction:column}.sn-reader iframe{height:68vh}.sn-reader{padding:9px}}
+  </style>
+
+  <style id="sn-bilingual-controls-style">
+  #sortNotesPage .sn-language-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px}
+  #sortNotesPage .sn-language-tools button{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer}
+  #sortNotesPage .sn-language-tools button.active{background:#0f766e;border-color:#0f766e;color:#fff}
+  #sortNotesPage #snLangStatus{font-size:11px;color:#64748b}
+  @media(max-width:650px){#sortNotesPage .sn-language-tools{gap:6px}#sortNotesPage .sn-language-tools button{padding:8px 13px}}
   </style>
   <style id="notes-full-width-fix">
     /* Sort Notes and Important Questions use the complete available app width. */
@@ -12350,7 +12358,7 @@ function snFiltered(){const q=(sn$("snSearch")?.value||"").trim().toLowerCase();
 function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Branches",...snPath];el.innerHTML=names.map((n,i)=>`${i?'<span>›</span>':''}<button type="button" data-sn-crumb="${i}">${snEsc(n)}</button>`).join("");el.querySelectorAll("[data-sn-crumb]").forEach(b=>b.onclick=()=>{snPath=snPath.slice(0,Number(b.dataset.snCrumb));snActive=null;snRender()})}
 function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent=groups.length?`${groups.length} ${["branch","semester","subject"][snPath.length]} folder(s)`:"No uploaded notes found.";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent=files.length?`${files.length} notes file(s)`:"इस Subject में कोई Notes file नहीं मिली।";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Tap to open & download PDF</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));return "<!doctype html>"+d.documentElement.outerHTML}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening notes…';const r=snRows.find(x=>x.id===id);const html=r?.htmlContent||r?.html||r?.content||"";if(!html)throw new Error("Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.");snActive={...r,html};const blob=new Blob([snSafeDocument(html)],{type:"text/html"});if(snObjectUrl)URL.revokeObjectURL(snObjectUrl);snObjectUrl=URL.createObjectURL(blob);sn$("snFrame").src=snObjectUrl;sn$("snReaderTitle").textContent=r.title||r.subject||"Notes";sn$("snReaderMeta").textContent=[r.branch,r.semester?`Semester ${r.semester}`:"",r.subject].filter(Boolean).join(" • ");sn$("snFolders").hidden=true;sn$("snReader").hidden=false;status.textContent="";sn$("snReader").scrollIntoView({behavior:"smooth",block:"start"});}catch(e){status.textContent="Notes open नहीं हो पाए: "+e.message;}}
+async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening notes…';const r=snRows.find(x=>x.id===id);const html=r?.htmlContent||r?.html||r?.content||"";if(!html)throw new Error("Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.");snActive={...r,html};snSetLanguageButtons("en");if(sn$("snLangStatus"))sn$("snLangStatus").textContent="English version";const blob=new Blob([snSafeDocument(html)],{type:"text/html"});if(snObjectUrl)URL.revokeObjectURL(snObjectUrl);snObjectUrl=URL.createObjectURL(blob);sn$("snFrame").src=snObjectUrl;sn$("snReaderTitle").textContent=r.title||r.subject||"Notes";sn$("snReaderMeta").textContent=[r.branch,r.semester?`Semester ${r.semester}`:"",r.subject].filter(Boolean).join(" • ");sn$("snFolders").hidden=true;sn$("snReader").hidden=false;status.textContent="";sn$("snReader").scrollIntoView({behavior:"smooth",block:"start"});}catch(e){status.textContent="Notes open नहीं हो पाए: "+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -12371,7 +12379,60 @@ async function snLoad(){
   sn$("snRetryLoad")?.addEventListener("click",snLoad);
  }
 }
-async function snEnsurePdf(){if(typeof window.html2pdf==="function")return;await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";s.onload=resolve;s.onerror=()=>reject(new Error("PDF library load नहीं हुई; internet check करें."));document.head.appendChild(s)});}
+let snCurrentLanguage='en';
+let snTranslationBusy=false;
+function snSetLanguageButtons(lang){
+ snCurrentLanguage=lang;
+ const en=sn$('snLangEn'),hi=sn$('snLangHi');
+ en?.classList.toggle('active',lang==='en');hi?.classList.toggle('active',lang==='hi');
+ en?.setAttribute('aria-pressed',String(lang==='en'));hi?.setAttribute('aria-pressed',String(lang==='hi'));
+}
+function snTextNodes(doc){
+ const walker=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT,{acceptNode(n){
+  const p=n.parentElement;if(!p||/^(SCRIPT|STYLE|NOSCRIPT|SVG|MATH|CODE|PRE|TEXTAREA|INPUT|OPTION)$/i.test(p.tagName))return NodeFilter.FILTER_REJECT;
+  if(p.closest('[data-no-translate],script,style,svg,math,code,pre'))return NodeFilter.FILTER_REJECT;
+  const t=(n.nodeValue||'').trim();if(!t||!/[A-Za-z]{2}/.test(t)||/^[\d\s.,;:()\[\]{}+\-/%=×÷<>|]+$/.test(t))return NodeFilter.FILTER_REJECT;
+  return NodeFilter.FILTER_ACCEPT;
+ }});
+ const out=[];while(walker.nextNode())out.push(walker.currentNode);return out;
+}
+async function snGoogleTranslate(text){
+ const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(text);
+ const res=await fetch(url,{method:'GET',mode:'cors',cache:'force-cache'});if(!res.ok)throw new Error('Translation service unavailable');
+ const data=await res.json();return (data[0]||[]).map(x=>x?.[0]||'').join('');
+}
+async function snSetLanguage(lang){
+ const frame=sn$('snFrame'),doc=frame?.contentDocument,status=sn$('snLangStatus');
+ if(!doc?.body){alert('Notes अभी load हो रहे हैं। थोड़ी देर बाद प्रयास करें।');return;}
+ if(lang==='en'){
+  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.textContent=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
+  snSetLanguageButtons('en');if(status)status.textContent='English version';return;
+ }
+ if(snTranslationBusy)return;
+ const nodes=snTextNodes(doc);if(!nodes.length){snSetLanguageButtons('hi');if(status)status.textContent='Hindi version';return;}
+ snTranslationBusy=true;sn$('snLangHi').disabled=true;sn$('snLangEn').disabled=true;
+ if(status)status.textContent='हिन्दी में अनुवाद हो रहा है…';
+ try{
+  // Translate text nodes only: uploaded HTML layout, diagrams, tables and formulas remain intact.
+  for(let i=0;i<nodes.length;i+=5){
+   const batch=nodes.slice(i,i+5);
+   await Promise.all(batch.map(async node=>{
+    if(!node.isConnected)return;
+    if(!node.hasAttribute('data-sn-original-text'))node.setAttribute('data-sn-original-text',node.nodeValue);
+    const original=node.getAttribute('data-sn-original-text');
+    const translated=await snGoogleTranslate(original);
+    if(translated)node.nodeValue=translated;
+   }));
+   if(status)status.textContent=`हिन्दी अनुवाद… ${Math.min(i+batch.length,nodes.length)}/${nodes.length}`;
+  }
+  snSetLanguageButtons('hi');if(status)status.textContent='हिन्दी अनुवाद पूरा हुआ';
+ }catch(e){
+  console.error('Notes translation error:',e);
+  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.textContent=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
+  snSetLanguageButtons('en');if(status)status.textContent='अनुवाद उपलब्ध नहीं है। Internet check करके फिर प्रयास करें।';
+  alert('Hindi translation अभी उपलब्ध नहीं हो पाई। Internet connection जाँचें और दोबारा हिन्दी बटन दबाएँ।');
+ }finally{snTranslationBusy=false;sn$('snLangHi').disabled=false;sn$('snLangEn').disabled=false;}
+}
 async function snDownload(){
  if(!snActive){alert('पहले Firebase Notes file खोलें।');return;}
  const btn=sn$('snDownload'),old=btn.innerHTML,frame=sn$('snFrame');
@@ -12379,18 +12440,16 @@ async function snDownload(){
  let style=null;
  try{
   if(!frame)throw new Error('Notes preview नहीं मिला।');
-  const doc=frame.contentDocument, win=frame.contentWindow;
+  const doc=frame.contentDocument,win=frame.contentWindow;
   if(!doc||!doc.body||!win)throw new Error('Firebase Notes अभी load नहीं हुए। Notes दोबारा खोलें।');
-  // Verify that the exact Firebase HTML shown in the preview contains content.
   const textContent=(doc.body.innerText||doc.body.textContent||'').replace(/\s+/g,' ').trim();
   const media=doc.querySelectorAll('img,svg,canvas,table').length;
   if(textContent.length<2&&!media)throw new Error('Preview में कोई visible Notes content नहीं है। Admin Panel में HTML upload का content field जाँचें।');
-  // Native browser printing renders the actual iframe DOM (including uploaded
-  // styles, Hindi fonts, tables and diagrams) and avoids html2canvas blank captures.
-  style=doc.createElement('style');
-  style.id='deNativeNotesPrintStyle';
+  // Print only the notes iframe DOM: app header, language buttons and app controls are excluded.
+  style=doc.getElementById('deNativeNotesPrintStyle');if(style)style.remove();
+  style=doc.createElement('style');style.id='deNativeNotesPrintStyle';
   style.textContent=`
-   @page{size:A4 portrait;margin:14mm 12mm 16mm}
+   @page{size:A4 portrait;margin:12mm 11mm 14mm}
    @media print{
     html,body{width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important;color:#111!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
     body{margin:0!important;padding:0!important;font-size:inherit!important}
@@ -12401,20 +12460,17 @@ async function snDownload(){
     tr{break-inside:avoid!important;page-break-inside:avoid!important}
     h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
     .chapter,.unit,.chapter-title,.unit-title,[class*="chapter-title"],[class*="unit-title"]{break-before:page!important;page-break-before:always!important}
-   }
-  `;
+   }`;
   doc.head.appendChild(style);
-  await new Promise(r=>setTimeout(r,500));
-  btn.innerHTML='<i class="fas fa-print"></i> Print dialog खुल रहा है…';
-  // Browser print-to-PDF preserves the real DOM far more reliably than raster capture.
-  win.focus();
-  win.print();
-  btn.innerHTML='<i class="fas fa-check"></i> Print / Save PDF';
- }catch(e){console.error('Firebase Notes print/PDF error:',e);alert('PDF तैयार नहीं हुई: '+(e?.message||'Please try again.'));}
+  await new Promise(r=>setTimeout(r,400));
+  btn.innerHTML='<i class="fas fa-file-pdf"></i> PDF dialog खुल रहा है…';
+  win.focus();win.print();
+  btn.innerHTML='<i class="fas fa-check"></i> Save as PDF';
+ }catch(e){console.error('Firebase Notes PDF error:',e);alert('PDF तैयार नहीं हुई: '+(e?.message||'Please try again.'));}
  finally{btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},2500);}
 }
 
-sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
+sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snLangEn")?.addEventListener("click",()=>snSetLanguage("en"));sn$("snLangHi")?.addEventListener("click",()=>snSetLanguage("hi"));sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>
 </body>
 </html>

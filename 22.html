@@ -12375,33 +12375,94 @@ async function snEnsurePdf(){if(typeof window.html2pdf==="function")return;await
 async function snDownload(){
  if(!snActive)return;
  const btn=sn$("snDownload"),old=btn.innerHTML;
- btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बन रही है…';
- let frame;
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Preparing complete PDF…';
+ let frame,holder;
  try{
   await snEnsurePdf();
   frame=document.createElement("iframe");
-  frame.style.cssText="position:fixed;left:-12000px;top:0;width:900px;height:1200px;border:0;opacity:0;pointer-events:none";
+  frame.style.cssText="position:fixed;left:-12000px;top:0;width:794px;height:1100px;border:0;opacity:0;pointer-events:none";
   frame.setAttribute("sandbox","allow-same-origin");
   document.body.appendChild(frame);
   const doc=frame.contentDocument;
   const raw=snActive.htmlContent||snActive.html||snActive.content||"";
   if(!raw.trim())throw new Error("Notes content Firebase में नहीं मिला. Admin Panel से HTML Notes दोबारा upload करें.");
   doc.open();doc.write(snSafeDocument(raw));doc.close();
-  await new Promise(resolve=>{let done=false;const finish=()=>{if(!done){done=true;resolve()}};frame.onload=finish;setTimeout(finish,2200)});
-  await new Promise(r=>setTimeout(r,700));
+  await new Promise(resolve=>{let done=false;const finish=()=>{if(!done){done=true;resolve()}};frame.onload=finish;setTimeout(finish,1800)});
   const body=doc.body;
   if(!body||!body.innerText.trim())throw new Error("Notes page में visible text नहीं मिला; uploaded HTML file check करें.");
-  const safe=v=>String(v||"").trim().replace(/[^a-z0-9-]+/gi,"_").replace(/^_+|_+$/g,"");
-  const name=[safe(snActive.subject)||"Study",safe(snActive.semester)||"Semester",safe(snActive.branch)||"All_Branches","Notes_by_diploma_engineers7"].join("_")+".pdf";
-  await window.html2pdf().set({
-   margin:[10,10,14,10],filename:name,
-   image:{type:"jpeg",quality:.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:"#ffffff",windowWidth:900,logging:false,scrollX:0,scrollY:0},
-   jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},
-   pagebreak:{mode:["css","legacy"],avoid:["img","table","h1","h2","h3",".diagram",".unit"]}
-  }).from(body).save();
- }catch(e){console.error("Study Notes PDF error:",e);alert("PDF generate नहीं हुई: "+(e.message||"Please try again."));}
- finally{frame?.remove();btn.disabled=false;btn.innerHTML=old;}
+
+  /* PDF export layout: retain the uploaded notes' own styling/content, but
+     normalize the printable page to a full-width A4 document. */
+  const exportStyle=doc.createElement('style');
+  exportStyle.id='de-notes-pdf-export-style';
+  exportStyle.textContent=`
+   @page{size:A4 portrait;margin:0}
+   html,body{width:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
+   body{font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif!important;color:#111827!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   *,*::before,*::after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body>*{max-width:100%!important}
+   img,svg,canvas,video{max-width:100%!important}
+   img,svg,canvas,figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.math-figure,.chart,.table-wrap,table{break-inside:avoid!important;page-break-inside:avoid!important}
+   img{height:auto!important;object-fit:contain!important}
+   figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.math-figure,.chart{max-width:100%!important;overflow:visible!important}
+   table{width:100%!important;max-width:100%!important;border-collapse:collapse!important}
+   tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   p,li{orphans:3;widows:3}
+   h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
+   .de-pdf-new-chapter{break-before:page!important;page-break-before:always!important}
+   .de-pdf-first-chapter{break-before:auto!important;page-break-before:auto!important}
+   /* Very tall diagrams/images are fitted inside one A4 content page instead of being sliced. */
+   .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
+   img.de-pdf-keep-together,svg.de-pdf-keep-together,canvas.de-pdf-keep-together{max-height:245mm!important;object-fit:contain!important}
+   @media print{html,body{width:210mm!important}}
+  `;
+  doc.head.appendChild(exportStyle);
+
+  // Identify chapter/unit starts so every new chapter begins on a fresh page.
+  const chapterNodes=[...body.querySelectorAll('h1,h2,h3,h4,[class*="chapter"],[class*="unit-title"],[id*="chapter"],[id*="unit"]')]
+   .filter(el=>{const t=(el.innerText||el.textContent||'').trim();return t&&(/\b(chapter|unit|अध्याय|इकाई)\s*[-:–]?[0-9ivx०-९]*/i.test(t)||/^(chapter|unit|अध्याय|इकाई)\b/i.test(t));});
+  chapterNodes.forEach((el,i)=>el.classList.add(i===0?'de-pdf-first-chapter':'de-pdf-new-chapter'));
+  // Keep diagrams and their captions together; constrain oversized standalone images.
+  [...body.querySelectorAll('img,svg,canvas,figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.math-figure,.chart')].forEach(el=>{
+    el.classList.add('de-pdf-keep-together');
+    if(el.tagName==='IMG'){
+      el.style.maxWidth='100%';el.style.maxHeight='245mm';el.style.width=el.naturalWidth&&el.naturalHeight&&el.naturalWidth/el.naturalHeight>1.35?'100%':'auto';el.style.height='auto';el.style.objectFit='contain';el.style.display='block';el.style.marginLeft='auto';el.style.marginRight='auto';
+    }
+  });
+  // Wait for images, web fonts and layout before taking the PDF snapshot.
+  await Promise.all([...body.querySelectorAll('img')].map(img=>{
+    if(img.complete&&img.naturalWidth)return Promise.resolve();
+    return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,10000)});
+  }));
+  try{if(doc.fonts&&doc.fonts.ready)await doc.fonts.ready;}catch(e){}
+  await new Promise(resolve=>setTimeout(resolve,500));
+  const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
+  const name=[safe(snActive.subject)||'Study',safe(snActive.semester)||'Semester',safe(snActive.branch)||'All_Branches','Notes_by_diploma_engineers7'].join('_')+'.pdf';
+  const pdfOpt={
+   margin:[10,10,13,10],filename:name,
+   image:{type:'jpeg',quality:0.98},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:794,logging:false,scrollX:0,scrollY:0,imageTimeout:15000},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
+   pagebreak:{mode:['css','legacy'],avoid:['img','svg','canvas','figure','table','tr','.diagram','.diagram-container','.image-container','.note-image','.figure','.math-figure','.chart','.de-pdf-keep-together']}
+  };
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Creating A4 pages…';
+  const worker=window.html2pdf().set(pdfOpt).from(body).toPdf();
+  const pdf=await worker.get('pdf');
+  // Add a subtle Diploma Engineers watermark and page border to every notes page.
+  const total=pdf.internal.getNumberOfPages();
+  for(let page=1;page<=total;page++){
+   pdf.setPage(page);
+   const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+   pdf.saveGraphicsState();
+   try{pdf.setGState(new pdf.GState({opacity:0.075}));}catch(e){}
+   pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(25);
+   pdf.text('DIPLOMA ENGINEERS',pw/2,ph/2,{align:'center',angle:35});
+   pdf.restoreGraphicsState();
+   pdf.setDrawColor(203,213,225);pdf.setLineWidth(0.25);pdf.rect(5,5,pw-10,ph-10,'S');
+  }
+  pdf.save(name);
+ }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
+ finally{frame?.remove();holder?.remove();btn.disabled=false;btn.innerHTML=old;}
 }
 sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>

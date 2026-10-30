@@ -4117,7 +4117,7 @@ html,body{max-width:100%;overflow-x:hidden}
       <div id="snStatus" class="sn-status"><i class="fas fa-spinner fa-spin"></i> Loading notes…</div>
       <div id="snFolders" class="sn-grid" hidden></div>
       <article id="snReader" class="sn-reader" hidden>
-        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p></div><div class="sn-reader-actions"><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Download PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div></div>
+        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p></div><div class="sn-reader-actions"><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Print / Save PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div></div>
         <iframe id="snFrame" title="Notes preview" sandbox="allow-same-origin" loading="eager"></iframe>
       </article>
     </section>
@@ -12375,86 +12375,45 @@ async function snEnsurePdf(){if(typeof window.html2pdf==="function")return;await
 async function snDownload(){
  if(!snActive){alert('पहले Firebase Notes file खोलें।');return;}
  const btn=sn$('snDownload'),old=btn.innerHTML,frame=sn$('snFrame');
- btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase Notes पढ़े जा रहे हैं…';
- let printStyle=null;
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF तैयार हो रही है…';
+ let style=null;
  try{
-  await snEnsurePdf();
-  if(!frame)throw new Error('Notes preview iframe नहीं मिला।');
-  // IMPORTANT: Export the exact document that the student is seeing in the
-  // preview. Do not rebuild the HTML from Firebase fields: doing so loses
-  // document-level CSS, body styles, fonts and relative assets.
-  let doc=frame.contentDocument;
-  if(!doc || !doc.body)throw new Error('Notes preview अभी तैयार नहीं है। Notes दोबारा खोलकर 2-3 सेकंड बाद PDF दबाएँ।');
-  if(doc.readyState!=='complete'){
-   await new Promise((resolve,reject)=>{
-    let done=false;const finish=()=>{if(!done){done=true;resolve();}};
-    frame.addEventListener('load',finish,{once:true});setTimeout(finish,12000);
-   });
-   doc=frame.contentDocument;
-  }
-  if(!doc || !doc.body)throw new Error('Firebase HTML Notes का document load नहीं हुआ।');
-  // Wait for web fonts, images and layout in the actual preview document.
-  try{if(doc.fonts?.ready)await Promise.race([doc.fonts.ready,new Promise(r=>setTimeout(r,10000))]);}catch(e){}
-  await Promise.all([...doc.images].map(async img=>{
-   if(!img.complete)await new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});setTimeout(resolve,12000);});
-   try{if(img.decode)await img.decode();}catch(e){}
-  }));
-  await new Promise(r=>setTimeout(r,350));
-  const body=doc.body;
-  const readableText=(body.innerText||body.textContent||'').replace(/\s+/g,' ').trim();
-  const visualCount=body.querySelectorAll('img,svg,canvas,table,math').length;
-  if(readableText.length<3 && !visualCount)throw new Error('Preview में Firebase Notes का कोई Text/Diagram नहीं मिला। पहले जाँचें कि Notes Preview में पूरा content दिखाई दे रहा है।');
-
-  // Temporarily apply A4-friendly export rules to the already-rendered iframe.
-  // Original uploaded styles remain intact; only print layout overrides are added.
-  printStyle=doc.createElement('style');
-  printStyle.id='deFirebaseNotesPdfPrintStyle';
-  printStyle.textContent=`
-   html{width:794px!important;max-width:794px!important;min-width:794px!important;height:auto!important;overflow:visible!important;background:#fff!important}
-   body{width:794px!important;max-width:794px!important;min-width:794px!important;height:auto!important;min-height:0!important;margin:0!important;padding:28px 34px!important;overflow:visible!important;background:#fff!important;color:#111827!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-   body *{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-   img,svg,canvas,video{max-width:100%!important}
-   img{height:auto!important;object-fit:contain!important}
-   table{max-width:100%!important;border-collapse:collapse!important}
-   tr,figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,pre,blockquote{break-inside:avoid!important;page-break-inside:avoid!important}
-   h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
-   .chapter,.unit,.chapter-title,.unit-title,[class*="chapter-title"],[class*="unit-title"]{break-before:page!important;page-break-before:always!important}
-   *{overflow-wrap:anywhere}
+  if(!frame)throw new Error('Notes preview नहीं मिला।');
+  const doc=frame.contentDocument, win=frame.contentWindow;
+  if(!doc||!doc.body||!win)throw new Error('Firebase Notes अभी load नहीं हुए। Notes दोबारा खोलें।');
+  // Verify that the exact Firebase HTML shown in the preview contains content.
+  const textContent=(doc.body.innerText||doc.body.textContent||'').replace(/\s+/g,' ').trim();
+  const media=doc.querySelectorAll('img,svg,canvas,table').length;
+  if(textContent.length<2&&!media)throw new Error('Preview में कोई visible Notes content नहीं है। Admin Panel में HTML upload का content field जाँचें।');
+  // Native browser printing renders the actual iframe DOM (including uploaded
+  // styles, Hindi fonts, tables and diagrams) and avoids html2canvas blank captures.
+  style=doc.createElement('style');
+  style.id='deNativeNotesPrintStyle';
+  style.textContent=`
+   @page{size:A4 portrait;margin:14mm 12mm 16mm}
+   @media print{
+    html,body{width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important;color:#111!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{margin:0!important;padding:0!important;font-size:inherit!important}
+    *,*::before,*::after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    img,svg,canvas{max-width:100%!important;max-height:none!important;object-fit:contain!important}
+    table{max-width:100%!important;border-collapse:collapse!important}
+    figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,pre,blockquote{break-inside:avoid!important;page-break-inside:avoid!important}
+    tr{break-inside:avoid!important;page-break-inside:avoid!important}
+    h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
+    .chapter,.unit,.chapter-title,.unit-title,[class*="chapter-title"],[class*="unit-title"]{break-before:page!important;page-break-before:always!important}
+   }
   `;
-  doc.head.appendChild(printStyle);
-  // Allow layout to recalculate after the print stylesheet is added.
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF pages तैयार हो रहे हैं…';
-  const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
-  const filename=[safe(snActive.subject)||'Study',safe(snActive.semester)||'Semester',safe(snActive.branch)||'All_Branches','Notes_by_diploma_engineers7'].join('_')+'.pdf';
-  const pdfOptions={
-   margin:[10,10,13,10],filename,
-   image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:1.7,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,windowWidth:794,scrollX:0,scrollY:0,imageTimeout:25000},
-   jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],avoid:['img','svg','canvas','figure','table','tr','pre','blockquote','.diagram','.diagram-container','.image-container','.note-image','.figure','.chart']}
-  };
-  // html2pdf/html2canvas can capture a same-origin iframe's live body. This
-  // preserves all markup and computed styles produced by the uploaded HTML.
-  const worker=window.html2pdf().set(pdfOptions).from(body).toPdf();
-  const pdf=await worker.get('pdf');
-  const total=pdf.internal.getNumberOfPages();
-  if(!total)throw new Error('PDF में कोई पेज तैयार नहीं हुआ।');
-  for(let i=1;i<=total;i++){
-   pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   pdf.setDrawColor(203,213,225);pdf.setLineWidth(0.25);pdf.rect(5,5,pw-10,ph-10,'S');
-   pdf.setTextColor(148,163,184);pdf.setFont('helvetica','bold');pdf.setFontSize(8);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-6,{align:'center'});
-  }
-  pdf.save(filename);
-  btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';
- }catch(e){
-  console.error('Firebase HTML Notes PDF error:',e);
-  alert('PDF generate नहीं हुई: '+(e?.message||'Please try again.'));
- }finally{
-  try{printStyle?.remove();}catch(e){}
-  btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);
- }
+  doc.head.appendChild(style);
+  await new Promise(r=>setTimeout(r,500));
+  btn.innerHTML='<i class="fas fa-print"></i> Print dialog खुल रहा है…';
+  // Browser print-to-PDF preserves the real DOM far more reliably than raster capture.
+  win.focus();
+  win.print();
+  btn.innerHTML='<i class="fas fa-check"></i> Print / Save PDF';
+ }catch(e){console.error('Firebase Notes print/PDF error:',e);alert('PDF तैयार नहीं हुई: '+(e?.message||'Please try again.'));}
+ finally{btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},2500);}
 }
+
 sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>
 </body>

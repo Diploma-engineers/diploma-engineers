@@ -4118,7 +4118,7 @@ html,body{max-width:100%;overflow-x:hidden}
       <div id="snFolders" class="sn-grid" hidden></div>
       <article id="snReader" class="sn-reader" hidden>
         <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p><div class="sn-language-tools" role="group" aria-label="Notes language"><button type="button" id="snLangEn" class="active" aria-pressed="true">English</button><button type="button" id="snLangHi" aria-pressed="false">हिन्दी</button><span id="snLangStatus" aria-live="polite">English version</span></div></div><div class="sn-reader-actions"><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Generate PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div></div>
-        <iframe id="snFrame" title="Notes preview" sandbox="allow-same-origin" loading="eager"></iframe>
+        <iframe id="snFrame" title="Notes preview" sandbox="allow-same-origin allow-modals" loading="eager"></iframe>
       </article>
     </section>
   </div>
@@ -12397,79 +12397,100 @@ function snTextNodes(doc){
  const out=[];while(walker.nextNode())out.push(walker.currentNode);return out;
 }
 async function snGoogleTranslate(text){
- const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(text);
- const res=await fetch(url,{method:'GET',mode:'cors',cache:'force-cache'});if(!res.ok)throw new Error('Translation service unavailable');
- const data=await res.json();return (data[0]||[]).map(x=>x?.[0]||'').join('');
+ const clean=String(text||''); if(!clean.trim()) return clean;
+ // Google public translate endpoint has a practical URL limit; keep each request small.
+ const pieces=[]; let rest=clean;
+ while(rest.length>420){let cut=Math.max(rest.lastIndexOf('. ',420),rest.lastIndexOf(' ',420));if(cut<120)cut=420;pieces.push(rest.slice(0,cut+1));rest=rest.slice(cut+1);}
+ if(rest)pieces.push(rest);
+ const out=[];
+ for(const piece of pieces){
+  let translated='',lastError=null;
+  for(const base of ['https://translate.googleapis.com/translate_a/single','https://translate.googleapis.com/translate_a/t']){
+   try{
+    const u=new URL(base);u.searchParams.set('client','gtx');u.searchParams.set('sl','auto');u.searchParams.set('tl','hi');u.searchParams.set('dt','t');u.searchParams.set('q',piece);
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+    const response=await fetch(u.toString(),{method:'GET',mode:'cors',cache:'no-store',signal:controller.signal});clearTimeout(timer);
+    if(!response.ok)throw new Error('Translation server HTTP '+response.status);
+    const data=await response.json();
+    translated=Array.isArray(data?.[0])?data[0].map(x=>x?.[0]||'').join(''):'';
+    if(!translated)throw new Error('Translation returned empty text');
+    break;
+   }catch(e){lastError=e;}
+  }
+  if(!translated)throw lastError||new Error('Translation request failed');
+  out.push(translated);
+ }
+ return out.join('');
 }
 async function snSetLanguage(lang){
  const frame=sn$('snFrame'),doc=frame?.contentDocument,status=sn$('snLangStatus');
  if(!doc?.body){alert('Notes अभी load हो रहे हैं। थोड़ी देर बाद प्रयास करें।');return;}
  if(lang==='en'){
-  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.textContent=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
+  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
   snSetLanguageButtons('en');if(status)status.textContent='English version';return;
  }
  if(snTranslationBusy)return;
- const nodes=snTextNodes(doc);if(!nodes.length){snSetLanguageButtons('hi');if(status)status.textContent='Hindi version';return;}
+ const nodes=snTextNodes(doc);
+ if(!nodes.length){snSetLanguageButtons('hi');if(status)status.textContent='अनुवाद के लिए English text नहीं मिला';return;}
  snTranslationBusy=true;sn$('snLangHi').disabled=true;sn$('snLangEn').disabled=true;
  if(status)status.textContent='हिन्दी में अनुवाद हो रहा है…';
  try{
-  // Translate text nodes only: uploaded HTML layout, diagrams, tables and formulas remain intact.
-  for(let i=0;i<nodes.length;i+=5){
-   const batch=nodes.slice(i,i+5);
-   await Promise.all(batch.map(async node=>{
-    if(!node.isConnected)return;
-    if(!node.hasAttribute('data-sn-original-text'))node.setAttribute('data-sn-original-text',node.nodeValue);
-    const original=node.getAttribute('data-sn-original-text');
-    const translated=await snGoogleTranslate(original);
-    if(translated)node.nodeValue=translated;
-   }));
-   if(status)status.textContent=`हिन्दी अनुवाद… ${Math.min(i+batch.length,nodes.length)}/${nodes.length}`;
+  let done=0;
+  for(const node of nodes){
+   if(!node.isConnected)continue;
+   if(!node.hasAttribute('data-sn-original-text'))node.setAttribute('data-sn-original-text',node.nodeValue);
+   const original=node.getAttribute('data-sn-original-text');
+   const translated=await snGoogleTranslate(original);
+   if(translated)node.nodeValue=translated;
+   done++;if(status)status.textContent=`हिन्दी अनुवाद… ${done}/${nodes.length}`;
   }
   snSetLanguageButtons('hi');if(status)status.textContent='हिन्दी अनुवाद पूरा हुआ';
  }catch(e){
   console.error('Notes translation error:',e);
-  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.textContent=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
-  snSetLanguageButtons('en');if(status)status.textContent='अनुवाद उपलब्ध नहीं है। Internet check करके फिर प्रयास करें।';
-  alert('Hindi translation अभी उपलब्ध नहीं हो पाई। Internet connection जाँचें और दोबारा हिन्दी बटन दबाएँ।');
+  doc.querySelectorAll('[data-sn-original-text]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original-text');n.removeAttribute('data-sn-original-text');});
+  snSetLanguageButtons('en');if(status)status.textContent='अनुवाद सेवा तक पहुँच नहीं हुई: '+(e?.message||'Network error');
+  alert('हिन्दी अनुवाद नहीं हो पाया। Internet/translation service उपलब्ध नहीं है। कुछ देर बाद दोबारा प्रयास करें।');
  }finally{snTranslationBusy=false;sn$('snLangHi').disabled=false;sn$('snLangEn').disabled=false;}
 }
 async function snDownload(){
- if(!snActive){alert('पहले Firebase Notes file खोलें।');return;}
+ if(!snActive){alert('पहले Notes file खोलें।');return;}
  const btn=sn$('snDownload'),old=btn.innerHTML,frame=sn$('snFrame');
  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF तैयार हो रही है…';
- let style=null;
+ let printWin=null;
  try{
-  if(!frame)throw new Error('Notes preview नहीं मिला।');
-  const doc=frame.contentDocument,win=frame.contentWindow;
-  if(!doc||!doc.body||!win)throw new Error('Firebase Notes अभी load नहीं हुए। Notes दोबारा खोलें।');
+  if(!frame)throw new Error('Notes preview frame नहीं मिला।');
+  const doc=frame.contentDocument;
+  if(!doc?.body)throw new Error('Notes अभी load नहीं हुए। Notes दोबारा खोलें।');
+  const bodyHTML=doc.body.innerHTML||'';
   const textContent=(doc.body.innerText||doc.body.textContent||'').replace(/\s+/g,' ').trim();
-  const media=doc.querySelectorAll('img,svg,canvas,table').length;
-  if(textContent.length<2&&!media)throw new Error('Preview में कोई visible Notes content नहीं है। Admin Panel में HTML upload का content field जाँचें।');
-  // Print only the notes iframe DOM: app header, language buttons and app controls are excluded.
-  style=doc.getElementById('deNativeNotesPrintStyle');if(style)style.remove();
-  style=doc.createElement('style');style.id='deNativeNotesPrintStyle';
-  style.textContent=`
+  if(textContent.length<2&&!doc.querySelector('img,svg,canvas,table'))throw new Error('Notes content खाली है। Admin में HTML content जाँचें।');
+  // Open synchronously from the click handler so popup blockers do not silently cancel printing.
+  printWin=window.open('','_blank');
+  if(!printWin)throw new Error('Popup blocked. Browser में Pop-ups allow करें और फिर Generate PDF दबाएँ।');
+  const title=(snActive.title||snActive.subject||'Diploma Engineers Notes').replace(/[<>]/g,'');
+  const links=[...doc.querySelectorAll('link[rel="stylesheet"]')].map(x=>x.outerHTML).join('');
+  const styles=[...doc.querySelectorAll('style')].map(x=>x.outerHTML).join('');
+  const printCSS=`<style>
    @page{size:A4 portrait;margin:12mm 11mm 14mm}
-   @media print{
-    html,body{width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important;color:#111!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{margin:0!important;padding:0!important;font-size:inherit!important}
-    *,*::before,*::after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    img,svg,canvas{max-width:100%!important;max-height:none!important;object-fit:contain!important}
-    table{max-width:100%!important;border-collapse:collapse!important}
-    figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,pre,blockquote{break-inside:avoid!important;page-break-inside:avoid!important}
-    tr{break-inside:avoid!important;page-break-inside:avoid!important}
-    h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
-    .chapter,.unit,.chapter-title,.unit-title,[class*="chapter-title"],[class*="unit-title"]{break-before:page!important;page-break-before:always!important}
-   }`;
-  doc.head.appendChild(style);
-  await new Promise(r=>setTimeout(r,400));
-  btn.innerHTML='<i class="fas fa-file-pdf"></i> PDF dialog खुल रहा है…';
-  win.focus();win.print();
-  btn.innerHTML='<i class="fas fa-check"></i> Save as PDF';
- }catch(e){console.error('Firebase Notes PDF error:',e);alert('PDF तैयार नहीं हुई: '+(e?.message||'Please try again.'));}
+   html,body{margin:0!important;padding:0!important;width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important;color:#111!important;font-family:Arial,"Noto Sans Devanagari",sans-serif!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body{font-size:14px;line-height:1.55}*{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   img,svg,canvas{max-width:100%!important;height:auto!important;object-fit:contain!important}table{max-width:100%!important;border-collapse:collapse!important}td,th{overflow-wrap:anywhere!important}
+   figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,pre,blockquote,tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   h1,h2,h3,h4,h5{break-after:avoid!important;page-break-after:avoid!important}
+   button,[role=button],.toolbar,.no-print,[data-no-print]{display:none!important}
+   .chapter,.unit,.chapter-title,.unit-title,[class*="chapter-title"],[class*="unit-title"]{break-before:page!important;page-break-before:always!important}
+  </style>`;
+  printWin.document.open();
+  printWin.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title+'</title>'+links+styles+printCSS+'</head><body>'+bodyHTML+'</body></html>');
+  printWin.document.close();
+  const images=[...printWin.document.images];
+  await Promise.race([Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;}))),new Promise(resolve=>setTimeout(resolve,8000))]);
+  await new Promise(resolve=>setTimeout(resolve,500));
+  printWin.focus();printWin.print();
+  if(status)status.textContent='Print window खुल गई है — Destination में Save as PDF चुनें।';
+ }catch(e){console.error('Firebase Notes PDF error:',e);if(printWin&&!printWin.closed)printWin.close();alert('PDF नहीं बनी: '+(e?.message||'Please try again.'));}
  finally{btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},2500);}
 }
-
 sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snLangEn")?.addEventListener("click",()=>snSetLanguage("en"));sn$("snLangHi")?.addEventListener("click",()=>snSetLanguage("hi"));sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>
 </body>

@@ -7908,7 +7908,7 @@ function setPaidCardState(courseId,state){
   card.dataset.paidCourse=courseId;
   card.dataset.paidState=state;
   card.classList.add('paid-course-card');
-  const badge=card.querySelector('.free-badge');
+  const badge=card.querySelector('.free-badge:not(.de-firebase-course-price)');
   const isFirebaseCourse=card.classList.contains('admin-uploaded-course');
   if(isFirebaseCourse){
     const buy=card.querySelector('[data-admin-course-buy]');
@@ -10815,7 +10815,7 @@ function renderAdminCourses(data){
   const rawPrice=Number(c.price??c.amount??99),price=rawPrice>0?rawPrice:99;
   const itemCount=Array.isArray(c.items)?c.items.length:(Array.isArray(c.content)?c.content.length:0);
   const sid=escCourse(id),search=escCourse([c.title,c.name,c.courseName,c.branch,c.category,c.description].join(" ").toLowerCase());
-  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><span class="free-badge paid-badge de-firebase-course-price">₹${price} • UPI</span><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy Course ₹${price}</button></div><div class="de-course-validity-note" data-course-validity-note="${sid}" hidden></div></div></article>`;
+  return `<article class="course-card admin-uploaded-course de-firebase-course-card" data-paid-course="${sid}" data-price="${price}" data-course-title="${title}" data-course-search="${search}" data-course-category="${escCourse(c.category||c.branch||"").toLowerCase()}"><div class="de-firebase-course-banner ${img?'has-image':''}">${img?`<img class="de-firebase-course-banner-image" src="${img}" alt="${title} course banner" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.remove('has-image')">`:''}<div class="de-firebase-course-banner-shade"></div><button type="button" class="de-firebase-course-price" data-course-share="${sid}" aria-label="Share course poster" title="Share course poster"><i class="fa-solid fa-share-nodes"></i></button><div class="de-firebase-course-banner-copy"><span class="de-firebase-course-kicker"><i class="fa-solid fa-graduation-cap"></i> DIPLOMA ENGINEERS COURSE</span><h2>${title}</h2><p>${branch}</p></div></div><div class="course-body de-firebase-course-body de-firebase-course-compact-body"><div class="admin-course-actions"><button type="button" class="action-btn admin-course-explore" data-admin-course-explore="${sid}"><i class="fa-solid fa-compass"></i> Explore</button><button type="button" class="action-btn admin-course-buy" data-admin-course-buy="${sid}"><i class="fa-solid fa-qrcode"></i> Buy Course ₹${price}</button></div><div class="de-course-validity-note" data-course-validity-note="${sid}" hidden></div></div></article>`;
  }).join("");
  // Use onclick (not addEventListener) so payment-state refresh can safely replace it.
  grid.querySelectorAll("[data-admin-course-buy]").forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.validityButton==="true")return;const id=btn.getAttribute("data-admin-course-buy");if(typeof window.openCoursePayment==="function")window.openCoursePayment(id);else alert("Please sign in, then try again.");});
@@ -11557,7 +11557,9 @@ window.addEventListener('popstate',function(e){
 #deFirebaseCourseDetail .de-fcd-banner{width:100%;aspect-ratio:1536/812;background:linear-gradient(135deg,#0f172a,#2563eb);position:relative;overflow:hidden}
 #deFirebaseCourseDetail .de-fcd-banner img{width:100%;height:100%;object-fit:cover;display:block}
 #deFirebaseCourseDetail .de-fcd-banner:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(2,6,23,.58));pointer-events:none}
-#deFirebaseCourseDetail .de-fcd-price{position:absolute;z-index:1;right:14px;top:14px;background:#fff;color:#047857;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:900;box-shadow:0 4px 15px #0002}
+#deFirebaseCourseDetail .de-fcd-price{position:absolute;z-index:2;right:14px;top:14px;width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center;background:#fff;color:#1d4ed8;font-size:18px;font-weight:900;box-shadow:0 4px 15px #0003;cursor:pointer}
+#deFirebaseCourseDetail .de-fcd-share-note{font-size:12px;color:#64748b;margin:-10px 0 15px;line-height:1.5}
+#deFirebaseCourseDetail .de-fcd-share-note button{border:0;background:none;color:#2563eb;font-weight:900;cursor:pointer;padding:0 2px}
 #deFirebaseCourseDetail .de-fcd-main{padding:22px 18px 0}
 #deFirebaseCourseDetail .de-fcd-title{font-size:clamp(22px,4vw,31px);line-height:1.25;font-weight:900;margin:0 0 7px;color:#111827}
 #deFirebaseCourseDetail .de-fcd-branch{font-size:13px;color:#64748b;margin-bottom:15px}
@@ -11580,10 +11582,11 @@ window.addEventListener('popstate',function(e){
 <div id="deFirebaseCourseDetail" aria-hidden="true">
  <div class="de-fcd-wrap">
   <header class="de-fcd-top"><button class="de-fcd-back" id="deFcdBack" aria-label="Back" type="button"><i class="fa-solid fa-arrow-left"></i></button><div class="de-fcd-brand">Diploma <span>Engineers</span></div></header>
-  <div class="de-fcd-banner" id="deFcdBanner"><span class="de-fcd-price" id="deFcdPrice">₹99 • UPI</span></div>
+  <div class="de-fcd-banner" id="deFcdBanner"><button class="de-fcd-price" id="deFcdPrice" type="button" aria-label="Share course poster" title="Share course poster"><i class="fa-solid fa-share-nodes"></i></button></div>
   <main class="de-fcd-main">
    <h1 class="de-fcd-title" id="deFcdTitle">Course Title</h1><div class="de-fcd-branch" id="deFcdBranch">Diploma Engineering</div>
    <div class="de-fcd-validity-inline" id="deFcdValidityInline"><strong>Course Validity</strong><span id="deFcdValidityInlineText"></span></div>
+   <div class="de-fcd-share-note">Share this course as a PNG poster with its description, price, Explore & Buy details, app link and support number. <button id="deFcdShareText" type="button">Share details</button></div>
    <button class="de-fcd-buy" id="deFcdBuy" type="button"><i class="fa-solid fa-qrcode"></i> Buy Course</button>
    <div class="de-fcd-tabs" role="tablist"><button class="de-fcd-tab active" data-fcd-tab="details" type="button">Course Details</button><button class="de-fcd-tab" data-fcd-tab="content" type="button">Course Content</button></div>
    <section class="de-fcd-panel active" id="deFcdDetailsPanel">
@@ -11664,7 +11667,7 @@ window.addEventListener('popstate',function(e){
   activeId=id;const title=c.title||c.name||c.courseName||'Course',branch=c.branch||c.category||'Diploma Engineering',price=Number(c.price??c.amount??99)||99;
   const banner=c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
   $('deFcdBanner').querySelector('img')?.remove();if(banner){const img=document.createElement('img');img.src=banner;img.alt=title+' banner';img.onerror=()=>img.remove();$('deFcdBanner').prepend(img);}
-  $('deFcdTitle').textContent=title;$('deFcdBranch').textContent=branch;$('deFcdPrice').textContent='₹'+price+' • UPI';$('deFcdBuy').innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course • ₹'+price;
+  $('deFcdTitle').textContent=title;$('deFcdBranch').textContent=branch;$('deFcdPrice').innerHTML='<i class="fa-solid fa-share-nodes"></i>';$('deFcdPrice').setAttribute('aria-label','Share '+title+' course poster');$('deFcdBuy').innerHTML='<i class="fa-solid fa-qrcode"></i> Buy Course • ₹'+price;
   $('deFcdDescription').textContent=c.description||'Video lectures, PDF notes and study resources.';
   const items=Array.isArray(c.items)?c.items:(Array.isArray(c.content)?c.content:[]);$('deFcdCount').textContent=items.length+' lecture / PDF items included';
   const list=$('deFcdContentList');
@@ -11675,6 +11678,106 @@ window.addEventListener('popstate',function(e){
  $('deFcdBack').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();close();});root.addEventListener('click',e=>{if(e.target===root)close();});
  root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.fcdTab==='content'){openReaderFromDetail(activeId);return;}openTab('details');}));
  $('deFcdBuy').addEventListener('click',async(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;for(let i=0;i<25&&typeof window.openCoursePayment!=='function';i++)await new Promise(r=>setTimeout(r,80));if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{console.error('[Diploma Engineers] Payment module did not initialize; check Firebase module/network errors.');alert('Payment system is still loading. Please refresh the app and try again.');}});
+ async function makeCoursePoster(shareTextOnly=false){
+   const c=(window.__deAdminCourseCatalog||{})[String(activeId)]||{};
+   const title=String(c.title||c.name||c.courseName||$('deFcdTitle').textContent||'Course');
+   const branch=String(c.branch||c.category||'Diploma Engineering');
+   const price=Number(c.price??c.amount??99)||99;
+   const desc=String(c.description||c.desc||c.details||c.about||'Video lectures, PDF notes and study resources.');
+   const appUrl='https://diplomaengineers.vercel.app/';
+   const courseUrl=appUrl+'?courseId='+encodeURIComponent(activeId);
+   const message='🎓 DIPLOMA ENGINEERS\n\n📚 Course: '+title+'\n🏫 Branch: '+branch+'\n\n📝 About Course:\n'+desc+'\n\n💰 Course Price: ₹'+price+'\n\n🔎 Explore Course: '+courseUrl+'\n🛒 Buy Course: Diploma Engineers App खोलें और अपना कोर्स चुनें।\n\n🌐 App Link:\n'+appUrl+'\n\n📲 More Information / WhatsApp:\n9795810987 (WhatsApp: https://wa.me/919795810987)\n\n🚀 The Students’ Trusted Learning Platform\nLearn Today, Build Tomorrow!';
+   if(shareTextOnly){await shareCourseText(message,title);return;}
+
+   // Create a share PNG containing the course banner PLUS the Explore and Buy buttons below it.
+   // The actual app buttons remain interactive; these are visual buttons in the share poster.
+   const W=1200,BH=635,FOOT=165,H=BH+FOOT,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+   const ctx=canvas.getContext('2d');
+   const bannerEl=$('deFcdBanner');
+   const visibleImg=bannerEl?.querySelector('img');
+   const imageUrl=(visibleImg&&visibleImg.currentSrc)||c.thumbnail||c.thumbnailUrl||c.bannerUrl||c.imageUrl||'';
+   let imageDrawn=false;
+   if(imageUrl){
+     try{
+       const img=new Image();img.crossOrigin='anonymous';
+       await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=imageUrl;});
+       const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+       if(iw&&ih){const scale=Math.max(W/iw,BH/ih),sw=W/scale,sh=BH/scale,sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,0,0,W,BH);imageDrawn=true;}
+     }catch(err){console.warn('[Course share] Banner image could not be embedded; using a clean fallback poster.',err);}
+   }
+   if(!imageDrawn){
+     const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#08264d');grad.addColorStop(.58,'#1262b5');grad.addColorStop(1,'#f28a20');ctx.fillStyle=grad;ctx.fillRect(0,0,W,BH);
+     ctx.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<12;i++){ctx.beginPath();ctx.arc(70+i*100,90+(i%3)*45,62,0,Math.PI*2);ctx.fill();}
+     ctx.fillStyle='#fff';ctx.font='900 48px Arial';ctx.fillText('DIPLOMA ENGINEERS',55,95);
+     ctx.fillStyle='#ffdb36';ctx.font='800 22px Arial';ctx.fillText('THE STUDENTS’ TRUSTED LEARNING PLATFORM',58,133);
+   }
+   // Match the app card's bottom title overlay while keeping the PNG image-only.
+   const shade=ctx.createLinearGradient(0,BH*.52,0,BH);shade.addColorStop(0,'rgba(2,10,28,0)');shade.addColorStop(1,'rgba(2,10,28,.82)');ctx.fillStyle=shade;ctx.fillRect(0,0,W,BH);
+   // Share icon at top-right, as seen on the course card; no UPI or price badge.
+   const sx=W-88,sy=82;ctx.save();ctx.shadowColor='rgba(0,0,0,.20)';ctx.shadowBlur=18;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,sy,43,0,Math.PI*2);ctx.fill();ctx.restore();
+   ctx.strokeStyle='#245be8';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-11,sy);ctx.lineTo(sx+10,sy-12);ctx.moveTo(sx-11,sy);ctx.lineTo(sx+10,sy+12);ctx.stroke();
+   [[sx-14,sy,7],[sx+14,sy-16,7],[sx+14,sy+16,7]].forEach(([x,y,r])=>{ctx.fillStyle='#245be8';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
+   ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='900 43px Arial';
+   const titleLines=[];let line='';for(const word of title.split(/\s+/)){const test=line?line+' '+word:word;if(ctx.measureText(test).width>W-100&&line){titleLines.push(line);line=word;}else line=test;}if(line)titleLines.push(line);
+   const shown=titleLines.slice(-2);const titleY=BH-105-(shown.length-1)*49;shown.forEach((t,i)=>ctx.fillText(t,48,titleY+i*49));
+   ctx.fillStyle='#e2e8f0';ctx.font='700 25px Arial';ctx.fillText(branch.slice(0,90),50,BH-30);
+
+   // Bottom action strip: two clear buttons like the course card preview.
+   ctx.fillStyle='#ffffff';ctx.fillRect(0,BH,W,FOOT);
+   const margin=28,gap=24,btnY=BH+29,btnH=107,btnW=(W-margin*2-gap)/2;
+   function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+   // Explore button
+   ctx.save();ctx.shadowColor='rgba(37,99,235,.15)';ctx.shadowBlur=16;ctx.shadowOffsetY=5;roundRect(margin,btnY,btnW,btnH,28);ctx.fillStyle='#eff6ff';ctx.fill();ctx.restore();
+   roundRect(margin,btnY,btnW,btnH,28);ctx.lineWidth=3;ctx.strokeStyle='#bfdbfe';ctx.stroke();
+   ctx.fillStyle='#2563eb';ctx.font='900 34px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('◉  Explore',margin+btnW/2,btnY+btnH/2);
+   // Buy Course button
+   const bx=margin+btnW+gap;ctx.save();ctx.shadowColor='rgba(37,99,235,.24)';ctx.shadowBlur=18;ctx.shadowOffsetY=6;roundRect(bx,btnY,btnW,btnH,28);const buyGrad=ctx.createLinearGradient(bx,btnY,bx+btnW,btnY+btnH);buyGrad.addColorStop(0,'#2563eb');buyGrad.addColorStop(1,'#1d4ed8');ctx.fillStyle=buyGrad;ctx.fill();ctx.restore();
+   ctx.fillStyle='#ffffff';ctx.font='900 31px Arial';ctx.fillText('▦  Buy Course ₹'+price,bx+btnW/2,btnY+btnH/2);ctx.textAlign='left';ctx.textBaseline='alphabetic';
+
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob){await shareCourseText(message,title);return;}
+   const file=new File([blob],(title.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'course')+'.png',{type:'image/png'});
+   try{
+     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file],text:message})){
+       // Share the PNG and the full caption in the SAME native share action.
+       await navigator.share({title:title+' | Diploma Engineers',text:message,files:[file]});
+       return;
+     }
+   }catch(e){if(e&&e.name==='AbortError')return;}
+   // Unsupported file sharing: download the course poster PNG with Explore/Buy buttons, then open the caption in WhatsApp.
+   const objectUrl=URL.createObjectURL(blob);const a=document.createElement('a');a.href=objectUrl;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),2000);
+   shareCourseText(message,title,true);
+ }
+ async function shareCourseText(message,title,downloaded=false){
+   const waUrl='https://wa.me/?text='+encodeURIComponent(message);
+   // If image sharing is unsupported, open WhatsApp with the exact caption.
+   // The downloaded PNG must be attached manually; browsers cannot attach it to a wa.me URL.
+   if(downloaded){
+     const go=confirm('Course PNG poster downloaded. Open WhatsApp with the course message?\n\nWhen WhatsApp opens, attach the downloaded PNG to send the image and message together.');
+     if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+     return;
+   }
+   try{
+     if(navigator.share){
+       await navigator.share({title:title+' | Diploma Engineers',text:message});
+       return;
+     }
+   }catch(e){if(e&&e.name==='AbortError')return;}
+   try{
+     if(navigator.clipboard&&window.isSecureContext){
+       await navigator.clipboard.writeText(message);
+       const go=confirm('Course message copied. Open WhatsApp to share it?');
+       if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+       return;
+     }
+   }catch(e){}
+   const go=confirm('Open WhatsApp with course details?');
+   if(go)window.open(waUrl,'_blank','noopener,noreferrer');
+   else window.prompt('Copy course details:',message);
+ }
+ $('deFcdPrice').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(false);});
+ $('deFcdShareText').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();makeCoursePoster(true);});
+ document.addEventListener('click',async function(e){const btn=e.target.closest&&e.target.closest('[data-course-share]');if(!btn)return;e.preventDefault();e.stopPropagation();const id=String(btn.getAttribute('data-course-share')||'');if(!id)return;if(typeof window.openFirebaseCourseDetails==='function'){await window.openFirebaseCourseDetails(id);setTimeout(()=>makeCoursePoster(false),180);}},true);
  $('deFcdOpenContent').addEventListener('click',()=>openReaderFromDetail(activeId));
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('show'))close();});
 })();
@@ -11824,7 +11927,7 @@ window.addEventListener('popstate',function(e){
 #coursePage .de-firebase-course-banner.has-image{background-color:#10203a}
 #coursePage .de-firebase-course-banner-image{position:absolute;inset:0;width:100%;height:100%;min-width:100%;min-height:100%;object-fit:cover;object-position:center center;z-index:-2;background:linear-gradient(135deg,#e8eef8,#cbd8e9);display:block}
 #coursePage .de-firebase-course-banner-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,18,38,.05) 5%,rgba(8,18,38,.16) 38%,rgba(8,18,38,.88) 100%);pointer-events:none}
-#coursePage .de-firebase-course-price{position:absolute;right:12px;top:12px;z-index:2;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+#coursePage .de-firebase-course-price{position:absolute;right:12px;top:12px;z-index:2;border:0;border-radius:50%;width:44px;height:44px;display:grid;place-items:center;padding:0;font-size:19px;font-weight:900;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer;background:#fff;color:#1d4ed8;appearance:none;-webkit-appearance:none}#coursePage .de-firebase-course-price i{display:block;line-height:1;color:#1d4ed8;font-size:19px}#coursePage .de-firebase-course-price:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
 #coursePage .de-firebase-course-banner-copy{position:relative;z-index:1;max-width:100%;padding-right:70px;text-shadow:0 2px 8px rgba(0,0,0,.28)}
 #coursePage .de-firebase-course-kicker{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:900;letter-spacing:.09em;color:#fff;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 8px;margin-bottom:7px;backdrop-filter:blur(6px)}
 #coursePage .de-firebase-course-banner-copy h2{margin:0 0 4px;font-size:clamp(17px,2vw,23px);font-weight:900;line-height:1.2;color:#fff;overflow-wrap:anywhere}

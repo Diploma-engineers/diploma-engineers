@@ -12421,8 +12421,8 @@ async function snDownload(){
   const pdfStyle=srcDoc.createElement('style');
   pdfStyle.textContent=`
    @page{size:A4 portrait;margin:0}
-   html{width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
-   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0!important;padding:18px 24px 34px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
+   html{width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;min-height:0!important;margin:0!important;padding:18px 22px 34px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
    #deNotesPdfRoot *{box-sizing:border-box!important}
    #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
    #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
@@ -12443,7 +12443,7 @@ async function snDownload(){
 
   exportFrame=document.createElement('iframe');
   exportFrame.setAttribute('aria-hidden','true');
-  exportFrame.style.cssText='position:fixed;left:0;top:0;width:718px;height:1015px;border:0;z-index:2147483000;background:#fff;pointer-events:none;';
+  exportFrame.style.cssText='position:fixed;left:0;top:0;width:680px;height:1015px;border:0;z-index:2147483000;background:#fff;pointer-events:none;';
   document.body.appendChild(exportFrame);
   const exportDoc=exportFrame.contentDocument;
   exportDoc.open();exportDoc.write('<!doctype html>'+docClone.outerHTML);exportDoc.close();
@@ -12467,9 +12467,9 @@ async function snDownload(){
   // breaks uploaded styles that depend on body > element selectors and can make
   // the PDF appear blank. Capture the real rendered document body instead.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
-  root.style.setProperty('width','718px','important');
-  root.style.setProperty('min-width','718px','important');
-  root.style.setProperty('max-width','718px','important');
+  root.style.setProperty('width','680px','important');
+  root.style.setProperty('min-width','680px','important');
+  root.style.setProperty('max-width','680px','important');
   root.style.setProperty('height','auto','important');
   root.style.setProperty('overflow','visible','important');
   root.style.setProperty('margin','0','important');
@@ -12477,9 +12477,9 @@ async function snDownload(){
   exportBody.id='deNotesPdfRoot';
   exportBody.style.setProperty('display','block','important');
   exportBody.style.setProperty('position','relative','important');
-  exportBody.style.setProperty('width','718px','important');
-  exportBody.style.setProperty('min-width','718px','important');
-  exportBody.style.setProperty('max-width','718px','important');
+  exportBody.style.setProperty('width','680px','important');
+  exportBody.style.setProperty('min-width','680px','important');
+  exportBody.style.setProperty('max-width','680px','important');
   exportBody.style.setProperty('height','auto','important');
   exportBody.style.setProperty('min-height','0','important');
   exportBody.style.setProperty('overflow','visible','important');
@@ -12548,9 +12548,9 @@ async function snDownload(){
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बनाई जा रही है…';
   const fullHeight=Math.max(1015,Math.ceil(pdfRoot.scrollHeight||pdfRoot.getBoundingClientRect().height||1015));
   const opt={
-   margin:10,filename, // Numeric margin avoids html2pdf "Invalid margin array" errors across bundled versions.
+   margin:5,filename, // Numeric margin avoids invalid-margin-array errors and preserves A4 space.
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:680,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
    pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };
@@ -12563,26 +12563,33 @@ async function snDownload(){
   // Exact Diploma Engineers PDF logo, centered on every page.
   const logoUrl='https://diplomaengineers.vercel.app/pdf-logo.png';
   const logoImg=new Image();logoImg.crossOrigin='anonymous';logoImg.decoding='async';logoImg.src=logoUrl;
-  await new Promise((resolve,reject)=>{
-   if(logoImg.complete&&logoImg.naturalWidth)return resolve();
-   logoImg.onload=resolve;logoImg.onerror=()=>reject(new Error('PDF watermark logo load नहीं हुआ। कृपया logo URL और internet/CORS access जाँचें।'));
-   setTimeout(()=>reject(new Error('PDF watermark logo load होने में समय लग रहा है।')),15000);
-  });
-  const markCanvas=document.createElement('canvas');markCanvas.width=1200;markCanvas.height=1200;
-  const markCtx=markCanvas.getContext('2d');
-  const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
-  const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
-  markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.13;
-  markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
-  const watermarkData=markCanvas.toDataURL('image/png');
+  let watermarkData=null;
+  try{
+   await new Promise((resolve,reject)=>{
+    if(logoImg.complete&&logoImg.naturalWidth)return resolve();
+    logoImg.onload=resolve;logoImg.onerror=()=>reject(new Error('logo unavailable'));
+    setTimeout(()=>reject(new Error('logo timeout')),8000);
+   });
+   const markCanvas=document.createElement('canvas');markCanvas.width=1200;markCanvas.height=1200;
+   const markCtx=markCanvas.getContext('2d');
+   const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
+   const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
+   markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.13;
+   markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
+   watermarkData=markCanvas.toDataURL('image/png');
+  }catch(logoError){console.warn('PDF watermark skipped; continuing download.',logoError)}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   const wmW=105,wmH=105;
-   pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');
+   if(watermarkData){const wmW=105,wmH=105;pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');}
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
    pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }
-  pdf.save(filename);
+  // Trigger download from the top-level page to avoid iframe download restrictions.
+  const pdfBlob=pdf.output('blob');
+  const downloadUrl=URL.createObjectURL(pdfBlob);
+  const downloadLink=document.createElement('a');downloadLink.href=downloadUrl;downloadLink.download=filename;downloadLink.style.display='none';
+  document.body.appendChild(downloadLink);downloadLink.click();downloadLink.remove();
+  setTimeout(()=>URL.revokeObjectURL(downloadUrl),60000);
   btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';
  }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
  finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}

@@ -12381,36 +12381,77 @@ function snGetTranslatableTextNodes(doc){
   const t=(n.nodeValue||'').trim();return t&&/[A-Za-z]{2}/.test(t)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
  }});const a=[];while(walker.nextNode())a.push(walker.currentNode);return a;
 }
+// Reliable JSON fetch helper: the previous version called snFetchJson()
+// but did not define it, so translation stopped with a ReferenceError.
+async function snFetchJson(url,timeoutMs=16000){
+ let lastError=null;
+ for(let attempt=0;attempt<3;attempt++){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+   const response=await fetch(url,{method:'GET',mode:'cors',cache:'no-store',signal:controller.signal,headers:{'Accept':'application/json'}});
+   if(!response.ok){
+    const detail=await response.text().catch(()=> '');
+    const err=new Error('HTTP '+response.status+(detail?' — '+detail.slice(0,160):''));
+    err.status=response.status;
+    if(response.status===429||response.status>=500){lastError=err;}
+    else throw err;
+   }else{
+    const data=await response.json();
+    if(data==null)throw new Error('Translation service returned an empty response');
+    return data;
+   }
+  }catch(e){lastError=e;}
+  finally{clearTimeout(timer);}
+  if(attempt<2)await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));
+ }
+ throw lastError||new Error('Translation request failed');
+}
+const snTranslationCache=new Map();
 async function snTranslateChunk(text){
  const input=String(text||'').trim();if(!input)return '';
- // Provider 1: Google Translate's public web endpoint.
+ const cacheKey='en>hi:'+input;
+ if(snTranslationCache.has(cacheKey))return snTranslationCache.get(cacheKey);
+ // Primary provider: Google Translate web endpoint. Requests are kept small.
  try{
   const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(input);
-  const j=await snFetchJson(url,14000);
+  const j=await snFetchJson(url,18000);
   const out=Array.isArray(j?.[0])?j[0].map(x=>x?.[0]||'').join(''):'';
-  if(out.trim())return out;
+  if(out.trim()){snTranslationCache.set(cacheKey,out);return out;}
   throw new Error('Google Translate returned empty text');
  }catch(primaryError){
-  console.warn('Primary translation provider failed; trying fallback',primaryError);
+  console.warn('Google translation failed; trying MyMemory fallback',primaryError);
  }
- // Provider 2: MyMemory fallback. Keep each request below its public query limit.
- const pieces=[];for(let i=0;i<input.length;i+=450)pieces.push(input.slice(i,i+450));
+ // Fallback provider. Split below the public endpoint's query-size limit.
+ const pieces=[];for(let i=0;i<input.length;i+=400)pieces.push(input.slice(i,i+400));
  const translated=[];
  for(const piece of pieces){
   const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(piece)+'&langpair=en|hi';
-  const j=await snFetchJson(url,18000);
+  const j=await snFetchJson(url,20000);
   const out=String(j?.responseData?.translatedText||'').trim();
-  if(!out||Number(j?.responseStatus)>=400)throw new Error(j?.responseDetails||'All translation services failed');
+  if(!out||Number(j?.responseStatus)>=400)throw new Error(j?.responseDetails||'Google and MyMemory translation services are unavailable');
   translated.push(out);
  }
- return translated.join(' ');
+ const result=translated.join(' ');snTranslationCache.set(cacheKey,result);return result;
 }
-async function snTranslateText(text){let chunks=[],rest=String(text);while(rest.length>300){let cut=rest.lastIndexOf(' ',300);if(cut<100)cut=300;chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}if(rest)chunks.push(rest);let out=[];for(const c of chunks)out.push(await snTranslateChunk(c));return out.join(' ');}
+async function snTranslateText(text){
+ const source=String(text??'');
+ const leading=(source.match(/^\s*/)||[''])[0],trailing=(source.match(/\s*$/)||[''])[0];
+ let rest=source.trim();if(!rest)return source;
+ const chunks=[];
+ while(rest.length>420){
+  let cut=rest.lastIndexOf(' ',420);if(cut<180)cut=420;
+  chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();
+ }
+ if(rest)chunks.push(rest);
+ const out=[];for(const chunk of chunks)out.push(await snTranslateChunk(chunk));
+ return leading+out.join(' ')+trailing;
+}
 async function snSetLanguage(lang){
  const doc=sn$('snFrame')?.contentDocument,status=sn$('snLangStatus');if(!doc?.body){alert('Notes अभी load हो रहे हैं।');return;}if(snTranslationBusy)return;
  if(lang==='en'){doc.querySelectorAll('[data-sn-original]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original');n.removeAttribute('data-sn-original');});snSetLanguageButtons('en');if(status)status.textContent='English version';return;}
  const nodes=snGetTranslatableTextNodes(doc);if(!nodes.length){if(status)status.textContent='Translate करने के लिए English text नहीं मिला।';return;}
- snTranslationBusy=true;['snLangEn','snLangHi','snDownload'].forEach(id=>{if(sn$(id))sn$(id).disabled=true;});if(status)status.textContent='Hindi translation शुरू हो रहा है…';
+ snTranslationBusy=true;['snLangEn','snLangHi','snDownload'].forEach(id=>{if(sn$(id))sn$(id).disabled=true;});if(status)status.textContent='Hindi translation शुरू हो रहा है… कृपया इस tab को खुला रखें।';
  try{for(let i=0;i<nodes.length;i++){const n=nodes[i];if(!n.isConnected)continue;if(!n.hasAttribute('data-sn-original'))n.setAttribute('data-sn-original',n.nodeValue);n.nodeValue=await snTranslateText(n.getAttribute('data-sn-original'));if(status)status.textContent='Hindi translation: '+(i+1)+' / '+nodes.length;}
  snSetLanguageButtons('hi');if(status)status.textContent='Hindi translation complete. अब Download PDF दबाएँ।';
  }catch(e){console.error('Notes translation failed',e);doc.querySelectorAll('[data-sn-original]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original');n.removeAttribute('data-sn-original');});snSetLanguageButtons('en');if(status)status.textContent='Translation service/network error: '+(e.message||'failed');alert('Hindi translation नहीं हो पाई। Internet/CORS या दोनों translation services में समस्या हो सकती है। कृपया इंटरनेट जाँचकर दोबारा कोशिश करें।');}

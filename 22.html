@@ -12401,129 +12401,78 @@ async function snEnsurePdf(){if(typeof window.html2pdf==="function")return;await
 async function snDownload(){
  if(!snActive)return;
  const btn=sn$("snDownload"),old=btn.innerHTML;
- btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase Notes तैयार हो रहे हैं…';
- let holder=null;
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF तैयार हो रही है…';
+ let exportStyle=null;
  try{
   await snEnsurePdf();
-  const previewDoc=sn$('snFrame')?.contentDocument;
-  if(!previewDoc?.body)throw new Error('Notes preview अभी तैयार नहीं है। पहले Notes खोलें और कुछ सेकंड बाद प्रयास करें।');
-  const raw=snActive.htmlContent||snActive.html||snActive.content||'';
-  if(!String(raw).trim())throw new Error('Firebase में Notes HTML खाली है। Admin Panel से Notes दोबारा upload करें।');
-
-  // Export the currently visible preview, including Hindi translation if selected.
-  const parsed=new DOMParser().parseFromString('<!doctype html><html><head></head><body></body></html>','text/html');
-  [...previewDoc.head.querySelectorAll('style,link[rel=stylesheet]')].forEach(n=>parsed.head.appendChild(parsed.importNode(n,true)));
-  parsed.body.innerHTML=previewDoc.body.innerHTML;
-  parsed.querySelectorAll('script,iframe,object,embed,form,base').forEach(n=>n.remove());
-  parsed.querySelectorAll('*').forEach(el=>[...el.attributes].forEach(a=>{
-   const n=a.name.toLowerCase();
-   if(n.startsWith('on')||n==='srcdoc'||((n==='href'||n==='src')&&/^\s*javascript:/i.test(a.value)))el.removeAttribute(a.name);
-  }));
-  const sourceBody=parsed.body;
-  if(!sourceBody)throw new Error('Firebase Notes HTML का body नहीं मिला।');
-
-  holder=document.createElement('div');
-  holder.id='deSortNotesPdfExportHost';
-  holder.style.cssText='position:fixed;left:0;top:0;width:794px;max-width:100vw;background:#fff;color:#111827;z-index:2147483000;pointer-events:none;visibility:visible;opacity:1;display:block;overflow:visible;box-shadow:0 0 0 100vmax #ffffff;';
-  // Preserve the uploaded note's own CSS (inline styles and linked stylesheets).
-  parsed.head.querySelectorAll('style,link[rel="stylesheet"]').forEach(node=>{
-   const copy=document.importNode(node,true);
-   if(copy.tagName==='LINK')copy.crossOrigin='anonymous';
-   holder.appendChild(copy);
-  });
-  const page=document.createElement('div');
-  page.id='deSortNotesPdfExport';
-  page.style.cssText='display:block!important;position:relative!important;visibility:visible!important;opacity:1!important;width:794px!important;max-width:794px!important;min-height:100px;height:auto!important;background:#fff!important;color:#111827!important;overflow:visible!important;margin:0;padding:28px 34px;font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif;';
-  [...sourceBody.childNodes].forEach(n=>page.appendChild(document.importNode(n,true)));
-  holder.appendChild(page);
-  const exportCss=document.createElement('style');
-  exportCss.textContent=`
-   #deSortNotesPdfExport,#deSortNotesPdfExport *{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-   #deSortNotesPdfExport{width:794px!important;max-width:794px!important;background:#fff!important;color:#111827!important;font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif!important;font-size:14px;line-height:1.55;overflow:visible!important}
-   #deSortNotesPdfExport *{max-width:100%;}
-   #deSortNotesPdfExport p,#deSortNotesPdfExport li,#deSortNotesPdfExport td,#deSortNotesPdfExport th{overflow-wrap:anywhere;}
-   #deSortNotesPdfExport img,#deSortNotesPdfExport svg,#deSortNotesPdfExport canvas{max-width:100%!important;object-fit:contain!important}
-   #deSortNotesPdfExport img{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:245mm!important;object-fit:contain!important;object-position:center!important;margin-left:auto!important;margin-right:auto!important;}
-   #deSortNotesPdfExport header img,#deSortNotesPdfExport .logo img,#deSortNotesPdfExport .brand img,#deSortNotesPdfExport img[alt*='logo' i]{width:auto!important;max-width:100%!important;max-height:45mm!important;object-fit:contain!important;}
-   #deSortNotesPdfExport figure,#deSortNotesPdfExport .diagram,#deSortNotesPdfExport .diagram-container,#deSortNotesPdfExport .image-container,#deSortNotesPdfExport .note-image,#deSortNotesPdfExport .figure,#deSortNotesPdfExport .chart,#deSortNotesPdfExport table{break-inside:avoid!important;page-break-inside:avoid!important;}
-   #deSortNotesPdfExport tr{break-inside:avoid!important;page-break-inside:avoid!important;}
-   #deSortNotesPdfExport h1,#deSortNotesPdfExport h2,#deSortNotesPdfExport h3,#deSortNotesPdfExport h4,#deSortNotesPdfExport h5{break-after:avoid!important;page-break-after:avoid!important;}
-   #deSortNotesPdfExport .de-pdf-new-chapter{break-before:page!important;page-break-before:always!important;}
-   #deSortNotesPdfExport .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important;}
-   #deSortNotesPdfExport .de-pdf-keep-together img{max-height:245mm!important;object-fit:contain!important;}
+  const frame=sn$("snFrame"),doc=frame?.contentDocument;
+  if(!doc?.body)throw new Error('Notes preview अभी तैयार नहीं है। Notes को दोबारा खोलकर कुछ सेकंड बाद प्रयास करें।');
+  // Export the REAL iframe body that is already displaying the uploaded Firebase HTML.
+  // Do not rebuild/copy the body into a DIV: doing so breaks uploaded CSS selectors
+  // such as body > ..., html/body layout rules and can create a watermark-only PDF.
+  const body=doc.body;
+  const text=(body.innerText||body.textContent||'').replace(/\s+/g,' ').trim();
+  const visibleNodes=body.querySelectorAll('img,svg,canvas,table,figure,video');
+  if(text.length<3&&!visibleNodes.length)throw new Error('Preview के HTML body में Notes content नहीं मिला। Admin में अपलोड किए गए HTML के body को जाँचें।');
+  exportStyle=doc.createElement('style');
+  exportStyle.id='de-sn-live-pdf-export-style';
+  exportStyle.textContent=`
+   html,body{width:794px!important;min-width:794px!important;max-width:794px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important;color:#111827!important}
+   body{box-sizing:border-box!important;padding:28px 34px!important;font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body *{box-sizing:border-box!important;max-width:100%;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body p,body li,body td,body th{overflow-wrap:anywhere}
+   body img,body svg,body canvas{max-width:100%!important;object-fit:contain!important}
+   body img{height:auto!important;max-height:245mm!important;object-position:center!important}
+   body header img,body .logo img,body .brand img,body img[alt*="logo" i]{width:auto!important;max-width:100%!important;max-height:45mm!important;object-fit:contain!important}
+   body figure,body .diagram,body .diagram-container,body .image-container,body .note-image,body .figure,body .chart,body table,body tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   body h1,body h2,body h3,body h4,body h5{break-after:avoid!important;page-break-after:avoid!important}
+   @media print{html,body{width:794px!important;height:auto!important;overflow:visible!important}}
   `;
-  holder.appendChild(exportCss);
-  document.body.appendChild(holder);
-
-  // If the Firebase HTML uses a nested content wrapper, body text is still
-  // included. Fail loudly rather than silently downloading a blank PDF.
-  const textContent=(page.innerText||page.textContent||'').replace(/\s+/g,' ').trim();
-  const hasVisual=page.querySelector('img,svg,canvas,table');
-  if(textContent.length<2&&!hasVisual)throw new Error('Firebase Notes HTML में कोई printable text या diagram नहीं मिला। Preview में Notes दिख रहे हैं तो कृपया Refresh करके दोबारा कोशिश करें।');
-
-  // Start identifiable chapter/unit headings on fresh pages.
-  const chapterNodes=[...page.querySelectorAll('h1,h2,h3,h4,h5,[class*="chapter"],[class*="unit-title"],[id*="chapter"],[id*="unit"]')]
-   .filter(el=>{const t=(el.innerText||el.textContent||'').trim();return t&&(/\b(chapter|unit|अध्याय|इकाई)\s*[-:–]?[0-9ivx०-९]*/i.test(t)||/^(chapter|unit|अध्याय|इकाई)\b/i.test(t));});
-  chapterNodes.forEach((el,i)=>{if(i>0)el.classList.add('de-pdf-new-chapter');});
-  [...page.querySelectorAll('img,svg,canvas,figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart')].forEach(el=>{
-   el.classList.add('de-pdf-keep-together');
-   if(el.tagName==='IMG'){el.style.maxWidth='100%';el.style.maxHeight='245mm';el.style.height='auto';el.style.objectFit='contain';el.style.display='block';}
-  });
-
-  // Wait for every image and stylesheet/font to settle before rendering.
-  await Promise.all([...page.querySelectorAll('img')].map(img=>{
+  doc.head.appendChild(exportStyle);
+  // Wait for images and fonts inside the actual preview document.
+  await Promise.all([...body.querySelectorAll('img')].map(img=>{
    if(img.complete&&img.naturalWidth)return Promise.resolve();
    return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,12000)});
   }));
-  try{if(document.fonts?.ready)await document.fonts.ready;}catch(e){}
-  await new Promise(resolve=>setTimeout(resolve,600));
-
+  try{if(doc.fonts?.ready)await doc.fonts.ready;}catch(e){}
+  await new Promise(resolve=>setTimeout(resolve,500));
   const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
   const subjectForFile=snActive.subjectName||snActive.subject||snActive.title||'Subject';
   const filename=(safe(subjectForFile)||'Subject')+'_Notes_by_Diploma_Engineers.pdf';
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF pages बन रहे हैं…';
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF बन रही है…';
+  const width=Math.max(794,Math.ceil(body.scrollWidth||794));
   const opt={
    margin:[10,10,13,10],filename,
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:794,windowHeight:Math.max(1123,Math.ceil(page.scrollHeight)),logging:false,scrollX:0,scrollY:0,imageTimeout:30000,removeContainer:true},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:width,windowHeight:Math.max(1123,Math.ceil(body.scrollHeight||1123)),logging:false,scrollX:0,scrollY:0,imageTimeout:30000},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],avoid:['img','svg','canvas','figure','table','tr','.diagram','.diagram-container','.image-container','.note-image','.figure','.chart','.de-pdf-keep-together']}
+   pagebreak:{mode:['css','legacy'],avoid:['img','svg','canvas','figure','table','tr','.diagram','.diagram-container','.image-container','.note-image','.figure','.chart']}
   };
-  const worker=window.html2pdf().set(opt).from(page).toPdf();
+  // Important: source is doc.body itself, not a detached copy. This preserves every
+  // uploaded HTML element and all styles that make the on-screen preview correct.
+  const worker=window.html2pdf().set(opt).from(body).toPdf();
   const pdf=await worker.get('pdf');
   const total=pdf.internal.getNumberOfPages();
-  if(!total)throw new Error('PDF में कोई page render नहीं हुआ।');
-  // Build a large, faint centered logo watermark once, then stamp it on EVERY page.
-  // If the remote logo cannot be fetched, use a branded text watermark instead of failing PDF export.
+  if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
+  // Stamp a faint central logo watermark and a border on every page AFTER content render.
   const markCanvas=document.createElement('canvas');markCanvas.width=1000;markCanvas.height=1000;
-  const markCtx=markCanvas.getContext('2d');
-  markCtx.clearRect(0,0,1000,1000);markCtx.globalAlpha=0.10;
+  const markCtx=markCanvas.getContext('2d');markCtx.clearRect(0,0,1000,1000);markCtx.globalAlpha=0.10;
   const markLogo=new Image();markLogo.crossOrigin='anonymous';
   markLogo.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg';
   await new Promise(resolve=>{if(markLogo.complete)return resolve();markLogo.onload=resolve;markLogo.onerror=resolve;setTimeout(resolve,3500)});
-  if(markLogo.naturalWidth){
-   const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight);
-   const mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;
-   try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}
-  }
-  if(!markLogo.naturalWidth){
-   markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';
-   markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);
-   markCtx.font='900 82px Arial';markCtx.fillText('ENGINEERS',500,545);
-  }
-  let watermarkData='';try{watermarkData=markCanvas.toDataURL('image/png');}catch(e){watermarkData='';}
+  if(markLogo.naturalWidth){const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight),mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}}
+  if(!markLogo.naturalWidth){markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);markCtx.fillText('ENGINEERS',500,545);}
+  let watermarkData='';try{watermarkData=markCanvas.toDataURL('image/png');}catch(e){}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){try{pdf.setGState(new pdf.GState({opacity:0.11}));pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');pdf.setGState(new pdf.GState({opacity:1}));}catch(e){}}
-   // Consistent professional border on every A4 page.
+   if(watermarkData){try{pdf.setGState(new pdf.GState({opacity:0.10}));pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');pdf.setGState(new pdf.GState({opacity:1}));}catch(e){}}
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
-   pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);
-   pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
+   pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }
   pdf.save(filename);
   btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';
  }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
- finally{holder?.remove();btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
+ finally{try{exportStyle?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
 sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snLangEn")?.addEventListener("click",()=>snSetLanguage("en"));sn$("snLangHi")?.addEventListener("click",()=>snSetLanguage("hi"));sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>

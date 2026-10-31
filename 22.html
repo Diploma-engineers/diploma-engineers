@@ -12413,7 +12413,7 @@ async function snDownload(){
   // Export the complete HTML document, not an isolated body clone. This keeps
   // the uploaded stylesheet, fonts, table rules, diagrams and semantic layout.
   const docClone=srcDoc.documentElement.cloneNode(true);
-  docClone.querySelectorAll('script,noscript,button,.no-print,.pdf-ignore,hr,[data-html2canvas-ignore="true"]').forEach(n=>n.remove());
+  docClone.querySelectorAll('script,noscript,button,.no-print,.pdf-ignore,[data-html2canvas-ignore="true"]').forEach(n=>n.remove());
   let head=docClone.querySelector('head');
   if(!head){head=docClone.insertBefore(srcDoc.createElement('head'),docClone.firstChild);}
   const meta=srcDoc.createElement('meta');meta.setAttribute('charset','UTF-8');head.prepend(meta);
@@ -12422,8 +12422,9 @@ async function snDownload(){
   pdfStyle.textContent=`
    @page{size:A4 portrait;margin:0}
    html{width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;margin:0 auto!important;padding:0!important;overflow:visible!important;background:#fff!important}
-   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:translateX(-5px)!important;width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:18px 26px 22px 17px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
+   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:translateX(-8px)!important;width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:18px 24px 22px 16px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
    #deNotesPdfRoot *{box-sizing:border-box!important}
+   #deNotesPdfRoot hr{display:none!important;border:0!important;height:0!important;margin:0!important;padding:0!important}
    #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
    #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
    #deNotesPdfRoot h2{font-size:19px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
@@ -12434,20 +12435,20 @@ async function snDownload(){
    #deNotesPdfRoot table{width:auto;max-width:100%!important;border-collapse:collapse;table-layout:auto;overflow-wrap:anywhere}#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere;word-break:normal}#deNotesPdfRoot>*{max-width:100%!important}#deNotesPdfRoot .row{max-width:100%!important;margin-left:0!important;margin-right:0!important}
    #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
    #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
-   .de-pdf-unit-start{display:block!important;position:relative!important;left:-17px!important;width:calc(100% + 43px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
-   .de-pdf-unit-start{border-top:0!important;outline:0!important;box-shadow:none!important;margin-top:0!important;left:-17px!important;width:calc(100% + 43px)!important;max-width:none!important}
-   .de-pdf-heading-with-visual{break-before:page!important;page-break-before:always!important;break-after:avoid-page!important;page-break-after:avoid!important}
+   .de-pdf-unit-start{display:block!important;position:relative!important;left:-16px!important;width:calc(100% + 32px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
    #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{break-after:avoid-page!important;page-break-after:avoid!important;orphans:3;widows:3}
-   #deNotesPdfRoot table,#deNotesPdfRoot figure,#deNotesPdfRoot .diagram,#deNotesPdfRoot .diagram-container,#deNotesPdfRoot .image-container{break-inside:avoid-page!important;page-break-inside:avoid!important}
-   tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   /* Keep-together is applied by JS only to figures/images/tables that fit on one A4 content page.
+      Do not force every table row or every visual to a new page: that creates large blank gaps. */
+   #deNotesPdfRoot table,#deNotesPdfRoot figure,#deNotesPdfRoot .diagram,#deNotesPdfRoot .diagram-container,#deNotesPdfRoot .image-container{break-inside:auto!important;page-break-inside:auto!important}
+   #deNotesPdfRoot tr{break-inside:auto!important;page-break-inside:auto!important}
    @media print{html,body{overflow:visible!important}}
   `;
   head.appendChild(pdfStyle);
 
   exportFrame=document.createElement('iframe');
   exportFrame.setAttribute('aria-hidden','true');
-  exportFrame.style.cssText='position:fixed;left:0;top:0;width:680px;height:1015px;border:0;z-index:2147483000;background:#fff;pointer-events:none;';
+  exportFrame.style.cssText='position:fixed;left:0;top:0;width:680px;height:1015px;border:0;z-index:-1;background:#fff;pointer-events:none;opacity:0;';
   document.body.appendChild(exportFrame);
   const exportDoc=exportFrame.contentDocument;
   exportDoc.open();exportDoc.write('<!doctype html>'+docClone.outerHTML);exportDoc.close();
@@ -12488,8 +12489,8 @@ async function snDownload(){
   exportBody.style.setProperty('min-height','0','important');
   exportBody.style.setProperty('overflow','visible','important');
   exportBody.style.setProperty('margin','0 auto','important');
-  exportBody.style.setProperty('transform','translateX(-5px)','important');
-  exportBody.style.setProperty('padding','18px 26px 22px 17px','important');
+  exportBody.style.setProperty('transform','translateX(-8px)','important');
+  exportBody.style.setProperty('padding','18px 24px 22px 16px','important');
   const pdfRoot=exportBody;
   // Only constrain elements that can exceed the page; preserve normal layout,
   // margins, flex/grid structure, floats and positioning of the original notes.
@@ -12540,24 +12541,6 @@ async function snDownload(){
    });
    if(!nested)el.classList.add('de-pdf-unit-start');
   });
-  // Keep a heading with the table/diagram/image it introduces. If the visual
-  // would otherwise be pushed to the next page, move the heading with it.
-  const visualSelector='table,figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,img,svg,canvas';
-  const headingEls=[...pdfRoot.querySelectorAll('h1,h2,h3,h4,h5,h6,p,strong,b,div')];
-  headingEls.forEach(h=>{
-   const text=(h.innerText||h.textContent||'').replace(/\s+/g,' ').trim();
-   if(!text||text.length>150||h.querySelector(visualSelector))return;
-   const tag=h.tagName.toLowerCase();
-   const styledHeading=/^H[1-6]$/.test(h.tagName)||/font-weight:\s*(bold|[7-9]00)/i.test(h.getAttribute('style')||'')||/^\d+(?:\.\d+)*[.)]?\s+/.test(text);
-   if(!styledHeading)return;
-   let next=h.nextElementSibling;
-   while(next&&/^(SCRIPT|STYLE)$/.test(next.tagName))next=next.nextElementSibling;
-   if(next&&next.matches(visualSelector)){
-    h.classList.add('de-pdf-heading-with-visual');
-    next.classList.add('de-pdf-keep-together');
-   }
-  });
-
   // Keep diagrams/figures/tables together only when each fits on one A4
   // content page. Oversized ones are allowed to continue across pages.
   const keepCandidates=[...pdfRoot.querySelectorAll('figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,table,img,svg,canvas')];
@@ -12576,7 +12559,7 @@ async function snDownload(){
    image:{type:'jpeg',quality:0.98},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:680,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['.de-pdf-keep-together']}
   };
   const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();

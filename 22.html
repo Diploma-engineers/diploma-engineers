@@ -12404,7 +12404,6 @@ async function snDownload(){
  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF तैयार हो रही है…';
  let exportFrame=null;
  try{
-  await snEnsurePdf();
   const preview=sn$("snFrame"),srcDoc=preview?.contentDocument;
   if(!srcDoc?.body)throw new Error('Notes preview अभी तैयार नहीं है। Notes को दोबारा खोलकर कुछ सेकंड बाद प्रयास करें।');
   const bodyText=(srcDoc.body.innerText||srcDoc.body.textContent||'').replace(/\s+/g,' ').trim();
@@ -12450,6 +12449,18 @@ async function snDownload(){
    const check=()=>{if(exportDoc.readyState==='complete')resolve();else setTimeout(check,80)};
    check();setTimeout(resolve,12000);
   });
+  // IMPORTANT: html2pdf/html2canvas must run in the SAME browsing context as
+  // the cloned notes DOM. Running the parent window's renderer on an iframe
+  // element can produce a watermark-only/blank PDF on some Chromium builds.
+  await new Promise((resolve,reject)=>{
+   if(typeof exportFrame.contentWindow.html2pdf==='function')return resolve();
+   const lib=exportDoc.createElement('script');
+   lib.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+   lib.onload=()=>typeof exportFrame.contentWindow.html2pdf==='function'?resolve():reject(new Error('PDF renderer iframe में initialize नहीं हुआ।'));
+   lib.onerror=()=>reject(new Error('PDF library load नहीं हुई; internet connection जाँचें।'));
+   exportDoc.head.appendChild(lib);
+   setTimeout(()=>reject(new Error('PDF renderer load timeout.')),20000);
+  });
   // Set a stable A4 printable canvas while preserving uploaded HTML layout.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
   for(const [el,styles] of [[root,{width:'718px',minWidth:'0',maxWidth:'718px',height:'auto',overflow:'visible',margin:'0',padding:'0'}],[exportBody,{display:'block',width:'718px',minWidth:'0',maxWidth:'718px',height:'auto',minHeight:'0',overflow:'visible',margin:'0',padding:'0'}]]){
@@ -12481,6 +12492,10 @@ async function snDownload(){
   }));
   try{await exportDoc.fonts.ready;}catch(e){}
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const renderedText=(pdfRoot.innerText||pdfRoot.textContent||'').replace(/\s+/g,' ').trim();
+  const renderedVisuals=pdfRoot.querySelectorAll('img,svg,canvas,table,figure,video').length;
+  if(renderedText.length<3&&!renderedVisuals)throw new Error('PDF export copy में notes content नहीं आया। मूल HTML को सुरक्षित रखते हुए दोबारा Notes खोलें।');
+  if(!pdfRoot.firstElementChild&&!renderedText)throw new Error('PDF export content खाली है; PDF डाउनलोड रोक दिया गया है ताकि खाली PDF न बने।');
 
   // Recognize Unit / इकाई headings, even when the uploaded HTML uses a
   // paragraph or styled div instead of a heading element.
@@ -12511,11 +12526,11 @@ async function snDownload(){
   const opt={
    margin:[10,10,10,10],filename,
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
    pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };
-  const pdf=await window.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
+  const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
   // Refuse a blank/watermark-only output.

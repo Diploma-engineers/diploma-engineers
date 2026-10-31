@@ -12683,6 +12683,35 @@ async function snDownload(){
   }else{
    throw new Error('PDF library में page reorder सुविधा उपलब्ध नहीं है; first-page image सुरक्षित रूप से add नहीं की जा सकी।');
   }
+  // Append the two supplied promotional artworks as the final two A4 pages.
+  // They are added after the watermark/border pass, so both remain edge-to-edge
+  // with their original aspect ratio and no border, watermark, or margins.
+  const notesEndingImageUrls=[
+   'https://diplomaengineers.vercel.app/9f5bc381-8084-4e96-a289-65d5ea461da6.jpeg',
+   'https://diplomaengineers.vercel.app/e3fa48c-291b-4e21-85d9-7d8e8649a5f4.jpeg'
+  ];
+  for(let endingIndex=0;endingIndex<notesEndingImageUrls.length;endingIndex++){
+   const endingImg=new Image();
+   endingImg.crossOrigin='anonymous';
+   endingImg.decoding='async';
+   endingImg.src=notesEndingImageUrls[endingIndex];
+   await new Promise((resolve,reject)=>{
+    if(endingImg.complete&&endingImg.naturalWidth)return resolve();
+    endingImg.onload=resolve;
+    endingImg.onerror=()=>reject(new Error('Short Notes की आखिरी image '+(endingIndex+1)+' load नहीं हुई। Internet connection या image URL जाँचें।'));
+    setTimeout(()=>{if(!endingImg.naturalWidth)reject(new Error('Short Notes की आखिरी image '+(endingIndex+1)+' loading timed out.'))},15000);
+   });
+   const endingCanvas=document.createElement('canvas');
+   endingCanvas.width=endingImg.naturalWidth||1080;
+   endingCanvas.height=endingImg.naturalHeight||1526;
+   const endingCtx=endingCanvas.getContext('2d');
+   endingCtx.drawImage(endingImg,0,0,endingCanvas.width,endingCanvas.height);
+   const endingImageData=endingCanvas.toDataURL('image/jpeg',0.99);
+   pdf.addPage('a4','portrait');
+   const endingW=pdf.internal.pageSize.getWidth();
+   const endingH=pdf.internal.pageSize.getHeight();
+   pdf.addImage(endingImageData,'JPEG',0,0,endingW,endingH,'notes-ending-'+(endingIndex+1),'FAST');
+  }
   // Trigger download from the top-level page to avoid iframe download restrictions.
   const pdfBlob=pdf.output('blob');
   const downloadUrl=URL.createObjectURL(pdfBlob);

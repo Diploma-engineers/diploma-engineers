@@ -10812,6 +10812,11 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
         window.deCourseReturnToReader();return true;
       }else{window.deCourseReturnToReader();return true;}
     }
+    // Short Notes has its own Branch > Semester > Subject > File hierarchy.
+    // Walk back one level at a time; leave the page only from its root.
+    if(active==='sortNotesPage' && typeof window.deShortNotesGoBack==='function'){
+      if(window.deShortNotesGoBack()) return true;
+    }
     // Keep folder navigation local where the page has its own hierarchy.
     if(active==='importantQuestionsPage' && typeof window.iqNavigateBack==='function'){
       const crumb=document.getElementById('iqAppCrumbs');
@@ -11545,7 +11550,7 @@ async function iqDownloadPdf(el,name){
    for(let page=1;page<=total;page++){pdf.setPage(page);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();pdf.addImage(watermark,'PNG',(pw-155)/2,(ph-155)/2,155,155,undefined,'FAST');/* Professional single-line border on every generated question page */pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');}
    // Append the supplied full-page image as the FINAL page of every downloaded PDF.
    // Source image is 1054 x 1492 (A4-like portrait ratio); fit edge-to-edge to A4.
-   const lastPageImageUrl='https://diplomaengineers.vercel.app/9ee54b14-2728-42f0-88cf-62b5d9acbb51.jpeg';
+   const lastPageImageUrl='https://diplomaengineers.vercel.app/becf5501-c58f-4b36-8d20-4e996e420210.jpeg';
    const lastPageImage=new Image();lastPageImage.crossOrigin='anonymous';lastPageImage.src=lastPageImageUrl;
    await new Promise((resolve,reject)=>{if(lastPageImage.complete&&lastPageImage.naturalWidth)return resolve();lastPageImage.onload=resolve;lastPageImage.onerror=()=>reject(new Error('Last-page PDF image could not be loaded. Please check the internet connection and try again.'));setTimeout(()=>{if(!lastPageImage.naturalWidth)reject(new Error('Last-page PDF image loading timed out. Please try again.'));},10000)});
    const lastCanvas=document.createElement('canvas');lastCanvas.width=lastPageImage.naturalWidth||1054;lastCanvas.height=lastPageImage.naturalHeight||1492;
@@ -12442,7 +12447,11 @@ async function snDownload(){
    #deNotesPdfRoot table{width:auto;max-width:100%!important;border-collapse:collapse;table-layout:auto;overflow-wrap:anywhere}#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere;word-break:normal}#deNotesPdfRoot>*{max-width:100%!important}#deNotesPdfRoot .row{max-width:100%!important;margin-left:0!important;margin-right:0!important}
    #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
    #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
-   .de-pdf-unit-start{display:block!important;position:relative!important;left:-20px!important;width:calc(100% + 40px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
+   .de-pdf-unit-start{display:block!important;position:relative!important;left:-20px!important;top:14px!important;width:calc(100% + 40px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 26px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
+   /* Hide only a trailing blue divider immediately before a forced Unit page break. */
+   #deNotesPdfRoot .de-pdf-before-unit{border-bottom:0!important;box-shadow:none!important;outline:0!important}
+   #deNotesPdfRoot .de-pdf-before-unit:after,#deNotesPdfRoot .de-pdf-before-unit:before{border:0!important;box-shadow:none!important}
+   #deNotesPdfRoot .de-pdf-before-unit hr{display:none!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
    #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{break-after:avoid-page!important;page-break-after:avoid!important;orphans:3;widows:3}
    /* Keep-together is applied by JS only to figures/images/tables that fit on one A4 content page.
@@ -12499,6 +12508,36 @@ async function snDownload(){
   exportBody.style.setProperty('transform','none','important');
   exportBody.style.setProperty('padding','18px 20px 22px 20px','important');
   const pdfRoot=exportBody;
+  // Add a dedicated, centered A4 cover page before the uploaded notes content.
+  // Metadata comes from the selected Firebase Notes record, not guessed values.
+  const cover=exportDoc.createElement('section');
+  cover.className='de-notes-pdf-cover';
+  cover.style.cssText='width:100%;height:900px;min-height:900px;max-height:900px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;page-break-after:always;break-after:page;padding:40px 34px;background:#fff;color:#172033;margin:0;';
+  const coverBrand=exportDoc.createElement('div');
+  coverBrand.textContent='DIPLOMA ENGINEERS';
+  coverBrand.style.cssText='font-family:Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:900;letter-spacing:2px;color:#123d70;margin:0 0 54px;text-align:center;';
+  const coverLabel=exportDoc.createElement('div');
+  coverLabel.textContent='STUDY NOTES';
+  coverLabel.style.cssText='font-family:Arial,sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:#64748b;margin:0 0 18px;text-align:center;';
+  const coverSubject=exportDoc.createElement('div');
+  coverSubject.textContent=String(snActive.subjectName||snActive.subject||snActive.title||'Subject Notes');
+  coverSubject.style.cssText='font-family:Arial,sans-serif;font-size:32px;line-height:1.3;font-weight:900;color:#123d70;max-width:100%;overflow-wrap:anywhere;text-align:center;margin:0 auto 34px;';
+  const coverMeta=exportDoc.createElement('div');
+  coverMeta.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;max-width:470px;margin:0 auto 48px;';
+  const branchValue=String(snActive.branch||snActive.branchName||snActive.category||'Diploma Engineering');
+  const semesterValue=String(snActive.semester||snActive.semesterName||snActive.term||snActive.year||'Semester');
+  [["BRANCH",branchValue],["SEMESTER",semesterValue]].forEach(([label,value])=>{
+   const row=exportDoc.createElement('div');
+   row.style.cssText='width:100%;padding:15px 18px;border:1.5px solid #d8e3f1;border-radius:10px;background:#f7faff;text-align:center;box-sizing:border-box;';
+   const small=exportDoc.createElement('div');small.textContent=label;small.style.cssText='font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;font-weight:800;color:#64748b;margin-bottom:6px;';
+   const valueEl=exportDoc.createElement('div');valueEl.textContent=value;valueEl.style.cssText='font-family:Arial,sans-serif;font-size:19px;line-height:1.35;font-weight:800;color:#172033;overflow-wrap:anywhere;';
+   row.append(small,valueEl);coverMeta.appendChild(row);
+  });
+  const coverBy=exportDoc.createElement('div');
+  coverBy.textContent='BY @DIPLOMA_ENGINEERS';
+  coverBy.style.cssText='font-family:Arial,sans-serif;font-size:15px;font-weight:900;letter-spacing:1.8px;color:#123d70;text-align:center;border-top:2px solid #123d70;padding-top:18px;min-width:270px;';
+  cover.append(coverBrand,coverLabel,coverSubject,coverMeta,coverBy);
+  pdfRoot.insertBefore(cover,pdfRoot.firstChild);
   // Only constrain elements that can exceed the page; preserve normal layout,
   // margins, flex/grid structure, floats and positioning of the original notes.
   pdfRoot.querySelectorAll('*').forEach(el=>{
@@ -12546,7 +12585,21 @@ async function snDownload(){
     const ct=(child.innerText||child.textContent||'').replace(/\s+/g,' ').trim();
     return ct.length>0&&ct.length<90&&unitPattern.test(ct);
    });
-   if(!nested)el.classList.add('de-pdf-unit-start');
+   if(!nested){
+    el.classList.add('de-pdf-unit-start');
+    // The first Unit follows the cover page break; do not force another page break,
+    // which would create an empty watermark-only page between cover and notes.
+    if(!pdfRoot.querySelector('.de-pdf-first-unit')){
+     el.classList.add('de-pdf-first-unit');
+     el.style.setProperty('break-before','auto','important');
+     el.style.setProperty('page-break-before','auto','important');
+    }
+    // The last content block before a new Unit must not leave a blue divider
+    // at the bottom edge of the previous PDF page.
+    let prev=el.previousElementSibling;
+    while(prev && !((prev.innerText||prev.textContent||'').trim())) prev=prev.previousElementSibling;
+    if(prev)prev.classList.add('de-pdf-before-unit');
+   }
   });
   // Keep diagrams/figures/tables together only when each fits on one A4
   // content page. Oversized ones are allowed to continue across pages.
@@ -12566,7 +12619,7 @@ async function snDownload(){
    image:{type:'jpeg',quality:0.98},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['.de-pdf-keep-together','p','li','blockquote']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start:not(.de-pdf-first-unit)'],avoid:['.de-pdf-keep-together','p','li','blockquote']}
   };
   const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
@@ -12594,8 +12647,75 @@ async function snDownload(){
   }catch(logoError){console.warn('PDF watermark skipped; continuing download.',logoError)}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){const wmW=125,wmH=125;pdf.saveGraphicsState?.();pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');pdf.restoreGraphicsState?.();}
-   // Page frame removed: prevents the blue horizontal line appearing before each new unit.
+   if(watermarkData){const wmW=112,wmH=112;pdf.saveGraphicsState?.();pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');pdf.restoreGraphicsState?.();}
+   // Draw a clean, complete page border on every notes/content page.
+   // The separate full-page promotional image added below intentionally has
+   // no border or watermark over it, so its artwork remains edge-to-edge.
+   pdf.setDrawColor(35,72,119);
+   pdf.setLineWidth(0.45);
+   const inset=7.5;
+   pdf.rect(inset,inset,pw-inset*2,ph-inset*2);
+  }
+  // Add the supplied 1024x1536 artwork as a true edge-to-edge A4 page BEFORE
+  // the existing designed Notes cover. It is added directly to jsPDF rather
+  // than the HTML capture so the page border/margins cannot overlap it.
+  const notesIntroImageUrl='https://diplomaengineers.vercel.app/becf5501-c58f-4b36-8d20-4e996e420210.jpeg';
+  const notesIntroImage=new Image();
+  notesIntroImage.crossOrigin='anonymous';
+  notesIntroImage.decoding='async';
+  notesIntroImage.src=notesIntroImageUrl;
+  await new Promise((resolve,reject)=>{
+   if(notesIntroImage.complete&&notesIntroImage.naturalWidth)return resolve();
+   notesIntroImage.onload=resolve;
+   notesIntroImage.onerror=()=>reject(new Error('Notes first-page image load नहीं हुई। Internet connection जाँचें।'));
+   setTimeout(()=>{if(!notesIntroImage.naturalWidth)reject(new Error('Notes first-page image loading timed out.'))},15000);
+  });
+  const introCanvas=document.createElement('canvas');
+  introCanvas.width=notesIntroImage.naturalWidth||1024;
+  introCanvas.height=notesIntroImage.naturalHeight||1536;
+  const introCtx=introCanvas.getContext('2d');
+  introCtx.drawImage(notesIntroImage,0,0,introCanvas.width,introCanvas.height);
+  const introImageData=introCanvas.toDataURL('image/jpeg',0.99);
+  pdf.addPage('a4','portrait');
+  const introPageNumber=pdf.internal.getNumberOfPages();
+  pdf.setPage(introPageNumber);
+  const introW=pdf.internal.pageSize.getWidth();
+  const introH=pdf.internal.pageSize.getHeight();
+  // Full A4 bleed: no border, no watermark and no white margins on this page.
+  pdf.addImage(introImageData,'JPEG',0,0,introW,introH,'notes-intro-full-page','FAST');
+  if(typeof pdf.movePage==='function'){
+   pdf.movePage(introPageNumber,1);
+  }else{
+   throw new Error('PDF library में page reorder सुविधा उपलब्ध नहीं है; first-page image सुरक्षित रूप से add नहीं की जा सकी।');
+  }
+  // Append the two supplied promotional artworks as the final two A4 pages.
+  // They are added after the watermark/border pass, so both remain edge-to-edge
+  // with their original aspect ratio and no border, watermark, or margins.
+  const notesEndingImageUrls=[
+   'https://diplomaengineers.vercel.app/9f5bc381-8084-4e96-a289-65d5ea461da6.jpeg',
+   'https://diplomaengineers.vercel.app/9e3fa48c-291b-4e21-85d9-7d8e8649a5f4.jpeg '
+  ];
+  for(let endingIndex=0;endingIndex<notesEndingImageUrls.length;endingIndex++){
+   const endingImg=new Image();
+   endingImg.crossOrigin='anonymous';
+   endingImg.decoding='async';
+   endingImg.src=notesEndingImageUrls[endingIndex];
+   await new Promise((resolve,reject)=>{
+    if(endingImg.complete&&endingImg.naturalWidth)return resolve();
+    endingImg.onload=resolve;
+    endingImg.onerror=()=>reject(new Error('Short Notes की आखिरी image '+(endingIndex+1)+' load नहीं हुई। Internet connection या image URL जाँचें।'));
+    setTimeout(()=>{if(!endingImg.naturalWidth)reject(new Error('Short Notes की आखिरी image '+(endingIndex+1)+' loading timed out.'))},15000);
+   });
+   const endingCanvas=document.createElement('canvas');
+   endingCanvas.width=endingImg.naturalWidth||1080;
+   endingCanvas.height=endingImg.naturalHeight||1526;
+   const endingCtx=endingCanvas.getContext('2d');
+   endingCtx.drawImage(endingImg,0,0,endingCanvas.width,endingCanvas.height);
+   const endingImageData=endingCanvas.toDataURL('image/jpeg',0.99);
+   pdf.addPage('a4','portrait');
+   const endingW=pdf.internal.pageSize.getWidth();
+   const endingH=pdf.internal.pageSize.getHeight();
+   pdf.addImage(endingImageData,'JPEG',0,0,endingW,endingH,'notes-ending-'+(endingIndex+1),'FAST');
   }
   // Trigger download from the top-level page to avoid iframe download restrictions.
   const pdfBlob=pdf.output('blob');
@@ -12608,6 +12728,20 @@ async function snDownload(){
  finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
 sn$("snDownload")?.addEventListener("click",snDownload);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
+// Returns true when Back was handled inside Short Notes; false at its root.
+window.deShortNotesGoBack=function(){
+ const reader=sn$("snReader"),grid=sn$("snFolders"),tools=sn$("snTools"),status=sn$("snStatus");
+ if(reader && !reader.hidden){
+  reader.hidden=true;if(grid)grid.hidden=false;if(tools)tools.hidden=false;
+  if(status)status.textContent="";
+  snActive=null;
+  const frame=sn$("snFrame");if(frame){frame.removeAttribute("src");frame.srcdoc="";}
+  if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}
+  window.scrollTo({top:0,left:0,behavior:"instant"});return true;
+ }
+ if(snPath.length){snPath.pop();snActive=null;snRender();window.scrollTo({top:0,left:0,behavior:"instant"});return true;}
+ return false;
+};
 </script>
 
 <style id="de-hide-study-hub-back-buttons">

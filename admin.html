@@ -2319,11 +2319,12 @@ body { overflow-x:hidden; }
       <div class="hnu-field"><label for="hnuSemester">Semester *</label><select id="hnuSemester"><option value="">Select Semester</option><option value="1">1st Semester</option><option value="2">2nd Semester</option><option value="3">3rd Semester</option><option value="4">4th Semester</option><option value="5">5th Semester</option><option value="6">6th Semester</option></select></div>
       <div class="hnu-field"><label for="hnuTitle">Notes Title *</label><input id="hnuTitle" placeholder="e.g. Complete Unit-wise Notes"></div>
       <div class="hnu-field full"><label>Choose Upload Method *</label><div class="hnu-choice"><label><input type="radio" name="hnuMode" value="file" checked> <span><b>HTML File</b><small style="display:block;color:#64748b">Select .html / .htm file from device</small></span></label><label><input type="radio" name="hnuMode" value="code"> <span><b>HTML Code</b><small style="display:block;color:#64748b">Paste complete HTML source code</small></span></label></div></div>
+      <div class="hnu-field full"><div class="hnu-actions" style="margin:0"><button type="button" class="hnu-btn hnu-primary" id="hnuSave"><i class="fa-solid fa-cloud-arrow-up"></i> Save Notes</button><button type="button" class="hnu-btn hnu-light" id="hnuClear"><i class="fa-solid fa-eraser"></i> Clear Subject & Title</button><button type="button" class="hnu-btn hnu-light" id="hnuRefresh"><i class="fa-solid fa-rotate"></i> Refresh Saved Notes</button></div></div>
       <div class="hnu-field full" id="hnuFilePanel"><label for="hnuFile">Select HTML Notes File *</label><input id="hnuFile" type="file" accept=".html,.htm,text/html"><div id="hnuFileName" class="hnu-note">Only HTML files are accepted. Maximum size: 2 MB.</div></div>
       <div class="hnu-field full hnu-hidden" id="hnuCodePanel"><label for="hnuCode">Paste HTML Code *</label><textarea id="hnuCode" spellcheck="false" placeholder="Paste complete HTML code here, starting with <!DOCTYPE html> or <html>..."></textarea></div>
       <div class="hnu-field full"><label>Preview</label><iframe id="hnuPreview" class="hnu-preview" title="HTML notes preview" sandbox="allow-same-origin"></iframe><div class="hnu-note">Preview is local. Scripts inside uploaded HTML are disabled in this preview for safety; saved source is preserved as supplied.</div></div>
     </div>
-    <div class="hnu-actions"><button type="button" class="hnu-btn hnu-primary" id="hnuSave"><i class="fa-solid fa-cloud-arrow-up"></i> Save Notes to Firebase</button><button type="button" class="hnu-btn hnu-light" id="hnuClear">Clear Form</button><button type="button" class="hnu-btn hnu-light" id="hnuRefresh">Refresh Saved Notes</button></div>
+
     <div id="hnuStatus" class="hnu-status" role="status"></div>
   </div>
   <div class="hnu-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0;font-size:18px">Saved HTML Notes</h2><span id="hnuCount" class="hnu-note">Loading...</span></div><div id="hnuSavedList" class="hnu-list" style="margin-top:14px">Login required.</div></div>
@@ -6925,7 +6926,13 @@ function hnuSafePreview(html){const frame=hnu("hnuPreview");if(!frame)return;let
   src=src.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,"").replace(/\son\w+\s*=\s*(["']).*?\1/gi,"");frame.srcdoc=src;
 }
 async function hnuGetHtml(){if(hnuMode()==="code"){const code=hnu("hnuCode")?.value.trim()||"";return code;}if(hnuSelectedFile)return await hnuSelectedFile.text();return hnuCachedHtml||"";}
-function hnuReset(){hnuEditingId=null;hnuSelectedFile=null;hnuCachedHtml="";["hnuSubject","hnuTitle","hnuCode"].forEach(id=>{if(hnu(id))hnu(id).value=""});if(hnu("hnuBranch"))hnu("hnuBranch").value="Common";if(hnu("hnuSemester"))hnu("hnuSemester").value="";if(hnu("hnuFile"))hnu("hnuFile").value="";if(hnu("hnuFileName"))hnu("hnuFileName").textContent="Only HTML files are accepted. Maximum size: 2 MB.";hnuSafePreview("<h2>HTML Notes Preview</h2><p>Select an HTML file or paste HTML code to preview.</p>");hnuStatus("Form cleared.");}
+function hnuReset(){
+  // Clear only the Subject and Notes Title. Keep branch, semester, upload method,
+  // selected HTML file/code, cached content and preview intact until browser refresh.
+  if(hnu("hnuSubject"))hnu("hnuSubject").value="";
+  if(hnu("hnuTitle"))hnu("hnuTitle").value="";
+  hnuStatus("Subject और Title clear हो गए हैं। बाकी upload details सुरक्षित हैं।");
+}
 async function hnuSave(){
   if(!auth.currentUser){hnuStatus("Please login again before saving notes.",true);return;}
   const branch=hnu("hnuBranch")?.value||"",subject=hnu("hnuSubject")?.value.trim()||"",semester=hnu("hnuSemester")?.value||"",title=hnu("hnuTitle")?.value.trim()||"";
@@ -6953,6 +6960,8 @@ async function hnuPdfRecord(d){
   try{hnuSafePreview(d.htmlContent);frame.srcdoc=d.htmlContent;await new Promise((resolve,reject)=>{frame.onload=()=>setTimeout(resolve,700);setTimeout(()=>reject(new Error("Preview render timeout")),10000);});const doc=frame.contentDocument;if(!doc?.body)throw new Error("Could not render HTML content.");const canvas=await window.html2canvas(doc.body,{scale:1.6,useCORS:true,backgroundColor:"#ffffff",windowWidth:794,logging:false});const {jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4"),pageW=210,pageH=297,margin=10,usableW=pageW-2*margin,usableH=pageH-2*margin,imgW=usableW,imgH=canvas.height*imgW/canvas.width;let offset=0,page=0;while(offset<imgH){if(page>0)pdf.addPage();const sliceH=Math.min(usableH,imgH-offset),sourceY=Math.round(offset/imgW*canvas.width),sourceH=Math.min(canvas.height-sourceY,Math.round(sliceH/imgW*canvas.width));const c=document.createElement("canvas");c.width=canvas.width;c.height=sourceH;const ctx=c.getContext("2d");ctx.drawImage(canvas,0,sourceY,canvas.width,sourceH,0,0,canvas.width,sourceH);pdf.addImage(c.toDataURL("image/jpeg",.94),"JPEG",margin,margin,imgW,sourceH*imgW/canvas.width);pdf.setDrawColor(180,190,205);pdf.setLineWidth(.35);pdf.rect(5,5,200,287);pdf.setFontSize(8);pdf.setTextColor(145,155,170);pdf.text("Notes by diploma_engineers7",105,291,{align:"center"});offset+=usableH;page++;}const slug=(d.subject||d.title||"notes").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");pdf.save(`${slug||"study-notes"}_Notes_by_diploma_engineers7.pdf`);
   }finally{frame.remove();}
 }
+let hnuLastAutoTitle="";
+hnu("hnuSubject")?.addEventListener("input",()=>{const subject=hnu("hnuSubject").value.trim();const title=hnu("hnuTitle");if(!title)return;const generated=subject?subject+"_NOTES_@DIPLOMA_ENGINEERS7":"";if(!title.value||title.value===hnuLastAutoTitle){title.value=generated;hnuLastAutoTitle=generated;}});
 hnu("hnuSave")?.addEventListener("click",hnuSave);hnu("hnuClear")?.addEventListener("click",hnuReset);hnu("hnuRefresh")?.addEventListener("click",hnuLoadSaved);
 document.querySelectorAll('input[name="hnuMode"]').forEach(r=>r.addEventListener("change",()=>{hnuSetMode(hnuMode());hnuStatus(hnuMode()==="file"?"HTML file mode selected.":"HTML code mode selected.");}));
 hnuSetMode("file");hnu("hnuFile")?.addEventListener("change",async e=>{const f=e.target.files?.[0];if(!f)return;if(!/\.html?$/i.test(f.name)&&f.type!=="text/html"){hnuStatus("Only .html / .htm file allowed.",true);e.target.value="";return;}if(f.size>2*1024*1024){hnuStatus("File size 2 MB से कम रखें.",true);e.target.value="";return;}hnuSelectedFile=f;hnu("hnuFileName").textContent=f.name+" · "+Math.ceil(f.size/1024)+" KB";const html=await f.text();hnuCachedHtml=html;hnuSafePreview(html);hnuStatus("HTML file loaded. Check preview and click Save Notes.");});
@@ -7317,6 +7326,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
       <button class="upload-hub-item" data-upload-target="news"><span class="hub-icon hub-orange"><i class="fa-solid fa-newspaper"></i></span><b>News</b><small>Notices, results & updates</small></button>
       <button class="upload-hub-item" data-upload-target="test"><span class="hub-icon hub-purple"><i class="fa-solid fa-clipboard-question"></i></span><b>Test Series</b><small>Create and publish tests</small></button>
       <button class="upload-hub-item" data-upload-target="important"><span class="hub-icon hub-green"><i class="fa-solid fa-file-circle-question"></i></span><b>Important Questions</b><small>Upload question sheets</small></button>
+      <button class="upload-hub-item" data-upload-target="notes"><span class="hub-icon hub-teal"><i class="fa-solid fa-file-lines"></i></span><b>Upload Notes</b><small>Upload or create HTML notes</small></button>
       <button class="upload-hub-item" data-upload-target="blog"><span class="hub-icon hub-pink"><i class="fa-solid fa-pen-nib"></i></span><b>Blog</b><small>Create a learning post</small></button>
       <button class="upload-hub-item" data-upload-target="course"><span class="hub-icon hub-indigo"><i class="fa-solid fa-graduation-cap"></i></span><b>Courses</b><small>Manage course content</small></button>
     </div>
@@ -10917,7 +10927,7 @@ html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!impor
 .upload-hub-item{min-width:0;text-align:left;padding:15px 12px;border:1px solid #e7edf5;border-radius:17px;background:#fff;cursor:pointer;transition:.18s}
 .upload-hub-item:hover{border-color:#93c5fd;background:#f8fbff;transform:translateY(-2px)}
 .hub-icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:17px;margin-bottom:11px}
-.hub-blue{background:#eff6ff;color:#2563eb}.hub-orange{background:#fff7ed;color:#ea580c}.hub-purple{background:#f5f3ff;color:#7c3aed}.hub-green{background:#ecfdf5;color:#059669}.hub-pink{background:#fdf2f8;color:#db2777}.hub-indigo{background:#eef2ff;color:#4f46e5}
+.hub-blue{background:#eff6ff;color:#2563eb}.hub-orange{background:#fff7ed;color:#ea580c}.hub-purple{background:#f5f3ff;color:#7c3aed}.hub-green{background:#ecfdf5;color:#059669}.hub-pink{background:#fdf2f8;color:#db2777}.hub-indigo{background:#eef2ff;color:#4f46e5}.hub-teal{background:#ecfeff;color:#0891b2}
 .upload-hub-item b{display:block;font-size:12px;color:#172033}.upload-hub-item small{display:block;font-size:9px;color:#64748b;margin-top:4px;line-height:1.45}
 .upload-hub-note{font-size:10px;color:#64748b;margin:16px 2px 0}
 #mobileBottomNav .nav-upload-center{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:62px!important;color:#64748b!important;font-size:9px!important}

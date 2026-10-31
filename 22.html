@@ -12479,7 +12479,8 @@ async function snDownload(){
   await new Promise(resolve=>setTimeout(resolve,600));
 
   const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
-  const filename=[safe(snActive.subject)||'Study',safe(snActive.semester)||'Semester',safe(snActive.branch)||'All_Branches','Notes_by_diploma_engineers7'].join('_')+'.pdf';
+  const subjectForFile=snActive.subjectName||snActive.subject||snActive.title||'Subject';
+  const filename=(safe(subjectForFile)||'Subject')+'_Notes_by_Diploma_Engineers.pdf';
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF pages बन रहे हैं…';
   const opt={
    margin:[10,10,13,10],filename,
@@ -12492,11 +12493,32 @@ async function snDownload(){
   const pdf=await worker.get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF में कोई page render नहीं हुआ।');
+  // Build a large, faint centered logo watermark once, then stamp it on EVERY page.
+  // If the remote logo cannot be fetched, use a branded text watermark instead of failing PDF export.
+  const markCanvas=document.createElement('canvas');markCanvas.width=1000;markCanvas.height=1000;
+  const markCtx=markCanvas.getContext('2d');
+  markCtx.clearRect(0,0,1000,1000);markCtx.globalAlpha=0.10;
+  const markLogo=new Image();markLogo.crossOrigin='anonymous';
+  markLogo.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg';
+  await new Promise(resolve=>{if(markLogo.complete)return resolve();markLogo.onload=resolve;markLogo.onerror=resolve;setTimeout(resolve,3500)});
+  if(markLogo.naturalWidth){
+   const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight);
+   const mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;
+   try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}
+  }
+  if(!markLogo.naturalWidth){
+   markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';
+   markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);
+   markCtx.font='900 82px Arial';markCtx.fillText('ENGINEERS',500,545);
+  }
+  let watermarkData='';try{watermarkData=markCanvas.toDataURL('image/png');}catch(e){watermarkData='';}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   pdf.setDrawColor(203,213,225);pdf.setLineWidth(0.25);pdf.rect(5,5,pw-10,ph-10,'S');
-   pdf.setTextColor(148,163,184);pdf.setFont('helvetica','bold');pdf.setFontSize(8);
-   pdf.text('DIPLOMA ENGINEERS',pw/2,ph-6,{align:'center'});
+   if(watermarkData){try{pdf.setGState(new pdf.GState({opacity:0.11}));pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');pdf.setGState(new pdf.GState({opacity:1}));}catch(e){}}
+   // Consistent professional border on every A4 page.
+   pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
+   pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);
+   pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }
   pdf.save(filename);
   btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';

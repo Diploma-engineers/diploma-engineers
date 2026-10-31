@@ -10812,6 +10812,11 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
         window.deCourseReturnToReader();return true;
       }else{window.deCourseReturnToReader();return true;}
     }
+    // Short Notes has its own Branch > Semester > Subject > File hierarchy.
+    // Walk back one level at a time; leave the page only from its root.
+    if(active==='sortNotesPage' && typeof window.deShortNotesGoBack==='function'){
+      if(window.deShortNotesGoBack()) return true;
+    }
     // Keep folder navigation local where the page has its own hierarchy.
     if(active==='importantQuestionsPage' && typeof window.iqNavigateBack==='function'){
       const crumb=document.getElementById('iqAppCrumbs');
@@ -12688,7 +12693,7 @@ async function snDownload(){
   // with their original aspect ratio and no border, watermark, or margins.
   const notesEndingImageUrls=[
    'https://diplomaengineers.vercel.app/9f5bc381-8084-4e96-a289-65d5ea461da6.jpeg',
-   'https://diplomaengineers.vercel.app/e3fa48c-291b-4e21-85d9-7d8e8649a5f4.jpeg'
+   'https://diplomaengineers.vercel.app/9e3fa48c-291b-4e21-85d9-7d8e8649a5f4.jpeg '
   ];
   for(let endingIndex=0;endingIndex<notesEndingImageUrls.length;endingIndex++){
    const endingImg=new Image();
@@ -12723,6 +12728,20 @@ async function snDownload(){
  finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
 sn$("snDownload")?.addEventListener("click",snDownload);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
+// Returns true when Back was handled inside Short Notes; false at its root.
+window.deShortNotesGoBack=function(){
+ const reader=sn$("snReader"),grid=sn$("snFolders"),tools=sn$("snTools"),status=sn$("snStatus");
+ if(reader && !reader.hidden){
+  reader.hidden=true;if(grid)grid.hidden=false;if(tools)tools.hidden=false;
+  if(status)status.textContent="";
+  snActive=null;
+  const frame=sn$("snFrame");if(frame){frame.removeAttribute("src");frame.srcdoc="";}
+  if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}
+  window.scrollTo({top:0,left:0,behavior:"instant"});return true;
+ }
+ if(snPath.length){snPath.pop();snActive=null;snRender();window.scrollTo({top:0,left:0,behavior:"instant"});return true;}
+ return false;
+};
 </script>
 
 <style id="de-hide-study-hub-back-buttons">

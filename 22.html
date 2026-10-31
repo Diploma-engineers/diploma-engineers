@@ -12425,9 +12425,15 @@ async function snDownload(){
    html,body{width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
    *,*:before,*:after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
    body{color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:13px!important;line-height:1.5!important;overflow-wrap:anywhere!important;word-wrap:break-word!important}
-   #deNotesPdfRoot{display:block!important;position:relative!important;left:auto!important;right:auto!important;transform:none!important;float:none!important;width:190mm!important;max-width:190mm!important;min-width:0!important;margin:0 auto!important;padding:3mm!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-size:13px!important;line-height:1.5!important;box-sizing:border-box!important}
-   #deNotesPdfRoot *{box-sizing:border-box!important;max-width:100%!important;min-width:0!important}
-   #deNotesPdfRoot > *{left:auto!important;right:auto!important;transform:none!important;float:none!important;max-width:100%!important}
+   /* HARD A4 NORMALIZATION: source pages often contain fixed widths, transforms,
+      negative offsets and absolute-positioned wrappers. Reset these before capture. */
+   html{width:718px!important;min-width:0!important;max-width:718px!important;margin:0!important;padding:0!important;overflow:visible!important}
+   body{display:block!important;position:static!important;width:718px!important;min-width:0!important;max-width:718px!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;left:auto!important;right:auto!important}
+   #deNotesPdfRoot{display:block!important;position:static!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;float:none!important;clear:both!important;width:718px!important;max-width:718px!important;min-width:0!important;margin:0!important;padding:12px 14px 18px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-size:13px!important;line-height:1.5!important;box-sizing:border-box!important}
+   #deNotesPdfRoot, #deNotesPdfRoot *{box-sizing:border-box!important;max-width:100%!important;min-width:0!important}
+   #deNotesPdfRoot *{inset:auto!important;left:auto!important;right:auto!important;transform:none!important;float:none!important;word-break:normal!important;overflow-wrap:anywhere!important}
+   #deNotesPdfRoot > *{position:static!important;max-width:100%!important;margin-left:0!important;margin-right:0!important}
+   #deNotesPdfRoot [style*="position: fixed"],#deNotesPdfRoot [style*="position:fixed"],#deNotesPdfRoot [style*="position: absolute"],#deNotesPdfRoot [style*="position:absolute"]{position:static!important}
    #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6,#deNotesPdfRoot blockquote{max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow-wrap:anywhere!important}
    #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page,#deNotesPdfRoot .row{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;left:auto!important;right:auto!important;transform:none!important}
    #deNotesPdfRoot table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;table-layout:fixed!important}
@@ -12457,8 +12463,8 @@ async function snDownload(){
   // Ensure the page uses a stable A4-like content width. Remove fixed-width
   // layouts which were causing the left/right halves to be clipped.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
-  root.style.cssText+='width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important;';
-  exportBody.style.cssText+='width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  root.style.cssText='width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  exportBody.style.cssText='display:block!important;position:static!important;width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;transform:none!important;';
   const pdfRoot=exportDoc.createElement('main');pdfRoot.id='deNotesPdfRoot';
   while(exportBody.firstChild)pdfRoot.appendChild(exportBody.firstChild);
   exportBody.appendChild(pdfRoot);
@@ -12467,8 +12473,11 @@ async function snDownload(){
    el.style.setProperty('box-sizing','border-box','important');
    el.style.setProperty('max-width','100%','important');
    el.style.setProperty('min-width','0','important');
+   el.style.setProperty('left','auto','important');el.style.setProperty('right','auto','important');
+   el.style.setProperty('transform','none','important');el.style.setProperty('float','none','important');
+   el.style.setProperty('margin-left','0','important');el.style.setProperty('margin-right','0','important');
    const cs=exportDoc.defaultView.getComputedStyle(el);
-   if(cs.position==='fixed')el.style.setProperty('position','static','important');
+   if(cs.position==='fixed'||cs.position==='absolute')el.style.setProperty('position','static','important');
    if(el.tagName==='IMG'||el.tagName==='SVG'||el.tagName==='CANVAS'){
     el.style.setProperty('max-width','100%','important');
     if(el.tagName==='IMG')el.style.setProperty('height','auto','important');
@@ -12514,7 +12523,7 @@ async function snDownload(){
   const opt={
    margin:[10,10,10,10],filename,
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
    pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };

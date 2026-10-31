@@ -12421,18 +12421,20 @@ async function snDownload(){
   const pdfStyle=srcDoc.createElement('style');
   pdfStyle.textContent=`
    @page{size:A4 portrait;margin:0}
-   html,body{width:718px!important;min-width:0!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
-   *,*:before,*:after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-   body{color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:13px!important;line-height:1.5!important;overflow-wrap:anywhere!important;word-wrap:break-word!important}
-   /* Preserve original uploaded layout: don't flatten all margins/positions. */
-   #deNotesPdfRoot{display:block!important;position:relative!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:12px 18px 20px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-size:13px!important;line-height:1.5!important;box-sizing:border-box!important}
-   #deNotesPdfRoot *{box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
-   #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video,#deNotesPdfRoot iframe{max-width:100%!important;height:auto!important;object-fit:contain!important}
-   #deNotesPdfRoot table{max-width:100%!important;border-collapse:collapse!important}
-   #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important}
-   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere!important}
-   #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{max-width:100%!important;overflow-wrap:anywhere!important;break-after:avoid!important;page-break-after:avoid!important}
-   .de-pdf-unit-start{display:block!important;width:100%!important;max-width:100%!important;background:#123d70!important;color:#fff!important;padding:10px 12px!important;margin:0 0 14px!important;border-radius:3px!important;font-size:18px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   html{width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0!important;padding:18px 24px 34px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
+   #deNotesPdfRoot *{box-sizing:border-box!important}
+   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
+   #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+   #deNotesPdfRoot h2{font-size:19px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+   #deNotesPdfRoot h3{font-size:16px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+   #deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{max-width:100%;overflow-wrap:anywhere}
+   #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video,#deNotesPdfRoot iframe{max-width:100%!important;object-fit:contain}
+   #deNotesPdfRoot img,#deNotesPdfRoot video{height:auto}
+   #deNotesPdfRoot table{max-width:100%!important;border-collapse:collapse}
+   #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+   #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
+   .de-pdf-unit-start{display:block!important;max-width:100%!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:3px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
    tr{break-inside:avoid!important;page-break-inside:avoid!important}
    @media print{html,body{overflow:visible!important}}
@@ -12461,18 +12463,31 @@ async function snDownload(){
    exportDoc.head.appendChild(lib);
    setTimeout(()=>reject(new Error('PDF renderer load timeout.')),20000);
   });
-  // Set a stable A4 printable canvas while preserving uploaded HTML layout.
+  // Keep the original BODY in place. Re-parenting all children into a new MAIN
+  // breaks uploaded styles that depend on body > element selectors and can make
+  // the PDF appear blank. Capture the real rendered document body instead.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
-  for(const [el,styles] of [[root,{width:'718px',minWidth:'0',maxWidth:'718px',height:'auto',overflow:'visible',margin:'0',padding:'0'}],[exportBody,{display:'block',width:'718px',minWidth:'0',maxWidth:'718px',height:'auto',minHeight:'0',overflow:'visible',margin:'0',padding:'0'}]]){
-   for(const [k,v] of Object.entries(styles))el.style.setProperty(k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),v,'important');
-  }
-  const pdfRoot=exportDoc.createElement('main');pdfRoot.id='deNotesPdfRoot';
-  while(exportBody.firstChild)pdfRoot.appendChild(exportBody.firstChild);
-  exportBody.appendChild(pdfRoot);
-  // Repair only media/fixed pixel widths that exceed the page. Previous code
-  // forced every node to margin:0, position:static and transform:none, which
-  // collapsed the source document's layout and clipped/capped its content.
-  const contentWidth=pdfRoot.clientWidth||718;
+  root.style.setProperty('width','718px','important');
+  root.style.setProperty('min-width','718px','important');
+  root.style.setProperty('max-width','718px','important');
+  root.style.setProperty('height','auto','important');
+  root.style.setProperty('overflow','visible','important');
+  root.style.setProperty('margin','0','important');
+  root.style.setProperty('padding','0','important');
+  exportBody.id='deNotesPdfRoot';
+  exportBody.style.setProperty('display','block','important');
+  exportBody.style.setProperty('position','relative','important');
+  exportBody.style.setProperty('width','718px','important');
+  exportBody.style.setProperty('min-width','718px','important');
+  exportBody.style.setProperty('max-width','718px','important');
+  exportBody.style.setProperty('height','auto','important');
+  exportBody.style.setProperty('min-height','0','important');
+  exportBody.style.setProperty('overflow','visible','important');
+  exportBody.style.setProperty('margin','0','important');
+  exportBody.style.setProperty('padding','18px 24px 34px','important');
+  const pdfRoot=exportBody;
+  // Only constrain elements that can exceed the page; preserve normal layout,
+  // margins, flex/grid structure, floats and positioning of the original notes.
   pdfRoot.querySelectorAll('*').forEach(el=>{
    el.style.setProperty('box-sizing','border-box','important');
    const tag=el.tagName;
@@ -12481,9 +12496,18 @@ async function snDownload(){
     if(tag==='IMG'||tag==='VIDEO')el.style.setProperty('height','auto','important');
    }
    if(tag==='TABLE')el.style.setProperty('max-width','100%','important');
-   const inlineWidth=parseFloat(el.style.width||'');
-   if(Number.isFinite(inlineWidth)&&inlineWidth>contentWidth){
-    el.style.setProperty('width','100%','important');el.style.setProperty('max-width','100%','important');
+   const cs=exportDoc.defaultView.getComputedStyle(el);
+   const rect=el.getBoundingClientRect();
+   // Resize only fixed/inline widths that are wider than the A4 content area.
+   if(rect.width>670 && ['DIV','SECTION','ARTICLE','MAIN','TABLE','PRE','FIGURE'].includes(tag)){
+    el.style.setProperty('max-width','100%','important');
+    if(tag==='TABLE')el.style.setProperty('width','100%','important');
+   }
+   // Correct elements pushed beyond the left page edge by explicit offsets,
+   // without flattening every element's position or transform.
+   if(rect.left < -2 && (cs.position==='absolute'||cs.position==='fixed')){
+    el.style.setProperty('left','0','important');
+    el.style.setProperty('right','auto','important');
    }
   });
   await Promise.all([...exportBody.querySelectorAll('img')].map(img=>{

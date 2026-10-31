@@ -12421,8 +12421,8 @@ async function snDownload(){
   const pdfStyle=srcDoc.createElement('style');
   pdfStyle.textContent=`
    @page{size:A4 portrait;margin:0}
-   html{width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
-   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;min-height:0!important;margin:0!important;padding:18px 22px 34px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
+   html{width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;margin:0 auto!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:680px!important;min-width:680px!important;max-width:680px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:18px 24px 34px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
    #deNotesPdfRoot *{box-sizing:border-box!important}
    #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
    #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
@@ -12431,10 +12431,10 @@ async function snDownload(){
    #deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{max-width:100%;overflow-wrap:anywhere}
    #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video,#deNotesPdfRoot iframe{max-width:100%!important;object-fit:contain}
    #deNotesPdfRoot img,#deNotesPdfRoot video{height:auto}
-   #deNotesPdfRoot table{max-width:100%!important;border-collapse:collapse}
+   #deNotesPdfRoot table{width:auto;max-width:100%!important;border-collapse:collapse;table-layout:auto;overflow-wrap:anywhere}#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere;word-break:normal}#deNotesPdfRoot>*{max-width:100%!important}#deNotesPdfRoot .row{max-width:100%!important;margin-left:0!important;margin-right:0!important}
    #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
    #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
-   .de-pdf-unit-start{display:block!important;max-width:100%!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:3px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   .de-pdf-unit-start{display:block!important;max-width:100%!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:3px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:auto!important;page-break-before:auto!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
    tr{break-inside:avoid!important;page-break-inside:avoid!important}
    @media print{html,body{overflow:visible!important}}
@@ -12483,7 +12483,7 @@ async function snDownload(){
   exportBody.style.setProperty('height','auto','important');
   exportBody.style.setProperty('min-height','0','important');
   exportBody.style.setProperty('overflow','visible','important');
-  exportBody.style.setProperty('margin','0','important');
+  exportBody.style.setProperty('margin','0 auto','important');
   exportBody.style.setProperty('padding','18px 24px 34px','important');
   const pdfRoot=exportBody;
   // Only constrain elements that can exceed the page; preserve normal layout,
@@ -12495,7 +12495,8 @@ async function snDownload(){
     el.style.setProperty('max-width','100%','important');
     if(tag==='IMG'||tag==='VIDEO')el.style.setProperty('height','auto','important');
    }
-   if(tag==='TABLE')el.style.setProperty('max-width','100%','important');
+   if(tag==='TABLE'){el.style.setProperty('max-width','100%','important');el.style.setProperty('border-collapse','collapse','important');}
+   if(['P','LI','TD','TH','BLOCKQUOTE','PRE','CODE'].includes(tag)){el.style.setProperty('overflow-wrap','anywhere','important');el.style.setProperty('max-width','100%','important');}
    const cs=exportDoc.defaultView.getComputedStyle(el);
    const rect=el.getBoundingClientRect();
    // Resize only fixed/inline widths that are wider than the A4 content area.
@@ -12548,7 +12549,7 @@ async function snDownload(){
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बनाई जा रही है…';
   const fullHeight=Math.max(1015,Math.ceil(pdfRoot.scrollHeight||pdfRoot.getBoundingClientRect().height||1015));
   const opt={
-   margin:5,filename, // Numeric margin avoids invalid-margin-array errors and preserves A4 space.
+   margin:7,filename, // A4-safe numeric margin; avoids legacy Invalid margin array errors.
    image:{type:'jpeg',quality:0.98},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:680,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
@@ -12574,13 +12575,13 @@ async function snDownload(){
    const markCtx=markCanvas.getContext('2d');
    const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
    const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
-   markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.13;
+   markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.10;
    markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
    watermarkData=markCanvas.toDataURL('image/png');
   }catch(logoError){console.warn('PDF watermark skipped; continuing download.',logoError)}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){const wmW=105,wmH=105;pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');}
+   if(watermarkData){const wmW=125,wmH=125;pdf.saveGraphicsState?.();pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');pdf.restoreGraphicsState?.();}
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
    pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }

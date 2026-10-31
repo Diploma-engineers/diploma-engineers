@@ -12507,9 +12507,7 @@ async function snDownload(){
   // Metadata comes from the selected Firebase Notes record, not guessed values.
   const cover=exportDoc.createElement('section');
   cover.className='de-notes-pdf-cover';
-  cover.style.setProperty('break-inside','avoid','important');
-  cover.style.setProperty('page-break-inside','avoid','important');
-  cover.style.cssText='display:flex;flex:0 0 850px;width:100%;height:850px;min-height:850px;max-height:850px;box-sizing:border-box;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;margin:0;padding:42px 34px;background:#fff;color:#172033;break-after:page;page-break-after:always;';
+  cover.style.cssText='width:100%;height:900px;min-height:900px;max-height:900px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;page-break-after:always;break-after:page;padding:40px 34px;background:#fff;color:#172033;margin:0;';
   const coverBrand=exportDoc.createElement('div');
   coverBrand.textContent='DIPLOMA ENGINEERS';
   coverBrand.style.cssText='font-family:Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:900;letter-spacing:2px;color:#123d70;margin:0 0 54px;text-align:center;';
@@ -12584,6 +12582,13 @@ async function snDownload(){
    });
    if(!nested){
     el.classList.add('de-pdf-unit-start');
+    // The first Unit follows the cover page break; do not force another page break,
+    // which would create an empty watermark-only page between cover and notes.
+    if(!pdfRoot.querySelector('.de-pdf-first-unit')){
+     el.classList.add('de-pdf-first-unit');
+     el.style.setProperty('break-before','auto','important');
+     el.style.setProperty('page-break-before','auto','important');
+    }
     // The last content block before a new Unit must not leave a blue divider
     // at the bottom edge of the previous PDF page.
     let prev=el.previousElementSibling;
@@ -12609,7 +12614,7 @@ async function snDownload(){
    image:{type:'jpeg',quality:0.98},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['.de-pdf-keep-together','p','li','blockquote']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start:not(.de-pdf-first-unit)'],avoid:['.de-pdf-keep-together','p','li','blockquote']}
   };
   const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();

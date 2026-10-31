@@ -12402,126 +12402,133 @@ async function snDownload(){
  if(!snActive)return;
  const btn=sn$("snDownload"),old=btn.innerHTML;
  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF तैयार हो रही है…';
- let exportHost=null;
+ let exportFrame=null;
  try{
   await snEnsurePdf();
-  const frame=sn$("snFrame"),srcDoc=frame?.contentDocument;
+  const preview=sn$("snFrame"),srcDoc=preview?.contentDocument;
   if(!srcDoc?.body)throw new Error('Notes preview अभी तैयार नहीं है। Notes को दोबारा खोलकर कुछ सेकंड बाद प्रयास करें।');
-  const sourceBody=srcDoc.body;
-  const contentText=(sourceBody.innerText||sourceBody.textContent||'').replace(/\s+/g,' ').trim();
-  const visualCount=sourceBody.querySelectorAll('img,svg,canvas,table,figure,video,iframe').length;
-  if(contentText.length<3&&!visualCount)throw new Error('Uploaded HTML के body में Notes content नहीं मिला।');
+  const bodyText=(srcDoc.body.innerText||srcDoc.body.textContent||'').replace(/\s+/g,' ').trim();
+  const visualCount=srcDoc.body.querySelectorAll('img,svg,canvas,table,figure').length;
+  if(bodyText.length<3&&!visualCount)throw new Error('Uploaded HTML के अंदर कोई पढ़ने योग्य content नहीं मिला।');
 
-  // html2canvas needs the export node inside the viewport. A far-negative
-  // left position can make the captured canvas completely blank.
-  exportHost=document.createElement('div');
-  exportHost.id='de-sn-pdf-export-root';
-  exportHost.style.cssText='position:fixed;left:0;top:0;width:794px;min-height:1123px;background:#fff;color:#111827;z-index:-2147483000;pointer-events:none;overflow:visible;';
-
-  // Clone the actual uploaded body, then copy computed styles from the live
-  // iframe. This preserves external CSS, body selectors, fonts and layout.
-  const clone=sourceBody.cloneNode(true);
-  clone.removeAttribute('id');
-  function copyComputedStyles(source,target){
-   if(source.nodeType!==1||target.nodeType!==1)return;
-   try{
-    const cs=srcDoc.defaultView.getComputedStyle(source);
-    let css='';
-    for(let i=0;i<cs.length;i++){const prop=cs[i];css+=prop+':'+cs.getPropertyValue(prop)+';';}
-    target.style.cssText=css;
-   }catch(e){}
-   const a=source.children||[],b=target.children||[];
-   for(let i=0;i<Math.min(a.length,b.length);i++)copyComputedStyles(a[i],b[i]);
-  }
-  copyComputedStyles(sourceBody,clone);
-  clone.style.setProperty('display','block','important');
-  clone.style.setProperty('position','static','important');
-  clone.style.setProperty('width','794px','important');
-  clone.style.setProperty('min-width','0','important');
-  clone.style.setProperty('max-width','794px','important');
-  clone.style.setProperty('height','auto','important');
-  clone.style.setProperty('min-height','0','important');
-  clone.style.setProperty('margin','0','important');
-  clone.style.setProperty('padding','28px 34px','important');
-  clone.style.setProperty('overflow','visible','important');
-  clone.style.setProperty('background','#fff','important');
-  clone.style.setProperty('color','#111827','important');
-  clone.style.setProperty('box-sizing','border-box','important');
-  clone.querySelectorAll('script,noscript,button, .no-print, .pdf-ignore').forEach(n=>n.remove());
-
-  // Wait for uploaded images and fonts before taking the PDF snapshot.
-  await Promise.all([...clone.querySelectorAll('img')].map(img=>{
-   if(img.complete&&img.naturalWidth)return Promise.resolve();
-   return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,15000)});
-  }));
-  try{await srcDoc.fonts?.ready;}catch(e){}
-  try{await document.fonts.ready;}catch(e){}
-
-  const pageCss=document.createElement('style');
-  pageCss.textContent=`
-   #de-sn-pdf-export-root{width:794px!important;background:#fff!important;color:#111827!important;}
-   #de-sn-pdf-export-root *{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-   #de-sn-pdf-export-root p,#de-sn-pdf-export-root li,#de-sn-pdf-export-root td,#de-sn-pdf-export-root th{overflow-wrap:anywhere;}
-   #de-sn-pdf-export-root img,#de-sn-pdf-export-root svg,#de-sn-pdf-export-root canvas{max-width:100%!important;object-fit:contain!important;}
-   #de-sn-pdf-export-root figure,#de-sn-pdf-export-root .diagram,#de-sn-pdf-export-root .diagram-container,#de-sn-pdf-export-root .image-container,#de-sn-pdf-export-root .note-image,#de-sn-pdf-export-root .figure,#de-sn-pdf-export-root .chart,#de-sn-pdf-export-root table,#de-sn-pdf-export-root tr{break-inside:avoid!important;page-break-inside:avoid!important;}
-   #de-sn-pdf-export-root h1,#de-sn-pdf-export-root h2,#de-sn-pdf-export-root h3,#de-sn-pdf-export-root h4,#de-sn-pdf-export-root h5{break-after:avoid!important;page-break-after:avoid!important;}
-   #de-sn-pdf-export-root .de-pdf-unit-start{break-before:page!important;page-break-before:always!important;}
-   #de-sn-pdf-export-root .de-pdf-diagram{break-before:page!important;page-break-before:always!important;break-inside:avoid!important;page-break-inside:avoid!important;}
+  // Export the complete HTML document, not an isolated body clone. This keeps
+  // the uploaded stylesheet, fonts, table rules, diagrams and semantic layout.
+  const docClone=srcDoc.documentElement.cloneNode(true);
+  docClone.querySelectorAll('script,noscript,button,.no-print,.pdf-ignore,[data-html2canvas-ignore="true"]').forEach(n=>n.remove());
+  let head=docClone.querySelector('head');
+  if(!head){head=docClone.insertBefore(srcDoc.createElement('head'),docClone.firstChild);}
+  const meta=srcDoc.createElement('meta');meta.setAttribute('charset','UTF-8');head.prepend(meta);
+  const viewport=srcDoc.createElement('meta');viewport.name='viewport';viewport.content='width=device-width, initial-scale=1';head.appendChild(viewport);
+  const pdfStyle=srcDoc.createElement('style');
+  pdfStyle.textContent=`
+   html,body{width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   *,*:before,*:after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body{width:100%!important;max-width:100%!important;padding:12mm 13mm 15mm!important;color:#172033!important;overflow-wrap:anywhere!important}
+   img,svg,canvas,video{max-width:100%!important;height:auto!important;object-fit:contain!important}
+   table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;table-layout:auto!important}
+   th,td{overflow-wrap:anywhere!important;word-break:normal!important}
+   pre,code{white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+   p,li,td,th{line-height:1.55!important}
+   h1,h2,h3,h4,h5,h6{max-width:100%!important;break-after:avoid!important;page-break-after:avoid!important}
+   figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart{max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+   tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   .de-pdf-unit-start{break-before:page!important;page-break-before:always!important}
+   .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
+   @media print{html,body{overflow:visible!important}}
   `;
-  exportHost.appendChild(pageCss);exportHost.appendChild(clone);document.body.appendChild(exportHost);
+  head.appendChild(pdfStyle);
 
-  // Every new UNIT starts on a fresh page. Diagrams are kept together and
-  // moved to a fresh page so they are not split between two pages.
-  const unitPattern=/^\s*(?:unit|इकाई)\s*(?:[-:–.]\s*)?(?:[ivxlcdm]+|\d+)\b/i;
-  [...clone.querySelectorAll('h1,h2,h3,h4,h5,h6,strong,b,p,div,section')].forEach(el=>{
-   const direct=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
-   if(direct.length<45&&unitPattern.test(direct))el.classList.add('de-pdf-unit-start');
+  exportFrame=document.createElement('iframe');
+  exportFrame.setAttribute('aria-hidden','true');
+  exportFrame.style.cssText='position:fixed;left:0;top:0;width:794px;height:1123px;border:0;z-index:2147483000;background:#fff;pointer-events:none;';
+  document.body.appendChild(exportFrame);
+  const exportDoc=exportFrame.contentDocument;
+  exportDoc.open();exportDoc.write('<!doctype html>'+docClone.outerHTML);exportDoc.close();
+  await new Promise(resolve=>{
+   const check=()=>{if(exportDoc.readyState==='complete')resolve();else setTimeout(check,80)};
+   check();setTimeout(resolve,12000);
   });
-  const diagramSelector='figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,[class*="diagram" i],[id*="diagram" i]';
-  clone.querySelectorAll(diagramSelector).forEach(el=>el.classList.add('de-pdf-diagram'));
-  // Standalone large images/SVGs are treated as diagrams when their dimensions suggest it.
-  clone.querySelectorAll('img,svg,canvas').forEach(el=>{
-   const r=el.getBoundingClientRect();
-   if((r.width>260&&r.height>130)||/diagram|figure|chart|graph|drawing|map/i.test((el.getAttribute('alt')||'')+' '+(el.className?.baseVal||el.className||'')))el.classList.add('de-pdf-diagram');
-   el.style.setProperty('max-width','100%','important');
-   if(el.tagName==='IMG')el.style.setProperty('height','auto','important');
+  // Ensure the page uses a stable A4-like content width. Remove fixed-width
+  // layouts which were causing the left/right halves to be clipped.
+  const root=exportDoc.documentElement,exportBody=exportDoc.body;
+  root.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;overflow:visible!important;margin:0!important;';
+  exportBody.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;';
+  exportBody.querySelectorAll('*').forEach(el=>{
+   const cs=exportDoc.defaultView.getComputedStyle(el);
+   if(cs.position==='fixed')el.style.setProperty('position','static','important');
+   if(el.tagName==='IMG'||el.tagName==='SVG'||el.tagName==='CANVAS'){
+    el.style.setProperty('max-width','100%','important');
+    if(el.tagName==='IMG')el.style.setProperty('height','auto','important');
+   }
+   if(el.tagName==='TABLE'){
+    el.style.setProperty('max-width','100%','important');
+    el.style.setProperty('width','100%','important');
+   }
   });
+  await Promise.all([...exportBody.querySelectorAll('img')].map(img=>{
+   if(img.complete&&img.naturalWidth)return Promise.resolve();
+   return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,12000)});
+  }));
+  try{await exportDoc.fonts.ready;}catch(e){}
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+  // Recognize Unit / इकाई headings, even when the uploaded HTML uses a
+  // paragraph or styled div instead of a heading element.
+  const unitPattern=/^\s*(?:unit|इकाई)\s*(?:[-:–.]?\s*)(?:[ivxlcdm]+|\d+)\b/i;
+  [...exportBody.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,section,strong,b')].forEach(el=>{
+   const t=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
+   if(t.length>0&&t.length<90&&unitPattern.test(t))el.classList.add('de-pdf-unit-start');
+  });
+  // Keep diagrams/figures/tables together only when each fits on one A4
+  // content page. Oversized ones are allowed to continue across pages.
+  const keepCandidates=[...exportBody.querySelectorAll('figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,table,img,svg,canvas')];
+  keepCandidates.forEach(el=>{
+   const h=el.getBoundingClientRect().height;
+   if(h>0&&h<930)el.classList.add('de-pdf-keep-together');
+   else el.classList.remove('de-pdf-keep-together');
+  });
   const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
   const subjectForFile=snActive.subjectName||snActive.subject||snActive.title||'Subject';
   const filename=(safe(subjectForFile)||'Subject')+'_Notes_by_Diploma_Engineers.pdf';
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF बन रही है…';
-  const fullHeight=Math.max(1123,Math.ceil(clone.scrollHeight||clone.getBoundingClientRect().height||1123));
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बनाई जा रही है…';
+  const fullHeight=Math.max(1123,Math.ceil(exportBody.scrollHeight||exportBody.getBoundingClientRect().height||1123));
   const opt={
-   margin:[10,10,13,10],filename,
-   image:{type:'jpeg',quality:0.99},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:794,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,onclone:(doc)=>{const n=doc.getElementById('de-sn-pdf-export-root');if(n){n.style.position='absolute';n.style.left='0';n.style.top='0';n.style.zIndex='1';}}},
+   margin:0,filename,
+   image:{type:'jpeg',quality:0.98},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:794,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],avoid:['img','svg','canvas','figure','table','tr','.diagram','.diagram-container','.image-container','.note-image','.figure','.chart','.de-pdf-diagram']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };
-  const pdf=await window.html2pdf().set(opt).from(clone).toPdf().get('pdf');
+  const pdf=await window.html2pdf().set(opt).from(exportBody).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
-  // Fail safely instead of saving a watermark-only PDF.
-  if(fullHeight>1200&&total===1)throw new Error('HTML content capture नहीं हुआ। कृपया Notes HTML में visible body content जाँचें और दोबारा प्रयास करें।');
+  // Refuse a blank/watermark-only output.
+  if(fullHeight>1300&&total===1)throw new Error('PDF में पूरा HTML content capture नहीं हुआ। कृपया दोबारा प्रयास करें।');
+
+  // Use the same Diploma Engineers logo watermark as the Important Questions
+  // PDF, centered and faintly repeated on every page.
   const markCanvas=document.createElement('canvas');markCanvas.width=1000;markCanvas.height=1000;
-  const markCtx=markCanvas.getContext('2d');markCtx.clearRect(0,0,1000,1000);markCtx.globalAlpha=0.10;
+  const markCtx=markCanvas.getContext('2d');markCtx.clearRect(0,0,1000,1000);
   const markLogo=new Image();markLogo.crossOrigin='anonymous';
   markLogo.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg';
-  await new Promise(resolve=>{if(markLogo.complete)return resolve();markLogo.onload=resolve;markLogo.onerror=resolve;setTimeout(resolve,3500)});
-  if(markLogo.naturalWidth){const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight),mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}}
-  if(!markLogo.naturalWidth){markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);markCtx.fillText('ENGINEERS',500,545);}
+  await new Promise(resolve=>{if(markLogo.complete)return resolve();markLogo.onload=resolve;markLogo.onerror=resolve;setTimeout(resolve,5000)});
+  if(markLogo.naturalWidth){
+   const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight),mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;
+   markCtx.globalAlpha=0.12;try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}
+  }else{
+   markCtx.globalAlpha=0.12;markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);markCtx.fillText('ENGINEERS',500,545);
+  }
   let watermarkData='';try{watermarkData=markCanvas.toDataURL('image/png');}catch(e){}
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){try{pdf.setGState(new pdf.GState({opacity:0.075}));pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');pdf.setGState(new pdf.GState({opacity:1}));}catch(e){}}
+   if(watermarkData){try{pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');}catch(e){}}
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
    pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }
   pdf.save(filename);
   btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';
  }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
- finally{try{exportHost?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
+ finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
 sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snLangEn")?.addEventListener("click",()=>snSetLanguage("en"));sn$("snLangHi")?.addEventListener("click",()=>snSetLanguage("hi"));sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>

@@ -4144,10 +4144,12 @@ html,body{max-width:100%;overflow-x:hidden}
 #sortNotesPage .sn-tools input{width:100%;min-height:48px}
 #sortNotesPage .sn-status{padding:5px 0!important;font-size:0!important}
 #sortNotesPage .sn-status:empty{display:none}
+#sortNotesPage .sn-folder-back,#sortNotesPage #snClose,#sortNotesPage #snShare{display:none!important}
+#sortNotesPage .sn-folder-back[hidden]{display:none!important}
 #sortNotesPage .sn-reader-head{justify-content:flex-start!important;margin:0 0 10px!important;padding:0!important}
 #sortNotesPage .sn-reader-actions{width:100%;display:flex!important;gap:8px;flex-wrap:wrap}
 #sortNotesPage .sn-reader-actions button{flex:0 1 auto;min-height:42px}
-#sortNotesPage #snDownload[hidden]{display:none!important}
+#sortNotesPage #snDownload[hidden],#sortNotesPage #snShare[hidden]{display:none!important}
 @media(max-width:520px){#sortNotesPage .sn-reader-actions{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important}#sortNotesPage .sn-reader-actions button{flex:1 1 auto;font-size:12px}}
 </style>
   <style id="notes-full-width-fix">
@@ -12372,10 +12374,10 @@ function snField(r,k){return String(r?.[k]??(k==="title"?r?.fileName:r?.original
 function snLevel(r){return [snField(r,"branch"),snField(r,"semester").toLowerCase().startsWith("semester")?snField(r,"semester"):"Semester "+snField(r,"semester"),snField(r,"subject")]}
 function snFiltered(){const q=(sn$("snSearch")?.value||"").trim().toLowerCase();return snRows.filter(r=>!q||[r.branch,r.semester,r.subject,r.title,r.originalFileName].join(" ").toLowerCase().includes(q))}
 function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Branches",...snPath];el.innerHTML=names.map((n,i)=>`${i?'<span>›</span>':''}<button type="button" data-sn-crumb="${i}">${snEsc(n)}</button>`).join("");el.querySelectorAll("[data-sn-crumb]").forEach(b=>b.onclick=()=>{snPath=snPath.slice(0,Number(b.dataset.snCrumb));snActive=null;snRender()})}
-function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Open file</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
+function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;sn$("snBack").hidden=!snPath.length;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Open file</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));const fix=d.createElement("style");fix.id="de-sn-image-fit-fix";fix.textContent="html,body{max-width:100%;overflow-wrap:anywhere}body img{max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:center!important}body img[alt*=logo i],body .logo img,body .brand img,body header img{width:auto!important;max-width:min(100%,680px)!important;max-height:150px!important;object-fit:contain!important;display:block!important;margin:8px auto!important}table{max-width:100%!important}*{box-sizing:border-box}";d.head.appendChild(fix);return "<!doctype html>"+d.documentElement.outerHTML}
 function snFileUrl(r,keys){for(const k of keys){const v=String(r?.[k]||'').trim();if(v)return v;}return ''}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video></body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
+async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video></body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snShare').hidden=true;sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;sn$('snShare').hidden=false;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;sn$('snShare').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;sn$('snBack').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -12428,11 +12430,7 @@ async function snDownload(){
    body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:18px 20px 22px 20px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
    #deNotesPdfRoot *{box-sizing:border-box!important}
    #deNotesPdfRoot hr{display:none!important;border:0!important;height:0!important;margin:0!important;padding:0!important}
-   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word;orphans:3;widows:3}
-   /* Prevent PDF page boundaries from cutting through a text paragraph or bullet line. */
-   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot blockquote{break-inside:avoid!important;page-break-inside:avoid!important;overflow:visible!important;height:auto!important;max-height:none!important}
-   #deNotesPdfRoot ul,#deNotesPdfRoot ol{overflow:visible!important;height:auto!important;max-height:none!important}
-   #deNotesPdfRoot p * ,#deNotesPdfRoot li *{max-height:none!important}
+   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
    #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
    #deNotesPdfRoot h2{font-size:19px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
    #deNotesPdfRoot h3{font-size:16px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
@@ -12442,11 +12440,7 @@ async function snDownload(){
    #deNotesPdfRoot table{width:auto;max-width:100%!important;border-collapse:collapse;table-layout:auto;overflow-wrap:anywhere}#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere;word-break:normal}#deNotesPdfRoot>*{max-width:100%!important}#deNotesPdfRoot .row{max-width:100%!important;margin-left:0!important;margin-right:0!important}
    #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
    #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
-   .de-pdf-unit-start{display:block!important;position:relative!important;left:-20px!important;top:14px!important;width:calc(100% + 40px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 26px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
-   /* Hide only a trailing blue divider immediately before a forced Unit page break. */
-   #deNotesPdfRoot .de-pdf-before-unit{border-bottom:0!important;box-shadow:none!important;outline:0!important}
-   #deNotesPdfRoot .de-pdf-before-unit:after,#deNotesPdfRoot .de-pdf-before-unit:before{border:0!important;box-shadow:none!important}
-   #deNotesPdfRoot .de-pdf-before-unit hr{display:none!important}
+   .de-pdf-unit-start{display:block!important;position:relative!important;left:-20px!important;width:calc(100% + 40px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
    #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{break-after:avoid-page!important;page-break-after:avoid!important;orphans:3;widows:3}
    /* Keep-together is applied by JS only to figures/images/tables that fit on one A4 content page.
@@ -12503,36 +12497,6 @@ async function snDownload(){
   exportBody.style.setProperty('transform','none','important');
   exportBody.style.setProperty('padding','18px 20px 22px 20px','important');
   const pdfRoot=exportBody;
-  // Add a dedicated, centered A4 cover page before the uploaded notes content.
-  // Metadata comes from the selected Firebase Notes record, not guessed values.
-  const cover=exportDoc.createElement('section');
-  cover.className='de-notes-pdf-cover';
-  cover.style.cssText='width:100%;height:900px;min-height:900px;max-height:900px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;page-break-after:always;break-after:page;padding:40px 34px;background:#fff;color:#172033;margin:0;';
-  const coverBrand=exportDoc.createElement('div');
-  coverBrand.textContent='DIPLOMA ENGINEERS';
-  coverBrand.style.cssText='font-family:Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:900;letter-spacing:2px;color:#123d70;margin:0 0 54px;text-align:center;';
-  const coverLabel=exportDoc.createElement('div');
-  coverLabel.textContent='STUDY NOTES';
-  coverLabel.style.cssText='font-family:Arial,sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:#64748b;margin:0 0 18px;text-align:center;';
-  const coverSubject=exportDoc.createElement('div');
-  coverSubject.textContent=String(snActive.subjectName||snActive.subject||snActive.title||'Subject Notes');
-  coverSubject.style.cssText='font-family:Arial,sans-serif;font-size:32px;line-height:1.3;font-weight:900;color:#123d70;max-width:100%;overflow-wrap:anywhere;text-align:center;margin:0 auto 34px;';
-  const coverMeta=exportDoc.createElement('div');
-  coverMeta.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;max-width:470px;margin:0 auto 48px;';
-  const branchValue=String(snActive.branch||snActive.branchName||snActive.category||'Diploma Engineering');
-  const semesterValue=String(snActive.semester||snActive.semesterName||snActive.term||snActive.year||'Semester');
-  [["BRANCH",branchValue],["SEMESTER",semesterValue]].forEach(([label,value])=>{
-   const row=exportDoc.createElement('div');
-   row.style.cssText='width:100%;padding:15px 18px;border:1.5px solid #d8e3f1;border-radius:10px;background:#f7faff;text-align:center;box-sizing:border-box;';
-   const small=exportDoc.createElement('div');small.textContent=label;small.style.cssText='font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;font-weight:800;color:#64748b;margin-bottom:6px;';
-   const valueEl=exportDoc.createElement('div');valueEl.textContent=value;valueEl.style.cssText='font-family:Arial,sans-serif;font-size:19px;line-height:1.35;font-weight:800;color:#172033;overflow-wrap:anywhere;';
-   row.append(small,valueEl);coverMeta.appendChild(row);
-  });
-  const coverBy=exportDoc.createElement('div');
-  coverBy.textContent='BY @DIPLOMA_ENGINEERS';
-  coverBy.style.cssText='font-family:Arial,sans-serif;font-size:15px;font-weight:900;letter-spacing:1.8px;color:#123d70;text-align:center;border-top:2px solid #123d70;padding-top:18px;min-width:270px;';
-  cover.append(coverBrand,coverLabel,coverSubject,coverMeta,coverBy);
-  pdfRoot.insertBefore(cover,pdfRoot.firstChild);
   // Only constrain elements that can exceed the page; preserve normal layout,
   // margins, flex/grid structure, floats and positioning of the original notes.
   pdfRoot.querySelectorAll('*').forEach(el=>{
@@ -12580,21 +12544,7 @@ async function snDownload(){
     const ct=(child.innerText||child.textContent||'').replace(/\s+/g,' ').trim();
     return ct.length>0&&ct.length<90&&unitPattern.test(ct);
    });
-   if(!nested){
-    el.classList.add('de-pdf-unit-start');
-    // The first Unit follows the cover page break; do not force another page break,
-    // which would create an empty watermark-only page between cover and notes.
-    if(!pdfRoot.querySelector('.de-pdf-first-unit')){
-     el.classList.add('de-pdf-first-unit');
-     el.style.setProperty('break-before','auto','important');
-     el.style.setProperty('page-break-before','auto','important');
-    }
-    // The last content block before a new Unit must not leave a blue divider
-    // at the bottom edge of the previous PDF page.
-    let prev=el.previousElementSibling;
-    while(prev && !((prev.innerText||prev.textContent||'').trim())) prev=prev.previousElementSibling;
-    if(prev)prev.classList.add('de-pdf-before-unit');
-   }
+   if(!nested)el.classList.add('de-pdf-unit-start');
   });
   // Keep diagrams/figures/tables together only when each fits on one A4
   // content page. Oversized ones are allowed to continue across pages.
@@ -12614,11 +12564,32 @@ async function snDownload(){
    image:{type:'jpeg',quality:0.98},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start:not(.de-pdf-first-unit)'],avoid:['.de-pdf-keep-together','p','li','blockquote']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['.de-pdf-keep-together']}
   };
   const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
+  // Add the supplied full-page artwork as the FIRST page of every Short Notes PDF.
+  // Keep it border-free so the blue content-page border never overlaps the image.
+  const shortNotesCoverUrl='https://diplomaengineers.vercel.app/becf5501-c58f-4b36-8d20-4e996e420210.jpeg';
+  const shortNotesCover=new Image();shortNotesCover.crossOrigin='anonymous';shortNotesCover.decoding='async';shortNotesCover.src=shortNotesCoverUrl;
+  await new Promise((resolve,reject)=>{
+   if(shortNotesCover.complete&&shortNotesCover.naturalWidth)return resolve();
+   shortNotesCover.onload=resolve;
+   shortNotesCover.onerror=()=>reject(new Error('Short Notes cover image load नहीं हुई। Internet connection जाँचें।'));
+   setTimeout(()=>{if(!shortNotesCover.naturalWidth)reject(new Error('Short Notes cover image loading timed out.')),12000);
+  });
+  const coverCanvas=document.createElement('canvas');
+  coverCanvas.width=shortNotesCover.naturalWidth;coverCanvas.height=shortNotesCover.naturalHeight;
+  const coverCtx=coverCanvas.getContext('2d');coverCtx.drawImage(shortNotesCover,0,0);
+  const coverData=coverCanvas.toDataURL('image/jpeg',0.98);
+  pdf.addPage('a4','portrait');
+  const coverPageNo=pdf.internal.getNumberOfPages();
+  const coverW=pdf.internal.pageSize.getWidth(),coverH=pdf.internal.pageSize.getHeight();
+  pdf.addImage(coverData,'JPEG',0,0,coverW,coverH,undefined,'FAST');
+  if(typeof pdf.movePage!=='function')throw new Error('PDF cover-page ordering is not supported by the loaded PDF library.');
+  pdf.movePage(coverPageNo,1);
+  const contentPageCount=total;
   // Refuse a blank/watermark-only output.
   if(fullHeight>1300&&total===1)throw new Error('PDF में पूरा HTML content capture नहीं हुआ। कृपया दोबारा प्रयास करें।');
 
@@ -12640,15 +12611,12 @@ async function snDownload(){
    markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
    watermarkData=markCanvas.toDataURL('image/png');
   }catch(logoError){console.warn('PDF watermark skipped; continuing download.',logoError)}
-  for(let i=1;i<=total;i++){
+  // Page 1 is the supplied cover image: intentionally no watermark or border.
+  // Apply the existing watermark and blue border only to the original notes pages.
+  for(let i=2;i<=contentPageCount+1;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
    if(watermarkData){const wmW=125,wmH=125;pdf.saveGraphicsState?.();pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');pdf.restoreGraphicsState?.();}
-   // Draw a clean, complete page border on every PDF page. The unit-break
-   // cleanup above removes the unrelated trailing blue content divider.
-   pdf.setDrawColor(35,72,119);
-   pdf.setLineWidth(0.45);
-   const inset=7.5;
-   pdf.rect(inset,inset,pw-inset*2,ph-inset*2);
+   pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
   }
   // Trigger download from the top-level page to avoid iframe download restrictions.
   const pdfBlob=pdf.output('blob');
@@ -12660,12 +12628,13 @@ async function snDownload(){
  }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
  finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
-sn$("snDownload")?.addEventListener("click",snDownload);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
+sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;sn$("snTools").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snShare")?.addEventListener("click",async()=>{if(!snActive)return;const shareData={title:snActive.title||'Diploma Engineers Study Notes',text:[snActive.title,snActive.branch,snActive.subject].filter(Boolean).join(' • '),url:snActive.downloadUrl||location.href};try{if(navigator.share)await navigator.share(shareData);else if(navigator.clipboard){await navigator.clipboard.writeText(shareData.url);alert('Share link copied!')}}catch(e){if(e.name!=='AbortError')console.warn(e)}});sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>
 
 <style id="de-hide-study-hub-back-buttons">
 /* Keep folder navigation and PDF/video content, but remove Back controls from both study hubs. */
 #sortNotesPage .sn-back,
+#sortNotesPage #snBack,
 #importantQuestionsPage .iq-app-back,
 #importantQuestionsPage #iqAppBackFolders {
   display: none !important;

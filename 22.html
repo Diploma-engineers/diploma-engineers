@@ -12421,19 +12421,22 @@ async function snDownload(){
   const viewport=srcDoc.createElement('meta');viewport.name='viewport';viewport.content='width=device-width, initial-scale=1';head.appendChild(viewport);
   const pdfStyle=srcDoc.createElement('style');
   pdfStyle.textContent=`
-   html,body{width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   @page{size:A4 portrait;margin:0}
+   html,body{width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
    *,*:before,*:after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-   body{width:100%!important;max-width:100%!important;padding:12mm 13mm 15mm!important;color:#172033!important;overflow-wrap:anywhere!important}
-   img,svg,canvas,video{max-width:100%!important;height:auto!important;object-fit:contain!important}
-   table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;table-layout:auto!important}
-   th,td{overflow-wrap:anywhere!important;word-break:normal!important}
-   pre,code{white-space:pre-wrap!important;overflow-wrap:anywhere!important}
-   p,li,td,th{line-height:1.55!important}
-   h1,h2,h3,h4,h5,h6{max-width:100%!important;break-after:avoid!important;page-break-after:avoid!important}
-   figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart{max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
-   tr{break-inside:avoid!important;page-break-inside:avoid!important}
-   .de-pdf-unit-start{break-before:page!important;page-break-before:always!important}
+   body{color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:14px!important;line-height:1.65!important;overflow-wrap:break-word!important;word-wrap:break-word!important}
+   #deNotesPdfRoot{display:block!important;width:180mm!important;max-width:180mm!important;min-width:0!important;margin:0 auto!important;padding:12mm 0 15mm!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-size:14px!important;line-height:1.65!important}
+   #deNotesPdfRoot *{max-width:100%!important;box-sizing:border-box!important}
+   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th{line-height:1.65!important;white-space:normal!important;overflow-wrap:break-word!important;word-break:normal!important}
+   #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{line-height:1.3!important;white-space:normal!important;overflow-wrap:break-word!important;break-after:avoid!important;page-break-after:avoid!important}
+   #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video{max-width:100%!important;height:auto!important;object-fit:contain!important}
+   #deNotesPdfRoot table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;table-layout:auto!important}
+   #deNotesPdfRoot th,#deNotesPdfRoot td{overflow-wrap:break-word!important;word-break:normal!important;white-space:normal!important;vertical-align:top!important}
+   #deNotesPdfRoot pre,#deNotesPdfRoot code{white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+   #deNotesPdfRoot figure,#deNotesPdfRoot .diagram,#deNotesPdfRoot .diagram-container,#deNotesPdfRoot .image-container,#deNotesPdfRoot .note-image,#deNotesPdfRoot .figure,#deNotesPdfRoot .chart{max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+   .de-pdf-unit-start{display:block!important;width:100%!important;background:#123d70!important;color:#fff!important;padding:12px 16px!important;margin:0 0 18px!important;border-radius:3px!important;font-size:19px!important;font-weight:800!important;line-height:1.35!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
+   tr{break-inside:avoid!important;page-break-inside:avoid!important}
    @media print{html,body{overflow:visible!important}}
   `;
   head.appendChild(pdfStyle);
@@ -12451,9 +12454,12 @@ async function snDownload(){
   // Ensure the page uses a stable A4-like content width. Remove fixed-width
   // layouts which were causing the left/right halves to be clipped.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
-  root.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;overflow:visible!important;margin:0!important;';
-  exportBody.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;';
-  exportBody.querySelectorAll('*').forEach(el=>{
+  root.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  exportBody.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  const pdfRoot=exportDoc.createElement('main');pdfRoot.id='deNotesPdfRoot';
+  while(exportBody.firstChild)pdfRoot.appendChild(exportBody.firstChild);
+  exportBody.appendChild(pdfRoot);
+  pdfRoot.querySelectorAll('*').forEach(el=>{
    const cs=exportDoc.defaultView.getComputedStyle(el);
    if(cs.position==='fixed')el.style.setProperty('position','static','important');
    if(el.tagName==='IMG'||el.tagName==='SVG'||el.tagName==='CANVAS'){
@@ -12475,13 +12481,19 @@ async function snDownload(){
   // Recognize Unit / इकाई headings, even when the uploaded HTML uses a
   // paragraph or styled div instead of a heading element.
   const unitPattern=/^\s*(?:unit|इकाई)\s*(?:[-:–.]?\s*)(?:[ivxlcdm]+|\d+)\b/i;
-  [...exportBody.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,section,strong,b')].forEach(el=>{
+  [...pdfRoot.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,section,strong,b')].forEach(el=>{
    const t=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
-   if(t.length>0&&t.length<90&&unitPattern.test(t))el.classList.add('de-pdf-unit-start');
+   if(!t||t.length>=90||!unitPattern.test(t))return;
+   // Avoid applying the page break twice to a wrapper and its nested heading.
+   const nested=[...el.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,section,strong,b')].some(child=>{
+    const ct=(child.innerText||child.textContent||'').replace(/\s+/g,' ').trim();
+    return ct.length>0&&ct.length<90&&unitPattern.test(ct);
+   });
+   if(!nested)el.classList.add('de-pdf-unit-start');
   });
   // Keep diagrams/figures/tables together only when each fits on one A4
   // content page. Oversized ones are allowed to continue across pages.
-  const keepCandidates=[...exportBody.querySelectorAll('figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,table,img,svg,canvas')];
+  const keepCandidates=[...pdfRoot.querySelectorAll('figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,table,img,svg,canvas')];
   keepCandidates.forEach(el=>{
    const h=el.getBoundingClientRect().height;
    if(h>0&&h<930)el.classList.add('de-pdf-keep-together');
@@ -12491,7 +12503,7 @@ async function snDownload(){
   const subjectForFile=snActive.subjectName||snActive.subject||snActive.title||'Subject';
   const filename=(safe(subjectForFile)||'Subject')+'_Notes_by_Diploma_Engineers.pdf';
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बनाई जा रही है…';
-  const fullHeight=Math.max(1123,Math.ceil(exportBody.scrollHeight||exportBody.getBoundingClientRect().height||1123));
+  const fullHeight=Math.max(1123,Math.ceil(pdfRoot.scrollHeight||pdfRoot.getBoundingClientRect().height||1123));
   const opt={
    margin:0,filename,
    image:{type:'jpeg',quality:0.98},
@@ -12499,29 +12511,31 @@ async function snDownload(){
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
    pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };
-  const pdf=await window.html2pdf().set(opt).from(exportBody).toPdf().get('pdf');
+  const pdf=await window.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
   // Refuse a blank/watermark-only output.
   if(fullHeight>1300&&total===1)throw new Error('PDF में पूरा HTML content capture नहीं हुआ। कृपया दोबारा प्रयास करें।');
 
-  // Use the same Diploma Engineers logo watermark as the Important Questions
-  // PDF, centered and faintly repeated on every page.
-  const markCanvas=document.createElement('canvas');markCanvas.width=1000;markCanvas.height=1000;
-  const markCtx=markCanvas.getContext('2d');markCtx.clearRect(0,0,1000,1000);
-  const markLogo=new Image();markLogo.crossOrigin='anonymous';
-  markLogo.src='https://anubhavfinance.wordpress.com/wp-content/uploads/2025/11/whatsapp-image-2025-11-26-at-01.09.43_629f0cdb.jpg';
-  await new Promise(resolve=>{if(markLogo.complete)return resolve();markLogo.onload=resolve;markLogo.onerror=resolve;setTimeout(resolve,5000)});
-  if(markLogo.naturalWidth){
-   const scale=Math.min(760/markLogo.naturalWidth,760/markLogo.naturalHeight),mw=markLogo.naturalWidth*scale,mh=markLogo.naturalHeight*scale;
-   markCtx.globalAlpha=0.12;try{markCtx.drawImage(markLogo,(1000-mw)/2,(1000-mh)/2,mw,mh);}catch(e){}
-  }else{
-   markCtx.globalAlpha=0.12;markCtx.fillStyle='#315b83';markCtx.textAlign='center';markCtx.textBaseline='middle';markCtx.font='900 82px Arial';markCtx.fillText('DIPLOMA',500,445);markCtx.fillText('ENGINEERS',500,545);
-  }
-  let watermarkData='';try{watermarkData=markCanvas.toDataURL('image/png');}catch(e){}
+  // Exact Diploma Engineers PDF logo, centered on every page.
+  const logoUrl='https://diplomaengineers.vercel.app/pdf-logo.png';
+  const logoImg=new Image();logoImg.crossOrigin='anonymous';logoImg.decoding='async';logoImg.src=logoUrl;
+  await new Promise((resolve,reject)=>{
+   if(logoImg.complete&&logoImg.naturalWidth)return resolve();
+   logoImg.onload=resolve;logoImg.onerror=()=>reject(new Error('PDF watermark logo load नहीं हुआ। कृपया logo URL और internet/CORS access जाँचें।'));
+   setTimeout(()=>reject(new Error('PDF watermark logo load होने में समय लग रहा है।')),15000);
+  });
+  const markCanvas=document.createElement('canvas');markCanvas.width=1200;markCanvas.height=1200;
+  const markCtx=markCanvas.getContext('2d');
+  const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
+  const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
+  markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.13;
+  markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
+  const watermarkData=markCanvas.toDataURL('image/png');
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){try{pdf.addImage(watermarkData,'PNG',(pw-150)/2,(ph-150)/2,150,150,undefined,'FAST');}catch(e){}}
+   const wmW=132,wmH=132;
+   pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
    pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }

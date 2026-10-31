@@ -4098,6 +4098,7 @@ html,body{max-width:100%;overflow-x:hidden}
   <div id="importantQuestionsPage" class="page">
     <section class="iq-app-shell">
       <header class="iq-app-hero"><button class="iq-app-back" onclick="iqNavigateBack()" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div><small>DIPLOMA ENGINEERS • STUDY HUB</small><h1>Important Questions</h1><p>Branch Folder • Semester Folder • Subject PDF</p></div></header>
+      <button type="button" id="iqFolderBack" class="de-folder-back" hidden><i class="fas fa-arrow-left"></i> Back</button>
       <div class="iq-app-filters"><input id="iqAppSearch" placeholder="Search branch, semester, subject or question..."><select id="iqAppBranch" hidden><option value="">All Branches</option></select><select id="iqAppSemester" hidden><option value="">All Semesters</option></select><select id="iqAppSubject" hidden><option value="">All Subjects</option></select></div>
       <div id="iqAppCrumbs" class="iq-app-crumbs"></div>
       <div id="iqAppStatus" class="iq-app-status"><div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading important questions, please wait…</div></div></div>
@@ -4108,22 +4109,45 @@ html,body{max-width:100%;overflow-x:hidden}
     </section>
   </div>
 
+
+  <style id="study-hub-clean-folder-reader-ui">
+    #importantQuestionsPage .iq-app-hero{display:none!important}
+    #sortNotesPage .sn-hero{display:none!important}
+    #importantQuestionsPage .iq-app-shell,#sortNotesPage .sn-shell{padding-top:8px!important}
+    #importantQuestionsPage .iq-app-filters{margin:0 0 10px!important}
+    #importantQuestionsPage .iq-app-status{padding:0!important;margin:0!important;min-height:0!important}
+    #importantQuestionsPage .iq-app-crumbs,#sortNotesPage .sn-crumbs{display:none!important}
+    .de-folder-back{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 12px;border:1px solid #dbe5f1;border-radius:10px;background:#fff;color:#23416b;font:700 13px/1.2 inherit;cursor:pointer;box-shadow:0 2px 7px rgba(15,23,42,.04)}
+    .de-folder-back[hidden]{display:none!important}
+    #sortNotesPage .sn-folder-back{margin-bottom:9px}
+    #importantQuestionsPage .iq-app-folder-grid[hidden],#sortNotesPage .sn-grid[hidden]{display:none!important}
+    #importantQuestionsPage .iq-app-reader-toolbar{align-items:center;flex-wrap:wrap}
+    #importantQuestionsPage .iq-app-reader-toolbar button{display:inline-flex;align-items:center;gap:7px}
+    @media(max-width:650px){#importantQuestionsPage .iq-app-shell,#sortNotesPage .sn-shell{padding:8px 8px 20px!important}.de-folder-back{font-size:12px;padding:8px 10px}}
+  </style>
+
   <!-- SORT NOTES: Branch > Semester > Subject > HTML notes -->
   <div id="sortNotesPage" class="page">
     <section class="sn-shell">
-      <header class="sn-hero"><button class="sn-back" id="snBack" type="button" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div><small>DIPLOMA ENGINEERS • STUDY HUB</small><h1>Sort Notes</h1><p>Branch → Semester → Subject → Notes</p></div></header>
-      <div class="sn-tools"><input id="snSearch" type="search" placeholder="Search branch, semester, subject or notes…"><button id="snRefresh" type="button"><i class="fas fa-rotate"></i> Refresh</button></div>
-      <div id="snCrumbs" class="sn-crumbs"></div>
-      <div id="snStatus" class="sn-status"><i class="fas fa-spinner fa-spin"></i> Loading notes…</div>
+      <button type="button" id="snFolderBack" class="de-folder-back sn-folder-back" hidden><i class="fas fa-arrow-left"></i> Back</button>
+      <div class="sn-tools sn-folder-search"><input id="snSearch" type="search" placeholder="Search branch, semester, subject or short notes…"></div>
+      <div id="snCrumbs" class="sn-crumbs" hidden></div>
+      <div id="snStatus" class="sn-status"><div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading Short Notes, please wait…</div></div></div>
       <div id="snFolders" class="sn-grid" hidden></div>
       <article id="snReader" class="sn-reader" hidden>
-        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p></div><div class="sn-reader-actions"><button id="snLangEn" type="button" class="secondary">English</button><button id="snLangHi" type="button" class="secondary">हिन्दी</button><button id="snDownload" type="button"><i class="fas fa-file-pdf"></i> Download PDF</button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back to folders</button></div><div id="snLangStatus" role="status" aria-live="polite" style="font-size:12px;color:#64748b;margin:6px 0"></div></div>
+        <div class="sn-reader-head"><div><h2 id="snReaderTitle">Notes</h2><p id="snReaderMeta"></p></div><div class="sn-reader-actions"><button id="snTranslate" type="button"><i class="fas fa-language"></i> Translate to Hindi</button><button id="snDownloadVideo" type="button" aria-label="PDF" title="PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></button><button id="snClose" type="button" class="secondary"><i class="fas fa-arrow-left"></i> Back</button></div><div id="snLangStatus" role="status" aria-live="polite" style="font-size:12px;color:#64748b;margin:6px 0"></div></div>
         <iframe id="snFrame" title="Notes preview" sandbox="allow-same-origin" loading="eager"></iframe>
       </article>
     </section>
   </div>
   <style>
-  .sn-shell{max-width:1100px;margin:0 auto;padding:14px 12px 35px;color:#172033}.sn-hero{display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#0e7490);color:#fff;box-shadow:0 9px 24px #0f766e22}.sn-hero h1{font-size:clamp(23px,4vw,32px);margin:3px 0}.sn-hero p{margin:0;font-size:13px;opacity:.88}.sn-hero small{font-size:10px;letter-spacing:1px;font-weight:800}.sn-back{width:42px;height:42px;border:0;border-radius:12px;background:#ffffff25;color:#fff;font-size:18px;cursor:pointer}.sn-tools{display:flex;gap:9px;margin:15px 0}.sn-tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid #dbe3ed;border-radius:12px;font:inherit;background:#fff}.sn-tools button,.sn-reader-actions button{border:0;border-radius:11px;padding:11px 14px;background:#0f766e;color:#fff;font-weight:800;cursor:pointer}.sn-crumbs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px}.sn-crumbs button{border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}.sn-crumbs span{align-self:center;color:#94a3b8}.sn-status{text-align:center;padding:22px;color:#64748b}.sn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sn-item{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:15px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;color:#172033;box-shadow:0 5px 18px #0f172a0a;cursor:pointer}.sn-item:hover{border-color:#5eead4;transform:translateY(-1px)}.sn-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;display:grid;place-items:center;background:#ccfbf1;color:#0f766e;font-size:21px}.sn-item strong{display:block;font-size:14px;line-height:1.4}.sn-item small{display:block;color:#64748b;margin-top:5px;line-height:1.5}.sn-reader{margin-top:12px;border:1px solid #dbe3ed;border-radius:15px;background:#fff;padding:13px}.sn-reader-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.sn-reader-head h2{margin:0;font-size:19px}.sn-reader-head p{margin:5px 0 0;color:#64748b;font-size:12px}.sn-reader-actions{display:flex;gap:8px;flex-wrap:wrap}.sn-reader-actions .secondary{background:#e2e8f0;color:#334155}.sn-reader iframe{width:100%;height:76vh;border:1px solid #dbe3ed;border-radius:11px;background:#fff}.sn-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;text-align:center;grid-column:1/-1}@media(max-width:650px){.sn-shell{padding:10px 9px 30px}.sn-grid{grid-template-columns:1fr}.sn-tools{flex-direction:column}.sn-reader-head{align-items:flex-start;flex-direction:column}.sn-reader iframe{height:68vh}.sn-reader{padding:9px}}
+  .sn-shell{max-width:1100px;margin:0 auto;padding:14px 12px 35px;color:#172033}.sn-hero{display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#0e7490);color:#fff;box-shadow:0 9px 24px #0f766e22}.sn-hero h1{font-size:clamp(23px,4vw,32px);margin:3px 0}.sn-hero p{margin:0;font-size:13px;opacity:.88}.sn-hero small{font-size:10px;letter-spacing:1px;font-weight:800}.sn-back{width:42px;height:42px;border:0;border-radius:12px;background:#ffffff25;color:#fff;font-size:18px;cursor:pointer}.sn-tools{display:flex;gap:9px;margin:0 0 14px}.sn-folder-search{margin-top:0}.sn-folder-search input{width:100%;flex:1}.sn-tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid #dbe3ed;border-radius:12px;font:inherit;background:#fff}.sn-tools button,.sn-reader-actions button{border:0;border-radius:11px;padding:11px 14px;background:#0f766e;color:#fff;font-weight:800;cursor:pointer}.sn-crumbs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px}.sn-crumbs button{border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}.sn-crumbs span{align-self:center;color:#94a3b8}.sn-status{text-align:center;padding:22px;color:#64748b}.sn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sn-item{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:15px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;color:#172033;box-shadow:0 5px 18px #0f172a0a;cursor:pointer}.sn-item:hover{border-color:#5eead4;transform:translateY(-1px)}.sn-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;display:grid;place-items:center;background:#ccfbf1;color:#0f766e;font-size:21px}.sn-item strong{display:block;font-size:14px;line-height:1.4}.sn-item small{display:block;color:#64748b;margin-top:5px;line-height:1.5}.sn-reader{margin-top:12px;border:1px solid #dbe3ed;border-radius:15px;background:#fff;padding:13px}.sn-reader-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.sn-reader-head h2{margin:0;font-size:19px}.sn-reader-head p{margin:5px 0 0;color:#64748b;font-size:12px}.sn-reader-actions{display:flex;gap:8px;flex-wrap:wrap}.sn-reader-actions .secondary{background:#e2e8f0;color:#334155}.sn-reader iframe{width:100%;height:76vh;border:1px solid #dbe3ed;border-radius:11px;background:#fff}.sn-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;text-align:center;grid-column:1/-1}@media(max-width:650px){.sn-shell{padding:10px 9px 30px}.sn-grid{grid-template-columns:1fr}.sn-tools{flex-direction:column}.sn-reader-head{align-items:flex-start;flex-direction:column}.sn-reader iframe{height:68vh}.sn-reader{padding:9px}}
+    #sortNotesPage .sn-hero{display:none!important}
+    #sortNotesPage .sn-crumbs{display:none!important}
+    #sortNotesPage .sn-status:empty{display:none!important}
+    #sortNotesPage .sn-reader-head{display:flex!important;margin:0 0 8px!important}
+    #sortNotesPage .sn-reader-actions{display:flex!important;gap:8px;flex-wrap:wrap}
+    #sortNotesPage .sn-reader-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
   </style>
   <style id="sn-preview-logo-fit">#snFrame{background:#fff}#snReader{overflow:hidden}#snReader iframe{display:block;max-width:100%} .sn-reader-actions button{white-space:nowrap}@media(max-width:520px){.sn-reader-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.sn-reader-actions button{width:100%;padding:10px 8px;font-size:12px}}</style>
   <style id="notes-full-width-fix">
@@ -11373,7 +11397,7 @@ function iqSemesterLabel(value){let s=String(value||'').trim().replace(/[_-]+/g,
 function iqGroupKey(r,key){return key==='title'?(iqField(r,'title','name')||'Untitled Important Questions'):key==='branch'?(iqField(r,'branch','branchName','category','courseBranch')||'Common / All Branches'):key==='semester'?iqSemesterLabel(iqField(r,'semester','semesterName','term','year')):(iqField(r,'subject','subjectName','paperName')||'Subject not set')}
 function iqHierarchyList(){let list=iqRecords.slice();const keys=['branch','semester','subject'];iqPath.forEach((v,i)=>{list=list.filter(r=>iqGroupKey(r,keys[i])===v)});return list}
 function iqRenderCrumbs(){const labels=['Branches','Semesters','Subjects','Files'];iqEl('iqAppCrumbs').innerHTML='<button data-iq-root="1">'+labels[0]+'</button>'+iqPath.map((v,i)=>'<span>›</span><button data-iq-crumb="'+i+'">'+iqTxt(v)+'</button>').join('')+(iqPath.length?'<span>›</span><b>'+labels[Math.min(iqPath.length,4)]+'</b>':'');iqEl('iqAppCrumbs').querySelector('[data-iq-root]').onclick=()=>{iqPath=[];iqRenderFolders()};iqEl('iqAppCrumbs').querySelectorAll('[data-iq-crumb]').forEach(b=>b.onclick=()=>{iqPath=iqPath.slice(0,Number(b.dataset.iqCrumb)+1);iqRenderFolders()})}
-function iqRenderFolders(){if(!iqLoaded){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<div class="iq-app-empty" role="status">Important Questions are loading. If folders do not appear, use Retry below.<br><button type="button" id="iqRetryLoad" style="margin-top:10px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';iqEl('iqAppFolders').hidden=true;iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqStartLoad(true)});return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?groups.length+' '+['branch folder(s)','semester folder(s)','subject folder(s)'][iqPath.length]:'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
+function iqRenderFolders(){const folderBack=iqEl('iqFolderBack');if(folderBack)folderBack.hidden=iqPath.length===0;if(!iqLoaded){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<div class="iq-app-empty" role="status">Important Questions are loading. If folders do not appear, use Retry below.<br><button type="button" id="iqRetryLoad" style="margin-top:10px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';iqEl('iqAppFolders').hidden=true;iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqStartLoad(true)});return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?list.length+' file(s)':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?'':'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g),nextKey=keys[iqPath.length+1],subInfo=nextKey?[...new Set(subset.map(r=>iqGroupKey(r,nextKey)))].length+' '+['branches','semesters','subjects','files'][iqPath.length+1]:'Open files';return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong><small>'+subset.length+' sheet(s) • '+iqTxt(subInfo)+'</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
 function iqQuestionPairHtml(raw,number){
  const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  const hi=[],en=[];
@@ -11460,7 +11484,7 @@ function iqShareQuestionLines(raw,number){const lines=String(raw||'').split(/\r?
 function iqBuildShareText(){if(!iqChosen)return '';const r=iqChosen,branch=iqField(r,'branch','branchName','category','courseBranch')||'Diploma Engineering',semester=iqGroupKey(r,'semester'),subject=iqField(r,'subject','subjectName','paperName')||'Important Questions',units=iqUnits(r);const lines=[];lines.push('🚀⚙️ '+iqFancyBold('DIPLOMA ENGINEERS')+' ⚙️🚀','', '　　　📚 '+iqFancyBold(subject.toUpperCase())+' 📚','', '🎯 '+iqFancyBold('MOST IMPORTANT QUESTIONS')+' 🎯','', '　　　　📝 '+iqFancyBold('BTEUP DIPLOMA EXAM')+' 📝','', '━━━━━━━━━━━━━━━━━━━━','', '🌐 '+iqFancyBold('Bilingual Edition (English + Hindi)'),'','━━━━━━━━━━━━━━━━━━━━','', '📌 '+iqFancyBold('BRANCH')+': '+branch,'📌 '+iqFancyBold('SEMESTER')+': '+semester,'📌 '+iqFancyBold('SUBJECT')+': '+subject,'','━━━━━━━━━━━━━━━━━━━━','');units.forEach((u,i)=>{lines.push('📘 '+iqFancyBold(iqUnitTitle(u.title,i).toUpperCase()),'━━━━━━━━━━━━━━━━━━━━','');u.questions.forEach((q,j)=>{lines.push(iqShareQuestionLines(q.text,q.number||j+1),'');});lines.push('━━━━━━━━━━━━━━━━━━━━','');});lines.push('🎯 '+iqFancyBold('EXAM PREPARATION TIPS'),'','✅ Prepare all units.','✅ Learn definitions, causes, effects and preventive measures.','✅ Practise writing answers in points with suitable headings.','','━━━━━━━━━━━━━━━━━━━━','','📢 '+iqFancyBold('FREE STUDY MATERIAL'),'📚 Notes • Books • PYQs • Mock Tests • Exam Guidance','','🌐 '+iqFancyBold('WEBSITE')+':','https://diplomaengineers.vercel.app','','📲 '+iqFancyBold('JOIN OUR WHATSAPP CHANNEL')+':','https://whatsapp.com/channel/0029Vay8k8CAojYkBQWr1s1w','','━━━━━━━━━━━━━━━━━━━━','','　　　　🚀⚙️ '+iqFancyBold('DIPLOMA ENGINEERS')+' ⚙️🚀','','　　　'+iqFancyBold("Students' Trusted Learning Platform"),'','❤️ '+iqFancyBold('Learn Together • Grow Together • Succeed Together')+' ❤️');return lines.join('\n');}
 async function iqShareAllQuestions(){const text=iqBuildShareText();if(!text)return;const subject=iqField(iqChosen,'subject','subjectName')||'Important Questions';const data={title:'Diploma Engineers | '+subject+' Important Questions',text:text};try{if(navigator.share){await navigator.share(data);return;}const wa='https://wa.me/?text='+encodeURIComponent(text);const w=window.open(wa,'_blank','noopener,noreferrer');if(!w){if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);alert('All Important Questions copied. Paste them into WhatsApp or any chat.');}else window.prompt('Copy all Important Questions:',text);}}catch(err){if(err&&err.name!=='AbortError'){const wa='https://wa.me/?text='+encodeURIComponent(text);window.open(wa,'_blank','noopener,noreferrer');}}}
 iqEl('iqAppFloatingShare')?.addEventListener('click',iqShareAllQuestions);
-iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Preparing clear PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='PDF downloaded ✓'}catch(e){console.error('PDF generation failed',e);alert((e&&e.message)||'Unable to open PDF print window. Please allow popups and try again.');btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='PDF downloaded ✓')btn.textContent=old},2200)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
+iqEl('iqAppBackFolders').onclick=iqNavigateBack;iqEl('iqFolderBack')?.addEventListener('click',()=>{if(iqPath.length){iqPath=iqPath.slice(0,-1);iqChosen=null;iqRenderFolders();}});iqEl('iqAppPdf').addEventListener('click',async()=>{if(!iqChosen)return;const nm=[iqField(iqChosen,'subject','subjectName'),iqField(iqChosen,'branch','branchName'),'Imp_Questions_by_diploma_engineers7'].filter(Boolean).join('_').replace(/[^a-z0-9 _-]/gi,'').replace(/\s+/g,'_');const btn=iqEl('iqAppPdf'),old=btn.textContent;btn.disabled=true;btn.textContent='Preparing clear PDF…';try{await iqDownloadPdf(document.getElementById('iqAppSheet'),nm);btn.textContent='PDF downloaded ✓'}catch(e){console.error('PDF generation failed',e);alert((e&&e.message)||'Unable to open PDF print window. Please allow popups and try again.');btn.textContent=old}finally{setTimeout(()=>{btn.disabled=false;if(btn.textContent==='PDF downloaded ✓')btn.textContent=old},2200)}});['iqAppSearch','iqAppBranch','iqAppSemester','iqAppSubject'].forEach(id=>{const el=iqEl(id);if(el)el.addEventListener('input',iqRenderFolders)});
 async function iqDownloadPdf(el,name){
  if(!el)throw new Error('Question sheet not found');
  // Create a real downloadable, selectable-quality A4 PDF (no print dialog).
@@ -12349,9 +12373,9 @@ function snField(r,k){return String(r?.[k]??(k==="title"?r?.fileName:r?.original
 function snLevel(r){return [snField(r,"branch"),snField(r,"semester").toLowerCase().startsWith("semester")?snField(r,"semester"):"Semester "+snField(r,"semester"),snField(r,"subject")]}
 function snFiltered(){const q=(sn$("snSearch")?.value||"").trim().toLowerCase();return snRows.filter(r=>!q||[r.branch,r.semester,r.subject,r.title,r.originalFileName].join(" ").toLowerCase().includes(q))}
 function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Branches",...snPath];el.innerHTML=names.map((n,i)=>`${i?'<span>›</span>':''}<button type="button" data-sn-crumb="${i}">${snEsc(n)}</button>`).join("");el.querySelectorAll("[data-sn-crumb]").forEach(b=>b.onclick=()=>{snPath=snPath.slice(0,Number(b.dataset.snCrumb));snActive=null;snRender()})}
-function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent=groups.length?`${groups.length} ${["branch","semester","subject"][snPath.length]} folder(s)`:"No uploaded notes found.";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent=files.length?`${files.length} notes file(s)`:"इस Subject में कोई Notes file नहीं मिली।";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Tap to open & download PDF</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
+function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader"),folderBack=sn$("snFolderBack");if(!status||!grid)return;if(folderBack)folderBack.hidden=snPath.length===0;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Tap to open & download PDF</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));const fix=d.createElement("style");fix.id="de-sn-image-fit-fix";fix.textContent="html,body{max-width:100%;overflow-wrap:anywhere}body img{max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:center!important}body img[alt*=logo i],body .logo img,body .brand img,body header img{width:auto!important;max-width:min(100%,680px)!important;max-height:150px!important;object-fit:contain!important;display:block!important;margin:8px auto!important}table{max-width:100%!important}*{box-sizing:border-box}";d.head.appendChild(fix);return "<!doctype html>"+d.documentElement.outerHTML}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening notes…';const r=snRows.find(x=>x.id===id);const html=r?.htmlContent||r?.html||r?.content||"";if(!html)throw new Error("Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.");snActive={...r,html};snSetLanguageButtons("en");if(sn$("snLangStatus"))sn$("snLangStatus").textContent="English version";const blob=new Blob([snSafeDocument(html)],{type:"text/html"});if(snObjectUrl)URL.revokeObjectURL(snObjectUrl);snObjectUrl=URL.createObjectURL(blob);sn$("snFrame").src=snObjectUrl;sn$("snReaderTitle").textContent=r.title||r.subject||"Notes";sn$("snReaderMeta").textContent=[r.branch,r.semester?`Semester ${r.semester}`:"",r.subject].filter(Boolean).join(" • ");sn$("snFolders").hidden=true;sn$("snReader").hidden=false;status.textContent="";sn$("snReader").scrollIntoView({behavior:"smooth",block:"start"});}catch(e){status.textContent="Notes open नहीं हो पाए: "+e.message;}}
+async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Opening Short Notes, please wait…</div></div>';const r=snRows.find(x=>x.id===id);const html=r?.htmlContent||r?.html||r?.content||"";if(!html)throw new Error("Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.");snActive={...r,html};snSetLanguageButtons("en");if(sn$("snLangStatus"))sn$("snLangStatus").textContent="English version";const blob=new Blob([snSafeDocument(html)],{type:"text/html"});if(snObjectUrl)URL.revokeObjectURL(snObjectUrl);snObjectUrl=URL.createObjectURL(blob);sn$("snFrame").src=snObjectUrl;sn$("snReaderTitle").textContent=r.title||r.subject||"Notes";sn$("snReaderMeta").textContent=[r.branch,r.semester?`Semester ${r.semester}`:"",r.subject].filter(Boolean).join(" • ");sn$("snFolders").hidden=true;sn$("snReader").hidden=false;status.textContent="";sn$("snReader").scrollIntoView({behavior:"smooth",block:"start"});}catch(e){status.textContent="Notes open नहीं हो पाए: "+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -12373,29 +12397,70 @@ async function snLoad(){
  }
 }
 let snTranslationBusy=false;
-function snSetLanguageButtons(lang){sn$('snLangEn')?.classList.toggle('active',lang==='en');sn$('snLangHi')?.classList.toggle('active',lang==='hi');}
+function snSetLanguageButtons(lang){const b=sn$('snTranslate');if(!b)return;b.dataset.lang=lang;b.innerHTML=lang==='hi'?'<i class="fas fa-language"></i> Show English':'<i class="fas fa-language"></i> Translate to Hindi';}
 function snGetTranslatableTextNodes(doc){
  const walker=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT,{acceptNode(n){
   const p=n.parentElement;if(!p||/^(SCRIPT|STYLE|NOSCRIPT|SVG|MATH|CODE|PRE|TEXTAREA|INPUT|OPTION)$/i.test(p.tagName))return NodeFilter.FILTER_REJECT;
-  if(p.closest('[data-no-translate],script,style,svg,math,code,pre'))return NodeFilter.FILTER_REJECT;
+  if(p.closest('[data-no-translate],script,style,svg,math,code,pre,[hidden],[aria-hidden="true"]'))return NodeFilter.FILTER_REJECT;
   const t=(n.nodeValue||'').trim();return t&&/[A-Za-z]{2}/.test(t)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
  }});const a=[];while(walker.nextNode())a.push(walker.currentNode);return a;
 }
-async function snTranslateChunk(text){
- const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(text);
- const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
- try{const r=await fetch(url,{signal:ctl.signal,mode:'cors',cache:'no-store'});if(!r.ok)throw new Error('Translation HTTP '+r.status);const j=await r.json();const out=Array.isArray(j?.[0])?j[0].map(x=>x?.[0]||'').join(''):'';if(!out)throw new Error('Empty translation');return out;}finally{clearTimeout(timer);}
+const snTranslationCache=new Map();
+const snSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function snFetchJson(url,timeout=18000){
+ const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeout);
+ try{const r=await fetch(url,{signal:ctl.signal,mode:'cors',cache:'no-store',headers:{'Accept':'application/json'}});if(!r.ok)throw new Error('Translation HTTP '+r.status);return await r.json();}
+ finally{clearTimeout(timer);}
 }
-async function snTranslateText(text){let chunks=[],rest=String(text);while(rest.length>300){let cut=rest.lastIndexOf(' ',300);if(cut<100)cut=300;chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}if(rest)chunks.push(rest);let out=[];for(const c of chunks)out.push(await snTranslateChunk(c));return out.join(' ');}
+async function snTranslateChunk(text){
+ const source=String(text||'');if(!source.trim())return source;
+ if(snTranslationCache.has(source))return snTranslationCache.get(source);
+ let lastError;
+ // Google Translate's public web endpoint is tried first; transient failures are retried.
+ for(let attempt=0;attempt<2;attempt++){
+  try{
+   const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(source);
+   const j=await snFetchJson(url,18000);
+   const out=Array.isArray(j?.[0])?j[0].map(x=>x?.[0]||'').join(''):'';
+   if(!out.trim())throw new Error('Google Translate returned empty text');
+   snTranslationCache.set(source,out);return out;
+  }catch(e){lastError=e;if(attempt===0)await snSleep(450);}
+ }
+ // CORS-enabled fallback for networks where the Google endpoint is unavailable.
+ try{
+  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(source)+'&langpair=en|hi';
+  const j=await snFetchJson(url,18000);
+  const out=String(j?.responseData?.translatedText||'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+  if(!out.trim()||String(j?.responseStatus)==='403')throw new Error('Fallback translation unavailable');
+  snTranslationCache.set(source,out);return out;
+ }catch(e){throw new Error('Translation services unavailable. Google: '+(lastError?.message||'failed')+'; fallback: '+(e?.message||'failed'));}
+}
+async function snTranslateText(text){
+ const source=String(text??'');if(source.length<=420)return snTranslateChunk(source);
+ const chunks=[];let rest=source;
+ while(rest.length>420){let cut=rest.lastIndexOf(' ',420);if(cut<180)cut=420;chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}
+ if(rest)chunks.push(rest);
+ const out=[];for(const c of chunks)out.push(await snTranslateChunk(c));return out.join(' ');
+}
 async function snSetLanguage(lang){
  const doc=sn$('snFrame')?.contentDocument,status=sn$('snLangStatus');if(!doc?.body){alert('Notes अभी load हो रहे हैं।');return;}if(snTranslationBusy)return;
  if(lang==='en'){doc.querySelectorAll('[data-sn-original]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original');n.removeAttribute('data-sn-original');});snSetLanguageButtons('en');if(status)status.textContent='English version';return;}
  const nodes=snGetTranslatableTextNodes(doc);if(!nodes.length){if(status)status.textContent='Translate करने के लिए English text नहीं मिला।';return;}
- snTranslationBusy=true;['snLangEn','snLangHi','snDownload'].forEach(id=>{if(sn$(id))sn$(id).disabled=true;});if(status)status.textContent='Hindi translation शुरू हो रहा है…';
- try{for(let i=0;i<nodes.length;i++){const n=nodes[i];if(!n.isConnected)continue;if(!n.hasAttribute('data-sn-original'))n.setAttribute('data-sn-original',n.nodeValue);n.nodeValue=await snTranslateText(n.getAttribute('data-sn-original'));if(status)status.textContent='Hindi translation: '+(i+1)+' / '+nodes.length;}
- snSetLanguageButtons('hi');if(status)status.textContent='Hindi translation complete. अब Download PDF दबाएँ।';
+ snTranslationBusy=true;['snTranslate','snDownloadVideo'].forEach(id=>{if(sn$(id))sn$(id).disabled=true;});if(status)status.textContent='Hindi translation शुरू हो रहा है…';
+ try{for(let i=0;i<nodes.length;i++){const n=nodes[i];if(!n.isConnected)continue;if(!n.hasAttribute('data-sn-original'))n.setAttribute('data-sn-original',n.nodeValue);const original=n.getAttribute('data-sn-original');n.nodeValue=await snTranslateText(original);if(status&&(i===nodes.length-1||(i+1)%5===0))status.textContent='Hindi translation: '+(i+1)+' / '+nodes.length+' text parts';if((i+1)%8===0)await snSleep(80);}
+ snSetLanguageButtons('hi');if(status)status.textContent='Hindi translation complete. अब PDF आइकन दबाकर Hindi notes डाउनलोड करें।'
  }catch(e){console.error('Notes translation failed',e);doc.querySelectorAll('[data-sn-original]').forEach(n=>{n.nodeValue=n.getAttribute('data-sn-original');n.removeAttribute('data-sn-original');});snSetLanguageButtons('en');if(status)status.textContent='Translation service/network error: '+(e.message||'failed');alert('Hindi translation नहीं हो पाई। Internet connection या translation service उपलब्ध नहीं है।');}
- finally{snTranslationBusy=false;['snLangEn','snLangHi','snDownload'].forEach(id=>{if(sn$(id))sn$(id).disabled=false;});}
+ finally{snTranslationBusy=false;['snTranslate','snDownloadVideo'].forEach(id=>{if(sn$(id))sn$(id).disabled=false;});}
+}
+
+function snDownloadVideo(){
+ if(!snActive){alert('पहले Short Notes की फ़ाइल खोलें।');return;}
+ const raw=String(snActive.videoUrl||snActive.downloadVideoUrl||snActive.videoDownloadUrl||snActive.videoLink||snActive.mediaUrl||'').trim();
+ let url=raw;
+ if(!url){const doc=sn$('snFrame')?.contentDocument;const v=doc?.querySelector('video[src],video source[src],a[download][href],a[href$=".mp4"],a[href$=".webm"],a[href$=".mov"]');url=v?.currentSrc||v?.src||v?.href||v?.getAttribute?.('src')||v?.getAttribute?.('href')||'';}
+ if(!url){alert('इस Short Notes फ़ाइल के साथ कोई direct downloadable video link नहीं मिला।');return;}
+ if(/youtube\.com|youtu\.be|vimeo\.com/i.test(url)){window.open(url,'_blank','noopener');alert('यह video platform link है। ब्राउज़र में वीडियो खुलेगा; direct video download के लिए uploaded file में direct MP4/WebM URL होना चाहिए।');return;}
+ const a=document.createElement('a');a.href=url;a.download=(snActive.title||'Diploma_Engineers_Short_Notes_Video').replace(/[^a-z0-9_-]+/gi,'_')+'.mp4';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 async function snEnsurePdf(){if(typeof window.html2pdf==="function")return;await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";s.onload=resolve;s.onerror=()=>reject(new Error("PDF library load नहीं हुई; internet check करें."));document.head.appendChild(s)});}
 async function snDownload(){
@@ -12404,6 +12469,7 @@ async function snDownload(){
  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Notes PDF तैयार हो रही है…';
  let exportFrame=null;
  try{
+  await snEnsurePdf();
   const preview=sn$("snFrame"),srcDoc=preview?.contentDocument;
   if(!srcDoc?.body)throw new Error('Notes preview अभी तैयार नहीं है। Notes को दोबारा खोलकर कुछ सेकंड बाद प्रयास करें।');
   const bodyText=(srcDoc.body.innerText||srcDoc.body.textContent||'').replace(/\s+/g,' ').trim();
@@ -12421,34 +12487,34 @@ async function snDownload(){
   const pdfStyle=srcDoc.createElement('style');
   pdfStyle.textContent=`
    @page{size:A4 portrait;margin:0}
-   html{width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;margin:0 auto!important;padding:0!important;overflow:visible!important;background:#fff!important}
-   body#deNotesPdfRoot{display:block!important;position:relative!important;float:none!important;transform:none!important;width:718px!important;min-width:718px!important;max-width:718px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:18px 20px 22px 20px!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;line-height:1.45!important;box-sizing:border-box!important}
-   #deNotesPdfRoot *{box-sizing:border-box!important}
-   #deNotesPdfRoot hr{display:none!important;border:0!important;height:0!important;margin:0!important;padding:0!important}
-   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th,#deNotesPdfRoot blockquote{font-size:inherit;line-height:1.45;overflow-wrap:anywhere;word-wrap:break-word}
-   #deNotesPdfRoot h1{font-size:22px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
-   #deNotesPdfRoot h2{font-size:19px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
-   #deNotesPdfRoot h3{font-size:16px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
-   #deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{max-width:100%;overflow-wrap:anywhere}
-   #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video,#deNotesPdfRoot iframe{max-width:100%!important;object-fit:contain}
-   #deNotesPdfRoot img,#deNotesPdfRoot video{height:auto}
-   #deNotesPdfRoot table{width:auto;max-width:100%!important;border-collapse:collapse;table-layout:auto;overflow-wrap:anywhere}#deNotesPdfRoot td,#deNotesPdfRoot th{overflow-wrap:anywhere;word-break:normal}#deNotesPdfRoot>*{max-width:100%!important}#deNotesPdfRoot .row{max-width:100%!important;margin-left:0!important;margin-right:0!important}
-   #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
-   #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page{max-width:100%}
-   .de-pdf-unit-start{display:block!important;position:relative!important;left:-20px!important;width:calc(100% + 40px)!important;max-width:none!important;background:#123d70!important;color:#fff!important;padding:9px 12px!important;margin:0 0 12px!important;border-radius:2px!important;font-size:17px!important;font-weight:800!important;line-height:1.3!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.de-pdf-unit-start:first-child{break-before:page!important;page-break-before:always!important}
+   html,body{width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+   *,*:before,*:after{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+   body{color:#172033!important;font-family:Arial,Helvetica,sans-serif!important;font-size:14px!important;line-height:1.65!important;overflow-wrap:break-word!important;word-wrap:break-word!important}
+   #deNotesPdfRoot{display:block!important;position:relative!important;left:auto!important;right:auto!important;transform:none!important;float:none!important;width:180mm!important;max-width:180mm!important;min-width:0!important;margin:0 auto!important;padding:12mm 4mm 15mm!important;overflow:visible!important;background:#fff!important;color:#172033!important;font-size:14px!important;line-height:1.65!important;box-sizing:border-box!important}
+   /* Hard containment: prevent uploaded page wrappers from escaping the A4 border. */
+   #deNotesPdfRoot *{box-sizing:border-box!important;max-width:100%!important;min-width:0!important}
+   #deNotesPdfRoot > *{position:static!important;left:auto!important;right:auto!important;transform:none!important;float:none!important;width:auto!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6,#deNotesPdfRoot blockquote{max-width:100%!important;margin-left:0!important;margin-right:0!important}
+   #deNotesPdfRoot .container,#deNotesPdfRoot .wrapper,#deNotesPdfRoot .content,#deNotesPdfRoot .main,#deNotesPdfRoot .page,#deNotesPdfRoot .row{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;left:auto!important;right:auto!important;transform:none!important}
+   #deNotesPdfRoot table{width:100%!important;max-width:100%!important;table-layout:fixed!important}
+   #deNotesPdfRoot pre,#deNotesPdfRoot code{max-width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+   #deNotesPdfRoot p,#deNotesPdfRoot li,#deNotesPdfRoot td,#deNotesPdfRoot th{line-height:1.65!important;white-space:normal!important;overflow-wrap:break-word!important;word-break:normal!important}
+   #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{line-height:1.3!important;white-space:normal!important;overflow-wrap:break-word!important;break-after:avoid!important;page-break-after:avoid!important}
+   #deNotesPdfRoot img,#deNotesPdfRoot svg,#deNotesPdfRoot canvas,#deNotesPdfRoot video{max-width:100%!important;height:auto!important;object-fit:contain!important}
+   #deNotesPdfRoot table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;table-layout:auto!important}
+   #deNotesPdfRoot th,#deNotesPdfRoot td{overflow-wrap:break-word!important;word-break:normal!important;white-space:normal!important;vertical-align:top!important}
+   #deNotesPdfRoot pre,#deNotesPdfRoot code{white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+   #deNotesPdfRoot figure,#deNotesPdfRoot .diagram,#deNotesPdfRoot .diagram-container,#deNotesPdfRoot .image-container,#deNotesPdfRoot .note-image,#deNotesPdfRoot .figure,#deNotesPdfRoot .chart{max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+   .de-pdf-unit-start{display:block!important;width:100%!important;background:#123d70!important;color:#fff!important;padding:12px 16px!important;margin:0 0 18px!important;border-radius:3px!important;font-size:19px!important;font-weight:800!important;line-height:1.35!important;break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
    .de-pdf-keep-together{break-inside:avoid!important;page-break-inside:avoid!important}
-   #deNotesPdfRoot h1,#deNotesPdfRoot h2,#deNotesPdfRoot h3,#deNotesPdfRoot h4,#deNotesPdfRoot h5,#deNotesPdfRoot h6{break-after:avoid-page!important;page-break-after:avoid!important;orphans:3;widows:3}
-   /* Keep-together is applied by JS only to figures/images/tables that fit on one A4 content page.
-      Do not force every table row or every visual to a new page: that creates large blank gaps. */
-   #deNotesPdfRoot table,#deNotesPdfRoot figure,#deNotesPdfRoot .diagram,#deNotesPdfRoot .diagram-container,#deNotesPdfRoot .image-container{break-inside:auto!important;page-break-inside:auto!important}
-   #deNotesPdfRoot tr{break-inside:auto!important;page-break-inside:auto!important}
+   tr{break-inside:avoid!important;page-break-inside:avoid!important}
    @media print{html,body{overflow:visible!important}}
   `;
   head.appendChild(pdfStyle);
 
   exportFrame=document.createElement('iframe');
   exportFrame.setAttribute('aria-hidden','true');
-  exportFrame.style.cssText='position:fixed;left:0;top:0;width:718px;height:1015px;border:0;z-index:-1;background:#fff;pointer-events:none;opacity:0;';
+  exportFrame.style.cssText='position:fixed;left:0;top:0;width:794px;height:1123px;border:0;z-index:2147483000;background:#fff;pointer-events:none;';
   document.body.appendChild(exportFrame);
   const exportDoc=exportFrame.contentDocument;
   exportDoc.open();exportDoc.write('<!doctype html>'+docClone.outerHTML);exportDoc.close();
@@ -12456,65 +12522,28 @@ async function snDownload(){
    const check=()=>{if(exportDoc.readyState==='complete')resolve();else setTimeout(check,80)};
    check();setTimeout(resolve,12000);
   });
-  // IMPORTANT: html2pdf/html2canvas must run in the SAME browsing context as
-  // the cloned notes DOM. Running the parent window's renderer on an iframe
-  // element can produce a watermark-only/blank PDF on some Chromium builds.
-  await new Promise((resolve,reject)=>{
-   if(typeof exportFrame.contentWindow.html2pdf==='function')return resolve();
-   const lib=exportDoc.createElement('script');
-   lib.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-   lib.onload=()=>typeof exportFrame.contentWindow.html2pdf==='function'?resolve():reject(new Error('PDF renderer iframe में initialize नहीं हुआ।'));
-   lib.onerror=()=>reject(new Error('PDF library load नहीं हुई; internet connection जाँचें।'));
-   exportDoc.head.appendChild(lib);
-   setTimeout(()=>reject(new Error('PDF renderer load timeout.')),20000);
-  });
-  // Keep the original BODY in place. Re-parenting all children into a new MAIN
-  // breaks uploaded styles that depend on body > element selectors and can make
-  // the PDF appear blank. Capture the real rendered document body instead.
+  // Ensure the page uses a stable A4-like content width. Remove fixed-width
+  // layouts which were causing the left/right halves to be clipped.
   const root=exportDoc.documentElement,exportBody=exportDoc.body;
-  root.style.setProperty('width','718px','important');
-  root.style.setProperty('min-width','718px','important');
-  root.style.setProperty('max-width','718px','important');
-  root.style.setProperty('height','auto','important');
-  root.style.setProperty('overflow','visible','important');
-  root.style.setProperty('margin','0','important');
-  root.style.setProperty('padding','0','important');
-  exportBody.id='deNotesPdfRoot';
-  exportBody.style.setProperty('display','block','important');
-  exportBody.style.setProperty('position','relative','important');
-  exportBody.style.setProperty('width','718px','important');
-  exportBody.style.setProperty('min-width','718px','important');
-  exportBody.style.setProperty('max-width','718px','important');
-  exportBody.style.setProperty('height','auto','important');
-  exportBody.style.setProperty('min-height','0','important');
-  exportBody.style.setProperty('overflow','visible','important');
-  exportBody.style.setProperty('margin','0 auto','important');
-  exportBody.style.setProperty('transform','none','important');
-  exportBody.style.setProperty('padding','18px 20px 22px 20px','important');
-  const pdfRoot=exportBody;
-  // Only constrain elements that can exceed the page; preserve normal layout,
-  // margins, flex/grid structure, floats and positioning of the original notes.
+  root.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  exportBody.style.cssText+='width:794px!important;min-width:0!important;max-width:794px!important;height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;';
+  const pdfRoot=exportDoc.createElement('main');pdfRoot.id='deNotesPdfRoot';
+  while(exportBody.firstChild)pdfRoot.appendChild(exportBody.firstChild);
+  exportBody.appendChild(pdfRoot);
   pdfRoot.querySelectorAll('*').forEach(el=>{
+   // Neutralize common source-HTML offsets that push content beyond the left page edge.
    el.style.setProperty('box-sizing','border-box','important');
-   const tag=el.tagName;
-   if(['IMG','SVG','CANVAS','VIDEO','IFRAME'].includes(tag)){
-    el.style.setProperty('max-width','100%','important');
-    if(tag==='IMG'||tag==='VIDEO')el.style.setProperty('height','auto','important');
-   }
-   if(tag==='TABLE'){el.style.setProperty('max-width','100%','important');el.style.setProperty('border-collapse','collapse','important');}
-   if(['P','LI','TD','TH','BLOCKQUOTE','PRE','CODE'].includes(tag)){el.style.setProperty('overflow-wrap','anywhere','important');el.style.setProperty('max-width','100%','important');}
+   el.style.setProperty('max-width','100%','important');
+   el.style.setProperty('min-width','0','important');
    const cs=exportDoc.defaultView.getComputedStyle(el);
-   const rect=el.getBoundingClientRect();
-   // Resize only fixed/inline widths that are wider than the A4 content area.
-   if(rect.width>708 && ['DIV','SECTION','ARTICLE','MAIN','TABLE','PRE','FIGURE'].includes(tag)){
+   if(cs.position==='fixed')el.style.setProperty('position','static','important');
+   if(el.tagName==='IMG'||el.tagName==='SVG'||el.tagName==='CANVAS'){
     el.style.setProperty('max-width','100%','important');
-    if(tag==='TABLE')el.style.setProperty('width','100%','important');
+    if(el.tagName==='IMG')el.style.setProperty('height','auto','important');
    }
-   // Correct elements pushed beyond the left page edge by explicit offsets,
-   // without flattening every element's position or transform.
-   if(rect.left < -2 && (cs.position==='absolute'||cs.position==='fixed')){
-    el.style.setProperty('left','0','important');
-    el.style.setProperty('right','auto','important');
+   if(el.tagName==='TABLE'){
+    el.style.setProperty('max-width','100%','important');
+    el.style.setProperty('width','100%','important');
    }
   });
   await Promise.all([...exportBody.querySelectorAll('img')].map(img=>{
@@ -12523,10 +12552,6 @@ async function snDownload(){
   }));
   try{await exportDoc.fonts.ready;}catch(e){}
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const renderedText=(pdfRoot.innerText||pdfRoot.textContent||'').replace(/\s+/g,' ').trim();
-  const renderedVisuals=pdfRoot.querySelectorAll('img,svg,canvas,table,figure,video').length;
-  if(renderedText.length<3&&!renderedVisuals)throw new Error('PDF export copy में notes content नहीं आया। मूल HTML को सुरक्षित रखते हुए दोबारा Notes खोलें।');
-  if(!pdfRoot.firstElementChild&&!renderedText)throw new Error('PDF export content खाली है; PDF डाउनलोड रोक दिया गया है ताकि खाली PDF न बने।');
 
   // Recognize Unit / इकाई headings, even when the uploaded HTML uses a
   // paragraph or styled div instead of a heading element.
@@ -12546,22 +12571,22 @@ async function snDownload(){
   const keepCandidates=[...pdfRoot.querySelectorAll('figure,.diagram,.diagram-container,.image-container,.note-image,.figure,.chart,table,img,svg,canvas')];
   keepCandidates.forEach(el=>{
    const h=el.getBoundingClientRect().height;
-   if(h>0&&h<980)el.classList.add('de-pdf-keep-together');
+   if(h>0&&h<930)el.classList.add('de-pdf-keep-together');
    else el.classList.remove('de-pdf-keep-together');
   });
   const safe=v=>String(v||'').normalize('NFKD').replace(/[^a-z0-9-]+/gi,'_').replace(/^_+|_+$/g,'');
   const subjectForFile=snActive.subjectName||snActive.subject||snActive.title||'Subject';
   const filename=(safe(subjectForFile)||'Subject')+'_Notes_by_Diploma_Engineers.pdf';
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> PDF बनाई जा रही है…';
-  const fullHeight=Math.max(1015,Math.ceil(pdfRoot.scrollHeight||pdfRoot.getBoundingClientRect().height||1015));
+  const fullHeight=Math.max(1123,Math.ceil(pdfRoot.scrollHeight||pdfRoot.getBoundingClientRect().height||1123));
   const opt={
-   margin:7,filename, // A4-safe numeric margin; avoids legacy Invalid margin array errors.
+   margin:0,filename,
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:718,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000,foreignObjectRendering:false,removeContainer:true},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',windowWidth:794,windowHeight:fullHeight,logging:false,scrollX:0,scrollY:0,imageTimeout:30000},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['.de-pdf-keep-together']}
+   pagebreak:{mode:['css','legacy'],before:['.de-pdf-unit-start'],avoid:['img','svg','canvas','figure','tr','.de-pdf-keep-together']}
   };
-  const pdf=await exportFrame.contentWindow.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
+  const pdf=await window.html2pdf().set(opt).from(pdfRoot).toPdf().get('pdf');
   const total=pdf.internal.getNumberOfPages();
   if(!total)throw new Error('PDF renderer ने कोई page नहीं बनाया।');
   // Refuse a blank/watermark-only output.
@@ -12570,37 +12595,31 @@ async function snDownload(){
   // Exact Diploma Engineers PDF logo, centered on every page.
   const logoUrl='https://diplomaengineers.vercel.app/pdf-logo.png';
   const logoImg=new Image();logoImg.crossOrigin='anonymous';logoImg.decoding='async';logoImg.src=logoUrl;
-  let watermarkData=null;
-  try{
-   await new Promise((resolve,reject)=>{
-    if(logoImg.complete&&logoImg.naturalWidth)return resolve();
-    logoImg.onload=resolve;logoImg.onerror=()=>reject(new Error('logo unavailable'));
-    setTimeout(()=>reject(new Error('logo timeout')),8000);
-   });
-   const markCanvas=document.createElement('canvas');markCanvas.width=1200;markCanvas.height=1200;
-   const markCtx=markCanvas.getContext('2d');
-   const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
-   const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
-   markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.10;
-   markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
-   watermarkData=markCanvas.toDataURL('image/png');
-  }catch(logoError){console.warn('PDF watermark skipped; continuing download.',logoError)}
+  await new Promise((resolve,reject)=>{
+   if(logoImg.complete&&logoImg.naturalWidth)return resolve();
+   logoImg.onload=resolve;logoImg.onerror=()=>reject(new Error('PDF watermark logo load नहीं हुआ। कृपया logo URL और internet/CORS access जाँचें।'));
+   setTimeout(()=>reject(new Error('PDF watermark logo load होने में समय लग रहा है।')),15000);
+  });
+  const markCanvas=document.createElement('canvas');markCanvas.width=1200;markCanvas.height=1200;
+  const markCtx=markCanvas.getContext('2d');
+  const maxW=1050,maxH=1050,scale=Math.min(maxW/logoImg.naturalWidth,maxH/logoImg.naturalHeight);
+  const mw=logoImg.naturalWidth*scale,mh=logoImg.naturalHeight*scale;
+  markCtx.clearRect(0,0,1200,1200);markCtx.globalAlpha=0.13;
+  markCtx.drawImage(logoImg,(1200-mw)/2,(1200-mh)/2,mw,mh);
+  const watermarkData=markCanvas.toDataURL('image/png');
   for(let i=1;i<=total;i++){
    pdf.setPage(i);const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-   if(watermarkData){const wmW=125,wmH=125;pdf.saveGraphicsState?.();pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');pdf.restoreGraphicsState?.();}
+   const wmW=132,wmH=132;
+   pdf.addImage(watermarkData,'PNG',(pw-wmW)/2,(ph-wmH)/2,wmW,wmH,undefined,'FAST');
    pdf.setDrawColor(37,99,160);pdf.setLineWidth(0.35);pdf.rect(5,5,pw-10,ph-10,'S');
+   pdf.setTextColor(100,116,139);pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.text('DIPLOMA ENGINEERS',pw/2,ph-7,{align:'center'});
   }
-  // Trigger download from the top-level page to avoid iframe download restrictions.
-  const pdfBlob=pdf.output('blob');
-  const downloadUrl=URL.createObjectURL(pdfBlob);
-  const downloadLink=document.createElement('a');downloadLink.href=downloadUrl;downloadLink.download=filename;downloadLink.style.display='none';
-  document.body.appendChild(downloadLink);downloadLink.click();downloadLink.remove();
-  setTimeout(()=>URL.revokeObjectURL(downloadUrl),60000);
+  pdf.save(filename);
   btn.innerHTML='<i class="fas fa-check"></i> PDF Downloaded';
  }catch(e){console.error('Study Notes PDF error:',e);alert('PDF generate नहीं हुई: '+(e.message||'Please try again.'));}
  finally{try{exportFrame?.remove();}catch(e){}btn.disabled=false;setTimeout(()=>{btn.innerHTML=old;},1800);}
 }
-sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snDownload")?.addEventListener("click",snDownload);sn$("snLangEn")?.addEventListener("click",()=>snSetLanguage("en"));sn$("snLangHi")?.addEventListener("click",()=>snSetLanguage("hi"));sn$("snRefresh")?.addEventListener("click",snLoad);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
+sn$("snFolderBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snActive=null;snRender()}});sn$("snBack")?.addEventListener("click",()=>{if(snPath.length){snPath.pop();snRender()}else if(typeof navigateTo==="function")navigateTo("homePage")});sn$("snClose")?.addEventListener("click",()=>{snActive=null;sn$("snReader").hidden=true;sn$("snFolders").hidden=false;snRender()});sn$("snTranslate")?.addEventListener("click",()=>snSetLanguage(sn$("snTranslate")?.dataset.lang==="hi"?"en":"hi"));sn$("snDownloadVideo")?.addEventListener("click",snDownloadVideo);sn$("snSearch")?.addEventListener("input",()=>{snPath=[];snRender()});window.openSortNotesHome=()=>{snPath=[];snActive=null;snLoad()};
 </script>
 </body>
 </html>

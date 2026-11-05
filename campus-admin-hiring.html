@@ -2530,38 +2530,66 @@ document.addEventListener("DOMContentLoaded",function(){
             );
 
 
-            const response =
-                await fetch(
-                    EMAIL_ENDPOINT,
-                    {
-                        method:"POST",
-                        body:data,
-                        headers:{
-                            "Accept":"application/json"
-                        }
-                    }
-                );
+            /*
+             * Submit through a normal HTML form in a hidden iframe.
+             * This avoids the browser CORS restriction that can make
+             * fetch(https://formsubmit.co/ajax/...) fail with "Failed to fetch".
+             * No Firebase rules, database rules, or Cloudinary settings change.
+             */
+            const submitFrame = document.getElementById("caFormSubmitFrame") || (()=>{
+                const frame = document.createElement("iframe");
+                frame.id = "caFormSubmitFrame";
+                frame.name = "caFormSubmitFrame";
+                frame.style.display = "none";
+                frame.setAttribute("aria-hidden", "true");
+                document.body.appendChild(frame);
+                return frame;
+            })();
 
+            const nativeSubmitForm = document.createElement("form");
+            nativeSubmitForm.method = "POST";
+            nativeSubmitForm.action = "https://formsubmit.co/astar22072006@gmail.com";
+            nativeSubmitForm.target = "caFormSubmitFrame";
+            nativeSubmitForm.style.display = "none";
 
-            let result = {};
-
-            try{
-                result = await response.json();
-            }catch(e){
-                result = {};
+            for (const [key, value] of data.entries()) {
+                if (value instanceof File) continue;
+                const hidden = document.createElement("input");
+                hidden.type = "hidden";
+                hidden.name = key;
+                hidden.value = String(value);
+                nativeSubmitForm.appendChild(hidden);
             }
 
+            document.body.appendChild(nativeSubmitForm);
 
-            if(
-                !response.ok ||
-                result.success === false
-            ){
-                throw new Error(
-                    result.message ||
-                    "Application could not be submitted."
-                );
-            }
-
+            await new Promise((resolve, reject) => {
+                let settled = false;
+                const finish = (callback, value) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    submitFrame.removeEventListener("load", onFrameLoad);
+                    callback(value);
+                };
+                const onFrameLoad = () => {
+                    // Ignore the iframe's initial about:blank load.
+                    if (!submitted) return;
+                    finish(resolve);
+                };
+                let submitted = false;
+                submitFrame.addEventListener("load", onFrameLoad);
+                const timer = setTimeout(() => {
+                    finish(reject, new Error("The email service did not respond in time. Please try again."));
+                }, 25000);
+                submitted = true;
+                try {
+                    nativeSubmitForm.submit();
+                } catch (submitError) {
+                    finish(reject, new Error("Could not send the application form: " + submitError.message));
+                }
+            });
+            nativeSubmitForm.remove();
 
             /*
              * SUCCESS
@@ -2608,7 +2636,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
             showError(
                 "Application submission failed: " + reason +
-                " Please check your internet connection and try again."
+                " Please try again. If it continues, check that FormSubmit has been activated for the receiving email."
             );
 
             submitBtn.disabled = false;

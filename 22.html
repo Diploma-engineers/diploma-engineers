@@ -12380,266 +12380,107 @@ function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Bra
 function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Open file</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));const fix=d.createElement("style");fix.id="de-sn-image-fit-fix";fix.textContent="html,body{max-width:100%;overflow-wrap:anywhere}body img{max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:center!important}body img[alt*=logo i],body .logo img,body .brand img,body header img{width:auto!important;max-width:min(100%,680px)!important;max-height:150px!important;object-fit:contain!important;display:block!important;margin:8px auto!important}table{max-width:100%!important}*{box-sizing:border-box}";d.head.appendChild(fix);return "<!doctype html>"+d.documentElement.outerHTML}
 function snFileUrl(r,keys){for(const k of keys){const v=String(r?.[k]||'').trim();if(v)return v;}return ''}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video><script id="de-final-back-navigation-controller">
-/* =========================================================
-   DIPLOMA ENGINEERS — FINAL ONE-STEP BACK CONTROLLER
-   Tracks actual visible app pages; local folder/player navigation
-   always gets priority. No Firebase configuration/rules are changed.
-========================================================= */
-(function () {
+async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video>
+<script id="de-unified-back-navigation-update">
+(function(){
   'use strict';
-  if (window.__DE_FINAL_BACK_CONTROLLER__) return;
-  window.__DE_FINAL_BACK_CONTROLLER__ = true;
+  const $ = id => document.getElementById(id);
+  const activePage = () => document.querySelector('.page.active-page')?.id || 'homePage';
+  const visible = el => !!el && (el.classList.contains('show') || el.style.display === 'block' || getComputedStyle(el).display !== 'none');
+  const originalBack = window.goBack;
 
-  var routeStack = [];
-  var lastPage = '';
-  var movingBack = false;
-  var popLock = false;
-  var MAX_STACK = 100;
-
-  function activePage() {
-    var el = document.querySelector('.page.active-page');
-    return el && el.id ? el.id : '';
-  }
-  function pageExists(id) {
-    return !!(id && document.getElementById(id));
-  }
-  function pushRoute(id) {
-    if (!id || !pageExists(id)) return;
-    if (!routeStack.length) routeStack.push(id);
-    else if (routeStack[routeStack.length - 1] !== id) routeStack.push(id);
-    if (routeStack.length > MAX_STACK) routeStack = routeStack.slice(-MAX_STACK);
-    lastPage = id;
-  }
-  function observeRoute() {
-    var now = activePage();
-    if (!now) return;
-    var backButton = document.getElementById('headerBackBtn');
-    if (backButton) {
-      backButton.style.display = now === 'homePage' ? 'none' : 'flex';
-      backButton.setAttribute('aria-label', 'Go back to previous page');
-      backButton.title = 'Back';
-    }
-    if (!lastPage) {
-      routeStack = [now];
-      lastPage = now;
-      return;
-    }
-    if (now !== lastPage) {
-      if (!movingBack) pushRoute(now);
-      else lastPage = now;
-    }
-  }
-
-  // Catch every route change, including old scripts that manipulate page classes directly.
-  var appRoot = document.getElementById('app') || document.body;
-  var routeObserver = new MutationObserver(observeRoute);
-  routeObserver.observe(appRoot, { subtree: true, attributes: true, attributeFilter: ['class'] });
-
-  function courseReaderOpen() {
-    var shell = document.getElementById('deCourseShell');
-    if (!shell) return false;
-    var style = window.getComputedStyle(shell);
-    return shell.classList.contains('de-open') ||
-      (style.display !== 'none' && style.visibility !== 'hidden' && shell.offsetWidth > 0 && shell.offsetHeight > 0);
-  }
-  function paymentOpen() {
-    var overlay = document.getElementById('paymentOverlay');
-    if (!overlay) return false;
-    return overlay.getAttribute('aria-hidden') === 'false' || window.getComputedStyle(overlay).display !== 'none';
-  }
-
-  // Returns true when a section's own hierarchy consumed Back.
-  function doNestedBack() {
-    var id = activePage();
-
-    // IMPORTANT QUESTIONS READER PRIORITY:
-    // The reader is an in-page overlay, not a separate .page route. Handle it
-    // before looking at the active page/route stack so the top app-bar Back
-    // cannot skip the reader and route directly to Home or another section.
-    var iqReader = document.getElementById('iqAppReader');
-    var iqReaderVisible = !!(iqReader && !iqReader.hidden &&
-      window.getComputedStyle(iqReader).display !== 'none' &&
-      window.getComputedStyle(iqReader).visibility !== 'hidden');
-    if (iqReaderVisible) {
-      if (typeof window.iqNavigateBack === 'function') {
-        window.iqNavigateBack();
-      } else {
-        // Defensive fallback if the Firebase module is still initializing.
-        iqReader.hidden = true;
-        var iqFolders = document.getElementById('iqAppFolders');
-        if (iqFolders) { iqFolders.hidden = false; iqFolders.style.display = 'grid'; }
-        var iqShare = document.getElementById('iqAppFloatingShare');
-        if (iqShare) iqShare.hidden = true;
-      }
+  function handleBack(){
+    // 1. Payment QR/modal always closes before leaving the current screen.
+    const payment = $('paymentOverlay');
+    if(payment && (payment.getAttribute('aria-hidden') === 'false' ||
+       (payment.style.display && payment.style.display !== 'none') ||
+       payment.classList.contains('show'))){
+      $('paymentClose')?.click();
       return true;
     }
 
-    // Payment QR/modal must close before leaving its course page.
-    if (paymentOpen()) {
-      var closePayment = document.getElementById('paymentClose');
-      if (closePayment) closePayment.click();
-      else {
-        var overlay = document.getElementById('paymentOverlay');
-        if (overlay) { overlay.style.display = 'none'; overlay.setAttribute('aria-hidden', 'true'); }
-      }
+    // 2. Integrated course reader manages its own Player -> Folder -> Subject -> Previous page stack.
+    const reader = $('deCourseShell');
+    if(reader && reader.classList.contains('de-open')){
+      if(typeof window.deCRGoBack === 'function'){ window.deCRGoBack(); return true; }
+    }
+
+    // 3. Firebase course detail overlay.
+    const detail = $('deFirebaseCourseDetail');
+    if(detail && detail.classList.contains('show')){
+      $('deFcdBack')?.click();
       return true;
     }
 
-    // Course reader: player -> folder browser -> previous app page.
-    if (courseReaderOpen() && typeof window.deCRGoBack === 'function') {
-      window.deCRGoBack();
+    const page = activePage();
+
+    // 4. Important Questions: Subject PDF -> Subject -> Semester -> Branch -> previous page.
+    if(page === 'importantQuestionsPage' && typeof window.iqNavigateBack === 'function'){
+      // iqNavigateBack itself handles File -> Subject -> Semester -> Branch -> Home.
+      window.iqNavigateBack(); return true;
+    }
+
+    // 5. Short Notes keeps its independent folder stack.
+    if(page === 'sortNotesPage' && typeof window.deShortNotesGoBack === 'function'){
+      if(window.deShortNotesGoBack()) return true;
+    }
+
+    // 6. Test Series: Test -> Folder listing; then folder levels.
+    if(page === 'testRunnerPage'){
+      if(typeof window.navigateTo === 'function') window.navigateTo('testSeriesPage', false);
+      else { document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id==='testSeriesPage')); }
       return true;
     }
-
-    // Short Notes: PDF reader -> subject -> semester -> branch.
-    if (id === 'sortNotesPage' && typeof window.deShortNotesGoBack === 'function') {
-      if (window.deShortNotesGoBack()) return true;
+    if(page === 'testSeriesPage' && typeof window.deTsGoBack === 'function' &&
+       typeof window.deTsPathHasFolder === 'function' && window.deTsPathHasFolder()){
+      window.deTsGoBack(); return true;
     }
 
-    // Important Questions: PDF -> subject -> semester -> branch.
-    if (id === 'importantQuestionsPage' && typeof window.iqNavigateBack === 'function') {
-      var crumbs = document.getElementById('iqAppCrumbs');
-      var reader = document.getElementById('iqAppReader');
-      var folders = document.getElementById('iqAppFolders');
-      var hasReader = !!(reader && !reader.hidden && window.getComputedStyle(reader).display !== 'none');
-      var hasInner = !!(crumbs && crumbs.textContent.trim() && !crumbs.textContent.trim().toLowerCase().startsWith('branches'));
-      if (hasReader || hasInner) {
-        window.iqNavigateBack();
-        return true;
-      }
-    }
-
-    // Test Series: test runner -> folders; then each folder -> parent folder.
-    if (id === 'testRunnerPage') {
-      if (pageExists('testSeriesPage')) {
-        removeCurrentRouteFromStack();
-        routeStack.push('testSeriesPage');
-        lastPage = 'testSeriesPage';
-        movingBack = true;
-        try { window.navigateTo('testSeriesPage', false); }
-        finally { setTimeout(function () { movingBack = false; observeRoute(); }, 80); }
-        return true;
-      }
-    }
-    if (id === 'testSeriesPage' && typeof window.deTsGoBack === 'function' &&
-        typeof window.deTsPathHasFolder === 'function' && window.deTsPathHasFolder()) {
-      window.deTsGoBack();
-      return true;
-    }
-    return false;
-  }
-
-  function removeCurrentRouteFromStack() {
-    var now = activePage();
-    while (routeStack.length && routeStack[routeStack.length - 1] === now) routeStack.pop();
-  }
-
-  function navigateToPrevious() {
-    if (doNestedBack()) return true;
-
-    var now = activePage();
-    if (!now || now === 'homePage') return false;
-
-    // Remove the current route, then find the immediately preceding valid page.
-    removeCurrentRouteFromStack();
-    var previous = '';
-    while (routeStack.length) {
-      var candidate = routeStack.pop();
-      if (pageExists(candidate) && candidate !== now) { previous = candidate; break; }
-    }
-    if (!previous) previous = 'homePage';
-
-    // Set lastPage before routing so MutationObserver doesn't record Back as a new visit.
-    movingBack = true;
-    lastPage = previous;
-    try {
-      if (typeof window.navigateTo === 'function') window.navigateTo(previous, false);
-      else if (typeof window.renderPageUI === 'function') window.renderPageUI(previous);
-      else {
-        document.querySelectorAll('.page').forEach(function (p) {
-          p.classList.toggle('active-page', p.id === previous);
-        });
-      }
-    } catch (err) {
-      console.error('[DE Back] Could not open previous page:', err);
-      if (typeof window.renderPageUI === 'function') window.renderPageUI(previous);
-    }
-    // Keep destination as current stack top for the next Back action.
-    if (routeStack[routeStack.length - 1] !== previous) routeStack.push(previous);
-    lastPage = previous;
-    setTimeout(function () { movingBack = false; observeRoute(); }, 100);
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if(typeof originalBack === 'function') return originalBack.apply(this, arguments);
+    if(history.length > 1) history.back();
+    else window.navigateTo?.('homePage', false);
     return true;
   }
 
-  // Public handler used by inline onclick="goBack()" and other app controls.
-  window.goBack = function () { return navigateToPrevious(); };
+  window.goBack = handleBack;
 
-  // Capture the visible header arrow before its inline onclick and older listeners.
-  document.addEventListener('click', function (event) {
-    var button = event.target && event.target.closest ? event.target.closest('#headerBackBtn') : null;
-    if (!button) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    var iqReader = document.getElementById('iqAppReader');
-    if (iqReader && !iqReader.hidden && window.getComputedStyle(iqReader).display !== 'none') {
-      if (typeof window.iqNavigateBack === 'function') window.iqNavigateBack();
-      else {
-        iqReader.hidden = true;
-        var iqFolders = document.getElementById('iqAppFolders');
-        if (iqFolders) { iqFolders.hidden = false; iqFolders.style.display = 'grid'; }
-      }
+  // Ensure the app's top-left arrow uses the same priority order.
+  document.addEventListener('click', function(e){
+    const btn = e.target?.closest?.('#headerBackBtn');
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    handleBack();
+  }, true);
+
+  // Keep browser/Android Back behavior aligned with internal folder stacks.
+  // The feature-specific handlers already restore their own history snapshots;
+  // this fallback handles visible overlays and local stacks when no snapshot exists.
+  window.addEventListener('popstate', function(e){
+    const payment = $('paymentOverlay');
+    if(payment && (payment.getAttribute('aria-hidden') === 'false' ||
+       (payment.style.display && payment.style.display !== 'none') ||
+       payment.classList.contains('show'))){
+      e.stopImmediatePropagation(); $('paymentClose')?.click();
       return;
     }
-    navigateToPrevious();
-  }, true);
-
-  // Browser / Android hardware Back. A history sentinel keeps each press inside
-  // this controller instead of allowing older popstate handlers to jump Home.
-  window.addEventListener('popstate', function (event) {
-    if (popLock) return;
-    var now = activePage();
-    if (!now || now === 'homePage') return;
-    popLock = true;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    navigateToPrevious();
-    try { history.pushState({ __deFinalBackGuard: true, pageId: activePage() }, '', location.href); } catch (_) {}
-    setTimeout(function () { popLock = false; }, 80);
-  }, true);
-
-  function initBackController() {
-    var now = activePage() || 'homePage';
-    routeStack = [now];
-    lastPage = now;
-    // Establish a guard without changing the URL or the visible app page.
-    try {
-      history.replaceState({ __deFinalBackGuard: true, pageId: now }, '', location.href);
-      history.pushState({ __deFinalBackGuard: true, pageId: now }, '', location.href);
-    } catch (_) {}
-    var back = document.getElementById('headerBackBtn');
-    if (back) {
-      back.style.display = now === 'homePage' ? 'none' : 'flex';
-      back.setAttribute('aria-label', 'Go back to previous page');
-      back.title = 'Back';
+    const detail = $('deFirebaseCourseDetail');
+    if(detail?.classList.contains('show')){
+      e.stopImmediatePropagation(); $('deFcdBack')?.click(); return;
     }
-  }
+  }, true);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initBackController, { once: true });
-  } else {
-    setTimeout(initBackController, 0);
+  // Course Details -> Course Content opens the integrated reader. Preserve the
+  // originating page so closing the reader returns to the real previous page.
+  const oldOpenDetails = window.openFirebaseCourseDetails;
+  if(typeof oldOpenDetails === 'function'){
+    window.openFirebaseCourseDetails = function(){
+      window.__deCoursePreviousPageId = activePage();
+      return oldOpenDetails.apply(this, arguments);
+    };
   }
-  window.addEventListener('load', function () {
-    if (!routeStack.length) initBackController();
-    else observeRoute();
-  });
 })();
-
 </script>
+
 </body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
@@ -13014,5 +12855,106 @@ window.deShortNotesGoBack=function(){
   pointer-events: none !important;
 }
 </style>
+
+<script id="de-unified-back-navigation-update">
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const activePage = () => document.querySelector('.page.active-page')?.id || 'homePage';
+  const visible = el => !!el && (el.classList.contains('show') || el.style.display === 'block' || getComputedStyle(el).display !== 'none');
+  const originalBack = window.goBack;
+
+  function handleBack(){
+    // 1. Payment QR/modal always closes before leaving the current screen.
+    const payment = $('paymentOverlay');
+    if(payment && (payment.getAttribute('aria-hidden') === 'false' ||
+       (payment.style.display && payment.style.display !== 'none') ||
+       payment.classList.contains('show'))){
+      $('paymentClose')?.click();
+      return true;
+    }
+
+    // 2. Integrated course reader manages its own Player -> Folder -> Subject -> Previous page stack.
+    const reader = $('deCourseShell');
+    if(reader && reader.classList.contains('de-open')){
+      if(typeof window.deCRGoBack === 'function'){ window.deCRGoBack(); return true; }
+    }
+
+    // 3. Firebase course detail overlay.
+    const detail = $('deFirebaseCourseDetail');
+    if(detail && detail.classList.contains('show')){
+      $('deFcdBack')?.click();
+      return true;
+    }
+
+    const page = activePage();
+
+    // 4. Important Questions: Subject PDF -> Subject -> Semester -> Branch -> previous page.
+    if(page === 'importantQuestionsPage' && typeof window.iqNavigateBack === 'function'){
+      // iqNavigateBack itself handles File -> Subject -> Semester -> Branch -> Home.
+      window.iqNavigateBack(); return true;
+    }
+
+    // 5. Short Notes keeps its independent folder stack.
+    if(page === 'sortNotesPage' && typeof window.deShortNotesGoBack === 'function'){
+      if(window.deShortNotesGoBack()) return true;
+    }
+
+    // 6. Test Series: Test -> Folder listing; then folder levels.
+    if(page === 'testRunnerPage'){
+      if(typeof window.navigateTo === 'function') window.navigateTo('testSeriesPage', false);
+      else { document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id==='testSeriesPage')); }
+      return true;
+    }
+    if(page === 'testSeriesPage' && typeof window.deTsGoBack === 'function' &&
+       typeof window.deTsPathHasFolder === 'function' && window.deTsPathHasFolder()){
+      window.deTsGoBack(); return true;
+    }
+
+    if(typeof originalBack === 'function') return originalBack.apply(this, arguments);
+    if(history.length > 1) history.back();
+    else window.navigateTo?.('homePage', false);
+    return true;
+  }
+
+  window.goBack = handleBack;
+
+  // Ensure the app's top-left arrow uses the same priority order.
+  document.addEventListener('click', function(e){
+    const btn = e.target?.closest?.('#headerBackBtn');
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    handleBack();
+  }, true);
+
+  // Keep browser/Android Back behavior aligned with internal folder stacks.
+  // The feature-specific handlers already restore their own history snapshots;
+  // this fallback handles visible overlays and local stacks when no snapshot exists.
+  window.addEventListener('popstate', function(e){
+    const payment = $('paymentOverlay');
+    if(payment && (payment.getAttribute('aria-hidden') === 'false' ||
+       (payment.style.display && payment.style.display !== 'none') ||
+       payment.classList.contains('show'))){
+      e.stopImmediatePropagation(); $('paymentClose')?.click();
+      return;
+    }
+    const detail = $('deFirebaseCourseDetail');
+    if(detail?.classList.contains('show')){
+      e.stopImmediatePropagation(); $('deFcdBack')?.click(); return;
+    }
+  }, true);
+
+  // Course Details -> Course Content opens the integrated reader. Preserve the
+  // originating page so closing the reader returns to the real previous page.
+  const oldOpenDetails = window.openFirebaseCourseDetails;
+  if(typeof oldOpenDetails === 'function'){
+    window.openFirebaseCourseDetails = function(){
+      window.__deCoursePreviousPageId = activePage();
+      return oldOpenDetails.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
 </body>
 </html>

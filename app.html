@@ -9248,10 +9248,12 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 @media(max-width:600px){#appTeamModal{padding:9px}#appTeamModal .app-team-modal-card{width:min(560px,calc(100vw - 18px));border-radius:28px}#appTeamModal .app-team-modal-cover{height:157px}#appTeamModal .app-team-modal-photo-wrap{width:138px;height:138px;margin:-69px auto 0}#appTeamModal .app-team-modal-body{padding:0 20px 22px}#appTeamModal .app-team-modal-body h2{font-size:30px}#appTeamModal .app-team-modal-role{font-size:17px}#appTeamModal .app-team-modal-actions{gap:10px;margin:23px 0 21px}#appTeamModal .app-team-modal-actions a{width:52px;height:52px;flex-basis:52px;font-size:18px}#appTeamModal .app-team-modal-meta{gap:10px;margin-bottom:18px}#appTeamModal .app-team-meta-box{min-height:76px}#appTeamModal .app-team-modal-buttons{gap:10px}#appTeamModal .app-team-share-btn,#appTeamModal .app-team-view-file{min-height:54px;font-size:14px}}
 @media(max-width:380px){#appTeamModal .app-team-modal-cover{height:145px}#appTeamModal .app-team-modal-photo-wrap{width:126px;height:126px;margin:-63px auto 0}#appTeamModal .app-team-modal-body h2{font-size:27px}#appTeamModal .app-team-modal-bio{font-size:13px}#appTeamModal .app-team-modal-actions a{width:48px;height:48px;flex-basis:48px}#appTeamModal .app-team-modal-buttons{grid-template-columns:1fr 1fr}}
 
-/* ===== FINAL FIXED APP HEADER + PROFILE ADMIN DIRECT BUTTON ===== */
-.navbar{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;height:56px!important;z-index:99999!important;box-sizing:border-box!important;transform:none!important;transition:none!important;}
-#app{padding-top:56px!important;}
-@media(max-width:560px){.navbar{height:54px!important;padding:8px 10px!important;}#app{padding-top:54px!important;}}
+/* ===== APP HEADER: REMOVE UNWANTED TOP GAP ===== */
+/* The universal navbar is sticky (not fixed), so the app must not reserve
+   an extra 54/56px spacer above it. */
+.navbar{position:sticky!important;top:0!important;left:auto!important;right:auto!important;width:100%!important;height:auto!important;min-height:56px!important;z-index:99999!important;box-sizing:border-box!important;transform:none!important;transition:none!important;}
+#app{padding-top:0!important;}
+@media(max-width:560px){.navbar{min-height:54px!important;padding:8px 10px!important;}#app{padding-top:0!important;}}
 .profile-admin-direct-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:13px 16px;border:0;border-radius:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff!important;font:700 14px 'Plus Jakarta Sans',sans-serif;text-decoration:none!important;box-shadow:0 8px 20px rgba(37,99,235,.18);cursor:pointer;}
 .profile-admin-direct-btn:active{transform:scale(.98);}
 
@@ -11332,7 +11334,19 @@ window.addEventListener('popstate',function(e){
  let activeId='',previousOverflow='';
  const $=id=>document.getElementById(id);
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function close(){root.classList.remove('show');root.setAttribute('aria-hidden','true');document.body.style.overflow=previousOverflow;}
+ function close(){
+  root.classList.remove('show');
+  root.setAttribute('aria-hidden','true');
+  document.body.style.overflow=previousOverflow;
+  // Course Details back must return to the in-app Course Section page,
+  // never delegate to browser history (which can exit the application).
+  if(typeof window.navigateTo==='function'){
+    window.navigateTo('coursePage', false);
+  }else{
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active-page'));
+    document.getElementById('coursePage')?.classList.add('active-page');
+  }
+}
  function openReaderFromDetail(id){
   window.__deCourseActiveDetailId=String(id||activeId||'');
   window.__deCourseReaderReturnToDetail=true;
@@ -11940,7 +11954,129 @@ async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i 
  #deCourseShell .decr-brand>b{font-size:15px!important}
 }
 </style>
-</body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
+
+<style id="de-universal-app-topbar">
+/* One compact, full-width app bar matching the supplied reference image. */
+#app > .navbar{
+  position:sticky!important;top:0!important;z-index:999!important;
+  width:100%!important;min-height:68px!important;height:68px!important;
+  padding:8px 16px!important;background:#fff!important;
+  border:1px solid #e5e7eb!important;border-radius:12px!important;
+  box-shadow:0 2px 10px rgba(15,23,42,.04)!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+}
+#app > .navbar .menu-toggle-btn{display:none!important}
+#app > .navbar .header-back-btn{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:42px!important;height:42px!important;min-width:42px!important;
+ border-radius:50%!important;background:#f8fafc!important;border:1px solid #dbe3ef!important;
+ color:#172033!important;font-size:17px!important;flex:0 0 42px!important;
+}
+#app > .navbar .nav-left{gap:12px!important}
+#app > .navbar .header-bell-wrap{width:36px!important;height:36px!important}
+#app > .navbar .header-bell-btn{font-size:19px!important}
+#app > .navbar .nav-right-box{gap:12px!important}
+#app > .navbar .coin-btn{min-height:40px!important;padding:7px 16px!important;border-radius:24px!important;font-size:13px!important}
+#app > .navbar .streak-btn{min-height:40px!important}
+#app > .navbar .profile-icon{width:40px!important;height:40px!important}
+#deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
+ height:68px!important;min-height:68px!important;padding:8px 16px!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;background:#fff!important;border-bottom:1px solid #e5e7eb!important;
+ box-shadow:0 2px 10px rgba(15,23,42,.04)!important;position:sticky!important;top:0!important;z-index:100!important;
+}
+#deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{display:none!important}
+.de-universal-overlay-left{display:flex;align-items:center;gap:12px;min-width:0}
+.de-universal-overlay-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.de-universal-overlay-back{
+ width:42px;height:42px;min-width:42px;border-radius:50%;border:1px solid #dbe3ef;
+ background:#f8fafc;color:#172033;display:inline-flex;align-items:center;justify-content:center;
+ font-size:17px;cursor:pointer;
+}
+.de-universal-overlay-bell{width:36px;height:36px;border:0;background:transparent;color:#172033;font-size:19px;position:relative;cursor:pointer}
+.de-universal-overlay-action{height:40px;border:1px solid #ffe066;border-radius:24px;background:linear-gradient(135deg,#ffd700,#ffa500);color:#5b3a00;padding:0 14px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.de-universal-overlay-streak{height:40px;border:1px solid #ffd7bd;border-radius:24px;background:#fff7f0;color:#e85b13;padding:0 12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.de-universal-overlay-profile{width:40px;height:40px;border-radius:50%;overflow:hidden;border:0;background:#f1f5f9;padding:0;cursor:pointer}
+.de-universal-overlay-profile img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+@media(max-width:520px){
+ #app > .navbar{height:62px!important;min-height:62px!important;padding:7px 10px!important}
+ #app > .navbar .nav-left{gap:8px!important}
+ #app > .navbar .nav-right-box{gap:7px!important}
+ #app > .navbar .coin-btn{padding:6px 10px!important;font-size:11px!important}
+ #app > .navbar .profile-icon{width:34px!important;height:34px!important}
+ #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{height:62px!important;min-height:62px!important;padding:7px 10px!important}
+ .de-universal-overlay-right{gap:7px}
+ .de-universal-overlay-action{padding:0 9px;font-size:11px}
+ .de-universal-overlay-streak{padding:0 9px}
+ .de-universal-overlay-profile{width:34px;height:34px}
+ .de-universal-overlay-back{width:38px;height:38px;min-width:38px}
+}
+</style>
+<script id="de-universal-topbar-controls">
+(function(){
+ const $=id=>document.getElementById(id);
+ function makeOverlayBars(){
+  const configs=[
+   {root:$('deFirebaseCourseDetail'),top:$('deFirebaseCourseDetail')?.querySelector('.de-fcd-top'),back:'deFcdBack'},
+   {root:$('deCourseShell'),top:$('deCourseShell')?.querySelector('.decr-top'),back:'deCRBack'}
+  ];
+  configs.forEach(({root,top,back})=>{
+   if(!root||!top||top.dataset.universalBar==='1')return;
+   top.dataset.universalBar='1';
+   const backButton=top.querySelector('#'+back);
+   top.innerHTML='';
+   const left=document.createElement('div');left.className='de-universal-overlay-left';
+   if(backButton){backButton.className='de-universal-overlay-back';backButton.innerHTML='<i class="fas fa-arrow-left"></i>';backButton.setAttribute('aria-label','Back');left.appendChild(backButton);}
+   left.insertAdjacentHTML('beforeend',`<button class="de-universal-overlay-bell" type="button" data-de-action="bell" aria-label="Notifications"><i class="fas fa-bell"></i><span class="news-badge" data-de-badge>0</span></button>`);
+   const right=document.createElement('div');right.className='de-universal-overlay-right';
+   right.innerHTML=`<button class="de-universal-overlay-action" type="button" data-de-action="coins"><i class="fas fa-coins"></i><span data-de-coins>0 Coins</span></button>
+    <button class="de-universal-overlay-streak" type="button" data-de-action="streak"><i class="fas fa-fire"></i><span data-de-streak>0</span></button>
+    <button class="de-universal-overlay-profile" type="button" data-de-action="profile" aria-label="Profile"><img data-de-avatar alt="Profile" src=""></button>`;
+   top.append(left,right);
+  });
+  syncOverlayBars();
+ }
+ function syncOverlayBars(){
+  const coin=$('navCoinCount')?.textContent||'0 Coins';
+  const streak=$('navStreakCount')?.textContent||'0';
+  const avatar=$('navProfileIcon')?.querySelector('img')?.src||'';
+  const badge=$('newsBadge')?.textContent||'0';
+  document.querySelectorAll('[data-de-coins]').forEach(x=>x.textContent=coin);
+  document.querySelectorAll('[data-de-streak]').forEach(x=>x.textContent=streak);
+  document.querySelectorAll('[data-de-avatar]').forEach(x=>{if(avatar)x.src=avatar;else x.removeAttribute('src');});
+  document.querySelectorAll('[data-de-badge]').forEach(x=>{x.textContent=badge;x.style.display=badge!=='0'?'block':'none';});
+ }
+ document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-de-action]');if(!b)return;
+  const a=b.dataset.deAction;
+  if(a==='bell')window.openNewsNotifications?.();
+  if(a==='coins')window.navigateTo?.('leaderboardPage');
+  if(a==='streak')window.openStreakModal?.();
+  if(a==='profile')window.navigateTo?.('profilePage');
+ });
+ function init(){
+  makeOverlayBars();
+  const nav=$('app')?.querySelector('.navbar');
+  if(nav){
+   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
+   if(back)back.style.display='inline-flex';
+   if(menu)menu.style.display='none';
+  }
+  const app=$('app');
+  if(app)new MutationObserver(()=>{
+   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
+   if(back&&back.style.display!=='inline-flex')back.style.display='inline-flex';
+   if(menu&&menu.style.display!=='none')menu.style.display='none';
+  }).observe(app,{subtree:true,attributes:true,attributeFilter:['style','class']});
+  const sourceIds=['navCoinCount','navStreakCount','navProfileIcon','newsBadge'];
+  sourceIds.forEach(id=>{const el=$(id);if(el)new MutationObserver(syncOverlayBars).observe(el,{subtree:true,childList:true,characterData:true,attributes:true});});
+  syncOverlayBars();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+<\/script>
+
+</body></html>';sn$('snDownload').innerHTML'<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -12353,7 +12489,7 @@ window.deShortNotesGoBack=function(){
  window.goBack=stepBack;
  // Catch both top-bar buttons before older inline/delegated handlers.
  document.addEventListener('click',function(e){
-  const b=e.target.closest('#deCRBack,#deFcdBack');
+  const b=e.target.closest('#deCRBack');
   if(!b)return;
   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();stepBack();
  },true);
@@ -12420,5 +12556,132 @@ window.deShortNotesGoBack=function(){
  #deCourseShell .decr-brand>b{font-size:15px!important}
 }
 </style>
+
+<style id="de-universal-app-topbar">
+/* One compact, full-width app bar matching the supplied reference image. */
+#app > .navbar{
+  position:sticky!important;top:0!important;z-index:999!important;
+  width:100%!important;min-height:68px!important;height:68px!important;
+  padding:8px 16px!important;background:#fff!important;
+  border:1px solid #e5e7eb!important;border-radius:12px!important;
+  box-shadow:0 2px 10px rgba(15,23,42,.04)!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+}
+#app > .navbar .menu-toggle-btn{display:none!important}
+#app > .navbar .header-back-btn{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:42px!important;height:42px!important;min-width:42px!important;
+ border-radius:50%!important;background:#f8fafc!important;border:1px solid #dbe3ef!important;
+ color:#172033!important;font-size:17px!important;flex:0 0 42px!important;
+}
+#app > .navbar .nav-left{gap:12px!important}
+#app > .navbar .header-bell-wrap{width:36px!important;height:36px!important}
+#app > .navbar .header-bell-btn{font-size:19px!important}
+#app > .navbar .nav-right-box{gap:12px!important}
+#app > .navbar .coin-btn{min-height:40px!important;padding:7px 16px!important;border-radius:24px!important;font-size:13px!important}
+#app > .navbar .streak-btn{min-height:40px!important}
+#app > .navbar .profile-icon{width:40px!important;height:40px!important}
+#deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
+ height:68px!important;min-height:68px!important;padding:8px 16px!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;background:#fff!important;border-bottom:1px solid #e5e7eb!important;
+ box-shadow:0 2px 10px rgba(15,23,42,.04)!important;position:sticky!important;top:0!important;z-index:100!important;
+}
+#deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{display:none!important}
+.de-universal-overlay-left{display:flex;align-items:center;gap:12px;min-width:0}
+.de-universal-overlay-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.de-universal-overlay-back{
+ width:42px;height:42px;min-width:42px;border-radius:50%;border:1px solid #dbe3ef;
+ background:#f8fafc;color:#172033;display:inline-flex;align-items:center;justify-content:center;
+ font-size:17px;cursor:pointer;
+}
+.de-universal-overlay-bell{width:36px;height:36px;border:0;background:transparent;color:#172033;font-size:19px;position:relative;cursor:pointer}
+.de-universal-overlay-action{height:40px;border:1px solid #ffe066;border-radius:24px;background:linear-gradient(135deg,#ffd700,#ffa500);color:#5b3a00;padding:0 14px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.de-universal-overlay-streak{height:40px;border:1px solid #ffd7bd;border-radius:24px;background:#fff7f0;color:#e85b13;padding:0 12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.de-universal-overlay-profile{width:40px;height:40px;border-radius:50%;overflow:hidden;border:0;background:#f1f5f9;padding:0;cursor:pointer}
+.de-universal-overlay-profile img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+@media(max-width:520px){
+ #app > .navbar{height:62px!important;min-height:62px!important;padding:7px 10px!important}
+ #app > .navbar .nav-left{gap:8px!important}
+ #app > .navbar .nav-right-box{gap:7px!important}
+ #app > .navbar .coin-btn{padding:6px 10px!important;font-size:11px!important}
+ #app > .navbar .profile-icon{width:34px!important;height:34px!important}
+ #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{height:62px!important;min-height:62px!important;padding:7px 10px!important}
+ .de-universal-overlay-right{gap:7px}
+ .de-universal-overlay-action{padding:0 9px;font-size:11px}
+ .de-universal-overlay-streak{padding:0 9px}
+ .de-universal-overlay-profile{width:34px;height:34px}
+ .de-universal-overlay-back{width:38px;height:38px;min-width:38px}
+}
+</style>
+<script id="de-universal-topbar-controls">
+(function(){
+ const $=id=>document.getElementById(id);
+ function makeOverlayBars(){
+  const configs=[
+   {root:$('deFirebaseCourseDetail'),top:$('deFirebaseCourseDetail')?.querySelector('.de-fcd-top'),back:'deFcdBack'},
+   {root:$('deCourseShell'),top:$('deCourseShell')?.querySelector('.decr-top'),back:'deCRBack'}
+  ];
+  configs.forEach(({root,top,back})=>{
+   if(!root||!top||top.dataset.universalBar==='1')return;
+   top.dataset.universalBar='1';
+   const backButton=top.querySelector('#'+back);
+   top.innerHTML='';
+   const left=document.createElement('div');left.className='de-universal-overlay-left';
+   if(backButton){backButton.className='de-universal-overlay-back';backButton.innerHTML='<i class="fas fa-arrow-left"></i>';backButton.setAttribute('aria-label','Back');left.appendChild(backButton);}
+   left.insertAdjacentHTML('beforeend',`<button class="de-universal-overlay-bell" type="button" data-de-action="bell" aria-label="Notifications"><i class="fas fa-bell"></i><span class="news-badge" data-de-badge>0</span></button>`);
+   const right=document.createElement('div');right.className='de-universal-overlay-right';
+   right.innerHTML=`<button class="de-universal-overlay-action" type="button" data-de-action="coins"><i class="fas fa-coins"></i><span data-de-coins>0 Coins</span></button>
+    <button class="de-universal-overlay-streak" type="button" data-de-action="streak"><i class="fas fa-fire"></i><span data-de-streak>0</span></button>
+    <button class="de-universal-overlay-profile" type="button" data-de-action="profile" aria-label="Profile"><img data-de-avatar alt="Profile" src=""></button>`;
+   top.append(left,right);
+  });
+  syncOverlayBars();
+ }
+ function syncOverlayBars(){
+  const coin=$('navCoinCount')?.textContent||'0 Coins';
+  const streak=$('navStreakCount')?.textContent||'0';
+  const avatar=$('navProfileIcon')?.querySelector('img')?.src||'';
+  const badge=$('newsBadge')?.textContent||'0';
+  document.querySelectorAll('[data-de-coins]').forEach(x=>x.textContent=coin);
+  document.querySelectorAll('[data-de-streak]').forEach(x=>x.textContent=streak);
+  document.querySelectorAll('[data-de-avatar]').forEach(x=>{if(avatar)x.src=avatar;else x.removeAttribute('src');});
+  document.querySelectorAll('[data-de-badge]').forEach(x=>{x.textContent=badge;x.style.display=badge!=='0'?'block':'none';});
+ }
+ document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-de-action]');if(!b)return;
+  const a=b.dataset.deAction;
+  if(a==='bell')window.openNewsNotifications?.();
+  if(a==='coins')window.navigateTo?.('leaderboardPage');
+  if(a==='streak')window.openStreakModal?.();
+  if(a==='profile')window.navigateTo?.('profilePage');
+ });
+ function init(){
+  makeOverlayBars();
+  const nav=$('app')?.querySelector('.navbar');
+  if(nav){
+   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
+   if(back)back.style.display='inline-flex';
+   if(menu)menu.style.display='none';
+  }
+  const app=$('app');
+  if(app)new MutationObserver(()=>{
+   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
+   if(back&&back.style.display!=='inline-flex')back.style.display='inline-flex';
+   if(menu&&menu.style.display!=='none')menu.style.display='none';
+  }).observe(app,{subtree:true,attributes:true,attributeFilter:['style','class']});
+  const sourceIds=['navCoinCount','navStreakCount','navProfileIcon','newsBadge'];
+  sourceIds.forEach(id=>{const el=$(id);if(el)new MutationObserver(syncOverlayBars).observe(el,{subtree:true,childList:true,characterData:true,attributes:true});});
+  syncOverlayBars();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
 </body>
 </html>
+
+<style id="de-remove-top-empty-space-final">
+#app{padding-top:0!important;margin-top:0!important;}
+#app>.navbar{margin-top:0!important;top:0!important;}
+</style>

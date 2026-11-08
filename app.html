@@ -9248,12 +9248,10 @@ window.playPaymentSuccessSound=function(){const a=document.getElementById('payme
 @media(max-width:600px){#appTeamModal{padding:9px}#appTeamModal .app-team-modal-card{width:min(560px,calc(100vw - 18px));border-radius:28px}#appTeamModal .app-team-modal-cover{height:157px}#appTeamModal .app-team-modal-photo-wrap{width:138px;height:138px;margin:-69px auto 0}#appTeamModal .app-team-modal-body{padding:0 20px 22px}#appTeamModal .app-team-modal-body h2{font-size:30px}#appTeamModal .app-team-modal-role{font-size:17px}#appTeamModal .app-team-modal-actions{gap:10px;margin:23px 0 21px}#appTeamModal .app-team-modal-actions a{width:52px;height:52px;flex-basis:52px;font-size:18px}#appTeamModal .app-team-modal-meta{gap:10px;margin-bottom:18px}#appTeamModal .app-team-meta-box{min-height:76px}#appTeamModal .app-team-modal-buttons{gap:10px}#appTeamModal .app-team-share-btn,#appTeamModal .app-team-view-file{min-height:54px;font-size:14px}}
 @media(max-width:380px){#appTeamModal .app-team-modal-cover{height:145px}#appTeamModal .app-team-modal-photo-wrap{width:126px;height:126px;margin:-63px auto 0}#appTeamModal .app-team-modal-body h2{font-size:27px}#appTeamModal .app-team-modal-bio{font-size:13px}#appTeamModal .app-team-modal-actions a{width:48px;height:48px;flex-basis:48px}#appTeamModal .app-team-modal-buttons{grid-template-columns:1fr 1fr}}
 
-/* ===== APP HEADER: REMOVE UNWANTED TOP GAP ===== */
-/* The universal navbar is sticky (not fixed), so the app must not reserve
-   an extra 54/56px spacer above it. */
-.navbar{position:sticky!important;top:0!important;left:auto!important;right:auto!important;width:100%!important;height:auto!important;min-height:56px!important;z-index:99999!important;box-sizing:border-box!important;transform:none!important;transition:none!important;}
-#app{padding-top:0!important;}
-@media(max-width:560px){.navbar{min-height:54px!important;padding:8px 10px!important;}#app{padding-top:0!important;}}
+/* ===== FINAL FIXED APP HEADER + PROFILE ADMIN DIRECT BUTTON ===== */
+.navbar{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;height:56px!important;z-index:99999!important;box-sizing:border-box!important;transform:none!important;transition:none!important;}
+#app{padding-top:56px!important;}
+@media(max-width:560px){.navbar{height:54px!important;padding:8px 10px!important;}#app{padding-top:54px!important;}}
 .profile-admin-direct-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:13px 16px;border:0;border-radius:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff!important;font:700 14px 'Plus Jakarta Sans',sans-serif;text-decoration:none!important;box-shadow:0 8px 20px rgba(37,99,235,.18);cursor:pointer;}
 .profile-admin-direct-btn:active{transform:scale(.98);}
 
@@ -9972,11 +9970,32 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     const list=$("deTsList"); if(!list)return;
     if(!deTsLoaded){list.innerHTML='<div class="de-student-loading" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin de-loader-ring" aria-hidden="true"></i><div class="de-loader-brand">The student Trusted Learning Platform.</div><div class="de-loader-sub">Loading data, please wait…</div></div>';return;}
     if(deTsCourseFilter){
-      const matched=filtered.filter(t=>deTsMatch(t.branch,deTsCourseFilter.branch)&&(deTsNorm(deTsCourseFilter.subject)==='allsubjects'||deTsMatch(t.subject,deTsCourseFilter.subject))&&deTsMatch(t.semester,deTsCourseFilter.semester));
+      const branchTests=filtered.filter(t=>deTsMatch(t.branch,deTsCourseFilter.branch)&&deTsMatch(t.semester,deTsCourseFilter.semester));
+      const allSubjects=[...new Set([...(window.__deCourseLinkedContext?.subjects||[]),...branchTests.map(t=>String(t.subject||'').trim())].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      const allMode=!deTsCourseFilter.subject||deTsNorm(deTsCourseFilter.subject)==='allsubjects';
+      const matched=branchTests.filter(t=>allMode||deTsMatch(t.subject,deTsCourseFilter.subject));
+      const topicOf=t=>String(t.topic||t.unitName||t.unitTitle||t.unit||t.folderName||'Other Units').trim()||'Other Units';
+      const topics=[...new Set(matched.map(topicOf))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      const topicMode=!allMode&&!!deTsCourseFilter.topic;
       if($("deTsBack"))$("deTsBack").style.display='inline-flex';
-      if($("deTsBreadcrumb"))$("deTsBreadcrumb").textContent=[deTsCourseFilter.branch,deTsCourseFilter.semester,deTsCourseFilter.subject].filter(Boolean).join('  /  ');
-      if($("deTsStats"))$("deTsStats").innerHTML=`<div class="de-ts-stat"><b>${matched.length}</b> Matching Published Tests</div><div class="de-ts-stat"><b>${deTsTests.length}</b> Total Published Tests</div>`;
-      list.innerHTML=matched.length?`<div class="de-ts-grid">${renderTestCards(matched)}</div>`:'<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No published Test Series found for this branch and subject yet.</p></div>';
+      if($("deTsBreadcrumb"))$("deTsBreadcrumb").textContent=[deTsCourseFilter.branch,deTsCourseFilter.semester,allMode?'Subjects':deTsCourseFilter.subject,deTsCourseFilter.topic||(!allMode?'Units':'')].filter(Boolean).join('  /  ');
+      if($("deTsStats"))$("deTsStats").innerHTML=`<div class="de-ts-stat"><b>${allMode?allSubjects.length:(topicMode?matched.filter(t=>topicOf(t)===deTsCourseFilter.topic).length:topics.length)}</b> ${allMode?'Course Subjects':(topicMode?'Published Tests':'Units / Topics')}</div><div class="de-ts-stat"><b>${deTsTests.length}</b> Total Published Tests</div>`;
+      if(allMode){
+        list.innerHTML=allSubjects.length?`<div class="de-ts-folder-grid">${allSubjects.map(subject=>folderCard(subject,2,branchTests.filter(t=>deTsMatch(t.subject,subject)).length)).join('')}</div>`:'<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No subjects are listed in this course yet. Add subjects in Course Content.</p></div>';
+        list.querySelectorAll('[data-folder-level="2"]').forEach(btn=>btn.addEventListener('click',()=>{
+          deTsCourseFilter.subject=btn.dataset.folderValue;deTsCourseFilter.topic='';render();
+          try{history.pushState({pageId:'testSeriesPage',__deTestCourseSubject:deTsCourseFilter.subject},'',location.href)}catch(e){}
+        }));
+      }else if(!topicMode){
+        list.innerHTML=topics.length?`<div class="de-ts-folder-grid">${topics.map(topic=>folderCard(topic,3,matched.filter(t=>topicOf(t)===topic).length)).join('')}</div>`:'<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No unit folders found for '+esc(deTsCourseFilter.subject)+'. Publish tests with Unit / Topic names in Admin Panel.</p></div>';
+        list.querySelectorAll('[data-folder-level="3"]').forEach(btn=>btn.addEventListener('click',()=>{
+          deTsCourseFilter.topic=btn.dataset.folderValue;render();
+          try{history.pushState({pageId:'testSeriesPage',__deTestCourseUnit:deTsCourseFilter.topic},'',location.href)}catch(e){}
+        }));
+      }else{
+        const unitTests=matched.filter(t=>topicOf(t)===deTsCourseFilter.topic);
+        list.innerHTML=unitTests.length?`<div class="de-ts-grid">${renderTestCards(unitTests)}</div>`:'<div class="de-ts-empty"><i class="fa-regular fa-folder-open" style="font-size:30px"></i><p>No published tests found in this unit.</p></div>';
+      }
       return;
     }
     const back=$("deTsBack"), crumb=$("deTsBreadcrumb");
@@ -10067,7 +10086,11 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
   window.__deTsPathHasFolder = function(){return deTsPath.length>0;};
   window.deTsResetPath = function(){deTsPath.length=0;render();return true;};
   window.deTsGoBack = function(){
-    if(deTsCourseFilter){deTsCourseFilter=null;deTsPath.length=0;render();return true;}
+    if(deTsCourseFilter){
+       if(deTsCourseFilter.topic){deTsCourseFilter.topic='';render();return true;}
+       if(deTsCourseFilter.subject&&deTsNorm(deTsCourseFilter.subject)!=='allsubjects'){deTsCourseFilter.subject='All Subjects';render();return true;}
+       deTsCourseFilter=null;deTsPath.length=0;render();return true;
+     }
     if(!deTsPath.length) return false;
     deTsPath.pop();
     render();
@@ -10075,8 +10098,9 @@ import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0
     if(page && page.classList.contains('active-page')) window.scrollTo({top:0,left:0,behavior:'smooth'});
     return true;
   };
-  window.openCourseTestSeries=async function(branch,semester,subject){
-    await load();deTsPath.length=0;deTsCourseFilter={branch:String(branch||''),semester:String(semester||''),subject:String(subject||'')};
+  window.openCourseTestSeries=async function(branch,semester,subject,subjects){
+    if(Array.isArray(subjects))window.__deCourseLinkedContext={...(window.__deCourseLinkedContext||{}),branch:String(branch||''),semester:String(semester||''),subjects:subjects.slice()};
+    await load();deTsPath.length=0;deTsCourseFilter={branch:String(branch||''),semester:String(semester||''),subject:String(subject||'All Subjects'),topic:''};
     const search=$("deTsSearch");if(search)search.value='';render();
   };
   window.initEmbeddedTestSeries=loadWhenOpen;
@@ -10679,10 +10703,17 @@ onValue(ref(catalogDb,"courseCatalog"),snap=>renderAdminCourses(snap.val()),err=
 #deCourseShell #deCRList{filter:none!important;backdrop-filter:none!important}
 </style>
 <div aria-hidden="true" id="deCourseShell">
-<header class="decr-top">
-<button class="decr-back" id="deCRBack" type="button">← Back</button>
-<div class="decr-brand"><b>Diploma <span style="color:#2563eb">Engineers</span></b><small id="deCRTopTitle">Course Reader</small><small class="decr-hidden" id="deCRTopSub"></small></div>
-
+<header class="decr-top de-shared-course-topbar" aria-label="App navigation">
+ <div class="de-course-top-left">
+  <button aria-label="Back to previous page" class="decr-back" id="deCRBack" type="button"><i class="fas fa-arrow-left"></i></button>
+  <button aria-label="Notifications" class="de-course-bell" type="button" onclick="openNewsNotifications()"><i class="fas fa-bell"></i><span class="de-course-notice-dot">1+</span></button>
+ </div>
+ <div class="de-course-top-right">
+  <button class="de-course-coins" type="button" onclick="navigateTo('leaderboardPage')"><i class="fas fa-coins"></i><span id="deCRHeaderCoins">0 Coins</span></button>
+  <button class="de-course-streak" type="button" onclick="openStreakModal()"><i class="fas fa-fire"></i><span id="deCRHeaderStreak">0</span></button>
+  <button class="de-course-profile" type="button" aria-label="Open profile" onclick="navigateTo('profilePage')"><i class="fas fa-user"></i></button>
+ </div>
+ <span class="decr-hidden" id="deCRTopTitle">Course Reader</span><span class="decr-hidden" id="deCRTopSub"></span>
 </header>
 <main class="decr-wrap">
 <div class="decr-message" id="deCRMessage">Choose a course from Courses to begin.</div>
@@ -10869,10 +10900,11 @@ function openFolder(folder){
   const branch=String(currentCourse?.branch||currentCourse?.branchName||currentCourse?.category||currentCourse?.department||currentCourse?.courseBranch||'').trim();
   const semester=String(currentSemester||currentCourse?.semester||'').trim();
   if(!branch){alert('Course branch could not be detected. Please check the course details and uploaded content.');return;}
-  window.__deCourseLinkedContext={courseId:String(currentCourseId||''),semester,subject:'All Subjects',branch,source:'course-content'};
+  const linkedSubjects=[...new Set(getItems().filter(it=>itemSemester(it)===normalizeSemester(semester)).map(itemSubject).filter(x=>x&&x!=='General'))];
+   window.__deCourseLinkedContext={courseId:String(currentCourseId||''),semester,subject:'All Subjects',branch,subjects:linkedSubjects,source:'course-content'};
   closeShell();
   if(typeof window.navigateTo==='function')window.navigateTo(folder==='__course_test_series__'?'testSeriesPage':'importantQuestionsPage',true);
-  setTimeout(()=>{if(folder==='__course_test_series__'&&typeof window.openCourseTestSeries==='function')window.openCourseTestSeries(branch,semester,'All Subjects');if(folder==='__course_important_questions__'&&typeof window.openCourseImportantQuestions==='function')window.openCourseImportantQuestions(branch,semester,'All Subjects');},120);
+  setTimeout(()=>{if(folder==='__course_test_series__'&&typeof window.openCourseTestSeries==='function')window.openCourseTestSeries(branch,semester,'All Subjects',linkedSubjects);if(folder==='__course_important_questions__'&&typeof window.openCourseImportantQuestions==='function')window.openCourseImportantQuestions(branch,semester,'All Subjects',linkedSubjects);},120);
   return;
  }
  const groups=folderGroups();
@@ -10963,10 +10995,31 @@ async function refreshReaderFolderLocks(){
 function showBrowser(scrollTop=true){lastView='browser';currentFolder='';const __deBrowserTitle=currentSubject==='__ALL_PDFS__'?'PDF Files':(currentResourceType==='pdf'?(currentSubject+' • PDF Files'):(currentSubject||String(currentCourse?.title||currentCourse?.name||'Course Reader')));setReaderTopBar(__deBrowserTitle,currentSubject==='__ALL_PDFS__'?'Choose a subject to view its uploaded PDF files':(currentResourceType==='pdf'?'All PDFs uploaded in this subject':(currentSubject?'Videos and PDF folder for this subject':'Choose a subject')));const __dePT=$('deCRPlayerTitle');if(__dePT)__dePT.textContent=__deBrowserTitle;renderFolders();$('deCRBrowser').classList.remove('decr-hidden');$('deCRPlayer').classList.add('decr-hidden');hideMsg();if(scrollTop)shell.scrollTo({top:0,behavior:'smooth'});}
 function renderPlaylist(){const items=currentFolderItems;$('deCRListCount').textContent=`${items.length} video/PDF item${items.length===1?'':'s'} • Select to open`; $('deCRList').innerHTML=items.map((it,i)=>{const url=itemUrl(it),pdf=isPdf(it,url),title=it.title||it.fileName||`${pdf?'PDF':'Lecture'} ${i+1}`;return `<button type="button" class="decr-item ${pdf?'pdf':''} ${i===currentLessonIndex?'active':''}" data-de-lesson="${i}"><span class="decr-item-type">${pdf?'▤':'▶'}</span><span class="decr-item-text"><strong>${esc(title)}</strong><small>${pdf?'PDF / DOCUMENT':'VIDEO LECTURE'}${it.description?' • '+esc(it.description):''}</small></span><span class="decr-item-play">›</span></button>`;}).join('');$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.addEventListener('click',()=>renderLesson(Number(btn.dataset.deLesson))));}
 function safeLink(url){try{const u=new URL(url,location.href);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}}
-async function renderLesson(index){if(index<0||index>=currentFolderItems.length)return;currentLessonIndex=index;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));
+async function renderLesson(index){
+ if(!Number.isInteger(index)||index<0||index>=currentFolderItems.length)return;
+ currentLessonIndex=index;
+ // Bind navigation immediately, before the asynchronous purchase/access check completes.
+ $('deCRPrevious').disabled=index===0;
+ $('deCRNext').disabled=index===currentFolderItems.length-1;
+ $('deCRPrevious').onclick=()=>{if(currentLessonIndex>0)renderLesson(currentLessonIndex-1);};
+ $('deCRNext').onclick=()=>{if(currentLessonIndex<currentFolderItems.length-1)renderLesson(currentLessonIndex+1);};
+ window.__deLessonRenderToken=(window.__deLessonRenderToken||0)+1;
+ const renderToken=window.__deLessonRenderToken;const it=currentFolderItems[index],raw=itemUrl(it),url=safeLink(raw),pdf=isPdf(it,raw),title=String(it.title||it.fileName||(pdf?'Study PDF':`Video Lecture ${index+1}`));
 // Keep the top app-bar title synchronized with the currently selected video/PDF.
 $('deCRTopTitle').textContent=title; $('deCRTopSub').textContent='';
-$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';if(!(await readerCourseUnlocked())){$('deCRPlayerDesc').style.display='none';$('deCRPlayerKicker').style.display='none';$('deCRCreditNotice')?.style.setProperty('display','none','important');document.querySelector('.decr-video-feedback')?.style.setProperty('display','none','important');$('deCRMedia').classList.add('decr-locked-media');$('deCRList').style.filter='none';$('deCRList').style.pointerEvents='none';$('deCRList').style.userSelect='none';media.innerHTML=`<div class="decr-lock-preview"><div class="decr-lock-symbol"><i class="fa-solid fa-lock"></i></div><h3>Course content locked</h3><p>Your 210-day course validity may have expired. Course access is available for 210 days from approval; contact the admin if you need help.</p><button type="button" id="deCRUnlockBtn"><i class="fa-solid fa-qrcode"></i> Buy Course</button></div>`;$('deCRUnlockBtn').onclick=()=>{if(typeof window.openCoursePayment==='function')window.openCoursePayment(currentCourseId);else alert('Please return to Courses and tap Buy.');};$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
+$('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+' • '+currentSemester.toUpperCase();$('deCRPlayerTitle').textContent=title;$('deCRPlayerDesc').textContent=String(it.description||`${currentFolder} • ${currentCourse?.title||currentCourse?.name||'Diploma Engineers Course'}`);const media=$('deCRMedia');media.innerHTML='';media.classList.toggle('pdf',pdf);$('deCRActions').innerHTML='';const unlocked=await readerCourseUnlocked();if(renderToken!==window.__deLessonRenderToken)return;if(!unlocked){$('deCRPlayerDesc').style.display='none';$('deCRPlayerKicker').style.display='none';$('deCRCreditNotice')?.style.setProperty('display','none','important');document.querySelector('.decr-video-feedback')?.style.setProperty('display','none','important');$('deCRMedia').classList.add('decr-locked-media');$('deCRList').style.filter='none';$('deCRList').style.pointerEvents='none';$('deCRList').style.userSelect='none';media.innerHTML=`<div class="decr-lock-preview">
+ <button type="button" class="decr-lock-symbol decr-lock-open-payment" id="deCRLockIcon" aria-label="Unlock course and open payment form"><i class="fa-solid fa-lock"></i></button>
+ <h3>Course Locked</h3>
+ <p class="decr-lock-message">You have not purchased this course. Please purchase it first to play the video.</p>
+ <button type="button" id="deCRUnlockBtn"><i class="fa-solid fa-qrcode"></i> Buy Course</button>
+ </div>`;
+ const openPaymentCard=()=>{
+  if(typeof window.openCoursePayment==='function')window.openCoursePayment(currentCourseId);
+  else if(typeof window.openPayment==='function')window.openPayment(currentCourseId);
+  else alert('Payment form is not available. Please return to Courses and try again.');
+ };
+ $('deCRLockIcon').onclick=openPaymentCard;
+ $('deCRUnlockBtn').onclick=openPaymentCard;$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
 $('deCRActions').innerHTML='';
 $('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));const active=$('deCRList').querySelector('.decr-item.active');active?.scrollIntoView({block:'nearest',behavior:'smooth'});updateLikeUI();$('deCRRatingSummary').textContent='Rate this video or resource';}
 async function loadIntegratedCourse(courseId){const token=++loadingToken;currentCourseId=String(courseId||'');openShell();msg('Loading course…');if(!currentCourseId){msg('Course ID is missing. Return to Courses and open the course again.','error');return;}try{ensureStudentFirebase();const courseSnap=await get(ref(catalogDb,`courseCatalog/${currentCourseId}`));if(token!==loadingToken)return;if(!courseSnap.exists()){msg('Course not found. Check that the Admin Panel published it in diplomaengineers-869df → courseCatalog and that the App is passing the correct course ID.','error');return;}const course=courseSnap.val()||{};if(!coursePublished(course)){msg('This course is not published yet. Admin must set its status to Approved/Published.','error');return;}showCourse(course);}catch(err){console.error('[Diploma Engineers] Integrated course reader failed:',err);if(token===loadingToken)msg(`Could not load this course (${err?.code||err?.message||'Firebase error'}). Check public read access for courseCatalog in diplomaengineers-869df.`, 'error');}}
@@ -11040,7 +11093,7 @@ function iqSemesterLabel(value){let s=String(value||'').trim().replace(/[_-]+/g,
 function iqGroupKey(r,key){return key==='title'?(iqField(r,'title','name')||'Untitled Important Questions'):key==='branch'?(iqField(r,'branch','branchName','category','courseBranch')||'Common / All Branches'):key==='semester'?iqSemesterLabel(iqField(r,'semester','semesterName','term','year')):(iqField(r,'subject','subjectName','paperName')||'Subject not set')}
 function iqHierarchyList(){let list=iqRecords.slice();const keys=['branch','semester','subject'];iqPath.forEach((v,i)=>{list=list.filter(r=>iqGroupKey(r,keys[i])===v)});return list}
 function iqRenderCrumbs(){const labels=['Branches','Semesters','Subjects','Files'];iqEl('iqAppCrumbs').innerHTML='<button data-iq-root="1">'+labels[0]+'</button>'+iqPath.map((v,i)=>'<span>›</span><button data-iq-crumb="'+i+'">'+iqTxt(v)+'</button>').join('')+(iqPath.length?'<span>›</span><b>'+labels[Math.min(iqPath.length,4)]+'</b>':'');iqEl('iqAppCrumbs').querySelector('[data-iq-root]').onclick=()=>{iqPath=[];iqRenderFolders()};iqEl('iqAppCrumbs').querySelectorAll('[data-iq-crumb]').forEach(b=>b.onclick=()=>{iqPath=iqPath.slice(0,Number(b.dataset.iqCrumb)+1);iqRenderFolders()})}
-function iqRenderFolders(){if(!iqLoaded){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<div class="iq-app-empty" role="status">Important Questions are loading. If folders do not appear, use Retry below.<br><button type="button" id="iqRetryLoad" style="margin-top:10px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';iqEl('iqAppFolders').hidden=true;iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqStartLoad(true)});return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?'':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],groups=[...new Set(list.map(r=>iqGroupKey(r,key)))].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?'':'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g);return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
+function iqRenderFolders(){if(!iqLoaded){const st=iqEl('iqAppStatus');if(st)st.innerHTML='<div class="iq-app-empty" role="status">Important Questions are loading. If folders do not appear, use Retry below.<br><button type="button" id="iqRetryLoad" style="margin-top:10px;padding:9px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700">Retry</button></div>';iqEl('iqAppFolders').hidden=true;iqEl('iqRetryLoad')?.addEventListener('click',()=>{iqLoaded=false;iqStartLoad(true)});return;}iqEl('iqAppStatus').innerHTML='';iqEl('iqAppFolders').hidden=false;iqEl('iqAppReader').hidden=true;iqEl('iqAppFolders').style.display='grid';iqRenderCrumbs();let list=iqHierarchyList(),term=iqEl('iqAppSearch').value.trim().toLowerCase();if(term)list=list.filter(r=>[r.title,iqField(r,'branch','branchName'),iqField(r,'semester','year'),iqField(r,'subject','subjectName'),r.content].join(' ').toLowerCase().includes(term));let keys=['branch','semester','subject'];if(iqPath.length>=3){iqEl('iqAppStatus').textContent=list.length?'':'No files found';iqEl('iqAppFolders').innerHTML=list.map(r=>{let idx=iqRecords.indexOf(r),units=iqUnits(r),count=units.reduce((n,u)=>n+u.questions.length,0);return '<button class="iq-app-folder" data-iq-file="'+idx+'"><span class="iq-app-folder-icon"><i class="fas fa-file-alt"></i></span><span><strong>'+iqTxt(r.title||'Important Questions')+'</strong><small>'+iqTxt(iqGroupKey(r,'branch'))+' • '+iqTxt(iqGroupKey(r,'semester'))+'<br>'+iqTxt(iqGroupKey(r,'subject'))+' • '+units.length+' Units • '+count+' Questions</small></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-file]').forEach(b=>b.onclick=()=>{iqOpen(Number(b.dataset.iqFile));history.pushState({__iqNav:true,path:iqPath.slice(),chosen:Number(b.dataset.iqFile)},'',location.href)});return}const key=keys[iqPath.length],courseFolderContext=window.__deCourseLinkedContext||{},courseSubjects=(iqPath.length===2&&courseFolderContext.subjects&&iqNormMatch(iqPath[0],courseFolderContext.branch)&&iqNormMatch(iqPath[1],iqSemesterLabel(courseFolderContext.semester))?courseFolderContext.subjects:[]),groups=[...new Set([...list.map(r=>iqGroupKey(r,key)),...(key==='subject'?courseSubjects:[])])].sort((a,b)=>a.localeCompare(b));iqEl('iqAppStatus').textContent=groups.length?'':'No published Important Questions found. Check Admin Panel publish status and Firebase rules.';iqEl('iqAppFolders').innerHTML=groups.map((g,i)=>{let subset=list.filter(r=>iqGroupKey(r,key)===g);return '<button class="iq-app-folder" data-iq-group="'+iqTxt(g)+'"><span class="iq-app-folder-icon"><i class="fas fa-folder"></i></span><span><strong>'+iqTxt(g)+'</strong></span></button>'}).join('');iqEl('iqAppFolders').querySelectorAll('[data-iq-group]').forEach(b=>b.onclick=()=>{iqPath.push(b.dataset.iqGroup);iqChosen=null;iqRenderFolders();history.pushState({__iqNav:true,path:iqPath.slice(),chosen:null},'',location.href)})}
 function iqQuestionPairHtml(raw,number){
  const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  const hi=[],en=[];
@@ -11112,8 +11165,8 @@ window.openImportantQuestionsHome=function(){
 };
 let iqCourseRequest=null;
 function iqNormMatch(a,b){const x=String(a||'').toLowerCase().replace(/[^a-z0-9]/g,''),y=String(b||'').toLowerCase().replace(/[^a-z0-9]/g,'');return !!x&&!!y&&(x===y||x.includes(y)||y.includes(x))}
-function iqApplyCourseRequest(){if(!iqLoaded||!iqCourseRequest)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch)&&(!req.subject||/^all\s*subjects?$/i.test(req.subject)||iqNormMatch(iqField(r,'subject','subjectName'),req.subject)));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const pick=candidates[0];iqPath=pick?[iqGroupKey(pick,'branch'),iqGroupKey(pick,'semester'),iqGroupKey(pick,'subject')]:[req.branch||'Common / All Branches',iqSemesterLabel(req.semester),req.subject||'Subject not set'];iqChosen=null;iqRenderFolders();}
-window.openCourseImportantQuestions=function(branch,semester,subject){iqCourseRequest={branch:String(branch||''),semester:String(semester||''),subject:String(subject||'')};if(iqRecords.length)iqApplyCourseRequest();else iqEl('iqAppStatus').textContent='Loading matching Important Questions…';};
+function iqApplyCourseRequest(){if(!iqLoaded||!iqCourseRequest)return;const req=iqCourseRequest;iqCourseRequest=null;let candidates=iqRecords.filter(r=>iqNormMatch(iqField(r,'branch','branchName'),req.branch));if(req.semester&&!/^(all|allsemesters?)$/i.test(String(req.semester).toLowerCase().replace(/[^a-z0-9]/g,'')))candidates=candidates.filter(r=>iqNormMatch(iqGroupKey(r,'semester'),req.semester)||iqNormMatch(iqField(r,'semester','year'),req.semester));const branchLabel=candidates[0]?iqGroupKey(candidates[0],'branch'):(req.branch||'Common / All Branches'),semesterLabel=candidates[0]?iqGroupKey(candidates[0],'semester'):iqSemesterLabel(req.semester);iqPath=[branchLabel,semesterLabel];if(req.subject&&!/^all\s*subjects?$/i.test(req.subject))iqPath.push(req.subject);iqChosen=null;iqRenderFolders();}
+window.openCourseImportantQuestions=function(branch,semester,subject,subjects){if(Array.isArray(subjects))window.__deCourseLinkedContext={...(window.__deCourseLinkedContext||{}),branch:String(branch||''),semester:String(semester||''),subjects:subjects.slice()};iqCourseRequest={branch:String(branch||''),semester:String(semester||''),subject:String(subject||'All Subjects')};if(iqRecords.length)iqApplyCourseRequest();else iqEl('iqAppStatus').textContent='Loading matching Important Questions…';};
 window.iqRestoreState=function(state){
  iqPath=Array.isArray(state.path)?state.path.slice():[];
  if(state.chosen!==null&&state.chosen!==undefined&&iqRecords[Number(state.chosen)]){
@@ -11298,7 +11351,17 @@ window.addEventListener('popstate',function(e){
 </style>
 <div aria-hidden="true" id="deFirebaseCourseDetail">
 <div class="de-fcd-wrap">
-<header class="de-fcd-top"><button aria-label="Back" class="de-fcd-back" id="deFcdBack" type="button"><i class="fa-solid fa-arrow-left"></i></button><div class="de-fcd-brand">Diploma <span>Engineers</span></div></header>
+<header class="de-fcd-top de-shared-course-topbar" aria-label="App navigation">
+ <div class="de-course-top-left">
+  <button aria-label="Back to previous page" class="de-fcd-back" id="deFcdBack" type="button"><i class="fa-solid fa-arrow-left"></i></button>
+  <button aria-label="Notifications" class="de-course-bell" type="button" onclick="openNewsNotifications()"><i class="fas fa-bell"></i><span class="de-course-notice-dot">1+</span></button>
+ </div>
+ <div class="de-course-top-right">
+  <button class="de-course-coins" type="button" onclick="navigateTo('leaderboardPage')"><i class="fas fa-coins"></i><span id="deFcdHeaderCoins">0 Coins</span></button>
+  <button class="de-course-streak" type="button" onclick="openStreakModal()"><i class="fas fa-fire"></i><span id="deFcdHeaderStreak">0</span></button>
+  <button class="de-course-profile" type="button" aria-label="Open profile" onclick="navigateTo('profilePage')"><i class="fas fa-user"></i></button>
+ </div>
+</header>
 <div class="de-fcd-banner" id="deFcdBanner"><button aria-label="Share course poster" class="de-fcd-price" id="deFcdPrice" title="Share course poster" type="button"><i class="fa-solid fa-share-nodes"></i></button></div>
 <main class="de-fcd-main">
 <h1 class="de-fcd-title" id="deFcdTitle">Course Title</h1><div class="de-fcd-branch" id="deFcdBranch">Diploma Engineering</div>
@@ -11924,159 +11987,7 @@ function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Bra
 function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Open file</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));const fix=d.createElement("style");fix.id="de-sn-image-fit-fix";fix.textContent="html,body{max-width:100%;overflow-wrap:anywhere}body img{max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:center!important}body img[alt*=logo i],body .logo img,body .brand img,body header img{width:auto!important;max-width:min(100%,680px)!important;max-height:150px!important;object-fit:contain!important;display:block!important;margin:8px auto!important}table{max-width:100%!important}*{box-sizing:border-box}";d.head.appendChild(fix);return "<!doctype html>"+d.documentElement.outerHTML}
 function snFileUrl(r,keys){for(const k of keys){const v=String(r?.[k]||'').trim();if(v)return v;}return ''}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video>
-<style id="de-course-topbar-consistency-final">
-/* Course Details and Course Reader share one top-bar design system. */
-#deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
- height:56px!important;min-height:56px!important;width:100%!important;box-sizing:border-box!important;
- display:flex!important;align-items:center!important;gap:12px!important;padding:0 16px!important;
- background:#fff!important;border-bottom:1px solid #e5e7eb!important;
- box-shadow:0 2px 10px rgba(15,23,42,.035)!important;backdrop-filter:none!important;
- position:sticky!important;top:0!important;z-index:100!important;
-}
-#deFirebaseCourseDetail .de-fcd-back,#deCourseShell .decr-back{
- width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
- flex:0 0 36px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
- padding:0!important;border:1px solid #e2e8f0!important;border-radius:50%!important;
- background:#f8fafc!important;color:#172033!important;font:700 17px/1 inherit!important;
- cursor:pointer!important;box-shadow:none!important;
-}
-#deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{
- display:flex!important;flex-direction:column!important;justify-content:center!important;gap:2px!important;
- flex:1 1 auto!important;min-width:0!important;font-weight:900!important;font-size:16px!important;
- line-height:1.2!important;color:#0f172a!important;
-}
-#deFirebaseCourseDetail .de-fcd-brand span,#deCourseShell .decr-brand b span{color:#2563eb!important}
-#deCourseShell .decr-brand small{font-size:11px!important;line-height:1.25!important;color:#64748b!important;font-weight:700!important}
-@media(max-width:560px){
- #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{height:54px!important;min-height:54px!important;padding:0 12px!important;gap:10px!important}
- #deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{font-size:15px!important}
- #deCourseShell .decr-brand>b{font-size:15px!important}
-}
-</style>
-
-<style id="de-universal-app-topbar">
-/* One compact, full-width app bar matching the supplied reference image. */
-#app > .navbar{
-  position:sticky!important;top:0!important;z-index:999!important;
-  width:100%!important;min-height:68px!important;height:68px!important;
-  padding:8px 16px!important;background:#fff!important;
-  border:1px solid #e5e7eb!important;border-radius:12px!important;
-  box-shadow:0 2px 10px rgba(15,23,42,.04)!important;
-  display:flex!important;align-items:center!important;justify-content:space-between!important;
-}
-#app > .navbar .menu-toggle-btn{display:none!important}
-#app > .navbar .header-back-btn{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- width:42px!important;height:42px!important;min-width:42px!important;
- border-radius:50%!important;background:#f8fafc!important;border:1px solid #dbe3ef!important;
- color:#172033!important;font-size:17px!important;flex:0 0 42px!important;
-}
-#app > .navbar .nav-left{gap:12px!important}
-#app > .navbar .header-bell-wrap{width:36px!important;height:36px!important}
-#app > .navbar .header-bell-btn{font-size:19px!important}
-#app > .navbar .nav-right-box{gap:12px!important}
-#app > .navbar .coin-btn{min-height:40px!important;padding:7px 16px!important;border-radius:24px!important;font-size:13px!important}
-#app > .navbar .streak-btn{min-height:40px!important}
-#app > .navbar .profile-icon{width:40px!important;height:40px!important}
-#deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
- height:68px!important;min-height:68px!important;padding:8px 16px!important;
- display:flex!important;align-items:center!important;justify-content:space-between!important;
- gap:12px!important;background:#fff!important;border-bottom:1px solid #e5e7eb!important;
- box-shadow:0 2px 10px rgba(15,23,42,.04)!important;position:sticky!important;top:0!important;z-index:100!important;
-}
-#deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{display:none!important}
-.de-universal-overlay-left{display:flex;align-items:center;gap:12px;min-width:0}
-.de-universal-overlay-right{display:flex;align-items:center;gap:12px;margin-left:auto}
-.de-universal-overlay-back{
- width:42px;height:42px;min-width:42px;border-radius:50%;border:1px solid #dbe3ef;
- background:#f8fafc;color:#172033;display:inline-flex;align-items:center;justify-content:center;
- font-size:17px;cursor:pointer;
-}
-.de-universal-overlay-bell{width:36px;height:36px;border:0;background:transparent;color:#172033;font-size:19px;position:relative;cursor:pointer}
-.de-universal-overlay-action{height:40px;border:1px solid #ffe066;border-radius:24px;background:linear-gradient(135deg,#ffd700,#ffa500);color:#5b3a00;padding:0 14px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
-.de-universal-overlay-streak{height:40px;border:1px solid #ffd7bd;border-radius:24px;background:#fff7f0;color:#e85b13;padding:0 12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-.de-universal-overlay-profile{width:40px;height:40px;border-radius:50%;overflow:hidden;border:0;background:#f1f5f9;padding:0;cursor:pointer}
-.de-universal-overlay-profile img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-@media(max-width:520px){
- #app > .navbar{height:62px!important;min-height:62px!important;padding:7px 10px!important}
- #app > .navbar .nav-left{gap:8px!important}
- #app > .navbar .nav-right-box{gap:7px!important}
- #app > .navbar .coin-btn{padding:6px 10px!important;font-size:11px!important}
- #app > .navbar .profile-icon{width:34px!important;height:34px!important}
- #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{height:62px!important;min-height:62px!important;padding:7px 10px!important}
- .de-universal-overlay-right{gap:7px}
- .de-universal-overlay-action{padding:0 9px;font-size:11px}
- .de-universal-overlay-streak{padding:0 9px}
- .de-universal-overlay-profile{width:34px;height:34px}
- .de-universal-overlay-back{width:38px;height:38px;min-width:38px}
-}
-</style>
-<script id="de-universal-topbar-controls">
-(function(){
- const $=id=>document.getElementById(id);
- function makeOverlayBars(){
-  const configs=[
-   {root:$('deFirebaseCourseDetail'),top:$('deFirebaseCourseDetail')?.querySelector('.de-fcd-top'),back:'deFcdBack'},
-   {root:$('deCourseShell'),top:$('deCourseShell')?.querySelector('.decr-top'),back:'deCRBack'}
-  ];
-  configs.forEach(({root,top,back})=>{
-   if(!root||!top||top.dataset.universalBar==='1')return;
-   top.dataset.universalBar='1';
-   const backButton=top.querySelector('#'+back);
-   top.innerHTML='';
-   const left=document.createElement('div');left.className='de-universal-overlay-left';
-   if(backButton){backButton.className='de-universal-overlay-back';backButton.innerHTML='<i class="fas fa-arrow-left"></i>';backButton.setAttribute('aria-label','Back');left.appendChild(backButton);}
-   left.insertAdjacentHTML('beforeend',`<button class="de-universal-overlay-bell" type="button" data-de-action="bell" aria-label="Notifications"><i class="fas fa-bell"></i><span class="news-badge" data-de-badge>0</span></button>`);
-   const right=document.createElement('div');right.className='de-universal-overlay-right';
-   right.innerHTML=`<button class="de-universal-overlay-action" type="button" data-de-action="coins"><i class="fas fa-coins"></i><span data-de-coins>0 Coins</span></button>
-    <button class="de-universal-overlay-streak" type="button" data-de-action="streak"><i class="fas fa-fire"></i><span data-de-streak>0</span></button>
-    <button class="de-universal-overlay-profile" type="button" data-de-action="profile" aria-label="Profile"><img data-de-avatar alt="Profile" src=""></button>`;
-   top.append(left,right);
-  });
-  syncOverlayBars();
- }
- function syncOverlayBars(){
-  const coin=$('navCoinCount')?.textContent||'0 Coins';
-  const streak=$('navStreakCount')?.textContent||'0';
-  const avatar=$('navProfileIcon')?.querySelector('img')?.src||'';
-  const badge=$('newsBadge')?.textContent||'0';
-  document.querySelectorAll('[data-de-coins]').forEach(x=>x.textContent=coin);
-  document.querySelectorAll('[data-de-streak]').forEach(x=>x.textContent=streak);
-  document.querySelectorAll('[data-de-avatar]').forEach(x=>{if(avatar)x.src=avatar;else x.removeAttribute('src');});
-  document.querySelectorAll('[data-de-badge]').forEach(x=>{x.textContent=badge;x.style.display=badge!=='0'?'block':'none';});
- }
- document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-de-action]');if(!b)return;
-  const a=b.dataset.deAction;
-  if(a==='bell')window.openNewsNotifications?.();
-  if(a==='coins')window.navigateTo?.('leaderboardPage');
-  if(a==='streak')window.openStreakModal?.();
-  if(a==='profile')window.navigateTo?.('profilePage');
- });
- function init(){
-  makeOverlayBars();
-  const nav=$('app')?.querySelector('.navbar');
-  if(nav){
-   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
-   if(back)back.style.display='inline-flex';
-   if(menu)menu.style.display='none';
-  }
-  const app=$('app');
-  if(app)new MutationObserver(()=>{
-   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
-   if(back&&back.style.display!=='inline-flex')back.style.display='inline-flex';
-   if(menu&&menu.style.display!=='none')menu.style.display='none';
-  }).observe(app,{subtree:true,attributes:true,attributeFilter:['style','class']});
-  const sourceIds=['navCoinCount','navStreakCount','navProfileIcon','newsBadge'];
-  sourceIds.forEach(id=>{const el=$(id);if(el)new MutationObserver(syncOverlayBars).observe(el,{subtree:true,childList:true,characterData:true,attributes:true});});
-  syncOverlayBars();
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-})();
-<\/script>
-
-</body></html>';sn$('snDownload').innerHTML'<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
+async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video></body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -12491,10 +12402,21 @@ window.deShortNotesGoBack=function(){
  document.addEventListener('click',function(e){
   const b=e.target.closest('#deCRBack');
   if(!b)return;
-  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();stepBack();
+  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  if(typeof window.deCRGoBack==='function')window.deCRGoBack();
  },true);
  // App's global back arrow.
  document.addEventListener('click',function(e){const b=e.target.closest('#headerBackBtn');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();stepBack();},true);
+ // Add a browser/Android Back history layer when Course Details opens.
+ const detailRoot=$('deFirebaseCourseDetail');
+ if(detailRoot){
+  let detailWas=false;
+  new MutationObserver(()=>{
+   const now=detailOpen();
+   if(now&&!detailWas)history.pushState({__deCourseDetailBackLayer:true},'',location.href);
+   detailWas=now;
+  }).observe(detailRoot,{attributes:true,attributeFilter:['class','style','aria-hidden']});
+ }
  // Give the course reader a browser-history layer when it opens. Re-arm it after each
  // browser/Android Back so one press moves one internal reader level, not to Home.
  const x=shell();
@@ -12557,131 +12479,179 @@ window.deShortNotesGoBack=function(){
 }
 </style>
 
-<style id="de-universal-app-topbar">
-/* One compact, full-width app bar matching the supplied reference image. */
-#app > .navbar{
-  position:sticky!important;top:0!important;z-index:999!important;
-  width:100%!important;min-height:68px!important;height:68px!important;
-  padding:8px 16px!important;background:#fff!important;
-  border:1px solid #e5e7eb!important;border-radius:12px!important;
-  box-shadow:0 2px 10px rgba(15,23,42,.04)!important;
-  display:flex!important;align-items:center!important;justify-content:space-between!important;
+<style id="de-course-shared-topbar-final">
+#deFirebaseCourseDetail .de-shared-course-topbar,#deCourseShell .de-shared-course-topbar{
+ height:68px!important;min-height:68px!important;width:100%!important;box-sizing:border-box!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;
+ padding:0 16px!important;margin:0!important;background:#fff!important;border:1px solid #e5e7eb!important;
+ border-radius:12px!important;box-shadow:0 2px 9px rgba(15,23,42,.045)!important;
+ position:sticky!important;top:0!important;z-index:500!important;
 }
-#app > .navbar .menu-toggle-btn{display:none!important}
-#app > .navbar .header-back-btn{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- width:42px!important;height:42px!important;min-width:42px!important;
- border-radius:50%!important;background:#f8fafc!important;border:1px solid #dbe3ef!important;
- color:#172033!important;font-size:17px!important;flex:0 0 42px!important;
+#deFirebaseCourseDetail .de-course-top-left,#deCourseShell .de-course-top-left{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+#deFirebaseCourseDetail .de-fcd-back,#deCourseShell .decr-back{
+ width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;flex:0 0 42px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;
+ border:1px solid #dbe3ee!important;border-radius:50%!important;background:#f8fafc!important;color:#172033!important;
+ font-size:18px!important;line-height:1!important;cursor:pointer!important;box-shadow:none!important;
 }
-#app > .navbar .nav-left{gap:12px!important}
-#app > .navbar .header-bell-wrap{width:36px!important;height:36px!important}
-#app > .navbar .header-bell-btn{font-size:19px!important}
-#app > .navbar .nav-right-box{gap:12px!important}
-#app > .navbar .coin-btn{min-height:40px!important;padding:7px 16px!important;border-radius:24px!important;font-size:13px!important}
-#app > .navbar .streak-btn{min-height:40px!important}
-#app > .navbar .profile-icon{width:40px!important;height:40px!important}
-#deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
- height:68px!important;min-height:68px!important;padding:8px 16px!important;
- display:flex!important;align-items:center!important;justify-content:space-between!important;
- gap:12px!important;background:#fff!important;border-bottom:1px solid #e5e7eb!important;
- box-shadow:0 2px 10px rgba(15,23,42,.04)!important;position:sticky!important;top:0!important;z-index:100!important;
+#deCourseShell .decr-back{font-size:0!important}#deCourseShell .decr-back i{font-size:18px!important}
+#deFirebaseCourseDetail .de-course-bell,#deCourseShell .de-course-bell{
+ position:relative!important;width:38px!important;height:38px!important;padding:0!important;border:0!important;
+ border-radius:50%!important;background:transparent!important;color:#111827!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;font-size:19px!important;cursor:pointer!important;
 }
-#deFirebaseCourseDetail .de-fcd-brand,#deCourseShell .decr-brand{display:none!important}
-.de-universal-overlay-left{display:flex;align-items:center;gap:12px;min-width:0}
-.de-universal-overlay-right{display:flex;align-items:center;gap:12px;margin-left:auto}
-.de-universal-overlay-back{
- width:42px;height:42px;min-width:42px;border-radius:50%;border:1px solid #dbe3ef;
- background:#f8fafc;color:#172033;display:inline-flex;align-items:center;justify-content:center;
- font-size:17px;cursor:pointer;
+#deFirebaseCourseDetail .de-course-notice-dot,#deCourseShell .de-course-notice-dot{
+ position:absolute!important;top:-2px!important;right:-4px!important;min-width:22px!important;height:20px!important;
+ padding:0 4px!important;border-radius:12px!important;background:#f52245!important;color:#fff!important;
+ border:2px solid #fff!important;font-size:11px!important;font-weight:900!important;line-height:16px!important;text-align:center!important;
 }
-.de-universal-overlay-bell{width:36px;height:36px;border:0;background:transparent;color:#172033;font-size:19px;position:relative;cursor:pointer}
-.de-universal-overlay-action{height:40px;border:1px solid #ffe066;border-radius:24px;background:linear-gradient(135deg,#ffd700,#ffa500);color:#5b3a00;padding:0 14px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
-.de-universal-overlay-streak{height:40px;border:1px solid #ffd7bd;border-radius:24px;background:#fff7f0;color:#e85b13;padding:0 12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-.de-universal-overlay-profile{width:40px;height:40px;border-radius:50%;overflow:hidden;border:0;background:#f1f5f9;padding:0;cursor:pointer}
-.de-universal-overlay-profile img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-@media(max-width:520px){
- #app > .navbar{height:62px!important;min-height:62px!important;padding:7px 10px!important}
- #app > .navbar .nav-left{gap:8px!important}
- #app > .navbar .nav-right-box{gap:7px!important}
- #app > .navbar .coin-btn{padding:6px 10px!important;font-size:11px!important}
- #app > .navbar .profile-icon{width:34px!important;height:34px!important}
- #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{height:62px!important;min-height:62px!important;padding:7px 10px!important}
- .de-universal-overlay-right{gap:7px}
- .de-universal-overlay-action{padding:0 9px;font-size:11px}
- .de-universal-overlay-streak{padding:0 9px}
- .de-universal-overlay-profile{width:34px;height:34px}
- .de-universal-overlay-back{width:38px;height:38px;min-width:38px}
+#deFirebaseCourseDetail .de-course-top-right,#deCourseShell .de-course-top-right{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;margin-left:auto!important}
+#deFirebaseCourseDetail .de-course-coins,#deCourseShell .de-course-coins{
+ height:40px!important;padding:0 15px!important;border:0!important;border-radius:24px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+ background:#ffbd00!important;color:#684400!important;font-size:13px!important;font-weight:900!important;
+ white-space:nowrap!important;box-shadow:0 3px 10px rgba(255,174,0,.24)!important;cursor:pointer!important;
+}
+#deFirebaseCourseDetail .de-course-coins i,#deCourseShell .de-course-coins i{color:#c47b00!important;font-size:15px!important}
+#deFirebaseCourseDetail .de-course-streak,#deCourseShell .de-course-streak{
+ min-width:48px!important;height:40px!important;padding:0 12px!important;border:1px solid #ffdec8!important;
+ border-radius:24px!important;background:#fff7f0!important;color:#e85b12!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;
+ font-size:13px!important;font-weight:900!important;cursor:pointer!important;
+}
+#deFirebaseCourseDetail .de-course-profile,#deCourseShell .de-course-profile{
+ width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;border:0!important;border-radius:50%!important;
+ background:#f1f5f9!important;color:#475569!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;font-size:18px!important;cursor:pointer!important;
+}
+@media(max-width:560px){
+ #deFirebaseCourseDetail .de-shared-course-topbar,#deCourseShell .de-shared-course-topbar{height:60px!important;min-height:60px!important;padding:0 10px!important;gap:7px!important;border-radius:0!important}
+ #deFirebaseCourseDetail .de-course-top-left,#deCourseShell .de-course-top-left{gap:8px!important}
+ #deFirebaseCourseDetail .de-course-top-right,#deCourseShell .de-course-top-right{gap:6px!important}
+ #deFirebaseCourseDetail .de-course-coins,#deCourseShell .de-course-coins{height:37px!important;padding:0 10px!important;font-size:11px!important}
+ #deFirebaseCourseDetail .de-course-streak,#deCourseShell .de-course-streak{height:37px!important;min-width:42px!important;padding:0 9px!important}
+ #deFirebaseCourseDetail .de-course-profile,#deCourseShell .de-course-profile{width:36px!important;height:36px!important;min-width:36px!important}
+ #deFirebaseCourseDetail .de-fcd-back,#deCourseShell .decr-back{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;flex-basis:38px!important}
 }
 </style>
-<script id="de-universal-topbar-controls">
+<script id="de-course-header-counter-sync">
 (function(){
- const $=id=>document.getElementById(id);
- function makeOverlayBars(){
-  const configs=[
-   {root:$('deFirebaseCourseDetail'),top:$('deFirebaseCourseDetail')?.querySelector('.de-fcd-top'),back:'deFcdBack'},
-   {root:$('deCourseShell'),top:$('deCourseShell')?.querySelector('.decr-top'),back:'deCRBack'}
-  ];
-  configs.forEach(({root,top,back})=>{
-   if(!root||!top||top.dataset.universalBar==='1')return;
-   top.dataset.universalBar='1';
-   const backButton=top.querySelector('#'+back);
-   top.innerHTML='';
-   const left=document.createElement('div');left.className='de-universal-overlay-left';
-   if(backButton){backButton.className='de-universal-overlay-back';backButton.innerHTML='<i class="fas fa-arrow-left"></i>';backButton.setAttribute('aria-label','Back');left.appendChild(backButton);}
-   left.insertAdjacentHTML('beforeend',`<button class="de-universal-overlay-bell" type="button" data-de-action="bell" aria-label="Notifications"><i class="fas fa-bell"></i><span class="news-badge" data-de-badge>0</span></button>`);
-   const right=document.createElement('div');right.className='de-universal-overlay-right';
-   right.innerHTML=`<button class="de-universal-overlay-action" type="button" data-de-action="coins"><i class="fas fa-coins"></i><span data-de-coins>0 Coins</span></button>
-    <button class="de-universal-overlay-streak" type="button" data-de-action="streak"><i class="fas fa-fire"></i><span data-de-streak>0</span></button>
-    <button class="de-universal-overlay-profile" type="button" data-de-action="profile" aria-label="Profile"><img data-de-avatar alt="Profile" src=""></button>`;
-   top.append(left,right);
+ const sync=()=>{
+  const coins=document.getElementById('navCoinCount')?.textContent?.trim();
+  const streak=document.getElementById('navStreakCount')?.textContent?.trim();
+  [['deFcdHeaderCoins',coins],['deCRHeaderCoins',coins],['deFcdHeaderStreak',streak],['deCRHeaderStreak',streak]].forEach(([id,value])=>{
+   const el=document.getElementById(id);if(el&&value)el.textContent=value;
   });
-  syncOverlayBars();
+ };
+ sync();setInterval(sync,1000);
+})();
+</script>
+
+
+<style id="de-course-header-final-polish">
+/* Identical top-bar geometry in Course Details and Course Content/Reader. */
+#deFirebaseCourseDetail .de-fcd-top,
+#deCourseShell .decr-top{
+ height:68px!important;min-height:68px!important;width:100%!important;
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:12px!important;padding:0 16px!important;
+ margin:0!important;background:#fff!important;border:1px solid #e5e7eb!important;
+ border-radius:12px!important;box-shadow:0 2px 9px rgba(15,23,42,.045)!important;
+ position:sticky!important;top:0!important;z-index:500!important;
+}
+#deFirebaseCourseDetail .de-fcd-wrap{padding-top:0!important}
+#deCourseShell .decr-back:before{content:none!important;display:none!important}
+#deCourseShell .decr-back i{display:block!important;font-size:18px!important;line-height:1!important}
+#deCourseShell #deCRTopTitle,#deCourseShell #deCRTopSub{display:none!important;visibility:hidden!important}
+#deCourseShell .decr-brand{display:none!important}
+#deCourseShell .decr-lock-open-payment{
+ border:0!important;cursor:pointer!important;box-shadow:0 5px 18px rgba(37,99,235,.18)!important;
+ transition:transform .15s ease,box-shadow .15s ease!important;
+}
+#deCourseShell .decr-lock-open-payment:active{transform:scale(.94)!important}
+#deCourseShell .decr-lock-message{color:#b42318!important;font-weight:750!important}
+#deCourseShell #deCRPrevious:disabled,#deCourseShell #deCRNext:disabled{
+ opacity:.38!important;cursor:not-allowed!important;
+}
+@media(max-width:560px){
+ #deFirebaseCourseDetail .de-fcd-top,#deCourseShell .decr-top{
+  height:60px!important;min-height:60px!important;padding:0 10px!important;border-radius:0!important;gap:7px!important;
  }
- function syncOverlayBars(){
-  const coin=$('navCoinCount')?.textContent||'0 Coins';
-  const streak=$('navStreakCount')?.textContent||'0';
-  const avatar=$('navProfileIcon')?.querySelector('img')?.src||'';
-  const badge=$('newsBadge')?.textContent||'0';
-  document.querySelectorAll('[data-de-coins]').forEach(x=>x.textContent=coin);
-  document.querySelectorAll('[data-de-streak]').forEach(x=>x.textContent=streak);
-  document.querySelectorAll('[data-de-avatar]').forEach(x=>{if(avatar)x.src=avatar;else x.removeAttribute('src');});
-  document.querySelectorAll('[data-de-badge]').forEach(x=>{x.textContent=badge;x.style.display=badge!=='0'?'block':'none';});
+ #deFirebaseCourseDetail .de-course-top-left,#deCourseShell .de-course-top-left{gap:8px!important}
+ #deFirebaseCourseDetail .de-course-top-right,#deCourseShell .de-course-top-right{gap:6px!important}
+}
+</style>
+
+
+
+<script id="de-mobile-previous-page-back-final">
+(function(){
+ 'use strict';
+ if(window.__deMobileBackFinalInstalled)return;
+ window.__deMobileBackFinalInstalled=true;
+ const pageStack=[];
+ const originalNavigate=window.navigateTo;
+ const activePage=()=>document.querySelector('.page.active-page')?.id||'homePage';
+ if(typeof originalNavigate==='function'){
+  window.navigateTo=function(pageId,pushToHistory=true){
+   const from=activePage();
+   if(pushToHistory!==false&&pageId&&pageId!==from)pageStack.push(from);
+   return originalNavigate.apply(this,arguments);
+  };
  }
- document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-de-action]');if(!b)return;
-  const a=b.dataset.deAction;
-  if(a==='bell')window.openNewsNotifications?.();
-  if(a==='coins')window.navigateTo?.('leaderboardPage');
-  if(a==='streak')window.openStreakModal?.();
-  if(a==='profile')window.navigateTo?.('profilePage');
- });
- function init(){
-  makeOverlayBars();
-  const nav=$('app')?.querySelector('.navbar');
-  if(nav){
-   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
-   if(back)back.style.display='inline-flex';
-   if(menu)menu.style.display='none';
+ const visible=el=>!!(el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+ function backOneLevel(){
+  const detail=document.getElementById('deFirebaseCourseDetail');
+  if(detail?.classList.contains('show')){document.getElementById('deFcdBack')?.click();return true;}
+  const shell=document.getElementById('deCourseShell');
+  if(shell&&visible(shell)&&!shell.classList.contains('decr-hidden')&&typeof window.deCRGoBack==='function'){window.deCRGoBack();return true;}
+  const page=activePage();
+
+  if(page==='importantQuestionsPage'&&typeof window.iqNavigateBack==='function'){
+   window.iqNavigateBack();return true;
   }
-  const app=$('app');
-  if(app)new MutationObserver(()=>{
-   const back=$('headerBackBtn'),menu=$('menuToggleBtn');
-   if(back&&back.style.display!=='inline-flex')back.style.display='inline-flex';
-   if(menu&&menu.style.display!=='none')menu.style.display='none';
-  }).observe(app,{subtree:true,attributes:true,attributeFilter:['style','class']});
-  const sourceIds=['navCoinCount','navStreakCount','navProfileIcon','newsBadge'];
-  sourceIds.forEach(id=>{const el=$(id);if(el)new MutationObserver(syncOverlayBars).observe(el,{subtree:true,childList:true,characterData:true,attributes:true});});
-  syncOverlayBars();
+  if((page==='sortNotesPage'||page==='shortNotesPage')&&typeof window.deShortNotesGoBack==='function'){
+   if(window.deShortNotesGoBack())return true;
+   if(window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){window.deCourseReturnToReader();return true;}
+  }
+  if(page==='testSeriesPage'&&typeof window.deTsGoBack==='function'){
+   if(window.deTsGoBack())return true;
+   if(window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){window.deCourseReturnToReader();return true;}
+  }
+  if(page==='testRunnerPage'){window.navigateTo?.('testSeriesPage',false);return true;}
+
+  let previous=pageStack.pop();
+  while(previous&&(!document.getElementById(previous)||previous===page))previous=pageStack.pop();
+  if(!previous&&window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){
+   window.deCourseReturnToReader();return true;
+  }
+  if(!previous){
+   const statePage=history.state?.pageId;
+   if(statePage&&statePage!==page&&document.getElementById(statePage))previous=statePage;
+   else if(page!=='homePage')previous='homePage';
+   else return true;
+  }
+  if(typeof window.navigateTo==='function')window.navigateTo(previous,false);
+  else document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active-page',el.id===previous));
+  return true;
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ window.goBack=backOneLevel;
+ window.__deUnifiedBack=backOneLevel;
+ window.deHandleMobileBack=backOneLevel;
+ document.addEventListener('backbutton',e=>{e.preventDefault?.();backOneLevel();},false);
+ document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'||e.keyCode===4||e.key==='BrowserBack'){
+   if(e.cancelable)e.preventDefault();e.stopPropagation();backOneLevel();
+  }
+ },true);
+ window.addEventListener('popstate',e=>{
+  if(e.state?.deNewsReader)return;
+  if(e.cancelable)e.preventDefault();
+  e.stopImmediatePropagation();
+  backOneLevel();
+ },true);
 })();
 </script>
 
 </body>
 </html>
-
-<style id="de-remove-top-empty-space-final">
-#app{padding-top:0!important;margin-top:0!important;}
-#app>.navbar{margin-top:0!important;top:0!important;}
-</style>

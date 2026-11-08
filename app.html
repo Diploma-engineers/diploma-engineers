@@ -12587,41 +12587,103 @@ window.deShortNotesGoBack=function(){
 <script id="de-mobile-previous-page-back-final">
 (function(){
  'use strict';
- if(window.__deMobileBackFinalInstalled)return;
- window.__deMobileBackFinalInstalled=true;
- const pageStack=[];
- const originalNavigate=window.navigateTo;
- const activePage=()=>document.querySelector('.page.active-page')?.id||'homePage';
- if(typeof originalNavigate==='function'){
-  window.navigateTo=function(pageId,pushToHistory=true){
-   const from=activePage();
-   if(pushToHistory!==false&&pageId&&pageId!==from)pageStack.push(from);
-   return originalNavigate.apply(this,arguments);
-  };
- }
- const visible=el=>!!(el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
- function backOneLevel(){
-  const detail=document.getElementById('deFirebaseCourseDetail');
-  if(detail?.classList.contains('show')){document.getElementById('deFcdBack')?.click();return true;}
-  const shell=document.getElementById('deCourseShell');
-  if(shell&&visible(shell)&&!shell.classList.contains('decr-hidden')&&typeof window.deCRGoBack==='function'){window.deCRGoBack();return true;}
-  const page=activePage();
+ if(window.__deMobileBackFinalV9)return;
+ window.__deMobileBackFinalV9=true;
 
-  if(page==='importantQuestionsPage'&&typeof window.iqNavigateBack==='function'){
-   window.iqNavigateBack();return true;
+ const stack=[];
+ let lastPage=document.querySelector('.page.active-page')?.id||'homePage';
+ let routing=false;
+ const pageNow=()=>document.querySelector('.page.active-page')?.id||'homePage';
+ const isVisible=el=>!!(el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'&&el.getAttribute('aria-hidden')!=='true');
+
+ // Wrap the FINAL router (including the payment/admin wrappers installed earlier).
+ function installRouterWrapper(){
+  const current=window.navigateTo;
+  if(typeof current!=='function'||current.__deBackV9)return;
+  const wrapped=function(pageId,pushToHistory=true){
+   const from=pageNow();
+   if(!routing&&pageId&&pageId!==from&&pushToHistory!==false){
+    stack.push(from);
+    if(stack.length>80)stack.shift();
+   }
+   // When leaving a course reader, hide its overlay so profile/notifications
+   // and other destination pages are not covered by the course shell.
+   if(pageId&&pageId!=='coursePage'&&pageId!=='homePage'){
+    const shell=document.getElementById('deCourseShell');
+    if(shell&&isVisible(shell)){
+     shell.setAttribute('aria-hidden','true');
+     shell.classList.add('decr-hidden');
+     shell.style.display='none';
+    }
+   }
+   const result=current.apply(this,arguments);
+   setTimeout(()=>{lastPage=pageNow();},0);
+   return result;
+  };
+  wrapped.__deBackV9=true;
+  window.navigateTo=wrapped;
+ }
+ installRouterWrapper();
+ const wrapTimer=setInterval(()=>{
+  installRouterWrapper();
+  if(window.navigateTo?.__deBackV9)clearInterval(wrapTimer);
+ },100);
+
+ function navigateToPage(id){
+  const shell=document.getElementById('deCourseShell');
+  if(shell){
+   shell.setAttribute('aria-hidden','true');
+   shell.classList.add('decr-hidden');
+   shell.style.display='none';
   }
-  if((page==='sortNotesPage'||page==='shortNotesPage')&&typeof window.deShortNotesGoBack==='function'){
-   if(window.deShortNotesGoBack())return true;
-   if(window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){window.deCourseReturnToReader();return true;}
+  const detail=document.getElementById('deFirebaseCourseDetail');
+  if(detail){
+   detail.classList.remove('show');
+   detail.setAttribute('aria-hidden','true');
   }
-  if(page==='testSeriesPage'&&typeof window.deTsGoBack==='function'){
-   if(window.deTsGoBack())return true;
-   if(window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){window.deCourseReturnToReader();return true;}
+  if(typeof window.navigateTo==='function')window.navigateTo(id,true);
+ }
+
+ // Delegate clicks from both course headers; inline handlers are inconsistent
+ // in embedded WebViews, so this is the reliable fallback.
+ document.addEventListener('click',function(e){
+  const profile=e.target.closest('#deFirebaseCourseDetail .de-course-profile,#deCourseShell .de-course-profile');
+  if(profile){
+   e.preventDefault();e.stopImmediatePropagation();
+   navigateToPage('profilePage');return;
   }
+  const bell=e.target.closest('#deFirebaseCourseDetail .de-course-bell,#deCourseShell .de-course-bell');
+  if(bell){
+   e.preventDefault();e.stopImmediatePropagation();
+   if(typeof window.openNewsNotifications==='function')window.openNewsNotifications();
+   else navigateToPage('updatePage');
+  }
+ },true);
+
+ function backOneLevel(){
+  // Close transient payment/reader overlays before leaving their parent page.
+  const payment=document.getElementById('paymentOverlay');
+  if(isVisible(payment)){document.getElementById('paymentClose')?.click();return true;}
+
+  const detail=document.getElementById('deFirebaseCourseDetail');
+  if(detail&&detail.classList.contains('show')){document.getElementById('deFcdBack')?.click();return true;}
+
+  const shell=document.getElementById('deCourseShell');
+  if(shell&&isVisible(shell)&&typeof window.deCRGoBack==='function'){
+   window.deCRGoBack();return true;
+  }
+
+  const page=pageNow();
+  if(page==='importantQuestionsPage'&&typeof window.iqNavigateBack==='function'){window.iqNavigateBack();return true;}
+  if((page==='sortNotesPage'||page==='shortNotesPage')&&typeof window.deShortNotesGoBack==='function'&&window.deShortNotesGoBack())return true;
+  if(page==='testSeriesPage'&&typeof window.deTsGoBack==='function'&&window.deTsGoBack())return true;
   if(page==='testRunnerPage'){window.navigateTo?.('testSeriesPage',false);return true;}
 
-  let previous=pageStack.pop();
-  while(previous&&(!document.getElementById(previous)||previous===page))previous=pageStack.pop();
+  let previous;
+  while(stack.length){
+   const candidate=stack.pop();
+   if(candidate&&candidate!==page&&document.getElementById(candidate)){previous=candidate;break;}
+  }
   if(!previous&&window.__deCourseLinkedContext?.courseId&&typeof window.deCourseReturnToReader==='function'){
    window.deCourseReturnToReader();return true;
   }
@@ -12631,25 +12693,47 @@ window.deShortNotesGoBack=function(){
    else if(page!=='homePage')previous='homePage';
    else return true;
   }
+  routing=true;
   if(typeof window.navigateTo==='function')window.navigateTo(previous,false);
   else document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active-page',el.id===previous));
+  routing=false;
+  lastPage=previous;
   return true;
  }
+
  window.goBack=backOneLevel;
  window.__deUnifiedBack=backOneLevel;
  window.deHandleMobileBack=backOneLevel;
- document.addEventListener('backbutton',e=>{e.preventDefault?.();backOneLevel();},false);
- document.addEventListener('keydown',e=>{
+
+ // Android Cordova/Capacitor back event, if provided by the native wrapper.
+ document.addEventListener('backbutton',function(e){e.preventDefault?.();backOneLevel();},false);
+ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'||e.keyCode===4||e.key==='BrowserBack'){
-   if(e.cancelable)e.preventDefault();e.stopPropagation();backOneLevel();
+   if(e.cancelable)e.preventDefault();
+   e.stopPropagation();backOneLevel();
   }
  },true);
- window.addEventListener('popstate',e=>{
+
+ // A history sentinel makes physical Android/browser Back produce popstate
+ // even when the app is running as a plain web page/PWA.
+ function armHistory(){
+  try{history.pushState({__deAppBackSentinel:true,pageId:pageNow()},'',location.href);}catch(_){}
+ }
+ armHistory();
+ window.addEventListener('popstate',function(e){
   if(e.state?.deNewsReader)return;
-  if(e.cancelable)e.preventDefault();
   e.stopImmediatePropagation();
   backOneLevel();
+  setTimeout(armHistory,0);
  },true);
+
+ // Re-arm sentinel after every successful in-app page transition.
+ const observer=new MutationObserver(()=>{
+  const now=pageNow();
+  if(now!==lastPage){lastPage=now;armHistory();}
+ });
+ const app=document.getElementById('app')||document.body;
+ observer.observe(app,{subtree:true,attributes:true,attributeFilter:['class']});
 })();
 </script>
 

@@ -3019,7 +3019,7 @@ html,body{max-width:100%;overflow-x:hidden}
 </div>
 <div class="card-box" onclick="navigateTo('sortNotesPage'); if(window.openSortNotesHome) window.openSortNotesHome();">
 <i class="fas fa-book-bookmark" style="color:#0d9488;"></i>
-<p>Sort Notes</p>
+<p>Notes</p>
 </div>
 </div>
 <!-- PREMIUM ACCESS CARD -->
@@ -3996,6 +3996,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <div class="page" id="sortNotesPage">
 <section class="sn-shell">
 <div class="sn-tools" id="snTools"><input id="snSearch" placeholder="Search branch, semester, subject or short notes…" type="search"/></div>
+<div class="sn-folder-topbar" id="snFolderTopbar" hidden><strong id="snFolderTitle">Notes</strong></div>
 <div class="sn-crumbs" hidden="" id="snCrumbs"></div>
 <div aria-live="polite" class="sn-status" id="snStatus"><i class="fas fa-spinner fa-spin"></i> Loading notes…</div>
 <div class="sn-grid" hidden="" id="snFolders"></div>
@@ -4006,6 +4007,7 @@ html,body{max-width:100%;overflow-x:hidden}
 </section>
 </div>
 <style>
+.sn-folder-topbar{display:flex;align-items:center;gap:12px;padding:5px 0 12px;color:#172033}.sn-folder-topbar[hidden]{display:none!important}
   .sn-shell{max-width:1100px;margin:0 auto;padding:14px 12px 35px;color:#172033}.sn-hero{display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#0e7490);color:#fff;box-shadow:0 9px 24px #0f766e22}.sn-hero h1{font-size:clamp(23px,4vw,32px);margin:3px 0}.sn-hero p{margin:0;font-size:13px;opacity:.88}.sn-hero small{font-size:10px;letter-spacing:1px;font-weight:800}.sn-back{width:42px;height:42px;border:0;border-radius:12px;background:#ffffff25;color:#fff;font-size:18px;cursor:pointer}.sn-tools{display:flex;gap:9px;margin:15px 0}.sn-tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid #dbe3ed;border-radius:12px;font:inherit;background:#fff}.sn-tools button,.sn-reader-actions button{border:0;border-radius:11px;padding:11px 14px;background:#0f766e;color:#fff;font-weight:800;cursor:pointer}.sn-crumbs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px}.sn-crumbs button{border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}.sn-crumbs span{align-self:center;color:#94a3b8}.sn-status{text-align:center;padding:22px;color:#64748b}.sn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sn-item{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:15px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;color:#172033;box-shadow:0 5px 18px #0f172a0a;cursor:pointer}.sn-item:hover{border-color:#5eead4;transform:translateY(-1px)}.sn-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;display:grid;place-items:center;background:#ccfbf1;color:#0f766e;font-size:21px}.sn-item strong{display:block;font-size:14px;line-height:1.4}.sn-item small{display:block;color:#64748b;margin-top:5px;line-height:1.5}.sn-reader{margin-top:12px;border:1px solid #dbe3ed;border-radius:15px;background:#fff;padding:13px}.sn-reader-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.sn-reader-head h2{margin:0;font-size:19px}.sn-reader-head p{margin:5px 0 0;color:#64748b;font-size:12px}.sn-reader-actions{display:flex;gap:8px;flex-wrap:wrap}.sn-reader-actions .secondary{background:#e2e8f0;color:#334155}.sn-reader iframe{width:100%;height:76vh;border:1px solid #dbe3ed;border-radius:11px;background:#fff}.sn-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;text-align:center;grid-column:1/-1}@media(max-width:650px){.sn-shell{padding:10px 9px 30px}.sn-grid{grid-template-columns:1fr}.sn-tools{flex-direction:column}.sn-reader-head{align-items:flex-start;flex-direction:column}.sn-reader iframe{height:68vh}.sn-reader{padding:9px}}
   </style>
 <style id="sn-preview-logo-fit">#snFrame{background:#fff}#snReader{overflow:hidden}#snReader iframe{display:block;max-width:100%} .sn-reader-actions button{white-space:nowrap}@media(max-width:520px){.sn-reader-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.sn-reader-actions button{width:100%;padding:10px 8px;font-size:12px}}</style>
@@ -10867,18 +10869,19 @@ function renderFolders(){
  if(!currentSubject){
   const all=getItems();
   const pdfs=all.filter(itemIsPdf);
-  cards.push(...groups.map(g=>({key:g.name,name:g.name,icon:'📚',count:g.items.filter(x=>!itemIsPdf(x)).length,sub:`${g.items.filter(x=>!itemIsPdf(x)).length} video lectures`})).filter(g=>g.count>0));
+  cards.push(...groups.map(g=>({key:g.name,name:g.name,icon:'📁',count:g.items.length,sub:'Open subject folder'})).filter(g=>g.count>0));
   cards.push({key:'__all_pdfs__',name:'Uploaded PDF Files',icon:'📄',count:pdfs.length,sub:'All branch PDFs • Open original links'});
   cards.push({key:'__course_test_series__',name:'Test Series',icon:'📝',count:1,sub:'Branch-wise subject tests'});
   cards.push({key:'__course_important_questions__',name:'Important Questions',icon:'❓',count:1,sub:'Unit-wise important questions'});
+  cards.push({key:'__course_notes__',name:'Notes',icon:'📝',count:1,sub:'Subject-wise PDF notes uploaded for this course'});
   $('deCRFolderHeading')?.replaceChildren(document.createTextNode('Course Content • Subjects & Resources'));
  }else if(currentSubject==='__ALL_PDFS__'){
   cards=getItems().filter(itemIsPdf).map((it,i)=>({key:`__pdfresource__${it.__sourceIndex}`,name:String(it.title||it.fileName||it.filename||it.name||`PDF File ${i+1}`),icon:'📄',count:1,sub:'Open PDF link',kind:'pdfresource'}));
   $('deCRFolderHeading')?.replaceChildren(document.createTextNode('Uploaded PDF Files'));
  }else{
-  const group=groups.find(g=>g.name===currentSubject); const videos=(group?.items||[]).filter(x=>!itemIsPdf(x));
-  cards=videos.map((it,i)=>({key:`__resource__${it.__sourceIndex}`,name:String(it.title||it.fileName||it.filename||it.name||`Video ${i+1}`),icon:'▶️',count:1,sub:'Play lecture',kind:'resource'}));
-  $('deCRFolderHeading')?.replaceChildren(document.createTextNode(currentSubject+' • Video Lectures'));
+  const group=groups.find(g=>g.name===currentSubject); const resources=(group?.items||[]);
+  cards=resources.map((it,i)=>({key:`__resource__${it.__sourceIndex}`,name:String(it.title||it.fileName||it.filename||it.name||`Resource ${i+1}`),icon:itemIsPdf(it)?'📄':'▶️',count:1,sub:itemIsPdf(it)?'Open PDF file':'Open lesson / resource',kind:'resource'}));
+  $('deCRFolderHeading')?.replaceChildren(document.createTextNode(currentSubject+' • Files & Lessons'));
  }
  $('deCRFolderGrid').innerHTML=cards.map(g=>`<button type="button" class="decr-folder" data-de-folder="${esc(g.key)}"><span class="decr-folder-icon">${g.icon}</span><span class="decr-folder-info"><strong>${esc(g.name)}</strong><small>${g.kind==='resource'||g.kind==='pdfresource'?esc(g.sub):`${g.count} item${g.count===1?'':'s'} • ${esc(g.sub)}`}</small></span><span class="decr-chevron">›</span></button>`).join('');
  $('deCRNoFolders').classList.toggle('decr-hidden',cards.length>0);
@@ -10886,6 +10889,14 @@ function renderFolders(){
  refreshReaderFolderLocks();
 }
 function openFolder(folder){
+ if(folder==='__course_notes__'){
+  const branch=String(currentCourse?.branch||currentCourse?.branchName||currentCourse?.category||currentCourse?.department||currentCourse?.courseBranch||'').trim();
+  const semester=String(currentSemester||currentCourse?.semester||'').trim();
+  const subjects=[...new Set(getItems().filter(it=>itemSemester(it)===normalizeSemester(semester)).map(itemSubject).filter(x=>x&&x!=='General'))];
+  if(typeof window.deOpenCourseNotes==='function')window.deOpenCourseNotes({courseId:String(currentCourseId||''),branch,semester,subjects});
+  else alert('Course Notes module is still loading. Please try again.');
+  return;
+ }
  if(folder==='__all_pdfs__'){
   currentSubject='__ALL_PDFS__';currentResourceType='pdf';currentFolder='PDF Files';renderFolders();
   $('deCRTopTitle').textContent='Uploaded PDF Files';$('deCRTopSub').textContent='Tap a title to open its original Google Drive link';return;
@@ -10917,24 +10928,19 @@ function openFolder(folder){
  }
  if(!currentSubject){
   const group=groups.find(g=>g.name===folder);if(!group)return;
-  const videos=group.items.filter(x=>!itemIsPdf(x));
-  if(!videos.length){currentSubject=group.name;currentResourceType='';renderFolders();$('deCRTopTitle').textContent=group.name;$('deCRTopSub').textContent='No video lectures available';return;}
-  window.__deCoursePlayerOrigin='home';try{history.pushState({__deCourseLayer:'player',courseId:String(currentCourseId||''),folder:group.name},'',location.href)}catch(e){}currentSubject=group.name;currentResourceType='video';currentFolder=currentSubject;currentFolderItems=videos;currentLessonIndex=0;
-  $('deCRActiveFolder').textContent=currentSubject;$('deCRActiveFolderMeta').textContent='';
-  $('deCRListTitle').textContent=currentSubject+' • Next Lectures';renderPlaylist();renderLesson(0);
-  $('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');
-  $('deCRTopTitle').textContent=String(videos[0].title||videos[0].fileName||currentSubject);$('deCRTopSub').textContent='';
-  lastView='player';hideMsg();shell.scrollTo({top:0,behavior:'smooth'});return;
+  currentSubject=group.name;currentResourceType='';currentFolder='';currentFolderItems=[];currentLessonIndex=0;
+  renderFolders();$('deCRTopTitle').textContent=group.name;$('deCRTopSub').textContent='Choose a PDF or lesson';
+  hideMsg();shell.scrollTo({top:0,behavior:'smooth'});return;
  }
  if(currentSubject==='__ALL_PDFS__')return;
  const group=groups.find(g=>g.name===currentSubject);if(!group)return;
  const match=String(folder).match(/^__resource__(\d+)$/);if(!match)return;
- const sourceIndex=Number(match[1]);const videos=group.items.filter(x=>!itemIsPdf(x));
- const idx=videos.findIndex(x=>Number(x.__sourceIndex)===sourceIndex);if(idx<0)return;
- window.__deCoursePlayerOrigin='subject';try{history.pushState({__deCourseLayer:'player',courseId:String(currentCourseId||''),folder:currentSubject,index:idx},'',location.href)}catch(e){}currentResourceType='video';currentFolder=currentSubject;currentFolderItems=videos;currentLessonIndex=idx;
+ const sourceIndex=Number(match[1]);const resources=group.items;
+ const idx=resources.findIndex(x=>Number(x.__sourceIndex)===sourceIndex);if(idx<0)return;
+ window.__deCoursePlayerOrigin='subject';try{history.pushState({__deCourseLayer:'player',courseId:String(currentCourseId||''),folder:currentSubject,index:idx},'',location.href)}catch(e){}currentResourceType=itemIsPdf(resources[idx])?'pdf':'video';currentFolder=currentSubject;currentFolderItems=resources;currentLessonIndex=idx;
  $('deCRActiveFolder').textContent=currentSubject;$('deCRActiveFolderMeta').textContent='';
- $('deCRListTitle').textContent=currentSubject+' • Next Lectures';renderPlaylist();renderLesson(idx);
- $('deCRTopTitle').textContent=String(videos[idx].title||videos[idx].fileName||currentSubject);$('deCRTopSub').textContent='';
+ $('deCRListTitle').textContent=currentSubject+' • Files & Lessons';renderPlaylist();renderLesson(idx);
+ $('deCRTopTitle').textContent=String(resources[idx].title||resources[idx].fileName||currentSubject);$('deCRTopSub').textContent='';
  $('deCRBrowser').classList.add('decr-hidden');$('deCRPlayer').classList.remove('decr-hidden');lastView='player';hideMsg();shell.scrollTo({top:0,behavior:'smooth'});
 }
 function deCRReturnToFolderBrowser(){
@@ -11019,10 +11025,10 @@ $('deCRPlayerKicker').textContent=(pdf?'PDF / STUDY RESOURCE':'VIDEO LECTURE')+'
   else alert('Payment form is not available. Please return to Courses and try again.');
  };
  $('deCRLockIcon').onclick=openPaymentCard;
- $('deCRUnlockBtn').onclick=openPaymentCard;$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=url;frame.title=title;frame.loading='lazy';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;border:0;background:#fff;';media.appendChild(frame);}else{const embed=youtubeEmbed(url)||vimeoEmbed(url)||drivePreview(url);if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
+ $('deCRUnlockBtn').onclick=openPaymentCard;$('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));return;}$('deCRPlayerDesc').style.display='';$('deCRPlayerKicker').style.display='';$('deCRCreditNotice')?.style.removeProperty('display');$('deCRMedia').classList.remove('decr-locked-media');document.querySelector('.decr-video-feedback')?.style.removeProperty('display');$('deCRList').style.filter='';$('deCRList').style.pointerEvents='';$('deCRList').style.userSelect='';if(!url){media.innerHTML='<div class="decr-placeholder"><div class="big">📭</div><p>This item has no valid video/PDF URL. Please ask the course administrator to add a resource URL.</p></div>';}else if(pdf){const frame=document.createElement('iframe');frame.src=drivePreview(url)||url;frame.title=title;frame.loading='eager';frame.setAttribute('allow','fullscreen');frame.style.cssText='width:100%;height:100%;min-height:66vh;border:0;background:#fff;';media.appendChild(frame);}else{const drive=drivePreview(url);const embed=youtubeEmbed(url)||vimeoEmbed(url);if(drive){media.innerHTML=`<div class="decr-placeholder"><div class="big">↗</div><p>Google Drive resource को browser में खोलें।</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open Google Drive ↗</a></div>`;}else if(embed){const frame=document.createElement('iframe');frame.src=embed;frame.title=title;frame.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share;fullscreen';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';media.appendChild(frame);}else if(/\.(mp4|webm|ogg|m4v)(?:[?#]|$)/i.test(url)){const video=document.createElement('video');video.src=url;video.controls=true;video.playsInline=true;video.preload='metadata';media.appendChild(video);}else{media.innerHTML=`<div class="decr-placeholder"><div class="big">▶️</div><p>This video may be hosted on a site that does not allow in-page playback. Use Open Source to view it.</p><a class="decr-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open video / resource ↗</a></div>`;}}
 $('deCRActions').innerHTML='';
 $('deCRCounter').textContent=`${index+1} / ${currentFolderItems.length}`;$('deCRPrevious').disabled=index===0;$('deCRNext').disabled=index===currentFolderItems.length-1;$('deCRPrevious').onclick=()=>renderLesson(currentLessonIndex-1);$('deCRNext').onclick=()=>renderLesson(currentLessonIndex+1);$('deCRList').querySelectorAll('[data-de-lesson]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.deLesson)===index));const active=$('deCRList').querySelector('.decr-item.active');active?.scrollIntoView({block:'nearest',behavior:'smooth'});updateLikeUI();$('deCRRatingSummary').textContent='Rate this video or resource';}
-async function loadIntegratedCourse(courseId){const token=++loadingToken;currentCourseId=String(courseId||'');openShell();msg('Loading course…');if(!currentCourseId){msg('Course ID is missing. Return to Courses and open the course again.','error');return;}try{ensureStudentFirebase();const courseSnap=await get(ref(catalogDb,`courseCatalog/${currentCourseId}`));if(token!==loadingToken)return;if(!courseSnap.exists()){msg('Course not found. Check that the Admin Panel published it in diplomaengineers-869df → courseCatalog and that the App is passing the correct course ID.','error');return;}const course=courseSnap.val()||{};if(!coursePublished(course)){msg('This course is not published yet. Admin must set its status to Approved/Published.','error');return;}showCourse(course);}catch(err){console.error('[Diploma Engineers] Integrated course reader failed:',err);if(token===loadingToken)msg(`Could not load this course (${err?.code||err?.message||'Firebase error'}). Check public read access for courseCatalog in diplomaengineers-869df.`, 'error');}}
+async function loadIntegratedCourse(courseId){const token=++loadingToken;currentCourseId=String(courseId||'');currentCourse=null;currentSubject='';currentFolder='';currentResourceType='';openShell();msg('Loading Course Content…');if(!currentCourseId){msg('Course ID is missing. Return to Courses and open the course again.','error');return;}try{ensureStudentFirebase();const readPromise=get(ref(catalogDb,`courseCatalog/${currentCourseId}`));const courseSnap=await Promise.race([readPromise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Firebase response timeout. Please check internet and courseCatalog read rules.')),12000))]);if(token!==loadingToken)return;if(!courseSnap.exists()){msg('Course not found. Check Admin Panel → diplomaengineers-869df → courseCatalog and verify this course ID.','error');return;}const course=courseSnap.val()||{};if(!coursePublished(course)){msg('This course is not published yet. Admin must set its status to Approved/Published.','error');return;}showCourse(course);}catch(err){console.error('[Diploma Engineers] Integrated course reader failed:',err);if(token===loadingToken)msg(`Course Content load नहीं हुआ: ${err?.code||err?.message||'Firebase error'}. Internet और diplomaengineers-869df → courseCatalog read permission जाँचें।`, 'error');}}
 let deSelectedStars=0;let deCurrentFeedbackKey='';let deCurrentFeedbackTitle='';
 function feedbackKey(){const raw=`${currentCourseId}_${currentSemester}_${currentFolder}_${currentLessonIndex}_${itemUrl(currentFolderItems[currentLessonIndex]||{})}`;return raw.toLowerCase().replace(/[^a-z0-9_-]+/g,'_').slice(0,180)||'lesson';}
 function updateLikeUI(){const key=feedbackKey(),storeKey='de_likes_'+key;let n=0,liked=false;try{const obj=JSON.parse(localStorage.getItem(storeKey)||'{"count":0,"liked":false}');n=Number(obj.count)||0;liked=!!obj.liked;}catch{}const b=$('deCRLikeBtn');if(b){b.classList.toggle('liked',liked);b.innerHTML=`${liked?'♥':'♡'} Like <span id="deCRLikeCount">${n}</span>`;}}
@@ -11411,12 +11417,24 @@ window.addEventListener('popstate',function(e){
   }
 }
  function openReaderFromDetail(id){
-  window.__deCourseActiveDetailId=String(id||activeId||'');
+  const courseId=String(id||activeId||'');
+  if(!courseId){console.error('[Diploma Engineers] Course Content clicked without a course id.');return;}
+  window.__deCourseActiveDetailId=courseId;
   window.__deCourseReaderReturnToDetail=true;
-  close();
-  if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(String(id));
-  else{window.__dePendingCourseId=String(id);window.dispatchEvent(new CustomEvent('de:open-integrated-course',{detail:{courseId:String(id)}}));}
+  window.__deCoursePreviousPageId='coursePage';
+  // Hide only the details overlay. Do not run its Back handler or route to Profile/Home.
+  root.classList.remove('show');root.setAttribute('aria-hidden','true');
+  document.body.style.overflow='hidden';
+  if(typeof window.openIntegratedCourse==='function')window.openIntegratedCourse(courseId);
+  else{window.__dePendingCourseId=courseId;window.dispatchEvent(new CustomEvent('de:open-integrated-course',{detail:{courseId}}));}
  }
+ // Capture the Course Content action before any delegated app/profile navigation can receive it.
+ document.addEventListener('click',function(e){
+  const btn=e.target.closest('#deFirebaseCourseDetail [data-fcd-tab="content"],#deFirebaseCourseDetail #deFcdOpenContent');
+  if(!btn)return;
+  e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();
+  openReaderFromDetail(activeId||window.__deCourseActiveDetailId||'');
+ },true);
  function openTab(tab){root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.classList.toggle('active',b.dataset.fcdTab===tab));$('deFcdDetailsPanel').classList.toggle('active',tab==='details');$('deFcdContentPanel').classList.toggle('active',tab==='content');}
  const DAY_MS=24*60*60*1000;
  function dateLabel(ms){return ms?new Date(ms).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Not recorded';}
@@ -11462,7 +11480,7 @@ window.addEventListener('popstate',function(e){
   openTab('details');previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root.classList.add('show');root.setAttribute('aria-hidden','false');refreshDetailValidity(activeId);
  };
  $('deFcdBack').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();close();});root.addEventListener('click',e=>{if(e.target===root)close();});
- root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.fcdTab==='content'){openReaderFromDetail(activeId);return;}openTab('details');}));
+ root.querySelectorAll('[data-fcd-tab]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();if(b.dataset.fcdTab==='content'){openReaderFromDetail(activeId);return;}openTab('details');}));
  $('deFcdBuy').addEventListener('click',async(e)=>{e.preventDefault();e.stopPropagation();const id=activeId;for(let i=0;i<25&&typeof window.openCoursePayment!=='function';i++)await new Promise(r=>setTimeout(r,80));if(typeof window.openCoursePayment==='function'){window.openCoursePayment(id);}else{console.error('[Diploma Engineers] Payment module did not initialize; check Firebase module/network errors.');alert('Payment system is still loading. Please refresh the app and try again.');}});
  async function makeCoursePoster(shareTextOnly=false){
    const c=(window.__deAdminCourseCatalog||{})[String(activeId)]||{};
@@ -11980,14 +11998,68 @@ const snConfig={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"dip
 const snApp=getApps().find(a=>a.name==="newsApp")||initializeApp(snConfig,"newsApp");const snDb=getDatabase(snApp);
 const sn$=id=>document.getElementById(id);let snRows=[],snPath=[],snActive=null,snObjectUrl=null;
 const snEsc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function snField(r,k){return String(r?.[k]??(k==="title"?r?.fileName:r?.originalFileName)??"").trim()||({branch:"Common / All Branches",semester:"Semester not set",subject:"Subject not set",title:"Untitled Notes"}[k]||"")}
-function snLevel(r){return [snField(r,"branch"),snField(r,"semester").toLowerCase().startsWith("semester")?snField(r,"semester"):"Semester "+snField(r,"semester"),snField(r,"subject")]}
+function snField(r,k){const aliases={branch:["branchName","department","courseBranch"],semester:["semesterName","sem"],subject:["subjectName","subjectTitle","folderName"],title:["fileName","originalFileName"]};let v=r?.[k];if(v==null||String(v).trim()===""){for(const a of (aliases[k]||[])){if(r?.[a]!=null&&String(r[a]).trim()!==""){v=r[a];break;}}}return String(v??"").trim()||({branch:"Common / All Branches",semester:"Semester not set",subject:"Subject not set",title:"Untitled Notes"}[k]||"")}
+function snLevel(r){return [snField(r,"branch"),snField(r,"semester"),snField(r,"subject")];}
 function snFiltered(){const q=(sn$("snSearch")?.value||"").trim().toLowerCase();return snRows.filter(r=>!q||[r.branch,r.semester,r.subject,r.title,r.originalFileName].join(" ").toLowerCase().includes(q))}
 function snCrumbs(){const el=sn$("snCrumbs");if(!el)return;const names=["All Branches",...snPath];el.innerHTML=names.map((n,i)=>`${i?'<span>›</span>':''}<button type="button" data-sn-crumb="${i}">${snEsc(n)}</button>`).join("");el.querySelectorAll("[data-sn-crumb]").forEach(b=>b.onclick=()=>{snPath=snPath.slice(0,Number(b.dataset.snCrumb));snActive=null;snRender()})}
-function snRender(){const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;snCrumbs();reader.hidden=true;grid.hidden=false;const rows=snFiltered();let groups=[];if(snPath.length<3){const k=["branch","semester","subject"][snPath.length];groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));status.textContent="";grid.innerHTML=groups.length?groups.map((g,i)=>{const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':'folder item(s)'}</small></span></button>`}).join(""):'<div class="sn-empty">Admin panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';grid.querySelectorAll("[data-sn-group]").forEach(b=>b.onclick=()=>{snPath.push(b.dataset.snGroup);snRender()});}else{const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));status.textContent="";grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas fa-file-lines"></i></span><span><strong>${snEsc(r.title||"Notes")}</strong><small>${snEsc(r.originalFileName||"HTML Notes")} • Open file</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';grid.querySelectorAll("[data-sn-file]").forEach(b=>b.onclick=()=>snOpen(b.dataset.snFile));}}
+function snRender(){
+ const status=sn$("snStatus"),grid=sn$("snFolders"),reader=sn$("snReader");if(!status||!grid)return;
+ snCrumbs();reader.hidden=true;grid.hidden=false;
+ const rows=snFiltered();
+ if(snPath.length<3){
+  const k=["branch","semester","subject"][snPath.length];
+  const groups=[...new Set(rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v)).map(r=>snLevel(r)[snPath.length]))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  status.textContent="";
+  grid.innerHTML=groups.length?groups.map(g=>{
+   const subset=rows.filter(r=>snLevel(r)[snPath.length]===g&&snPath.every((v,j)=>snLevel(r)[j]===v));
+   const sems=[...new Set(subset.map(r=>snField(r,"semester")).filter(x=>x&&x!=="Semester not set"))];
+   return `<button class="sn-item" type="button" data-sn-group="${snEsc(g)}"><span class="sn-icon"><i class="fas ${snPath.length===2?'fa-book-open':'fa-folder'}"></i></span><span><strong>${snEsc(g)}</strong><small>${subset.length} ${snPath.length===2?'notes file(s)':(snPath.length===0?'semester folder(s)':'subject folder(s)')}</small></span></button>`;
+  }).join(""):'<div class="sn-empty">Admin Panel से Notes upload होने के बाद यहाँ दिखाई देंगे।</div>';
+  grid.querySelectorAll("[data-sn-group]").forEach(btn=>btn.onclick=()=>{snPath.push(btn.dataset.snGroup);snRender()});
+ }else{
+  const files=rows.filter(r=>snPath.every((v,i)=>snLevel(r)[i]===v));
+  status.textContent="";
+  grid.innerHTML=files.length?files.map(r=>`<button class="sn-item" type="button" data-sn-file="${snEsc(r.id)}"><span class="sn-icon"><i class="fas ${snFileUrl(r,['pdfUrl','pdfURL','pdf','fileUrl','url','link'])?'fa-file-pdf':'fa-file-lines'}"></i></span><span><strong>${snEsc(r.title||r.fileName||"Notes")}</strong><small>${snEsc(r.originalFileName||"Study Notes")} • Open</small></span></button>`).join(""):'<div class="sn-empty">No notes uploaded for this subject yet.</div>';
+  grid.querySelectorAll("[data-sn-file]").forEach(btn=>btn.onclick=()=>snOpen(btn.dataset.snFile));
+ }
+ const top=document.getElementById('snFolderTopbar');
+ if(top){top.hidden=!snPath.length;const title=document.getElementById('snFolderTitle');if(title)title.textContent=snPath[snPath.length-1]||'Notes';}
+}
 function snSafeDocument(raw){const d=new DOMParser().parseFromString(String(raw||""),"text/html");d.querySelectorAll("script,iframe,object,embed,form,base").forEach(n=>n.remove());d.querySelectorAll("*").forEach(el=>[...el.attributes].forEach(a=>{if(a.name.toLowerCase().startsWith("on")||a.name.toLowerCase()==="srcdoc"||((a.name.toLowerCase()==="href"||a.name.toLowerCase()==="src")&&/^\\s*javascript:/i.test(a.value)))el.removeAttribute(a.name)}));const fix=d.createElement("style");fix.id="de-sn-image-fit-fix";fix.textContent="html,body{max-width:100%;overflow-wrap:anywhere}body img{max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:center!important}body img[alt*=logo i],body .logo img,body .brand img,body header img{width:auto!important;max-width:min(100%,680px)!important;max-height:150px!important;object-fit:contain!important;display:block!important;margin:8px auto!important}table{max-width:100%!important}*{box-sizing:border-box}";d.head.appendChild(fix);return "<!doctype html>"+d.documentElement.outerHTML}
 function snFileUrl(r,keys){for(const k of keys){const v=String(r?.[k]||'').trim();if(v)return v;}return ''}
-async function snOpen(id){const status=sn$("snStatus");try{status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');snActive={...r};const videoUrl=snFileUrl(r,['videoUrl','videoURL','video','downloadVideoUrl','downloadUrl','fileUrl','fileURL','url']);const pdfUrl=snFileUrl(r,['pdfUrl','pdfURL','pdf','downloadPdfUrl']);const isVideo=!!(r.videoUrl||r.videoURL||r.video||r.fileType==='video'||r.type==='video'||/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl));const isDirectPdf=!!pdfUrl||/\.pdf(\?|$)/i.test(videoUrl);const html=r.htmlContent||r.html||r.content||'';const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}if(isVideo){const src=videoUrl;frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;background:#0b1220;display:grid;place-items:center}video{width:100%;height:100%;max-height:100vh;object-fit:contain}</style></head><body><video controls playsinline controlsList="nodownload" src="'+snEsc(src)+'"></video></body></html>';sn$('snDownload').innerHTML='<i class="fas fa-download"></i> Download Video';sn$('snDownload').dataset.mode='video';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else if(isDirectPdf){const src=pdfUrl||videoUrl;frame.src=src;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=!src;snActive.downloadUrl=src;}else{if(!html)throw new Error('Notes HTML content is missing. Admin file में saved htmlContent नहीं मिला.');const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;}sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}}
+async function snOpen(id){
+ const status=sn$("snStatus");
+ try{
+  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening file…';
+  const r=snRows.find(x=>x.id===id);if(!r)throw new Error('File not found');
+  snActive={...r};
+  const raw=snFileUrl(r,['pdfUrl','pdfURL','pdfLink','pdf','fileUrl','fileURL','fileLink','url','link','driveUrl','googleDriveUrl']);
+  const html=r.htmlContent||r.html||r.content||'';
+  const frame=sn$('snFrame');if(snObjectUrl){URL.revokeObjectURL(snObjectUrl);snObjectUrl=null;}
+  const driveId=(raw.match(/drive\.google\.com\/(?:file\/d|document\/d)\/([^/?#]+)/i)||raw.match(/[?&]id=([^&#]+)/i)||[])[1];
+  const isDrive=!!driveId;
+  const isPdf=!!(r.pdfUrl||r.pdfURL||r.pdf||r.mimeType==='application/pdf'||/\.pdf(?:[?#]|$)/i.test(raw));
+  if(raw){
+   if(isDrive){window.open(raw,'_blank','noopener,noreferrer');status.textContent='Google Drive link browser में खुल गया। Back दबाकर Subject Folder पर लौटें।';return;}
+   if(isPdf){
+    frame.src=raw;
+    sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Open PDF';sn$('snDownload').dataset.mode='direct';sn$('snDownload').hidden=false;snActive.downloadUrl=raw;
+   }else{
+    window.open(raw,'_blank','noopener,noreferrer');
+    status.textContent='Link opened in a new tab. Back दबाकर Subject Folder पर लौटें।';
+    return;
+   }
+  }else{
+   if(!html)throw new Error('Uploaded file URL/content missing. Admin Panel में PDF या link upload करें.');
+   const blob=new Blob([snSafeDocument(html)],{type:'text/html'});snObjectUrl=URL.createObjectURL(blob);frame.src=snObjectUrl;
+   sn$('snDownload').innerHTML='<i class="fas fa-file-pdf"></i> Download PDF';sn$('snDownload').dataset.mode='html';sn$('snDownload').hidden=false;
+  }
+  sn$('snFolders').hidden=true;sn$('snReader').hidden=false;sn$('snTools').hidden=true;status.textContent='';
+  const top=document.getElementById('snFolderTopbar');if(top)top.hidden=false;
+  const title=document.getElementById('snFolderTitle');if(title)title.textContent=r.title||r.fileName||'PDF Notes';
+  sn$('snReader').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(e){status.textContent='File open नहीं हो पाई: '+e.message;}
+}
 async function snLoad(){
  const status=sn$("snStatus");if(!status)return;
  status.innerHTML='<i class="fas fa-spinner fa-spin"></i> Firebase से Normal Notes लोड हो रहे हैं…';
@@ -11998,7 +12070,7 @@ async function snLoad(){
    if(!v||typeof v!=="object")return false;
    const state=String(v.status??v.publishStatus??"published").trim().toLowerCase();
    return !["deleted","draft","unpublished","hidden","disabled","false"].includes(state)
-    &&!!(v.htmlContent||v.html||v.content||v.pdfUrl||v.pdfURL||v.pdf||v.videoUrl||v.videoURL||v.video||v.fileUrl||v.url);
+    &&!!(v.htmlContent||v.html||v.content||v.pdfUrl||v.pdfURL||v.pdfLink||v.pdf||v.videoUrl||v.videoURL||v.video||v.fileUrl||v.fileLink||v.url||v.link||v.googleDriveUrl);
   }).map(([id,data])=>({...data,id,html:data.htmlContent||data.html||data.content||"",originalFileName:data.fileName||data.originalFileName||"Normal Study Notes"}))
    .sort((a,b)=>(Number(b.updatedAt)||Number(b.createdAt)||0)-(Number(a.updatedAt)||Number(a.createdAt)||0));
   snPath=[];snActive=null;snRender();
@@ -12339,7 +12411,7 @@ sn$("snDownload")?.addEventListener("click",snDownload);sn$("snSearch")?.addEven
 window.deShortNotesGoBack=function(){
  const reader=sn$("snReader"),grid=sn$("snFolders"),tools=sn$("snTools"),status=sn$("snStatus");
  if(reader && !reader.hidden){
-  reader.hidden=true;if(grid)grid.hidden=false;if(tools)tools.hidden=false;
+  reader.hidden=true;if(grid)grid.hidden=false;if(tools)tools.hidden=false;const top=document.getElementById("snFolderTopbar");if(top)top.hidden=!snPath.length;
   if(status)status.textContent="";
   snActive=null;
   const frame=sn$("snFrame");if(frame){frame.removeAttribute("src");frame.srcdoc="";}
@@ -12679,6 +12751,7 @@ window.deShortNotesGoBack=function(){
  },true);
 
  function backOneLevel(){
+  if(typeof window.deCourseNotesBack==='function'&&document.getElementById('deCourseNotesOverlay')?.classList.contains('show')){window.deCourseNotesBack();return true;}
   // Close transient payment/reader overlays before leaving their parent page.
   const payment=document.getElementById('paymentOverlay');
   if(isVisible(payment)){document.getElementById('paymentClose')?.click();return true;}
@@ -12760,5 +12833,88 @@ window.deShortNotesGoBack=function(){
   #allFeedbackCount { display:none !important; }
 </style>
 
+
+<!-- Course Notes: subject folders -> uploaded PDF/link files -->
+<style id="de-course-notes-overlay-style">
+#deCourseNotesOverlay{position:fixed;inset:0;z-index:2147483646;display:none;background:#f8fafc;color:#172033;overflow:auto}
+#deCourseNotesOverlay.show{display:block}
+#deCourseNotesOverlay .dcn-top{position:sticky;top:0;z-index:3;height:62px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;padding:0 14px}
+#deCourseNotesOverlay .dcn-back{width:40px;height:40px;border:1px solid #dbe3ed;border-radius:50%;background:#fff;color:#172033}
+#deCourseNotesOverlay .dcn-title{font-size:16px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#deCourseNotesOverlay .dcn-wrap{max-width:1100px;margin:auto;padding:14px}
+#deCourseNotesOverlay .dcn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#deCourseNotesOverlay .dcn-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px;border:1px solid #e2e8f0;border-radius:15px;background:#fff;color:#172033;box-shadow:0 5px 18px #0f172a0a}
+#deCourseNotesOverlay .dcn-icon{width:46px;height:46px;flex:0 0 46px;border-radius:13px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:20px}
+#deCourseNotesOverlay .dcn-item strong{display:block;font-size:14px}.dcn-item small{display:block;color:#64748b;margin-top:4px}
+#deCourseNotesOverlay .dcn-status{text-align:center;color:#64748b;padding:28px 12px}
+#deCourseNotesOverlay .dcn-reader{display:none;background:#fff;border:1px solid #dbe3ed;border-radius:14px;padding:8px}
+#deCourseNotesOverlay .dcn-reader.show{display:block}
+#deCourseNotesOverlay iframe{width:100%;height:calc(100vh - 100px);border:0;border-radius:10px;background:#fff}
+@media(max-width:600px){#deCourseNotesOverlay .dcn-grid{grid-template-columns:1fr}#deCourseNotesOverlay .dcn-wrap{padding:10px}}
+</style>
+<div id="deCourseNotesOverlay" aria-hidden="true">
+ <div class="dcn-top"><button class="dcn-back" id="dcnBack" type="button" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div class="dcn-title" id="dcnTitle">Course Notes</div></div>
+ <div class="dcn-wrap"><div class="dcn-status" id="dcnStatus">Loading course notes…</div><div class="dcn-grid" id="dcnGrid"></div><div class="dcn-reader" id="dcnReader"><iframe id="dcnFrame" title="Course PDF Notes" allow="fullscreen"></iframe></div></div>
+</div>
+<script type="module" id="de-course-notes-module">
+import {getApp,getApps,initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {getDatabase,ref,get} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+const cfg={apiKey:"AIzaSyAbg1Q1ZPgF7mwaxyin7iglla01eDk_tKo",authDomain:"diplomaengineers-869df.firebaseapp.com",databaseURL:"https://diplomaengineers-869df-default-rtdb.firebaseio.com",projectId:"diplomaengineers-869df",storageBucket:"diplomaengineers-869df.appspot.com",messagingSenderId:"356779436080",appId:"1:356779436080:web:4b28da380e547420d0e5f5"};
+const app=getApps().find(a=>a.name==="courseNotesApp")||initializeApp(cfg,"courseNotesApp"),db=getDatabase(app);
+const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let rows=[],path=[],ctx={},loaded=false;
+const field=(r,...keys)=>{for(const k of keys){const v=String(r?.[k]??"").trim();if(v)return v;}return "";};
+const norm=v=>String(v||"").toLowerCase().replace(/engineering|branch|semester|[^a-z0-9]/g,"");
+function branchOf(r){return field(r,"branch","branchName","department","courseBranch")||"Common / All Branches";}
+function semesterOf(r){return field(r,"semester","semesterName","sem")||"Semester not set";}
+function subjectOf(r){return field(r,"subject","subjectName","subjectTitle","folderName","title")||"Other Notes";}
+function fileUrl(r){return field(r,"pdfUrl","pdfURL","pdfLink","pdf","fileUrl","fileURL","fileLink","url","link","driveUrl","googleDriveUrl");}
+function driveId(raw){return (String(raw).match(/drive\.google\.com\/(?:file\/d|document\/d)\/([^/?#]+)/i)||String(raw).match(/[?&]id=([^&#]+)/i)||[])[1]||"";}
+function show(){$("deCourseNotesOverlay").classList.add("show");$("deCourseNotesOverlay").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";}
+function hide(){$("deCourseNotesOverlay").classList.remove("show");$("deCourseNotesOverlay").setAttribute("aria-hidden","true");document.body.style.overflow="hidden";}
+function back(){
+ if($("dcnReader").classList.contains("show")){$("dcnReader").classList.remove("show");$("dcnFrame").removeAttribute("src");$("dcnGrid").style.display="grid";render();return true;}
+ if(path.length){path.pop();render();return true;}hide();return true;
+}
+function same(a,b){const x=norm(a),y=norm(b);return !x||!y||x===y||x.includes(y)||y.includes(x);}
+function pathMatch(r){
+ const targetBranch=String(ctx.branch||"").trim(),targetSem=String(ctx.semester||"").trim();
+ const branch=branchOf(r),semester=semesterOf(r);
+ const branchOk=!targetBranch||/common|all/i.test(branch)||same(branch,targetBranch);
+ const semOk=!targetSem||/^all/i.test(targetSem)||/^all/i.test(semester)||same(semester,targetSem);
+ const wanted=Array.isArray(ctx.subjects)?ctx.subjects.filter(Boolean):[];
+ const subjectOk=!wanted.length||wanted.some(x=>same(subjectOf(r),x));
+ return branchOk&&semOk&&subjectOk;
+}
+function availableRows(){return rows.filter(pathMatch);}
+function render(){
+ $("dcnReader").classList.remove("show");$("dcnFrame").removeAttribute("src");$("dcnGrid").style.display="grid";
+ $("dcnTitle").textContent=path[path.length-1]||"Course Notes";
+ const base=availableRows();let values=[];
+ if(path.length===0)values=[...new Set(base.map(branchOf))].sort((a,b)=>a.localeCompare(b));
+ else if(path.length===1)values=[...new Set(base.filter(r=>same(branchOf(r),path[0])).map(semesterOf))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+ else if(path.length===2)values=[...new Set(base.filter(r=>same(branchOf(r),path[0])&&same(semesterOf(r),path[1])).map(subjectOf))].sort((a,b)=>a.localeCompare(b));
+ else values=base.filter(r=>same(branchOf(r),path[0])&&same(semesterOf(r),path[1])&&same(subjectOf(r),path[2]));
+ const isFile=path.length>=3;
+ $("dcnStatus").textContent="";
+ $("dcnGrid").innerHTML=values.length?values.map((v,i)=>{const name=isFile?field(v,"title","fileName","originalFileName","name")||"Study Notes":v;const sub=isFile?field(v,"originalFileName","fileName","mimeType","type")||"Open file":(path.length===0?"Branch folders":path.length===1?"Semester folders":"Subject folders");const icon=isFile?(/pdf|application\/pdf/i.test(field(v,"mimeType","type","fileType","title","fileName")+" "+fileUrl(v))?"fa-file-pdf":"fa-file-lines"):"fa-folder";return `<button type="button" class="dcn-item" data-dcn-index="${i}"><span class="dcn-icon"><i class="fas ${icon}"></i></span><span><strong>${esc(name)}</strong><small>${esc(sub)}</small></span></button>`}).join(""):'<div class="dcn-status" style="grid-column:1/-1">इस स्तर पर कोई Notes उपलब्ध नहीं हैं।</div>';
+ $("dcnGrid").querySelectorAll("[data-dcn-index]").forEach(b=>b.onclick=()=>{const v=values[Number(b.dataset.dcnIndex)];if(!isFile){path.push(v);render();}else openFile(v);});
+}
+function openFile(r){
+ const raw=fileUrl(r);if(!raw){$("dcnStatus").textContent="File URL not found in this upload.";return;}
+ if(driveId(raw)){window.open(raw,"_blank","noopener,noreferrer");$("dcnStatus").textContent="Google Drive link browser में खुल गया। Back दबाकर subject folder पर लौटें।";return;}
+ const isPdf=!!(r.pdfUrl||r.pdfURL||r.pdf||String(r.mimeType||"").toLowerCase()==="application/pdf"||/\.pdf(?:[?#]|$)/i.test(raw));
+ if(isPdf){$("dcnGrid").style.display="none";$("dcnReader").classList.add("show");$("dcnFrame").src=raw;$("dcnTitle").textContent=field(r,"title","fileName","originalFileName")||"PDF Notes";return;}
+ window.open(raw,"_blank","noopener,noreferrer");$("dcnStatus").textContent="Link browser में खुल गया। Back दबाकर subject folder पर लौटें।";
+}
+async function load(){
+ $("dcnStatus").innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading notes…';
+ try{if(!loaded){const snap=await get(ref(db,"uploadedNotes"));const raw=snap.val()||{};rows=Object.entries(raw).map(([id,v])=>({...v,id})).filter(r=>r&&typeof r==="object"&&!['deleted','draft','unpublished','hidden','disabled','false'].includes(String(r.status??r.publishStatus??'published').toLowerCase())&&!!fileUrl(r));loaded=true;}render();}
+ catch(e){$("dcnStatus").textContent="Notes load नहीं हुए। Firebase /uploadedNotes read permission check करें. "+(e.message||"");}
+}
+window.deOpenCourseNotes=async function(context){ctx=context||{};path=[];show();await load();};
+$("dcnBack").addEventListener("click",back);
+window.deCourseNotesBack=back;
+</script>
 </body>
 </html>

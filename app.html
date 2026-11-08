@@ -12644,19 +12644,37 @@ window.deShortNotesGoBack=function(){
   if(typeof window.navigateTo==='function')window.navigateTo(id,true);
  }
 
- // Delegate clicks from both course headers; inline handlers are inconsistent
- // in embedded WebViews, so this is the reliable fallback.
+ // Reliable delegated routing for EVERY action in both course top bars.
+ // Do not depend on inline onclick handlers: some Android/WebView builds
+ // suppress or fail to resolve those handlers after the reader is opened.
  document.addEventListener('click',function(e){
-  const profile=e.target.closest('#deFirebaseCourseDetail .de-course-profile,#deCourseShell .de-course-profile');
-  if(profile){
-   e.preventDefault();e.stopImmediatePropagation();
-   navigateToPage('profilePage');return;
-  }
-  const bell=e.target.closest('#deFirebaseCourseDetail .de-course-bell,#deCourseShell .de-course-bell');
+  const rootSelector='#deFirebaseCourseDetail,#deCourseShell';
+  const profile=e.target.closest(rootSelector+' .de-course-profile');
+  const bell=e.target.closest(rootSelector+' .de-course-bell');
+  const coins=e.target.closest(rootSelector+' .de-course-coins');
+  const streak=e.target.closest(rootSelector+' .de-course-streak');
+  const action=profile||bell||coins||streak;
+  if(!action)return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+
+  // Hide course overlays before opening a normal app page, so they can
+  // never sit above the destination page and block its controls.
+  if(profile){navigateToPage('profilePage');return;}
   if(bell){
-   e.preventDefault();e.stopImmediatePropagation();
-   if(typeof window.openNewsNotifications==='function')window.openNewsNotifications();
-   else navigateToPage('updatePage');
+   if(typeof window.openNewsNotifications==='function'){
+    try{window.openNewsNotifications();}catch(_){navigateToPage('updatePage');}
+   }else navigateToPage('updatePage');
+   return;
+  }
+  if(coins){navigateToPage('leaderboardPage');return;}
+  if(streak){
+   const modal=document.getElementById('streakModal');
+   if(typeof window.openStreakModal==='function'){
+    try{window.openStreakModal();}catch(_){if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}}
+   }else if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
   }
  },true);
 

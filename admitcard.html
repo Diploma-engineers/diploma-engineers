@@ -29,16 +29,7 @@
         <button class="action-btn generate-btn" id="generateBtn" onclick="generateAdmitCard()">
             <i class="fa-solid fa-link"></i> Generate & Open Admit Card
         </button>
-
-        <div class="success" id="admitMsg">
-            ✅ Admit Card Link Generated Successfully
-        </div>
-
-        <button class="action-btn view" id="admitOpenBtn" onclick="openAdmitCard()">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Admit Card
-        </button>
-
-        <div class="footer">
+<div class="footer">
             Developed by <b>DIPLOMA ENGINEERS</b>
         </div>
     </div>
@@ -65,29 +56,20 @@
 .result-container-wrapper button.action-btn { width: 100%; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: .3s; }
 .result-container-wrapper .generate-btn { background: #2563eb; color: #fff; }
 .result-container-wrapper .generate-btn:hover { background: #1d4ed8; }
-.result-container-wrapper .view { display: none; background: #16a34a; color: #fff; margin-top: 12px; }
-.result-container-wrapper .view.active { display: block; }
-.result-container-wrapper .view:hover { background: #15803d; }
-.result-container-wrapper .success { display: none; margin-top: 14px; padding: 12px; background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 14px; color: #15803d; font-size: 13px; }
-.result-container-wrapper .success.active { display: block; }
 .result-container-wrapper .footer { margin-top: 18px; font-size: 12px; color: #94a3b8; }
 </style>
 
 <script>
 (function() {
     let selectedCardType = "admit";
-    let generatedCardURL = "";
 
     const enrollInput = document.getElementById("admitEnroll");
     const title = document.getElementById("admitPortalTitle");
     const desc = document.getElementById("admitPortalDesc");
     const generateBtn = document.getElementById("generateBtn");
-    const openBtn = document.getElementById("admitOpenBtn");
-    const message = document.getElementById("admitMsg");
 
     window.selectCardType = function(type) {
         selectedCardType = type;
-        generatedCardURL = "";
 
         document.getElementById("admitTab").classList.toggle("active", type === "admit");
         document.getElementById("verificationTab").classList.toggle("active", type === "verification");
@@ -95,17 +77,12 @@
         if (type === "verification") {
             title.textContent = "BTEUP Verification Card";
             desc.textContent = "Enter your Enrollment Number to open your official BTEUP Verification Card.";
-            generateBtn.innerHTML = '<i class="fa-solid fa-link"></i> Generate & Open Verification Card';
-            openBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Verification Card';
+            generateBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Verification Card';
         } else {
             title.textContent = "BTEUP Admit Card";
             desc.textContent = "Enter your Enrollment Number to open your official BTEUP Admit Card.";
-            generateBtn.innerHTML = '<i class="fa-solid fa-link"></i> Generate & Open Admit Card';
-            openBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Admit Card';
+            generateBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Admit Card';
         }
-
-        message.classList.remove("active");
-        openBtn.classList.remove("active");
     };
 
     window.generateAdmitCard = function() {
@@ -118,26 +95,10 @@
         }
 
         const page = selectedCardType === "verification" ? "VerificationCard.aspx" : "AdmitCard.aspx";
-        generatedCardURL = "https://bteup.ac.in/ESeva/Student/" + page + "?EnrollNumber=" + encodeURIComponent(enroll);
+        const targetURL = "https://bteup.ac.in/ESeva/Student/" + page + "?EnrollNumber=" + encodeURIComponent(enroll);
 
-        message.textContent = selectedCardType === "verification"
-            ? "✅ Verification Card Link Generated Successfully"
-            : "✅ Admit Card Link Generated Successfully";
-        message.classList.add("active");
-        openBtn.classList.add("active");
-
-        const opened = window.open(generatedCardURL, "_blank");
-        if (!opened) {
-            alert("Popup blocked. Please click the Open button.");
-        }
-    };
-
-    window.openAdmitCard = function() {
-        if (generatedCardURL) {
-            window.open(generatedCardURL, "_blank");
-        } else {
-            alert("Enter Enrollment Number and Generate the Link First");
-        }
+        // Open the selected BTEUP card directly; no intermediate generated-link or open button.
+        window.open(targetURL, "_blank");
     };
 
     enrollInput.addEventListener("keydown", function(e) {

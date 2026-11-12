@@ -3,19 +3,13 @@
     <div class="bg-circle circle2"></div>
 
     <div class="card">
-        <!-- Category Tabs -->
-        <div class="category-tabs">
-            <button class="tab-btn active" id="tabAdmitFinal" onclick="switchAdmitCategory('final')">Final Year</button>
-            <button class="tab-btn" id="tabAdmitFirst" onclick="switchAdmitCategory('first')">1st &amp; 2nd Year</button>
-        </div>
-
-        <div class="icon">
+<div class="icon">
             <i class="fa-solid fa-id-card-clip"></i>
         </div>
 
-        <h2 id="admitPortalTitle">Final Year Admit Card</h2>
+        <h2 id="admitPortalTitle">BTEUP Admit Card</h2>
         <p id="admitPortalDesc">
-            Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Admit Card Link.
+            Enter your Enrollment Number and Date of Birth to generate your official BTEUP BTEUP Admit Card Link.
         </p>
 
         <div class="input-box">
@@ -23,13 +17,8 @@
             <input type="text" id="admitEnroll" placeholder="Enrollment Number" autocomplete="off">
         </div>
 
-        <div class="input-box">
-            <i class="fa-solid fa-calendar-days"></i>
-            <input type="text" id="admitDob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
-        </div>
-
         <button class="action-btn generate-btn" onclick="generateAdmitCard()">
-            <i class="fa-solid fa-link"></i> Generate Admit Card Link
+            <i class="fa-solid fa-link"></i> Generate & Open Admit Card Link
         </button>
 
         <div class="success" id="admitMsg">
@@ -77,69 +66,42 @@
 
 <script>
 (function() {
-    let currentAdmitCategory = 'final';
     let admitCardURL = "";
 
-    window.switchAdmitCategory = function(cat) {
-        currentAdmitCategory = cat;
-        admitCardURL = "";
-        document.getElementById("admitMsg").classList.remove("active");
-        document.getElementById("admitOpenBtn").classList.remove("active");
-        document.getElementById("admitEnroll").value = "";
-        document.getElementById("admitDob").value = "";
-
-        const tabFinal = document.getElementById("tabAdmitFinal");
-        const tabFirst = document.getElementById("tabAdmitFirst");
-        const portalTitle = document.getElementById("admitPortalTitle");
-        const portalDesc = document.getElementById("admitPortalDesc");
-
-        if (cat === 'final') {
-            tabFinal.classList.add("active");
-            tabFirst.classList.remove("active");
-            portalTitle.innerText = "Final Year Admit Card";
-            portalDesc.innerText = "Enter your Enrollment Number and Date of Birth to generate your official BTEUP Final Year Admit Card Link.";
-        } else {
-            tabFirst.classList.add("active");
-            tabFinal.classList.remove("active");
-            portalTitle.innerText = "1st & 2nd Year Admit Card";
-            portalDesc.innerText = "Check your BTE UP 1st & 2nd Year Examination Admit Card quickly and securely.";
-        }
-    };
-
-    document.getElementById("admitDob").addEventListener("input", function(e){
-        let v = e.target.value.replace(/\D/g,"");
-        if(v.length > 2) v = v.slice(0,2) + "/" + v.slice(2);
-        if(v.length > 5) v = v.slice(0,5) + "/" + v.slice(5,9);
-        e.target.value = v;
-    });
-
-    function validDOB(d){
-        return /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/\d{4}$/.test(d);
-    }
-
-    window.generateAdmitCard = function(){
+    window.generateAdmitCard = function() {
         const enroll = document.getElementById("admitEnroll").value.trim().toUpperCase();
-        const dob = document.getElementById("admitDob").value.trim();
 
-        if(enroll === ""){ alert("Please Enter Enrollment Number"); return; }
-        if(!validDOB(dob)){ alert("Please Enter Valid DOB (DD/MM/YYYY)"); return; }
-
-        const id = btoa(enroll);
-        const id2 = btoa(dob);
-
-        if (currentAdmitCategory === 'final') {
-            admitCardURL = `https://result.bteexam.com/even/main/admit_card.aspx?id=${encodeURIComponent(id)}&id2=${encodeURIComponent(id2)}`;
-        } else {
-            admitCardURL = `https://result.bteexam.com/even/main/admit_card_1st.aspx?id=${id}&id2=${id2}`;
+        if (enroll === "") {
+            alert("Please Enter Enrollment Number");
+            document.getElementById("admitEnroll").focus();
+            return;
         }
+
+        // Direct BTEUP ESeva admit-card URL: enrollment number only.
+        admitCardURL = "https://bteup.ac.in/ESeva/Student/AdmitCard.aspx?EnrollNumber=" + encodeURIComponent(enroll);
 
         document.getElementById("admitMsg").classList.add("active");
         document.getElementById("admitOpenBtn").classList.add("active");
+
+        // Open directly in a new tab from the button click.
+        const opened = window.open(admitCardURL, "_blank");
+        if (!opened) {
+            alert("Popup blocked. Please click the Open Admit Card button.");
+        }
     };
 
-    window.openAdmitCard = function(){
-        if(admitCardURL !== ""){ window.open(admitCardURL, "_blank"); }
-        else { alert("Generate Admit Card Link First"); }
+    window.openAdmitCard = function() {
+        if (admitCardURL !== "") {
+            window.open(admitCardURL, "_blank");
+        } else {
+            alert("Enter Enrollment Number and Generate Admit Card Link First");
+        }
     };
+
+    document.getElementById("admitEnroll").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            window.generateAdmitCard();
+        }
+    });
 })();
 </script>

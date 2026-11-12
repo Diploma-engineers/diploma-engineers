@@ -3,13 +3,22 @@
     <div class="bg-circle circle2"></div>
 
     <div class="card">
+        <div class="category-tabs" role="tablist" aria-label="Select card type">
+            <button type="button" class="tab-btn active" id="admitTab" onclick="selectCardType('admit')">
+                <i class="fa-solid fa-id-card"></i> Admit Card
+            </button>
+            <button type="button" class="tab-btn" id="verificationTab" onclick="selectCardType('verification')">
+                <i class="fa-solid fa-file-circle-check"></i> Verification Card
+            </button>
+        </div>
+
 <div class="icon">
             <i class="fa-solid fa-id-card-clip"></i>
         </div>
 
         <h2 id="admitPortalTitle">BTEUP Admit Card</h2>
         <p id="admitPortalDesc">
-            Enter your Enrollment Number and Date of Birth to generate your official BTEUP BTEUP Admit Card Link.
+            Enter your Enrollment Number to open your official BTEUP Admit Card.
         </p>
 
         <div class="input-box">
@@ -17,8 +26,8 @@
             <input type="text" id="admitEnroll" placeholder="Enrollment Number" autocomplete="off">
         </div>
 
-        <button class="action-btn generate-btn" onclick="generateAdmitCard()">
-            <i class="fa-solid fa-link"></i> Generate & Open Admit Card Link
+        <button class="action-btn generate-btn" id="generateBtn" onclick="generateAdmitCard()">
+            <i class="fa-solid fa-link"></i> Generate & Open Admit Card
         </button>
 
         <div class="success" id="admitMsg">
@@ -66,42 +75,73 @@
 
 <script>
 (function() {
-    let admitCardURL = "";
+    let selectedCardType = "admit";
+    let generatedCardURL = "";
+
+    const enrollInput = document.getElementById("admitEnroll");
+    const title = document.getElementById("admitPortalTitle");
+    const desc = document.getElementById("admitPortalDesc");
+    const generateBtn = document.getElementById("generateBtn");
+    const openBtn = document.getElementById("admitOpenBtn");
+    const message = document.getElementById("admitMsg");
+
+    window.selectCardType = function(type) {
+        selectedCardType = type;
+        generatedCardURL = "";
+
+        document.getElementById("admitTab").classList.toggle("active", type === "admit");
+        document.getElementById("verificationTab").classList.toggle("active", type === "verification");
+
+        if (type === "verification") {
+            title.textContent = "BTEUP Verification Card";
+            desc.textContent = "Enter your Enrollment Number to open your official BTEUP Verification Card.";
+            generateBtn.innerHTML = '<i class="fa-solid fa-link"></i> Generate & Open Verification Card';
+            openBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Verification Card';
+        } else {
+            title.textContent = "BTEUP Admit Card";
+            desc.textContent = "Enter your Enrollment Number to open your official BTEUP Admit Card.";
+            generateBtn.innerHTML = '<i class="fa-solid fa-link"></i> Generate & Open Admit Card';
+            openBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open Admit Card';
+        }
+
+        message.classList.remove("active");
+        openBtn.classList.remove("active");
+    };
 
     window.generateAdmitCard = function() {
-        const enroll = document.getElementById("admitEnroll").value.trim().toUpperCase();
+        const enroll = enrollInput.value.trim().toUpperCase();
 
-        if (enroll === "") {
+        if (!enroll) {
             alert("Please Enter Enrollment Number");
-            document.getElementById("admitEnroll").focus();
+            enrollInput.focus();
             return;
         }
 
-        // Direct BTEUP ESeva admit-card URL: enrollment number only.
-        admitCardURL = "https://bteup.ac.in/ESeva/Student/AdmitCard.aspx?EnrollNumber=" + encodeURIComponent(enroll);
+        const page = selectedCardType === "verification" ? "VerificationCard.aspx" : "AdmitCard.aspx";
+        generatedCardURL = "https://bteup.ac.in/ESeva/Student/" + page + "?EnrollNumber=" + encodeURIComponent(enroll);
 
-        document.getElementById("admitMsg").classList.add("active");
-        document.getElementById("admitOpenBtn").classList.add("active");
+        message.textContent = selectedCardType === "verification"
+            ? "✅ Verification Card Link Generated Successfully"
+            : "✅ Admit Card Link Generated Successfully";
+        message.classList.add("active");
+        openBtn.classList.add("active");
 
-        // Open directly in a new tab from the button click.
-        const opened = window.open(admitCardURL, "_blank");
+        const opened = window.open(generatedCardURL, "_blank");
         if (!opened) {
-            alert("Popup blocked. Please click the Open Admit Card button.");
+            alert("Popup blocked. Please click the Open button.");
         }
     };
 
     window.openAdmitCard = function() {
-        if (admitCardURL !== "") {
-            window.open(admitCardURL, "_blank");
+        if (generatedCardURL) {
+            window.open(generatedCardURL, "_blank");
         } else {
-            alert("Enter Enrollment Number and Generate Admit Card Link First");
+            alert("Enter Enrollment Number and Generate the Link First");
         }
     };
 
-    document.getElementById("admitEnroll").addEventListener("keydown", function(e) {
-        if (e.key === "Enter") {
-            window.generateAdmitCard();
-        }
+    enrollInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") window.generateAdmitCard();
     });
 })();
 </script>

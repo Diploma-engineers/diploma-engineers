@@ -4194,11 +4194,21 @@ loginBtn.addEventListener("click", async () => {
 
     try {
         // MAIN Firebase is the only required authentication.
-        await withTimeout(
+        const mainLoginCredential = await withTimeout(
             signInWithEmailAndPassword(auth, email, password),
             12000,
             "Main Firebase login timed out. Check your internet connection and Firebase Authentication."
         );
+        // Keep the signed-in User returned by Firebase as the authoritative session
+        // during the login flow. auth.currentUser can briefly be unsettled while
+        // secondary-project authentication is running.
+        const mainLoginUser = mainLoginCredential?.user;
+        if (!mainLoginUser) {
+            throw new Error("Main Firebase login did not return an authenticated user.");
+        }
+        try { await mainLoginUser.getIdToken(); } catch (tokenError) {
+            throw new Error("Main Firebase session could not be verified. Please sign in again.");
+        }
 
         // FAST LOGIN UX: as soon as the main Firebase session is authenticated,
         // reveal the Admin Panel immediately. Secondary-project sign-in and profile
@@ -4258,9 +4268,16 @@ loginBtn.addEventListener("click", async () => {
         }
 
         // Course management shares the main Auth session; no second sign-in is needed.
-        if (!courseAuth.currentUser || courseAuth.currentUser.uid !== auth.currentUser.uid) {
-            throw new Error("Course session is not authenticated. Please sign out and sign in again.");
+        // courseAuth is intentionally the same Firebase Auth instance as auth.
+        // Compare against the User returned by signInWithEmailAndPassword rather
+        // than relying only on the transient currentUser getter during startup.
+        const activeMainUser = auth.currentUser || mainLoginUser;
+        if (courseAuth !== auth || !activeMainUser || activeMainUser.uid !== mainLoginUser.uid) {
+            throw new Error("Course authentication session could not be verified. Please sign in again.");
         }
+        // Refresh the token to ensure this authenticated session is ready for
+        // Course catalog operations and Realtime Database authorization.
+        await mainLoginUser.getIdToken();
 
         // Any valid account created in the MAIN Firebase Authentication
         // can enter this panel. Database write permissions are still

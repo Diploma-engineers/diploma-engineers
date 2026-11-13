@@ -2325,7 +2325,7 @@ body { overflow-x:hidden; }
    </div></div>
    <div class="hnu-field full" id="hnuFilePanel"><label for="hnuFile">Select PDF Notes File *</label><input id="hnuFile" type="file" accept="application/pdf,.pdf"><div id="hnuFileName" class="hnu-note">Only PDF files. Maximum size: 25 MB.</div></div>
    <div class="hnu-field full hnu-hidden" id="hnuLinkPanel"><label for="hnuPdfLink">PDF URL *</label><input id="hnuPdfLink" type="url" placeholder="https://example.com/notes.pdf"><div class="hnu-note">Use a public direct PDF URL or a Google Drive share link with viewer access.</div></div>
-   <div class="hnu-field full"><div class="hnu-actions" style="margin:0"><button type="button" class="hnu-btn hnu-primary" id="hnuSave"><i class="fa-solid fa-cloud-arrow-up"></i> Save Notes</button><button type="button" class="hnu-btn hnu-light" id="hnuClear"><i class="fa-solid fa-eraser"></i> Clear Subject &amp; Title</button><button type="button" class="hnu-btn hnu-light" id="hnuRefresh"><i class="fa-solid fa-rotate"></i> Refresh Saved Notes</button></div></div>
+   <div class="hnu-field full"><div class="hnu-actions" style="margin:0"><button type="button" class="hnu-btn hnu-primary" id="hnuSave"><i class="fa-solid fa-cloud-arrow-up"></i> Save Notes</button><button type="button" class="hnu-btn hnu-light" id="hnuClear"><i class="fa-solid fa-eraser"></i> Clear Subject &amp; PDF</button><button type="button" class="hnu-btn hnu-light" id="hnuRefresh"><i class="fa-solid fa-rotate"></i> Refresh Saved Notes</button></div></div>
    <div class="hnu-field full"><label>PDF Preview</label><iframe id="hnuPreview" class="hnu-preview" title="PDF notes preview"></iframe><div class="hnu-note">Selected PDF or entered link will appear here for preview.</div></div>
   </div>
   <div id="hnuStatus" class="hnu-status" role="status"></div>
@@ -4281,6 +4281,40 @@ onAuthStateChanged(auth, async (user) => {
         syncMasterCertificateButton();
 
         if (user) {
+            // Free-plan Founder deactivation gate: a deactivated UID/email access
+            // record must never be recreated by the normal login/profile sync.
+            try {
+                // Read only the UID-keyed access record here. Every signed-in user
+                // is allowed to read their own UID path (including when it is absent).
+                // Email-keyed registry entries are optional and may not exist yet;
+                // reading a missing email-key path can trigger PERMISSION_DENIED and
+                // incorrectly sign out otherwise valid admins.
+                const uidAccessSnap = await get(ref(db, `adminAccess/${user.uid}`));
+                const uidAccess = uidAccessSnap.exists() ? (uidAccessSnap.val() || {}) : {};
+                const blocked = String(uidAccess.status || '').toLowerCase() === 'deactivated'
+                    || uidAccess.disabled === true
+                    || uidAccess.enabled === false
+                    || uidAccess.deactivated === true;
+                if (blocked) {
+                    try { await signOut(auth); } catch (_) {}
+                    loginPage.style.display = 'flex';
+                    adminPanel.style.display = 'none';
+                    document.body.classList.remove('admin-logged-in');
+                    errorBox.innerText = 'Founder ने इस Admin account को deactivate कर दिया है। Admin Panel का access बंद है।';
+                    if (pageLoader) pageLoader.classList.add('hide');
+                    return;
+                }
+            } catch (accessCheckError) {
+                console.warn('Admin deactivation status check failed:', accessCheckError?.message || accessCheckError);
+                // Fail closed: don't grant panel access when the deactivation gate cannot be verified.
+                try { await signOut(auth); } catch (_) {}
+                loginPage.style.display = 'flex';
+                adminPanel.style.display = 'none';
+                document.body.classList.remove('admin-logged-in');
+                errorBox.innerText = 'Admin access verify नहीं हो पाया। कृपया Founder से संपर्क करें।';
+                if (pageLoader) pageLoader.classList.add('hide');
+                return;
+            }
             const registered = await isRegisteredAdmin(user);
             if (!registered) {
                 try { await signOut(auth); } catch (_) {}
@@ -6465,7 +6499,7 @@ async function loadAdminCertificates(){
           <div><small>Rank</small><b>${r.rank?("#"+r.rank):"—"}</b></div>
         </div>
         <div class="admin-cert-row-arrow"><i class="fa-solid fa-chevron-right"></i></div>
-        <button type="button" class="admin-cert-delete-btn" data-delete-admin-uid="${escapeHTML(r.uid)}" title="Delete admin profile and associated records" style="position:absolute;right:46px;bottom:14px;border:0;border-radius:8px;padding:7px 9px;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:800;cursor:pointer;z-index:2"><i class="fa-solid fa-trash"></i> Delete</button>
+        <button type="button" class="admin-cert-delete-btn" data-delete-admin-uid="${escapeHTML(r.uid)}" title="Deactivate admin and delete associated records" style="position:absolute;right:46px;bottom:14px;border:0;border-radius:8px;padding:7px 9px;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:800;cursor:pointer;z-index:2"><i class="fa-solid fa-user-slash"></i> Deactivate &amp; Delete</button>
       </article>`;
     }).join("");
 
@@ -6484,17 +6518,28 @@ async function loadAdminCertificates(){
       const name=profile.name||profile.email||uid;
       const inactive=profile.accountStatus==="deactivated"||profile.adminDisabled===true||profile.active===false&&!!profile.deactivatedAt;
       if(!inactive&&!confirm(`${name} is not marked deactivated. Delete this admin's records anyway?`))return;
-      if(!confirm(`PERMANENT ACTION
+      if(!confirm(`FOUNDER ACTION — DEACTIVATE & DELETE RECORDS
 
-Delete ${name}'s admin/certificate profile, activity, team profile, admin access record, coupons and their course coupon references, plus News/Blogs/Books authored under this UID?
+${name} का Admin access बंद होगा और उसकी profile, activity, team/certificate records तथा coupons हटाए जाएंगे। News/Blogs/Books में उसके बनाए content को भी हटाया जाएगा।
 
-Firebase Authentication login account cannot be deleted from another user's browser session. This action cannot be undone.`))return;
-      btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Deleting';
+Firebase Authentication login account Free Plan पर browser से delete नहीं हो सकता। Login account Firebase Console से अलग हटाना होगा। आगे बढ़ें?`))return;
+      btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Processing';
       try{
-        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`teamProfiles/${uid}`,`publicTeamProfiles/${uid}`,`certificateProfiles/${uid}`,`admins/${uid}`];
-        if(profile.email)paths.push(`adminAccess/${adminEmailKey(profile.email)}`);
-        // Also remove UID-keyed access record when the project stores it that way.
-        paths.push(`adminAccess/${uid}`);
+        const now=Date.now();
+        // IMPORTANT: Keep a deactivated UID-keyed adminAccess tombstone.
+        // RTDB Rules check this status to block the former admin's writes.
+        const accessRecord={uid,email:profile.email||'',status:'deactivated',enabled:false,disabled:true,deactivated:true,deactivatedAt:now,updatedAt:now,reason:'founder_deactivated_on_free_plan'};
+        await set(ref(db,`adminAccess/${uid}`),accessRecord);
+        if(profile.email){
+          await set(ref(db,`adminAccess/${adminEmailKey(profile.email)}`),{...accessRecord,email:profile.email});
+        }
+        // Remove admin privilege flag and mark public team profiles inactive.
+        await Promise.all([
+          remove(ref(db,`admins/${uid}`)),
+          update(ref(db,`teamProfiles/${uid}`),{status:'deactivated',active:false,enabled:false,deactivatedAt:now,updatedAt:now}).catch(()=>{}),
+          update(ref(db,`publicTeamProfiles/${uid}`),{status:'deactivated',active:false,enabled:false,deactivatedAt:now,updatedAt:now}).catch(()=>{})
+        ]);
+        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`certificateProfiles/${uid}`];
         // Gather this admin's coupon codes before deleting profile records.
         const couponCodes=new Set();
         try{
@@ -6550,12 +6595,12 @@ Firebase Authentication login account cannot be deleted from another user's brow
           });
           await Promise.all(deletions);
         }
-        alert(`Admin records for ${name} have been deleted. Their Firebase Authentication login account may still exist and must be removed separately by a trusted server/Admin SDK.`);
+        alert(` ${name} का Admin access deactivate कर दिया गया है और संबंधित records/coupons हटा दिए गए हैं। UID-keyed adminAccess record जानबूझकर रखा गया है ताकि Firebase Rules status=deactivated देखकर उसके writes रोक सकें। Firebase Authentication login account Free Plan पर यहाँ से delete नहीं हो सकता; उसे Firebase Console → Authentication → Users से अलग delete करें।`);
         await loadAdminCertificates();
       }catch(err){
         console.error("Founder admin delete failed",err);
         alert("Delete failed: "+(err?.message||err)+". Check Firebase Rules allow Founder write/delete access to these paths.");
-        btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-trash"></i> Delete';
+        btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-user-slash"></i> Deactivate &amp; Delete';
       }
     }));
   }catch(err){
@@ -6931,7 +6976,17 @@ function hnuValidPdfLink(url){try{const u=new URL(url);return u.protocol==="http
 
 function hnuSetMode(mode){hnu("hnuFilePanel")?.classList.toggle("hnu-hidden",mode!=="file");hnu("hnuLinkPanel")?.classList.toggle("hnu-hidden",mode!=="link");}
 function hnuShowPdf(url){const frame=hnu("hnuPreview");if(frame)frame.src=url||"about:blank";}
-function hnuReset(){if(hnu("hnuSubject"))hnu("hnuSubject").value="";if(hnu("hnuTitle"))hnu("hnuTitle").value="";hnuStatus("Subject और Title clear हो गए हैं। बाकी upload details सुरक्षित हैं।");}
+function hnuReset(){
+ // Clear only the subject/title and PDF selection/link/preview. Keep Branch and Semester unchanged.
+ hnuEditingId=null;hnuSelectedFile=null;hnuCurrentPdfUrl="";hnuCurrentStoragePath="";hnuLastAutoTitle="";
+ if(hnu("hnuSubject"))hnu("hnuSubject").value="";
+ if(hnu("hnuTitle"))hnu("hnuTitle").value="";
+ if(hnu("hnuFile"))hnu("hnuFile").value="";
+ if(hnu("hnuFileName"))hnu("hnuFileName").textContent="Only PDF files. Maximum size: 25 MB.";
+ if(hnu("hnuPdfLink"))hnu("hnuPdfLink").value="";
+ hnuShowPdf("");
+ hnuStatus("Subject और PDF selection/link clear हो गए हैं। Branch, Semester और पहले से saved PDFs सुरक्षित हैं।");
+}
 async function hnuSave(){
  if(!auth.currentUser){hnuStatus("Please login again before saving notes.",true);return;}
  const branch=hnu("hnuBranch")?.value||"",subject=hnu("hnuSubject")?.value.trim()||"",semester=hnu("hnuSemester")?.value||"",title=hnu("hnuTitle")?.value.trim()||"";
@@ -6956,10 +7011,9 @@ async function hnuSave(){
   const driveId=mode==="link"?hnuDriveFileId(link):"";const now=Date.now(),data={title,branch,category:branch,availableToAllBranches:branch==="Common",subject,semester,pdfUrl,pdfLink:pdfUrl,storagePath,sourceType:mode==="file"?"pdf-file":(driveId?"google-drive-pdf-link":"pdf-link"),googleDriveFileId:driveId||null,fileName:mode==="file"?(file?.name||"notes.pdf"):"",contentType:"application/pdf",status:"published",updatedAt:now,updatedBy:auth.currentUser.uid};
   let id=hnuEditingId,old=null;
   if(id){const r=ref(db,"uploadedNotes/"+id),snap=await get(r);old=snap.val();if(!old||!deOwnsContent(old)){deNoPermission();throw new Error("Only the creator Admin or Founder can update this note.");}Object.assign(data,{createdAt:old.createdAt||now,createdBy:old.createdBy||auth.currentUser.uid,createdByEmail:old.createdByEmail||auth.currentUser.email||"",id});await update(r,data);}
-  else{Object.assign(data,{createdAt:now,createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||""});const r=push(ref(db,"uploadedNotes"));id=r.key;data.id=id;await set(r,data);hnuEditingId=id;}
-  // Remove replaced Storage file only after the new database record has saved.
-  if(old?.storagePath&&old.storagePath!==storagePath){try{await deleteObject(storageRef(storage,old.storagePath));}catch(cleanupError){console.warn("Old PDF cleanup skipped",cleanupError);}}
-  hnuCurrentPdfUrl=pdfUrl;hnuCurrentStoragePath=storagePath;hnuShowPdf(pdfUrl);hnuStatus("PDF Notes successfully Firebase में save हो गए।");await hnuLoadSaved();
+  else{Object.assign(data,{createdAt:now,createdBy:auth.currentUser.uid,createdByEmail:auth.currentUser.email||""});const r=push(ref(db,"uploadedNotes"));id=r.key;data.id=id;await set(r,data);}
+  // Never remove an earlier PDF automatically. Files/records are removed only with their own Delete button.
+  hnuEditingId=null;hnuCurrentPdfUrl=pdfUrl;hnuCurrentStoragePath=storagePath;hnuShowPdf(pdfUrl);hnuStatus("PDF Notes successfully Firebase में save हो गए। अगली upload एक नई अलग entry के रूप में save होगी।");await hnuLoadSaved();
  }catch(e){console.error("PDF notes save error",e);hnuStatus(e.message||"Save failed. Firebase Storage/Database Rules check करें.",true);}
  finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-cloud-arrow-up"></i> Save Notes';}}
 }

@@ -3020,7 +3020,7 @@ D) 3 × 10⁹ m/s
    FIREBASE IMPORT
 ===================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, push, set, onValue, remove, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -4193,6 +4193,8 @@ loginBtn.addEventListener("click", async () => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
 
     try {
+        // Persist the primary Admin authentication session across page reloads.
+        await withTimeout(setPersistence(auth, browserLocalPersistence), 10000, "Could not initialize Firebase login persistence");
         // MAIN Firebase is the only required authentication.
         const mainLoginCredential = await withTimeout(
             signInWithEmailAndPassword(auth, email, password),
@@ -4279,23 +4281,23 @@ loginBtn.addEventListener("click", async () => {
         // Course catalog operations and Realtime Database authorization.
         await mainLoginUser.getIdToken();
 
-        // Any valid account created in the MAIN Firebase Authentication
-        // can enter this panel. Database write permissions are still
-        // controlled separately by Realtime Database Rules.
-        if (!auth.currentUser) {
-            throw new Error("Main Firebase login did not create an authenticated session.");
+        // The credential.user is the authoritative authenticated session.
+        // Do not reject a valid sign-in merely because currentUser has not
+        // finished updating in this event turn.
+        const signedInMainUser = auth.currentUser || mainLoginUser;
+        if (!signedInMainUser || signedInMainUser.uid !== mainLoginUser.uid) {
+            throw new Error("Main Firebase session could not be confirmed. Please retry login.");
         }
 
-        // Any account that successfully authenticated in the MAIN Firebase
-        // project can use the Admin Panel. Create/sync its Admin + Team
-        // profile automatically on first login.
-        const registered = await isRegisteredAdmin(auth.currentUser);
+        // Any account authenticated in the MAIN Firebase project can use the
+        // panel; database writes remain controlled by Realtime Database Rules.
+        const registered = await isRegisteredAdmin(signedInMainUser);
         if(!registered){
             throw new Error("Unable to verify the Firebase account.");
         }
         /* Login must not delete or deactivate a Firebase Auth account as a side effect. */
-        await ensureAdminProfileAndTeam(auth.currentUser);
-        await publishAdminAccessRecord(auth.currentUser);
+        await ensureAdminProfileAndTeam(signedInMainUser);
+        await publishAdminAccessRecord(signedInMainUser);
 
         loginPage.style.display = "none";
         adminPanel.style.display = "block";
@@ -4305,8 +4307,8 @@ loginBtn.addEventListener("click", async () => {
         loadAdminProfile();
         loadHomeUploads();
         /* 14-day activity enforcement disabled here to prevent accidental login lockouts. */
-        getAdminIdentityInfo(auth.currentUser.uid,{}).then(info=>{window.__currentAdminIdentity=info;}).catch(()=>{});
-        if (isCourseAllowed() && courseAuth.currentUser && typeof connectCourseAdmin === "function") connectCourseAdmin();
+        getAdminIdentityInfo(signedInMainUser.uid,{}).then(info=>{window.__currentAdminIdentity=info;}).catch(()=>{});
+        if (isCourseAllowed() && typeof connectCourseAdmin === "function") connectCourseAdmin();
 
     } catch (error) {
         console.error("Admin login error:", error);
@@ -9658,7 +9660,11 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
    </div>
   </article>`).join('');
  }
- function addBranch(name){name=normBranch(name);if(!name||name.toLowerCase()==='common')return '';const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!master[key])master[key]={name,order:Date.now(),semesters:{}};return key;}
+ const FOUNDER_UID='KirLkZUGXoZf0cXHkuCZ4Mfnxam2';
+ function isFounder(){return !!auth.currentUser && auth.currentUser.uid===FOUNDER_UID;}
+ function founderOnlyWarning(){alert('Founder Access Required\n\nOnly Founder can upload or manage Branches and Subjects. Please contact the Founder.');}
+ function requireFounder(){if(isFounder())return true;founderOnlyWarning();return false;}
+ function addBranch(name){if(!requireFounder())return '';name=normBranch(name);if(!name||name.toLowerCase()==='common')return '';const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!master[key])master[key]={name,order:Date.now(),semesters:{}};return key;}
  async function load(){
   const status=$('deBranchMasterStatus');
   try{if(!get||!ref||!set||!db)throw new Error('Firebase connection is not initialized. Reload the Admin Panel.');
@@ -9676,7 +9682,7 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
   renderCourseSubjectChoices();
   document.querySelectorAll('select[data-de-branch-master="1"]').forEach(el=>{const old=el.value;el.innerHTML='<option value="">Select Branch</option>'+branches().map(v=>`<option>${esc(v)}</option>`).join('');if(branches().includes(old))el.value=old;});
  }
- async function addMasterSubject(branch,sem,name){branch=String(branch||'').trim();const sm=String(sem||'').match(/[1-6]/)?.[0];name=String(name||'').trim();if(!branch||!sm||!name)return false;const key=branch.toLowerCase()==='common'?'common':Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch);if(!key&&branch.toLowerCase()!=='common')addBranch(branch);const targetKey=branch.toLowerCase()==='common'?'common':(Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch));const target=master[targetKey];target.semesters=target.semesters||{};target.semesters[sm]=target.semesters[sm]||[];if(!target.semesters[sm].some(x=>String(x).toLowerCase()===name.toLowerCase()))target.semesters[sm].push(name);await set(ref(db,PATH),master);render();populateAll();return true;}
+ async function addMasterSubject(branch,sem,name){if(!requireFounder())return false;branch=String(branch||'').trim();const sm=String(sem||'').match(/[1-6]/)?.[0];name=String(name||'').trim();if(!branch||!sm||!name)return false;const key=branch.toLowerCase()==='common'?'common':Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch);if(!key&&branch.toLowerCase()!=='common')addBranch(branch);const targetKey=branch.toLowerCase()==='common'?'common':(Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch));const target=master[targetKey];target.semesters=target.semesters||{};target.semesters[sm]=target.semesters[sm]||[];if(!target.semesters[sm].some(x=>String(x).toLowerCase()===name.toLowerCase()))target.semesters[sm].push(name);await set(ref(db,PATH),master);render();populateAll();return true;}
  window.__deAddMasterSubject=addMasterSubject;window.__deGetMasterSubjects=subjectList;
  function updateSubjectControl(branchId,semId,subjectId){const branch=$(branchId),sem=$(semId),subject=$(subjectId);if(!branch||!sem||!subject)return;const update=()=>{const list=subjectList(branch.value,sem.value);const old=subject.value;subject.innerHTML='<option value="">'+(branch.value&&sem.value?'Select Subject':'Select Branch & Semester first')+'</option>'+list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(list.includes(old))subject.value=old;};branch.addEventListener('change',update);sem.addEventListener('change',update);update();}
 
@@ -9685,6 +9691,7 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
  window.__deRenderCourseSubjectChoices=renderCourseSubjectChoices;window.__deSyncCourseSubjectText=syncCourseSubjectText;
 
  $('deAddBranch')?.addEventListener('click',async()=>{
+  if(!requireFounder())return;
   const input=$('deNewBranchName'),status=$('deBranchMasterStatus'),btn=$('deAddBranch'),key=addBranch(input?.value||'');
   if(!key){if(status)status.textContent='Enter a valid branch name first.';return;}
   try{btn.disabled=true;if(status)status.textContent='Saving new branch folder…';await set(ref(db,PATH),master);
@@ -9699,7 +9706,7 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
   const close=e.target.closest('[data-cancel-branch-edit]');
   if(close){const card=close.closest('[data-branch-key]'),panel=card?.querySelector('[data-branch-editor]'),opener=card?.querySelector('[data-open-branch]');if(panel)panel.hidden=true;opener?.setAttribute('aria-expanded','false');const icon=opener?.querySelector('[data-branch-chevron]');if(icon)icon.className='fa-solid fa-chevron-down';return;}
   const save=e.target.closest('[data-save-branch]');
-  if(save){const card=save.closest('[data-branch-key]'),key=save.dataset.saveBranch,status=$('deBranchMasterStatus');
+  if(save){if(!requireFounder())return;const card=save.closest('[data-branch-key]'),key=save.dataset.saveBranch,status=$('deBranchMasterStatus');
    try{save.disabled=true;if(status)status.textContent='Saving semester subjects to this branch folder…';const semesters={};
     card.querySelectorAll('textarea[data-sem]').forEach(t=>{semesters[t.dataset.sem]=[...new Set(t.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean))];});
     master[key].semesters=semesters;await set(ref(db,PATH),master);const verify=await get(ref(db,PATH));if(!verify.exists())throw new Error('Firebase save could not be verified.');
@@ -9708,11 +9715,11 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
    }catch(err){if(status)status.textContent='Subject save failed: '+(err?.message||err);console.error(err);}finally{save.disabled=false;}return;
   }
   const del=e.target.closest('[data-remove-branch]');
-  if(del){const status=$('deBranchMasterStatus'),key=del.dataset.removeBranch;if(confirm('Delete this branch folder and its new subject master list? Existing uploaded content will not be deleted.')){try{delete master[key];await set(ref(db,PATH),master);render();populateAll();if(status)status.textContent='Branch folder deleted. Existing uploaded content was not changed.';}catch(err){if(status)status.textContent='Delete failed: '+(err?.message||err);}}}
+  if(del){if(!requireFounder())return;const status=$('deBranchMasterStatus'),key=del.dataset.removeBranch;if(confirm('Delete this branch folder and its new subject master list? Existing uploaded content will not be deleted.')){try{delete master[key];await set(ref(db,PATH),master);render();populateAll();if(status)status.textContent='Branch folder deleted. Existing uploaded content was not changed.';}catch(err){if(status)status.textContent='Delete failed: '+(err?.message||err);}}}
  });
  $('deBranchMasterClose')?.addEventListener('click',()=>$('deBranchMasterModal').style.display='none');
  $('courseCategory')?.addEventListener('change',()=>renderCourseSubjectChoices());$('courseSemesterChoices')?.addEventListener('change',()=>renderCourseSubjectChoices());
- document.querySelector('[data-upload-target="branchmaster"]')?.addEventListener('click',()=>{$('uploadHubModal').style.display='none';$('deBranchMasterModal').style.display='block';load();});
+ document.querySelector('[data-upload-target="branchmaster"]')?.addEventListener('click',e=>{if(!requireFounder()){e.preventDefault();e.stopImmediatePropagation();return;}$('uploadHubModal').style.display='none';$('deBranchMasterModal').style.display='block';load();});
  // Re-sync master choices after existing admin sections open/render their forms.
  document.addEventListener('click',e=>{if(e.target.closest('[data-upload-target="important"],[data-upload-target="test"],[data-upload-target="notes"],[data-upload-target="course"]'))setTimeout(populateAll,350);});
  onAuthStateChanged(auth,u=>{if(u)load();});

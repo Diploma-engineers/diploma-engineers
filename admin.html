@@ -2496,6 +2496,11 @@ D) 3 × 10⁹ m/s
           <div><strong>Admin Directory</strong><span>Tap any admin to open their service card</span></div>
           <i class="fa-solid fa-chevron-right"></i>
         </div>
+        <div id="adminDirectoryFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+          <button type="button" data-admin-dir-filter="inactive" class="course-builder-btn primary">Inactive / Deactivated</button>
+          <button type="button" data-admin-dir-filter="active" class="course-builder-btn secondary">Active Admins &amp; Coupons</button>
+          <button type="button" data-admin-dir-filter="all" class="course-builder-btn secondary">All Admins</button>
+        </div>
         <div class="admin-cert-list" id="adminCertificatesList">
           <div class="admin-cert-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading all admin certificates...</div>
         </div>
@@ -5773,7 +5778,7 @@ function rankingIsNote(v){
 }
 
 async function buildAdminRankingRows(){
-  const [profilesSnap, teamSnap, ratingsSnap, newsSnap, blogsSnap, booksSnap, notesSnap, activitiesSnap] =
+  const [profilesSnap, teamSnap, ratingsSnap, newsSnap, blogsSnap, booksSnap, notesSnap, activitiesSnap, adminsSnap, accessSnap] =
     await Promise.all([
       safeRankingSnap("adminProfiles"),
       safeRankingSnap("teamProfiles"),
@@ -5782,17 +5787,31 @@ async function buildAdminRankingRows(){
       safeRankingSnap("blogs"),
       safeRankingSnap("books"),
       safeRankingSnap("notes"),
-      safeRankingSnap("activities")
+      safeRankingSnap("activities"),
+      safeRankingSnap("admins"),
+      safeRankingSnap("adminAccess")
     ]);
 
   const profiles=profilesSnap?.val()||{};
   const teams=teamSnap?.val()||{};
+  const activeAdminFlags=adminsSnap?.val()||{};
+  const accessRecords=accessSnap?.val()||{};
   const ratingsRoot=ratingsSnap?.val()||{};
 
   const ids=new Set([
     ...Object.keys(profiles||{}),
     ...Object.keys(teams||{})
   ]);
+  // Ranking contains only current active admins (and Founder); removed or
+  // deactivated UIDs are excluded even if an old team record is still cached.
+  [...ids].forEach(id=>{
+    const flag=activeAdminFlags[id];
+    const listed=flag===true||(flag&&typeof flag==="object"&&flag.active!==false&&flag.enabled!==false&&flag.disabled!==true&&String(flag.status||"active").toLowerCase()!=="deactivated");
+    const accessState=String((accessRecords[id]||{}).status||"active").toLowerCase();
+    const profile=profiles[id]||{};
+    const isActive=id===MASTER_ADMIN_UID||(listed&&accessState!=="deactivated"&&profile.accountStatus!=="deactivated"&&profile.adminDisabled!==true);
+    if(!isActive)ids.delete(id);
+  });
 
   const allRecords=[];
   const emailToUid={};
@@ -6362,6 +6381,7 @@ const DE_CERT_LOGO_URL="https://anubhavfinance.wordpress.com/wp-content/uploads/
 let adminDirectoryCache=null;
 let adminDirectoryCacheAt=0;
 let adminCertificateRecords=[];
+let adminDirectoryFilter="inactive";
 
 function certificateProfileCreatedAt(profile, uid=""){
   const v=profile||{};
@@ -6452,17 +6472,49 @@ function normalizeCertificateOwnerEmail(v){
   return String(v?.email||v?.authorEmail||v?.ownerEmail||v?.uploaderEmail||v?.createdByEmail||v?.adminEmail||v?.userEmail||"").trim().toLowerCase();
 }
 
+function bindAdminDirectoryFilters(){
+  document.querySelectorAll("[data-admin-dir-filter]").forEach(btn=>{
+    if(btn.dataset.bound==="1")return;
+    btn.dataset.bound="1";
+    btn.addEventListener("click",()=>{
+      adminDirectoryFilter=btn.dataset.adminDirFilter||"inactive";
+      document.querySelectorAll("[data-admin-dir-filter]").forEach(b=>{
+        const on=b===btn;b.classList.toggle("primary",on);b.classList.toggle("secondary",!on);
+      });
+      loadAdminCertificates(true);
+    });
+  });
+}
 async function loadAdminCertificates(){
   const list=document.getElementById("adminCertificatesList");
   if(!list||!isMasterAdmin())return;
+  bindAdminDirectoryFilters();
   list.innerHTML='<div class="admin-cert-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading admin profiles and Admin Rank analysis...</div>';
   try{
-    const [profilesSnap,newsSnap,blogsSnap,booksSnap]=await Promise.all([
+    const [profilesSnap,newsSnap,blogsSnap,booksSnap,adminsSnap,accessSnap,couponsSnap,ownCouponsSnap]=await Promise.all([
       get(ref(db,"adminProfiles")),
       get(ref(db,"news")),
       get(ref(db,"blogs")),
-      get(ref(db,"books"))
+      get(ref(db,"books")),
+      get(ref(db,"admins")).catch(()=>({val:()=>({})})),
+      get(ref(db,"adminAccess")).catch(()=>({val:()=>({})})),
+      get(ref(db,"publicAdminCoupons")).catch(()=>({val:()=>({})})),
+      get(ref(db,"adminCoupons")).catch(()=>({val:()=>({})}))
     ]);
+    const adminFlags=adminsSnap.val()||{};
+    const accessMap=accessSnap.val()||{};
+    const couponByUid={};
+    Object.entries(couponsSnap.val()||{}).forEach(([key,c])=>{
+      if(!c||c.active!==true||c.disabled===true)return;
+      const owner=String(c.adminUid||c.uid||"");
+      const code=String(c.code||c.couponCode||key).trim().toUpperCase();
+      if(owner&&code)couponByUid[owner]=code;
+    });
+    const ownCoupons=ownCouponsSnap.val()||{};
+    Object.entries(ownCoupons).forEach(([uid,c])=>{
+      const code=String(c?.couponCode||c?.code||"").trim().toUpperCase();
+      if(code&&!couponByUid[uid])couponByUid[uid]=code;
+    });
     const rankingRows=await buildAdminRankingRows();
     const rankingByUid=Object.fromEntries(rankingRows.map(x=>[x.uid,x]));
     const profiles=profilesSnap.val()||{};
@@ -6505,7 +6557,9 @@ async function loadAdminCertificates(){
         uid,profile:p,serial:i+1,adminNo:"2207"+String(i+1).padStart(4,"0"),
         profileCreatedAt,serviceDays,tier,uploads:s.uploads,
         rank:ranking?.rank||null,rankScore:ranking?.rankScore||0,
-        eligible:tier>0
+        eligible:tier>0,
+        active:(uid===MASTER_ADMIN_UID)||((adminFlags[uid]===true)||(adminFlags[uid]&&typeof adminFlags[uid]==="object"&&adminFlags[uid].active!==false&&adminFlags[uid].enabled!==false&&adminFlags[uid].disabled!==true&&String(adminFlags[uid].status||"active").toLowerCase()!=="deactivated"))&&String((accessMap[uid]||{}).status||"active").toLowerCase()!=="deactivated"&&p.accountStatus!=="deactivated"&&p.adminDisabled!==true&&p.active!==false,
+        couponCode:(p.couponDisabled===true?"":(couponByUid[uid]||String(p.couponCode||"").trim().toUpperCase()))
       };
     });
     adminCertificateRecords=records;
@@ -6524,7 +6578,13 @@ async function loadAdminCertificates(){
       return;
     }
 
-    list.innerHTML=records.map((r,index)=>{
+    const filteredRecords=records.filter(r=>adminDirectoryFilter==="all"||(adminDirectoryFilter==="active"?r.active:!r.active));
+    if(!filteredRecords.length){
+      list.innerHTML=`<div class="admin-cert-empty"><i class="fa-solid fa-users-slash"></i><br>No ${adminDirectoryFilter==="active"?"active":"inactive"} admins found.</div>`;
+      bindAdminDirectoryFilters();
+      return;
+    }
+    list.innerHTML=filteredRecords.map((r,index)=>{
       const p=r.profile||{};
       const name=p.name||"Admin";
       const role=getAutoAdminDesignation(r.uid);
@@ -6532,7 +6592,7 @@ async function loadAdminCertificates(){
       const serviceLabel=r.tier?`${r.tier} Year certificate ready`:`${r.serviceDays} days service`;
       const statusClass=r.tier?" ready":" locked";
       const created=formatAdminDate(r.profileCreatedAt);
-      return `<article class="admin-cert-row" data-admin-cert-card="${index}" role="button" tabindex="0" title="Open ${escapeHTML(name)} certificate card">
+      return `<article class="admin-cert-row" data-admin-cert-card="${escapeHTML(r.uid)}" role="button" tabindex="0" title="Open ${escapeHTML(name)} certificate card">
         <div class="admin-cert-row-avatar-wrap">
           <img class="admin-cert-avatar" src="${escapeHTML(photo)}" onerror="this.src='${DEFAULT_PROFILE_IMAGE}'" alt="">
         </div>
@@ -6540,18 +6600,23 @@ async function loadAdminCertificates(){
           <div class="admin-cert-row-name"><strong>${escapeHTML(name)}</strong>${r.tier?'<i class="fa-solid fa-certificate" title="Certificate ready"></i>':''}</div>
           <span class="admin-cert-row-role">${escapeHTML(role)}</span>
           <div class="admin-cert-row-meta"><span>${escapeHTML(serviceLabel)}</span><span>Created ${escapeHTML(created)}</span></div>
+          <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;background:${r.active?'#dcfce7':'#fee2e2'};color:${r.active?'#166534':'#991b1b'}">${r.active?'ACTIVE':'INACTIVE / DEACTIVATED'}</span>
+            ${r.active&&r.couponCode?`<span style="font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;background:#dbeafe;color:#1d4ed8">COUPON: ${escapeHTML(r.couponCode)}</span>`:(r.active?'<span style="font-size:10px;color:#64748b">Coupon not assigned</span>':'')}
+          </div>
         </div>
         <div class="admin-cert-row-stats">
           <div><small>Service</small><b>${r.serviceDays}</b><em>days</em></div>
           <div><small>Rank</small><b>${r.rank?("#"+r.rank):"—"}</b></div>
         </div>
         <div class="admin-cert-row-arrow"><i class="fa-solid fa-chevron-right"></i></div>
-        <button type="button" class="admin-cert-delete-btn" data-delete-admin-uid="${escapeHTML(r.uid)}" title="Deactivate admin and delete associated records" style="position:absolute;right:46px;bottom:14px;border:0;border-radius:8px;padding:7px 9px;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:800;cursor:pointer;z-index:2"><i class="fa-solid fa-user-slash"></i> Deactivate &amp; Delete</button>
+        <button type="button" class="admin-cert-delete-btn" data-delete-admin-uid="${escapeHTML(r.uid)}" title="Permanently remove admin profile and associated records" style="position:absolute;right:46px;bottom:14px;border:0;border-radius:8px;padding:7px 9px;background:#fee2e2;color:#b91c1b;font-size:11px;font-weight:800;cursor:pointer;z-index:2"><i class="fa-solid fa-trash"></i> Delete Admin</button>
       </article>`;
     }).join("");
 
+    bindAdminDirectoryFilters();
     list.querySelectorAll("[data-admin-cert-card]").forEach(card=>{
-      const open=()=>{const r=adminCertificateRecords[Number(card.dataset.adminCertCard)];if(r)openAdminCertificatePreview(r);};
+      const open=()=>{const r=adminCertificateRecords.find(x=>x.uid===card.dataset.adminCertCard);if(r)openAdminCertificatePreview(r);};
       card.addEventListener("click",e=>{if(e.target.closest("[data-delete-admin-uid]"))return;open();});
       card.addEventListener("keydown",e=>{if(e.key==='Enter'||e.key===' '){if(e.target.closest("[data-delete-admin-uid]"))return;e.preventDefault();open();}});
     });
@@ -6581,13 +6646,15 @@ Firebase Authentication login account Free Plan पर browser से delete न
         // Writing adminAccess/<email> caused invalid-path errors for emails
         // containing dots, even when @ was URL-encoded.
         await set(ref(db,`adminAccess/${uid}`),accessRecord);
-        // Remove admin privilege flag and mark public team profiles inactive.
-        await Promise.all([
-          remove(ref(db,`admins/${uid}`)),
-          update(ref(db,`teamProfiles/${uid}`),{status:'deactivated',active:false,enabled:false,deactivatedAt:now,updatedAt:now}).catch(()=>{}),
-          update(ref(db,`publicTeamProfiles/${uid}`),{status:'deactivated',active:false,enabled:false,deactivatedAt:now,updatedAt:now}).catch(()=>{})
-        ]);
-        const paths=[`adminProfiles/${uid}`,`adminActivity/${uid}`,`certificateProfiles/${uid}`];
+        // Remove the admin from every directory/ranking/profile source.
+        // Keep only the UID-keyed adminAccess tombstone so old Firebase Auth
+        // sessions cannot regain admin write access after their profile is removed.
+        const paths=[
+          `admins/${uid}`,`adminProfiles/${uid}`,`adminActivity/${uid}`,
+          `teamProfiles/${uid}`,`publicTeamProfiles/${uid}`,
+          `certificateProfiles/${uid}`,`profileRatings/${uid}`,
+          `users/${uid}`,`adminCoupons/${uid}`,`couponUsage/${uid}`
+        ];
         // Gather this admin's coupon codes before deleting profile records.
         const couponCodes=new Set();
         try{
@@ -6643,7 +6710,12 @@ Firebase Authentication login account Free Plan पर browser से delete न
           });
           await Promise.all(deletions);
         }
-        alert(` ${name} का Admin access deactivate कर दिया गया है और संबंधित records/coupons हटा दिए गए हैं। UID-keyed adminAccess record ही रखा गया है ताकि Firebase Rules status=deactivated देखकर उसके writes रोक सकें। Firebase Authentication login account Free Plan पर यहाँ से delete नहीं हो सकता; उसे Firebase Console → Authentication → Users से अलग delete करें।`);
+        // Remove all admin profile/rank identity nodes after collecting coupon ownership.
+        // Preserve only adminAccess/<uid> as a security tombstone for Rules.
+        await Promise.all(paths.map(path=>remove(ref(db,path))));
+        adminDirectoryCache=null;adminDirectoryCacheAt=0;
+        try{renderAdminRanking();}catch(_){}
+        alert(`${name} की Admin profile, team/public profile, rank rating, activity, coupons और संबंधित profile records Firebase Realtime Database से हटा दिए गए हैं। केवल adminAccess/${uid} security tombstone रखा गया है ताकि पुराने login session से Admin access वापस न मिले। Firebase Authentication का login user browser से सुरक्षित रूप से delete नहीं किया जा सकता; उसे Firebase Console → Authentication → Users या privileged Admin SDK/Cloud Function से अलग हटाना होगा।`);
         await loadAdminCertificates();
       }catch(err){
         console.error("Founder admin delete failed",err);
@@ -7450,7 +7522,7 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
   <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h2 style="margin:0;color:#172554">Branch & Semester Subject Master</h2><p style="margin:6px 0 0;color:#64748b;font-size:13px">Add each branch once and save its subjects semester-wise. Upload forms will use this master list automatically.</p></div><button id="deBranchMasterClose" type="button" style="border:0;background:#eff6ff;color:#1d4ed8;border-radius:10px;padding:10px 13px;font-weight:800">Close ✕</button></div>
   <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin:18px 0"><input id="deNewBranchName" placeholder="Branch name (e.g. Civil Engineering)" style="padding:12px;border:1px solid #cbd5e1;border-radius:10px"><button id="deAddBranch" type="button" style="border:0;border-radius:10px;padding:12px 17px;background:#2563eb;color:white;font-weight:800">+ Add Branch</button></div>
   <div id="deBranchEditorList" style="display:grid;gap:14px"></div>
-  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap"><button id="deBranchImportExisting" type="button" style="border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:10px;padding:11px 14px;font-weight:800">Import Existing Subjects</button><button id="deBranchSaveAll" type="button" style="border:0;background:#16a34a;color:#fff;border-radius:10px;padding:11px 18px;font-weight:850">Save Branch & Subjects</button></div><div id="deBranchMasterStatus" style="margin-top:12px;font-size:13px;color:#2563eb"></div>
+  <div style="margin-top:12px;padding:11px 13px;background:#eff6ff;border-radius:10px;color:#1e40af;font-size:12px">Step 1: Add and save a branch folder. Step 2: Open that folder, add subjects semester-wise, and press <b>Save Subjects</b>. Existing uploads remain unchanged.</div><div id="deBranchMasterStatus" style="margin-top:12px;font-size:13px;color:#2563eb"></div>
  </section>
 </div>
 <style>@media(max-width:650px){#deBranchMasterModal{padding:7px!important}#deBranchMasterModal section{padding:14px!important;margin:8px auto!important}#deBranchMasterModal .de-sem-grid{grid-template-columns:1fr!important}}</style>
@@ -8669,25 +8741,120 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
  function firstUserValue(obj,keys,fallback="-"){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v;}return fallback;}
  function userDate(v){if(!v)return "-";let n=typeof v==="number"?v:Date.parse(v);if(!Number.isFinite(n))return String(v);if(n<1e12)n*=1000;return new Date(n).toLocaleString();}
  async function loadYourCodeUsers(){
-  const page=ensureYourUsersPage(),list=$("deYourCodeUsersList"),count=$("deYourCodeUsersCount");page.style.display="block";
-  const code=String(own.code||"").trim().toUpperCase();$("deYourCodeUsersCode").textContent=code||"Not assigned";
+  const page=ensureYourUsersPage(),list=$("deYourCodeUsersList"),count=$("deYourCodeUsersCount");
+  page.style.display="block";
+  const code=String(own.code||"").trim().toUpperCase();
+  $("deYourCodeUsersCode").textContent=code||"Not assigned";
   if(!code){count.textContent="Founder ने अभी आपका Coupon Code assign नहीं किया है।";list.innerHTML="";return;}
   list.innerHTML='<div style="padding:20px;background:#fff;border-radius:14px;color:#64748b">Loading student list…</div>';
+
   try{
-   const purchaseDb=window.studentDb,purchaseAuth=window.studentAuth,purchaseFirebase=window.__couponFirebase||window.__adminFirebaseMain;
-   if(!purchaseDb||!purchaseAuth?.currentUser)throw new Error("Student purchase database login उपलब्ध नहीं है।");
-   if(!purchaseFirebase?.get||!purchaseFirebase?.ref)throw new Error("Firebase reader initialize नहीं हुआ। कृपया पेज refresh करके दोबारा कोशिश करें।");
-   const snap=await purchaseFirebase.get(purchaseFirebase.ref(purchaseDb,"utrPurchases")),root=snap.exists()?snap.val()||{}:{};const rows=[];
-   Object.entries(root).forEach(([key,val])=>{if(!val||typeof val!=="object")return;if(typeof val.uid==="string"&&(val.courseId||val.purchaseId||val.utr)){rows.push({...val,_key:key});return;}Object.entries(val).forEach(([courseId,courseVal])=>{if(!courseVal||typeof courseVal!=="object")return;Object.entries(courseVal).forEach(([purchaseKey,d])=>{if(d&&typeof d==="object")rows.push({...d,courseId:d.courseId||courseId,_key:purchaseKey});});});});
-   const uses=rows.filter(r=>String(r.couponCode||r.usedCouponCode||r.appliedCouponCode||(typeof r.coupon==="object"?r.coupon?.code:r.coupon)||"").trim().toUpperCase()===code).sort((a,b)=>(Number(b.submittedAt||b.createdAt||b.timestamp)||0)-(Number(a.submittedAt||a.createdAt||a.timestamp)||0));
-   const reward=uses.length*20;count.textContent=`${uses.length} coupon use${uses.length===1?"":"s"} found for ${code}`;$("deYourCodeUsersReward").textContent=`कुल रिवॉर्ड: ₹${reward}`;$("deYourCodeWithdrawAmount").textContent=`₹${reward}`;
+   const purchaseDb=window.studentDb;
+   const purchaseAuth=window.studentAuth;
+   const purchaseFirebase=window.__adminFirebaseMain||window.__couponFirebase;
+
+   if(!purchaseDb) throw new Error("Student purchase database initialize नहीं हुआ।");
+   if(!purchaseAuth?.currentUser) throw new Error("Student Purchase Firebase में login नहीं है। Logout करके दोबारा login करें।");
+   if(!purchaseFirebase?.get||!purchaseFirebase?.ref) throw new Error("Firebase reader initialize नहीं हुआ। Page refresh करके दोबारा कोशिश करें।");
+
+   const secondaryUser=purchaseAuth.currentUser;
+   const secondaryUid=String(secondaryUser.uid||"");
+   const secondaryEmail=String(secondaryUser.email||"").toLowerCase();
+
+   // Check the current secondary-project UID's explicit admin grant before reading
+   // the collection. The admin's main-project UID is NOT interchangeable with this UID.
+   let adminGrant=null,accessGrant=null;
+   try{
+    const a=await purchaseFirebase.get(purchaseFirebase.ref(purchaseDb,"admins/"+secondaryUid));
+    adminGrant=a.exists()?a.val():null;
+   }catch(_){}
+   try{
+    const a=await purchaseFirebase.get(purchaseFirebase.ref(purchaseDb,"adminAccess/"+secondaryUid));
+    accessGrant=a.exists()?a.val():null;
+   }catch(_){}
+
+   const activeByAdmins=adminGrant===true || adminGrant?.active===true;
+   const activeByAccess=!!(accessGrant && accessGrant.enabled===true && accessGrant.status!=="deactivated" && accessGrant.disabled!==true);
+   const isPurchaseFounder=secondaryUid==="KirLkZUGXoZf0cXHkuCZ4Mfnxam2" || secondaryEmail==="astar22072006@gmail.com";
+
+   let snap;
+   try{
+    snap=await purchaseFirebase.get(purchaseFirebase.ref(purchaseDb,"utrPurchases"));
+   }catch(readError){
+    if(readError?.code==="PERMISSION_DENIED" || String(readError?.message||"").toLowerCase().includes("permission")){
+     const grantState=(isPurchaseFounder||activeByAdmins||activeByAccess)
+       ?"UID grant exists, but published /utrPurchases rules are not allowing the read."
+       :"This Admin का Student Purchase Firebase UID अभी authorize नहीं है.";
+     throw new Error(
+      "PERMISSION_DENIED — "+grantState+
+      "\nStudent Firebase UID: "+secondaryUid+
+      "\nEmail: "+(secondaryEmail||"not available")+
+      "\n\nFirebase Console → diploma-app-9a378 → Realtime Database → Data में /admins/"+secondaryUid+" को true करें; या /adminAccess/"+secondaryUid+" में {\"uid\":\""+secondaryUid+"\",\"email\":\""+secondaryEmail+"\",\"enabled\":true,\"status\":\"active\",\"role\":\"admin\"} Founder द्वारा add करें। फिर नीचे दिए Rules publish करें और Refresh करें।"
+     );
+    }
+    throw readError;
+   }
+
+   const root=snap.exists()?snap.val()||{}:{};
+   const rows=[];
+   Object.entries(root).forEach(([key,val])=>{
+    if(!val||typeof val!=="object")return;
+    // Flat layout: /utrPurchases/{purchaseId}
+    if(typeof val.uid==="string"&&(val.courseId||val.purchaseId||val.utr)){
+     rows.push({...val,_key:key,_layout:"flat"});
+     return;
+    }
+    // Legacy nested layout: /utrPurchases/{uid}/{courseId}/{purchaseId}
+    Object.entries(val).forEach(([courseId,courseVal])=>{
+     if(!courseVal||typeof courseVal!=="object")return;
+     Object.entries(courseVal).forEach(([purchaseKey,d])=>{
+      if(d&&typeof d==="object")rows.push({...d,uid:d.uid||key,courseId:d.courseId||courseId,_key:purchaseKey,_layout:"nested"});
+     });
+    });
+   });
+
+   const couponOf=r=>String(
+    r.couponCode||r.usedCouponCode||r.appliedCouponCode||
+    (typeof r.coupon==="object"?(r.coupon.code||r.coupon.couponCode):r.coupon)||
+    r.coupon_code||r.discountCouponCode||""
+   ).trim().toUpperCase();
+
+   const uses=rows.filter(r=>couponOf(r)===code)
+    .sort((a,b)=>(Number(b.submittedAt||b.createdAt||b.timestamp||b.approvedAt)||0)-(Number(a.submittedAt||a.createdAt||a.timestamp||a.approvedAt)||0));
+
+   const reward=uses.length*20;
+   count.textContent=`${uses.length} coupon use${uses.length===1?"":"s"} found for ${code}`;
+   $("deYourCodeUsersReward").textContent=`कुल रिवॉर्ड: ₹${reward}`;
+   $("deYourCodeWithdrawAmount").textContent=`₹${reward}`;
+
    list.innerHTML=uses.length?uses.map((r,i)=>{
-    const name=firstUserValue(r,["name","fullName","studentName","displayName"],"Student"),branch=firstUserValue(r,["branch","courseBranch","studentBranch"]),mobile=firstUserValue(r,["mobile","mobileNumber","phone","phoneNumber"]),email=firstUserValue(r,["email","studentEmail"]),course=firstUserValue(r,["courseName","courseTitle","courseId","batchName"]),photo=firstUserValue(r,["profilePhoto","profilePhotoURL","photoURL","photoUrl","avatar","imageUrl","profileImage"],""),original=firstUserValue(r,["originalPrice","courseOriginalPrice","mrp","listPrice","priceBeforeDiscount"],"-"),paid=firstUserValue(r,["paidAmount","amountPaid","finalAmount","discountedPrice","amount","totalAmount"],"-"),discount=firstUserValue(r,["discountAmount","couponDiscount","discount"],"-"),status=firstUserValue(r,["paymentStatus","status"],"pending"),date=firstUserValue(r,["approvedAt","purchaseDate","submittedAt","createdAt","timestamp"],"");
-    const originalText=original==="-"?"-":String(original).startsWith("₹")?original:"₹"+original,paidText=paid==="-"?"-":String(paid).startsWith("₹")?paid:"₹"+paid,photoHtml=photo&&/^https?:|^data:image\//i.test(String(photo))?`<img src="${escUser(photo)}" alt="${escUser(name)} profile photo" loading="lazy" style="width:52px;height:52px;object-fit:cover;border-radius:50%;border:2px solid #dbeafe" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`:"";
+    const name=firstUserValue(r,["name","fullName","studentName","displayName"],"Student"),
+     branch=firstUserValue(r,["branch","courseBranch","studentBranch"]),
+     mobile=firstUserValue(r,["mobile","mobileNumber","phone","phoneNumber"]),
+     email=firstUserValue(r,["email","studentEmail"]),
+     course=firstUserValue(r,["courseName","courseTitle","courseId","batchName"]),
+     photo=firstUserValue(r,["profilePhoto","profilePhotoURL","photoURL","photoUrl","avatar","imageUrl","profileImage"],""),
+     original=firstUserValue(r,["originalPrice","courseOriginalPrice","mrp","listPrice","priceBeforeDiscount"],"-"),
+     paid=firstUserValue(r,["paidAmount","amountPaid","finalAmount","discountedPrice","amount","totalAmount"],"-"),
+     discount=firstUserValue(r,["discountAmount","couponDiscount","discount"],"-"),
+     status=firstUserValue(r,["paymentStatus","status"],"pending"),
+     date=firstUserValue(r,["approvedAt","purchaseDate","submittedAt","createdAt","timestamp"],"");
+    const originalText=original==="-"?"-":String(original).startsWith("₹")?original:"₹"+original,
+     paidText=paid==="-"?"-":String(paid).startsWith("₹")?paid:"₹"+paid,
+     photoHtml=photo&&/^https?:|^data:image\//i.test(String(photo))?`<img src="${escUser(photo)}" alt="${escUser(name)} profile photo" loading="lazy" style="width:52px;height:52px;object-fit:cover;border-radius:50%;border:2px solid #dbeafe" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`:"";
     return `<article style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 5px 18px #0f172a08;min-width:0"><button type="button" class="deCouponStudentToggle" aria-expanded="false" data-user-index="${i}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;color:inherit"><span style="position:relative;width:52px;height:52px;flex:none">${photoHtml}<span style="${photoHtml?"display:none;":"display:grid;"}width:52px;height:52px;border-radius:50%;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:900">${escUser(String(name).trim().charAt(0).toUpperCase()||"S")}</span></span><span style="flex:1;min-width:0"><b style="display:block;color:#0f172a;overflow-wrap:anywhere">${escUser(name)}</b><small style="display:block;color:#64748b">${escUser(branch)}</small><small style="display:block;color:#2563eb;margin-top:3px">Tap to view full details</small></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><div class="deCouponStudentDetails" hidden style="border-top:1px solid #e2e8f0;margin-top:13px;padding-top:12px"><div style="display:grid;gap:8px;font-size:13px;color:#334155"><div><b>Name:</b> ${escUser(name)}</div><div><b>Mobile:</b> ${escUser(mobile)}</div><div><b>Email:</b> ${escUser(email)}</div><div><b>Branch:</b> ${escUser(branch)}</div><div><b>Course / Batch:</b> ${escUser(course)}</div><div><b>Original Price:</b> ${escUser(originalText)}</div><div><b>Coupon Code:</b> ${escUser(code)}</div><div><b>Discount:</b> ${escUser(discount==="-"?"₹30 (coupon benefit)":discount)}</div><div><b>Paid After Coupon:</b> ${escUser(paidText)}</div><div><b>Payment Status:</b> ${escUser(status)}</div><div><b>Purchase Date:</b> ${escUser(userDate(date))}</div><div><b>Reward for this use:</b> ₹20</div></div></div></article>`;
    }).join(""):'<div style="grid-column:1/-1;padding:26px;text-align:center;background:#fff;border:1px dashed #cbd5e1;border-radius:16px;color:#64748b"><i class="fa-solid fa-users" style="font-size:26px;display:block;margin-bottom:10px"></i><b>अभी आपके कोड से कोई स्टूडेंट नहीं मिला।</b><div style="font-size:12px;margin-top:6px">यहाँ केवल वही purchase records दिखेंगे जिनमें आपका exact coupon code सेव है।</div></div>';
-   list.querySelectorAll(".deCouponStudentToggle").forEach(btn=>btn.addEventListener("click",()=>{const details=btn.parentElement.querySelector(".deCouponStudentDetails");const open=btn.getAttribute("aria-expanded")==="true";btn.setAttribute("aria-expanded",String(!open));details.hidden=open;const icon=btn.querySelector("i");if(icon)icon.className=open?"fa-solid fa-chevron-down":"fa-solid fa-chevron-up";}));
-  }catch(e){count.textContent="Student list load नहीं हो सकी";list.innerHTML=`<div style="grid-column:1/-1;padding:18px;background:#fef2f2;color:#b91c1c;border-radius:14px">${escUser(e.message||e)}<p style="font-size:12px;color:#64748b">Firebase rules में /utrPurchases read permission और student database authentication की जाँच करें।</p></div>`;}
+
+   list.querySelectorAll(".deCouponStudentToggle").forEach(btn=>btn.addEventListener("click",()=>{
+    const details=btn.parentElement.querySelector(".deCouponStudentDetails");
+    const open=btn.getAttribute("aria-expanded")==="true";
+    btn.setAttribute("aria-expanded",String(!open));details.hidden=open;
+    const icon=btn.querySelector("i");if(icon)icon.className=open?"fa-solid fa-chevron-down":"fa-solid fa-chevron-up";
+   }));
+  }catch(e){
+   count.textContent="Student list load नहीं हो सकी";
+   list.innerHTML=`<div style="grid-column:1/-1;padding:18px;background:#fef2f2;color:#b91c1c;border-radius:14px;white-space:pre-wrap">${escUser(e.message||e)}<p style="font-size:12px;color:#64748b">यह पेज diploma-app-9a378 के Student Purchase Firebase से डेटा पढ़ता है। Main Firebase UID और Student Purchase Firebase UID अलग हो सकते हैं।</p></div>`;
+  }
  }
  function showCard(){ensureModal();$('deCouponModalCode').textContent=own.code;$('deCouponModalMessage').innerHTML='<b style="font-size:16px;color:#1d4ed8">🎓 Diploma Engineers पर पढ़ाई अब और किफायती!</b><br><br>अपने डिप्लोमा कोर्स की तैयारी करें <b>Notes, वीडियो लेक्चर और स्टडी मटेरियल</b> के साथ।<br><br>🎁 इस कूपन कोड से Diploma Engineers पर Courses Batches खरीदने पर पाएँ <b style="color:#15803d">20% की छूट</b>।<br><br>📲 <b>अभी ऐप डाउनलोड करें</b>, कूपन कोड इस्तेमाल करें और अपना कोर्स कम कीमत में खरीदें। कम खर्च में बेहतर तैयारी करें और अपनी पढ़ाई को नई उड़ान दें! 🚀<br><br><a href="'+DOWNLOAD+'" target="_blank" rel="noopener" style="color:#2563eb;font-weight:800">ऐप डाउनलोड करें</a><br><span style="font-size:12px;color:#64748b">20% छूट Courses Batches पर लागू होगी जहाँ यह कूपन स्वीकार किया जाता है।</span>';$('deCouponWhatsApp').href='https://wa.me/?text='+encodeURIComponent(message());$('deCouponTelegram').href='https://t.me/share/url?url='+encodeURIComponent(DOWNLOAD)+'&text='+encodeURIComponent(message());$('deCouponShareModal').classList.add('show');}
  async function copyText(text,button,success){try{await navigator.clipboard.writeText(text);if(button){const old=button.innerHTML;button.innerHTML='<i class="fa-solid fa-check"></i> '+success;setTimeout(()=>{if(button.isConnected)button.innerHTML=old},1800);}}catch(e){window.prompt('कॉपी करने के लिए टेक्स्ट चुनें:',text);}}
@@ -9444,7 +9611,7 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
 (async function(){
  'use strict';
  // Reuse the default Firebase app directly; no window bridge or timing race.
- const PATH='branchSubjectMaster'; let master={}; const $=id=>document.getElementById(id);
+ const PATH='branchSubjectMaster/newCatalog'; let master={}; const $=id=>document.getElementById(id);
  let app, auth, db;
  try { app=getApp(); auth=getAuth(app); db=getDatabase(app); }
  catch(initError) { console.error('Branch Subject Master Firebase init failed:',initError); const st=$('deBranchMasterStatus'); if(st)st.textContent='Firebase initialization failed: '+(initError?.message||initError)+'. Check the main Firebase configuration and reload.'; return; }
@@ -9452,13 +9619,38 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
  const semNames=['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester'];
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function normBranch(v){const raw=String(v||'').trim();const k=raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();const aliases={'agricultural':'Agricultural Engineering','agriculture':'Agricultural Engineering','agri':'Agricultural Engineering','civil':'Civil Engineering','electrical':'Electrical Engineering','electronics':'Electronics Engineering','mechanical':'Mechanical Engineering','computer science':'Computer Science Engineering','computer':'Computer Science Engineering','cs':'Computer Science Engineering','cse':'Computer Science Engineering','information technology':'Information Technology','it':'Information Technology'};return aliases[k]||raw;}
- function orderedEntries(){return Object.entries(master).filter(([k])=>k!=='common').sort((a,b)=>(Number(b[1]?.order)||0)-(Number(a[1]?.order)||0));}
- function render(){const box=$('deBranchEditorList');if(!box)return;const entries=[['common',master.common||{name:'Common — All Branches',semesters:{}}],...orderedEntries()];box.innerHTML=entries.map(([key,b])=>{const isCommon=key==='common';return `<article data-branch-key="${esc(key)}" style="border:1px solid ${isCommon?'#a7f3d0':'#dbeafe'};border-radius:15px;padding:14px;background:${isCommon?'#f0fdf4':'#fff'}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b style="color:${isCommon?'#047857':'#1d4ed8'}">${esc(isCommon?'Common — All Branches':(b.name||key))}</b>${isCommon?'<div style="font-size:11px;color:#64748b;margin-top:3px">Subjects added here will automatically appear in the same semester for every branch.</div>':''}</div>${isCommon?'':'<button type="button" data-remove-branch="'+esc(key)+'" style="border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:7px 10px;font-weight:800">Delete Branch</button>'}</div><div class="de-sem-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px">${semNames.map((n,i)=>{if(isCommon&&i>1)return '';return `<label style="font-size:12px;font-weight:800;color:#334155">${n}<textarea data-sem="${i+1}" style="display:block;width:100%;box-sizing:border-box;min-height:78px;margin-top:5px;padding:9px;border:1px solid #cbd5e1;border-radius:9px;font:12px Arial" placeholder="One subject per line">${esc((b.semesters&&b.semesters[i+1]||[]).join('\\n'))}</textarea></label>`;}).join('')}</div></article>`;}).join('');}
- function addBranch(name){name=normBranch(name);if(!name||name.toLowerCase()==='common')return;const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!master[key])master[key]={name,order:Date.now(),semesters:{}};}
- function readEditor(){document.querySelectorAll('[data-branch-key]').forEach(card=>{const key=card.dataset.branchKey;if(!master[key])return;master[key].semesters={};card.querySelectorAll('textarea[data-sem]').forEach(t=>{master[key].semesters[t.dataset.sem]=[...new Set(t.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean))];});});}
- async function load(){const status=$('deBranchMasterStatus');try{if(!get||!ref||!db)throw new Error('Firebase connection is not initialized. Reload the Admin Panel.');if(status)status.textContent='Loading saved branches…';const snap=await get(ref(db,PATH));master=snap.exists()?(snap.val()||{}):{};if(!master.common)master.common={name:'Common — All Branches',semesters:{}};Object.entries(master).forEach(([k,b])=>{if(k!=='common'&&b&&typeof b==='object'&&!Number(b.order))b.order=0;});render();populateAll();if(status)status.textContent=snap.exists()?'Saved branches loaded.':'No branch master found yet. Add branches and press Save.';await importExisting(true);}catch(e){if(!master.common)master.common={name:'Common — All Branches',semesters:{}};render();populateAll();if(status)status.textContent='Load failed: '+(e?.message||e)+' — check branchSubjectMaster rules in diplomaengineers-869df.';console.error('Branch master load failed:',e);}}
+ function orderedEntries(){return Object.entries(master).filter(([k])=>k!=='common' && master[k] && typeof master[k]==='object').sort((a,b)=>(Number(b[1]?.order)||0)-(Number(a[1]?.order)||0));}
+ function render(){
+  const box=$('deBranchEditorList');if(!box)return;const entries=orderedEntries();
+  if(!entries.length){box.innerHTML='<div style="padding:22px;text-align:center;border:1px dashed #cbd5e1;border-radius:14px;color:#64748b">No branch folders yet. Add a branch above to get started.</div>';return;}
+  box.innerHTML=entries.map(([key,b])=>`<article data-branch-key="${esc(key)}" style="border:1px solid #dbeafe;border-radius:15px;background:#fff;overflow:hidden">
+   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px">
+    <button type="button" data-open-branch="${esc(key)}" aria-expanded="false" style="display:flex;align-items:center;gap:11px;flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer;color:#172554">
+     <span style="width:42px;height:42px;flex:none;border-radius:12px;background:#eff6ff;color:#2563eb;display:grid;place-items:center"><i class="fa-solid fa-folder"></i></span>
+     <span style="min-width:0"><b style="display:block;font-size:14px">${esc(b.name||key)}</b><small style="display:block;color:#64748b;font-size:11px;margin-top:3px">Branch folder · ${Object.values(b.semesters||{}).flat().length} subjects</small></span>
+     <i class="fa-solid fa-chevron-down" data-branch-chevron style="margin-left:auto;color:#64748b"></i>
+    </button>
+    <button type="button" data-remove-branch="${esc(key)}" title="Delete branch folder" style="border:0;background:#fee2e2;color:#b91c1c;border-radius:9px;padding:8px 10px;font-weight:800">Delete</button>
+   </div>
+   <div data-branch-editor hidden style="border-top:1px solid #e5edf8;padding:14px;background:#f8fbff">
+    <p style="margin:0 0 12px;color:#64748b;font-size:12px">Add or edit subjects semester-wise. Only subjects saved in this branch folder will appear in upload dropdowns.</p>
+    <div class="de-sem-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+     ${semNames.map((n,i)=>`<label style="font-size:12px;font-weight:800;color:#334155">${n}<textarea data-sem="${i+1}" style="display:block;width:100%;box-sizing:border-box;min-height:82px;margin-top:5px;padding:9px;border:1px solid #cbd5e1;border-radius:9px;font:12px Arial;background:#fff" placeholder="One subject per line">${esc((b.semesters&&b.semesters[i+1]||[]).join('\n'))}</textarea></label>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:13px"><button type="button" data-cancel-branch-edit style="border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:9px;padding:9px 13px;font-weight:800">Close</button><button type="button" data-save-branch="${esc(key)}" style="border:0;background:#16a34a;color:#fff;border-radius:9px;padding:9px 15px;font-weight:850">Save Subjects</button></div>
+   </div>
+  </article>`).join('');
+ }
+ function addBranch(name){name=normBranch(name);if(!name||name.toLowerCase()==='common')return '';const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!master[key])master[key]={name,order:Date.now(),semesters:{}};return key;}
+ async function load(){
+  const status=$('deBranchMasterStatus');
+  try{if(!get||!ref||!set||!db)throw new Error('Firebase connection is not initialized. Reload the Admin Panel.');
+   if(status)status.textContent='Loading branch folders…';const snap=await get(ref(db,PATH));master=snap.exists()?(snap.val()||{}):{};
+   render();populateAll();if(status)status.textContent=snap.exists()?'Saved branch folders loaded. Open a folder to edit its semester subjects.':'No branch folders yet. Add a branch name and save it.';
+  }catch(e){render();populateAll();if(status)status.textContent='Load failed: '+(e?.message||e)+' — check branchSubjectMaster rules in diplomaengineers-869df.';console.error('Branch master load failed:',e);}
+ }
  function branches(){return orderedEntries().map(([,x])=>x.name).filter(Boolean);}
- function subjectList(branch,sem){const semester=String(sem||'').match(/[1-6]/)?.[0]||String(sem);const common=(semester==='1'||semester==='2')?(master.common?.semesters?.[semester]||[]):[];const b=Object.values(master).find(x=>x.name===branch);return [...new Set([...common,...(b?.semesters?.[semester]||[])])];}
+ function subjectList(branch,sem){const semester=String(sem||'').match(/[1-6]/)?.[0]||String(sem);const b=Object.values(master).find(x=>x&&x.name===branch);return [...new Set((b?.semesters?.[semester]||[]).map(x=>String(x).trim()).filter(Boolean))];}
  function fillSelect(el,opts,placeholder,keep=true){if(!el)return;const old=el.value;el.innerHTML=`<option value="">${esc(placeholder)}</option>`+opts.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(keep&&opts.includes(old))el.value=old;}
  function populateAll(){
   const branchFields=['iqBranch','tsBranch','courseCategory','hnuBranch'];
@@ -9469,16 +9661,38 @@ import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/1
  }
  async function addMasterSubject(branch,sem,name){branch=String(branch||'').trim();const sm=String(sem||'').match(/[1-6]/)?.[0];name=String(name||'').trim();if(!branch||!sm||!name)return false;const key=branch.toLowerCase()==='common'?'common':Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch);if(!key&&branch.toLowerCase()!=='common')addBranch(branch);const targetKey=branch.toLowerCase()==='common'?'common':(Object.keys(master).find(k=>k!=='common'&&master[k]?.name===branch));const target=master[targetKey];target.semesters=target.semesters||{};target.semesters[sm]=target.semesters[sm]||[];if(!target.semesters[sm].some(x=>String(x).toLowerCase()===name.toLowerCase()))target.semesters[sm].push(name);await set(ref(db,PATH),master);render();populateAll();return true;}
  window.__deAddMasterSubject=addMasterSubject;window.__deGetMasterSubjects=subjectList;
- function updateSubjectControl(branchId,semId,subjectId){const branch=$(branchId),sem=$(semId),subject=$(subjectId);if(!branch||!sem||!subject)return;const update=()=>{const list=subjectList(branch.value,sem.value);const old=subject.value;subject.innerHTML='<option value="">'+(branch.value&&sem.value?'Select Subject':'Select Branch & Semester first')+'</option>'+list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')+'<option value="__other__">＋ Other — Add New Subject</option>';if(list.includes(old))subject.value=old;};branch.addEventListener('change',update);sem.addEventListener('change',update);subject.addEventListener('change',async()=>{if(subject.value!=='__other__')return;const name=prompt('Enter new subject name:');if(name&&name.trim()){try{await addMasterSubject(branch.value,sem.value,name);update();subject.value=name.trim();}catch(e){alert('Subject save failed: '+(e.message||e));}}else update();});update();}
- function renderCourseSubjectChoices(selectedBySemester={}){const box=$('courseSubjectChoices');if(!box)return;const branch=$('courseCategory')?.value||'';const selected=[...document.querySelectorAll('input[name="courseSemesterChoice"]:checked')].map(x=>x.value);const previous=new Set([...box.querySelectorAll('input[data-course-subject]:checked')].map(x=>x.dataset.subject+'|'+x.dataset.semester));Object.entries(selectedBySemester||{}).forEach(([sem,arr])=>(arr||[]).forEach(sub=>previous.add(sub+'|'+sem)));if(!branch||!selected.length){box.innerHTML='<span style="color:#64748b;font-size:12px">Select a branch and at least one semester first.</span>';$('courseSubjects').value='';return;}let html='';selected.forEach(label=>{const sem=String(label).match(/[1-6]/)?.[0];const list=subjectList(branch,sem);html+=`<div style="grid-column:1/-1;font-weight:900;color:#1d4ed8;margin-top:7px">${esc(label)}</div>`;if(!list.length){html+=`<small style="color:#b45309">No subjects found yet.</small>`;}else html+=list.map(sub=>{const checked=previous.has(sub+'|'+label)||previous.has(sub+'|'+sem);return `<label style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;font-size:12px"><input type="checkbox" data-course-subject data-subject="${esc(sub)}" data-semester="${esc(label)}" ${checked?'checked':''} style="width:auto;margin:0">${esc(sub)}</label>`;}).join('');html+=`<button type="button" data-course-add-subject="${esc(sem)}" style="grid-column:1/-1;justify-self:start;border:1px dashed #2563eb;color:#1d4ed8;background:#eff6ff;border-radius:8px;padding:7px 11px;font-weight:800">＋ Other — Add New Subject</button>`;});box.innerHTML=html;syncCourseSubjectText();box.querySelectorAll('input[data-course-subject]').forEach(ch=>ch.addEventListener('change',syncCourseSubjectText));box.querySelectorAll('[data-course-add-subject]').forEach(btn=>btn.addEventListener('click',async()=>{const name=prompt('Enter new subject name:');if(!name||!name.trim())return;try{await addMasterSubject(branch,btn.dataset.courseAddSubject,name);renderCourseSubjectChoices();const match=[...box.querySelectorAll('input[data-course-subject]')].find(x=>x.dataset.subject===name.trim()&&x.dataset.semester===label);if(match){match.checked=true;syncCourseSubjectText();}}catch(e){alert('Subject save failed: '+(e.message||e));}}));}
+ function updateSubjectControl(branchId,semId,subjectId){const branch=$(branchId),sem=$(semId),subject=$(subjectId);if(!branch||!sem||!subject)return;const update=()=>{const list=subjectList(branch.value,sem.value);const old=subject.value;subject.innerHTML='<option value="">'+(branch.value&&sem.value?'Select Subject':'Select Branch & Semester first')+'</option>'+list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(list.includes(old))subject.value=old;};branch.addEventListener('change',update);sem.addEventListener('change',update);update();}
+
+ function renderCourseSubjectChoices(selectedBySemester={}){const box=$('courseSubjectChoices');if(!box)return;const branch=$('courseCategory')?.value||'';const selected=[...document.querySelectorAll('input[name="courseSemesterChoice"]:checked')].map(x=>x.value);const previous=new Set([...box.querySelectorAll('input[data-course-subject]:checked')].map(x=>x.dataset.subject+'|'+x.dataset.semester));Object.entries(selectedBySemester||{}).forEach(([sem,arr])=>(arr||[]).forEach(sub=>previous.add(sub+'|'+sem)));if(!branch||!selected.length){box.innerHTML='<span style="color:#64748b;font-size:12px">Select a branch and at least one semester first.</span>';$('courseSubjects').value='';return;}let html='';selected.forEach(label=>{const sem=String(label).match(/[1-6]/)?.[0];const list=subjectList(branch,sem);html+=`<div style="grid-column:1/-1;font-weight:900;color:#1d4ed8;margin-top:7px">${esc(label)}</div>`;if(!list.length){html+=`<small style="color:#b45309">No subjects found yet.</small>`;}else html+=list.map(sub=>{const checked=previous.has(sub+'|'+label)||previous.has(sub+'|'+sem);return `<label style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;font-size:12px"><input type="checkbox" data-course-subject data-subject="${esc(sub)}" data-semester="${esc(label)}" ${checked?'checked':''} style="width:auto;margin:0">${esc(sub)}</label>`;}).join('');});box.innerHTML=html;syncCourseSubjectText();box.querySelectorAll('input[data-course-subject]').forEach(ch=>ch.addEventListener('change',syncCourseSubjectText));}
  function syncCourseSubjectText(){const box=$('courseSubjectChoices'),ta=$('courseSubjects');if(!box||!ta)return;const map={};box.querySelectorAll('input[data-course-subject]:checked').forEach(ch=>{(map[ch.dataset.semester]??=[]).push(ch.dataset.subject);});ta.value=[...new Set(Object.values(map).flat())].join('\n');ta.dataset.subjectsBySemester=JSON.stringify(map);}
  window.__deRenderCourseSubjectChoices=renderCourseSubjectChoices;window.__deSyncCourseSubjectText=syncCourseSubjectText;
 
- async function importExisting(silent=false){const status=$('deBranchMasterStatus');if(status)status.textContent='Importing existing subjects from Important Questions, Test Series, Notes and Courses…';let added=0;try{const paths=['importantQuestions','testSeries','uploadedNotes','courseCatalog'];const snaps=await Promise.all(paths.map(path=>get(ref(db,path))));const addSubject=(branch,semester,subject)=>{const sm=String(semester||'').match(/[1-6]/)?.[0];const su=String(subject||'').trim();if(!sm||!su)return;if(!branch||String(branch).toLowerCase()==='common'){const c=master.common||(master.common={name:'Common — All Branches',semesters:{}});c.semesters=c.semesters||{};const a=c.semesters[sm]||(c.semesters[sm]=[]);if(!a.includes(su)){a.push(su);added++;}return;}if(String(branch).toLowerCase()==='other')return;addBranch(branch);const b=Object.values(master).find(x=>x.name===branch);b.semesters=b.semesters||{};const a=b.semesters[sm]||(b.semesters[sm]=[]);if(!a.includes(su)){a.push(su);added++;}};const ingest=(obj)=>Object.values(obj||{}).forEach(r=>{if(!r||typeof r!=='object')return;const br=normBranch(r.branch||r.category);addSubject(br,r.semester,r.subject);if(r.subjectsBySemester&&typeof r.subjectsBySemester==='object')Object.entries(r.subjectsBySemester).forEach(([sem,arr])=>(Array.isArray(arr)?arr:[]).forEach(sub=>addSubject(br,sem,sub)));if(Array.isArray(r.subjects)){const sems=Array.isArray(r.semesters)&&r.semesters.length?r.semesters:[r.semester||'1'];sems.forEach(sem=>r.subjects.forEach(sub=>addSubject(br,sem,sub)));}});snaps.forEach(x=>ingest(x.val()));render();populateAll();if(added){await set(ref(db,PATH),master);}if(status)status.textContent=`Imported ${added} previously missing subject(s) from existing Important Questions, Test Series, Notes and Course records. Existing uploads were not changed.`;}catch(e){if(status)status.textContent='Import failed: '+(e.message||e);if(!silent)console.warn(e);}}
- $('deAddBranch')?.addEventListener('click',()=>{addBranch($('deNewBranchName').value);$('deNewBranchName').value='';render();populateAll();});
- $('deBranchEditorList')?.addEventListener('click',e=>{const b=e.target.closest('[data-remove-branch]');if(!b)return;if(confirm('Delete this branch and its master subject list? Existing uploaded content will not be deleted.')){delete master[b.dataset.removeBranch];render();populateAll();}});
- $('deBranchSaveAll')?.addEventListener('click',async()=>{const status=$('deBranchMasterStatus'),btn=$('deBranchSaveAll');try{if(!get||!ref||!set||!db)throw new Error('Firebase connection is not initialized. Reload the Admin Panel.');readEditor();if(!Object.keys(master).some(k=>k!=='common'))throw new Error('Add at least one branch before saving.');if(!master.common)master.common={name:'Common — All Branches',semesters:{}};btn.disabled=true;status.textContent='Saving branches and semester subjects…';await set(ref(db,PATH),master);const verify=await get(ref(db,PATH));if(!verify.exists())throw new Error('Firebase write was not verified.');master=verify.val()||{};render();populateAll();status.textContent='Saved and verified successfully. Branches and all six semester subject lists are now available in upload forms.';}catch(e){status.textContent='Save failed: '+(e?.message||e)+' — publish branchSubjectMaster rules in diplomaengineers-869df.';console.error('Branch master save failed:',e);}finally{btn.disabled=false;}});
- $('deBranchImportExisting')?.addEventListener('click',importExisting);
+ $('deAddBranch')?.addEventListener('click',async()=>{
+  const input=$('deNewBranchName'),status=$('deBranchMasterStatus'),btn=$('deAddBranch'),key=addBranch(input?.value||'');
+  if(!key){if(status)status.textContent='Enter a valid branch name first.';return;}
+  try{btn.disabled=true;if(status)status.textContent='Saving new branch folder…';await set(ref(db,PATH),master);
+   const verify=await get(ref(db,PATH));if(!verify.exists())throw new Error('Firebase save could not be verified.');
+   master=verify.val()||{};input.value='';render();populateAll();
+   if(status)status.textContent='Branch folder saved. Open the folder to add semester-wise subjects, then press Save Subjects.';
+  }catch(e){if(status)status.textContent='Branch save failed: '+(e?.message||e);console.error(e);}finally{btn.disabled=false;}
+ });
+ $('deBranchEditorList')?.addEventListener('click',async e=>{
+  const open=e.target.closest('[data-open-branch]');
+  if(open){const card=open.closest('[data-branch-key]'),panel=card?.querySelector('[data-branch-editor]'),isOpen=panel&&!panel.hidden;if(panel){panel.hidden=isOpen;open.setAttribute('aria-expanded',String(!isOpen));const icon=open.querySelector('[data-branch-chevron]');if(icon)icon.className=isOpen?'fa-solid fa-chevron-down':'fa-solid fa-chevron-up';}return;}
+  const close=e.target.closest('[data-cancel-branch-edit]');
+  if(close){const card=close.closest('[data-branch-key]'),panel=card?.querySelector('[data-branch-editor]'),opener=card?.querySelector('[data-open-branch]');if(panel)panel.hidden=true;opener?.setAttribute('aria-expanded','false');const icon=opener?.querySelector('[data-branch-chevron]');if(icon)icon.className='fa-solid fa-chevron-down';return;}
+  const save=e.target.closest('[data-save-branch]');
+  if(save){const card=save.closest('[data-branch-key]'),key=save.dataset.saveBranch,status=$('deBranchMasterStatus');
+   try{save.disabled=true;if(status)status.textContent='Saving semester subjects to this branch folder…';const semesters={};
+    card.querySelectorAll('textarea[data-sem]').forEach(t=>{semesters[t.dataset.sem]=[...new Set(t.value.split(/[\\n,;]+/).map(x=>x.trim()).filter(Boolean))];});
+    master[key].semesters=semesters;await set(ref(db,PATH),master);const verify=await get(ref(db,PATH));if(!verify.exists())throw new Error('Firebase save could not be verified.');
+    master=verify.val()||{};render();populateAll();document.querySelector(`[data-branch-key="${key}"] [data-open-branch]`)?.click();
+    if(status)status.textContent='Subjects saved. New subjects are now available in Important Questions, Upload Notes, Courses and other upload forms. Older uploaded records were not changed.';
+   }catch(err){if(status)status.textContent='Subject save failed: '+(err?.message||err);console.error(err);}finally{save.disabled=false;}return;
+  }
+  const del=e.target.closest('[data-remove-branch]');
+  if(del){const status=$('deBranchMasterStatus'),key=del.dataset.removeBranch;if(confirm('Delete this branch folder and its new subject master list? Existing uploaded content will not be deleted.')){try{delete master[key];await set(ref(db,PATH),master);render();populateAll();if(status)status.textContent='Branch folder deleted. Existing uploaded content was not changed.';}catch(err){if(status)status.textContent='Delete failed: '+(err?.message||err);}}}
+ });
  $('deBranchMasterClose')?.addEventListener('click',()=>$('deBranchMasterModal').style.display='none');
  $('courseCategory')?.addEventListener('change',()=>renderCourseSubjectChoices());$('courseSemesterChoices')?.addEventListener('change',()=>renderCourseSubjectChoices());
  document.querySelector('[data-upload-target="branchmaster"]')?.addEventListener('click',()=>{$('uploadHubModal').style.display='none';$('deBranchMasterModal').style.display='block';load();});

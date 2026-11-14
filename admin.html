@@ -4368,15 +4368,15 @@ onAuthStateChanged(auth, async (user) => {
                     return;
                 }
             } catch (accessCheckError) {
-                console.warn('Admin deactivation status check failed:', accessCheckError?.message || accessCheckError);
-                // Fail closed: don't grant panel access when the deactivation gate cannot be verified.
-                try { await signOut(auth); } catch (_) {}
-                loginPage.style.display = 'flex';
-                adminPanel.style.display = 'none';
-                document.body.classList.remove('admin-logged-in');
-                errorBox.innerText = 'Admin access verify नहीं हो पाया। कृपया Founder से संपर्क करें।';
-                if (pageLoader) pageLoader.classList.add('hide');
-                return;
+                // A failed read of the optional UID access/tombstone node is NOT
+                // an authentication failure. Some deployed RTDB rules allow an
+                // authenticated admin to read only selected paths, so this check
+                // can return PERMISSION_DENIED even while Firebase Auth is valid.
+                // Keep the authenticated session and let RTDB Rules enforce each
+                // protected read/write operation. If the UID record is readable
+                // and explicitly deactivated/disabled, the block above still logs
+                // the account out immediately.
+                console.warn('Admin deactivation status could not be read; preserving Firebase Auth session:', accessCheckError?.code || accessCheckError?.message || accessCheckError);
             }
             const registered = await isRegisteredAdmin(user);
             if (!registered) {
@@ -4424,10 +4424,21 @@ onAuthStateChanged(auth, async (user) => {
         }
     } catch (authScanError) {
         console.error("Admin saved-session scan failed:", authScanError);
-        loginPage.style.display = "flex";
-        adminPanel.style.display = "none";
-        document.body.classList.remove("admin-logged-in");
-        if (errorBox && !auth.currentUser) errorBox.innerText = "Checking saved login failed. Please log in again.";
+        // Do not ask for credentials again when Firebase Auth still has a valid
+        // signed-in user. Show the panel and let individual data modules report
+        // their own permission/network errors.
+        if (auth.currentUser?.uid) {
+            loginPage.style.display = "none";
+            adminPanel.style.display = "block";
+            document.body.classList.add("admin-logged-in");
+            try { applyCourseVisibility(); } catch (_) {}
+            if (errorBox) errorBox.innerText = "";
+        } else {
+            loginPage.style.display = "flex";
+            adminPanel.style.display = "none";
+            document.body.classList.remove("admin-logged-in");
+            if (errorBox) errorBox.innerText = "Checking saved login failed. Please log in again.";
+        }
     } finally {
         if (pageLoader) pageLoader.classList.add("hide");
         document.body.style.overflow = "";

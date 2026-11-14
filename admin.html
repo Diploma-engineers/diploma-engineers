@@ -3716,7 +3716,13 @@ profileSave.addEventListener("click",async()=>{
   profileSave.disabled=true;
   profileSave.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   try{
-    const targetUid = (isMasterAdmin() && profileEditUid) ? profileEditUid : user.uid;
+    // Non-Founder admins can only edit their own profile. Keep the target UID
+    // bound to the authenticated account so stale UI selection cannot trigger
+    // a forbidden write to another admin's profile.
+    const targetUid = isMasterAdmin() && profileEditUid ? profileEditUid : user.uid;
+    if(!isMasterAdmin() && targetUid !== user.uid){
+      throw new Error("You can only save your own admin profile.");
+    }
     const targetIsMaster = targetUid === MASTER_ADMIN_UID;
     const existingTargetSnap = await get(ref(db,"adminProfiles/"+targetUid));
     const existingTargetProfile = existingTargetSnap.exists() ? (existingTargetSnap.val() || {}) : {};
@@ -3733,16 +3739,18 @@ profileSave.addEventListener("click",async()=>{
     data.designation=getAutoAdminDesignation(targetUid);
     if(targetIsMaster && !data.name) data.name="Anubhav Gangwar";
     await set(ref(db,"adminProfiles/"+targetUid),data);
-    // Publish the SAVED PROFILE EMAIL, not the editor's name/identity.
-    if(data.email){
+    // adminAccess is Founder-managed by the current Realtime Database rules.
+    // Do not attempt email-key writes from a regular Admin while saving profile.
+    // Founder may publish the access record when editing their own account.
+    if(isMasterAdmin() && targetUid===user.uid && data.email){
+      const accessEmail = String(data.email).trim().toLowerCase();
       try{
-        const accessEmail = String(data.email).trim().toLowerCase();
-        await set(ref(db, `adminAccess/${adminEmailKey(accessEmail)}`), {
-          email: accessEmail, uid: targetUid, enabled:true, updatedAt:Date.now()
-        });
-      }catch(accessErr){ console.warn("Admin email access publish skipped:", accessErr); }
+        const accessRecord={email:accessEmail,uid:targetUid,status:"active",enabled:true,disabled:false,deactivated:false,updatedAt:Date.now()};
+        await set(ref(db, `adminAccess/${targetUid}`), accessRecord);
+        await set(ref(db, `adminAccess/${adminEmailKey(accessEmail)}`), accessRecord);
+      }catch(accessErr){ console.warn("Founder email access publish skipped:", accessErr); }
     }
-    if(targetUid===user.uid) await publishAdminAccessRecord(user);
+    if(isMasterAdmin() && targetUid===user.uid) await publishAdminAccessRecord(user);
 
     // Publish only the fields intended for the public Team profile.
     const teamProfile = {
@@ -3784,7 +3792,11 @@ profileSave.addEventListener("click",async()=>{
     if(isMasterAdmin()) await loadAllAdminProfiles();
   }catch(err){
     console.error("Profile save error:",err);
-    setProfileStatus("Unable to save profile: "+err.message,false);
+    const rawMessage = String(err?.message || err || "Unknown error");
+    const permissionHint = /PERMISSION_DENIED|permission denied/i.test(rawMessage)
+      ? " Firebase Rules must authorize this UID. Confirm either adminAccess/{uid} has status=active and enabled is not false, or admins/{uid} exists and is not disabled/deactivated. The authenticated UID must match the profile UID."
+      : "";
+    setProfileStatus("Unable to save profile: "+rawMessage+permissionHint,false);
   }finally{
     profileSave.disabled=false;
     profileSave.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Profile';
@@ -3890,43 +3902,62 @@ async function ensureAdminProfileAndTeam(user){
 }
 
 async function publishAdminAccessRecord(user){
-    if(!user?.email) return;
-    const key = adminEmailKey(user.email);
+    if(!user?.email || !user?.uid || !isMasterAdmin()) return;
+    const email = user.email.trim().toLowerCase();
+    const now = Date.now();
     try{
-        await set(ref(db, `adminAccess/${key}`), {
-            email: user.email.trim().toLowerCase(),
-            uid: user.uid,
-            enabled: true,
-            updatedAt: Date.now()
+        // UID-keyed record is the authorization source used by Realtime Database Rules.
+        await set(ref(db, `adminAccess/${user.uid}`), {
+            email, uid:user.uid, status:"active", enabled:true,
+            disabled:false, deactivated:false, updatedAt:now
+        });
+        // Keep the encoded email registry for older app integrations.
+        await set(ref(db, `adminAccess/${adminEmailKey(email)}`), {
+            email, uid:user.uid, status:"active", enabled:true,
+            disabled:false, deactivated:false, updatedAt:now
         });
     }catch(err){
-        // Do not block the Admin panel if an older Firebase Ruleset has not
-        // yet been updated for adminAccess. Profile saving still works.
-        console.warn("adminAccess publish skipped:", err);
+        console.warn("Founder adminAccess publish skipped:", err?.message || err);
     }
 }
 
-// Founder helper: keep the email-only public registry synchronized with all
-// existing Admin Profiles. This does NOT compare names; email is the only
-// identity field used by the App's Admin Panel switch.
+// Founder helper: sync UID authorization for existing profiles and keep the
+// legacy email-key registry. Never reactivate a profile already marked disabled.
 async function syncAllAdminEmailAccess(){
     if(!isMasterAdmin()) return;
     try{
-        const snap = await get(ref(db, "adminProfiles"));
-        if(!snap.exists()) return;
-        const profiles = snap.val() || {};
+        const [profilesSnap, accessSnap] = await Promise.all([
+            get(ref(db, "adminProfiles")),
+            get(ref(db, "adminAccess")).catch(()=>({val:()=>({})}))
+        ]);
+        if(!profilesSnap.exists()) return;
+        const profiles = profilesSnap.val() || {};
+        const accessMap = accessSnap.val() || {};
         const jobs = [];
         for(const [uid, profile] of Object.entries(profiles)){
             const email = String(profile?.email || "").trim().toLowerCase();
-            if(!email) continue;
+            if(!email || !profile || typeof profile !== "object") continue;
+            const existingUidAccess = accessMap[uid] || {};
+            const profileDisabled = profile.adminDisabled===true || profile.active===false ||
+                String(profile.accountStatus||"").toLowerCase()==="deactivated" ||
+                existingUidAccess.disabled===true || existingUidAccess.deactivated===true ||
+                String(existingUidAccess.status||"").toLowerCase()==="deactivated" ||
+                String(existingUidAccess.status||"").toLowerCase()==="inactive";
+            if(profileDisabled) continue;
+            const now=Date.now();
+            jobs.push(set(ref(db, `adminAccess/${uid}`), {
+                email, uid, status:"active", enabled:true, disabled:false,
+                deactivated:false, updatedAt:now
+            }));
             jobs.push(set(ref(db, `adminAccess/${adminEmailKey(email)}`), {
-                email, uid, enabled:true, updatedAt:Date.now()
+                email, uid, status:"active", enabled:true, disabled:false,
+                deactivated:false, updatedAt:now
             }));
         }
         await Promise.all(jobs);
-        console.log("Admin email registry synchronized:", jobs.length);
+        console.log("Admin UID/email access registry synchronized:", jobs.length/2);
     }catch(err){
-        console.warn("Admin email registry sync skipped:", err?.message || err);
+        console.warn("Admin access registry sync skipped:", err?.message || err);
     }
 }
 
@@ -3940,7 +3971,7 @@ if(launchEmail){
 
 /* =====================================================
    14-DAY ADMIN ACTIVITY / AUTO DEACTIVATION
-   - Any News, Blog or Book upload counts as activity.
+   - Any News, Blog, Book, Test Series, Important Questions or Notes upload counts as activity.
    - A calendar day becomes green when at least one owned upload
      exists on that date.
    - Today is displayed, but is not used as a completed inactive day
@@ -3999,14 +4030,11 @@ async function fetchAdminActivity(user){
     const createdTs=Number(profile.profileCreatedAt||profile.createdAt||profile.joinedAt||0) || (user.metadata?.creationTime ? Date.parse(user.metadata.creationTime) : Date.now());
     const createdKey=activityDateKey(createdTs);
 
-    // Books may be restricted by Firebase Rules for normal admins, so query
-    // only this admin's owned books. News and Blogs are already public-readable.
-    const booksQuery=query(ref(db,"books"),orderByChild("ownerUid"),equalTo(user.uid));
-    const [newsSnap,blogSnap,booksSnap]=await Promise.all([
-        get(ref(db,"news")),
-        get(ref(db,"blogs")),
-        get(booksQuery)
-    ]);
+    // Any real study-content contribution resets the inactivity streak.
+    // These content roots are public-readable in the current Admin database rules;
+    // ownership is checked locally before a date is counted for this Admin.
+    const activityRoots=["news","blogs","books","testSeries","importantQuestions","uploadedNotes","notes"];
+    const activitySnaps=await Promise.all(activityRoots.map(path=>get(ref(db,path))));
     const activity=new Set();
     const collect=(snap)=>{
         if(!snap?.exists())return;
@@ -4019,7 +4047,7 @@ async function fetchAdminActivity(user){
             }
         });
     };
-    collect(newsSnap); collect(blogSnap); collect(booksSnap);
+    activitySnaps.forEach(collect);
     return {createdKey,activity,profile};
 }
 
@@ -4099,7 +4127,7 @@ function renderAdminActivityDashboard(data,user){
 
 async function checkAndApplyAdminActivityPolicy(user,{render=true}={}){
     if(!user?.uid)return {allowed:false,blocked:true};
-    // Founder is exempt from the 14-day contributor deactivation policy.
+    // Founder never expires due to inactivity.
     if(user.uid===MASTER_ADMIN_UID){
         if(render) renderAdminActivityDashboard({createdKey:activityDateKey(user.metadata?.creationTime?Date.parse(user.metadata.creationTime):Date.now()),activity:new Set()},user);
         return {allowed:true,blocked:false,founder:true};
@@ -4109,8 +4137,13 @@ async function checkAndApplyAdminActivityPolicy(user,{render=true}={}){
     try{
         const data=await fetchAdminActivity(user);
         adminActivityCache=data;
-        if(data.profile?.accountStatus === "deactivated" || data.profile?.adminDisabled === true || data.profile?.active === false && data.profile?.deactivatedAt){
-            return {allowed:false,blocked:true,reason:data.profile?.deactivationReason||"Admin account is permanently deactivated."};
+        const profile=data.profile||{};
+        // Founder/manual deactivation is authoritative and must never be undone
+        // by the inactivity heartbeat or a regular Admin's own profile save.
+        if(profile.manualDeactivated===true || profile.deactivationSource==='founder' ||
+           profile.accountStatus==='deactivated' || profile.adminDisabled===true ||
+           (profile.active===false && !!profile.deactivatedAt)){
+            return {allowed:false,blocked:true,reason:profile.deactivationReason||"Founder has deactivated this Admin account."};
         }
         if(render) renderAdminActivityDashboard(data,user);
         const today=activityTodayKey();
@@ -4121,31 +4154,22 @@ async function checkAndApplyAdminActivityPolicy(user,{render=true}={}){
                 active:false,
                 accountStatus:"deactivated",
                 adminDisabled:true,
+                manualDeactivated:false,
+                deactivationSource:"auto_inactivity",
                 deactivatedAt:now,
-                deactivationReason:"14 consecutive calendar days without any News, Blog or Book upload.",
+                deactivationReason:"14 consecutive completed days without any content upload.",
                 inactivityStartDate:gap.start,
                 inactivityEndDate:gap.end,
                 updatedAt:now
             };
-            try{ await update(ref(db,`adminProfiles/${user.uid}`),patch); }catch(e){ console.warn("Admin deactivation profile update failed:",e?.message||e); }
-            try{
-                if(user.email) await update(ref(db,`adminAccess/${adminEmailKey(user.email)}`),{enabled:false,disabled:true,disabledAt:now,updatedAt:now});
-            }catch(e){ console.warn("Admin access disable failed:",e?.message||e); }
-            // Firebase client SDK allows the currently signed-in user to delete
-            // their own Auth account. RTDB content is NOT removed, so all
-            // previously uploaded News/Blogs/Books remain available to Founder.
-            let authDeleted=false, authDeleteError="";
-            try{
-                await deleteUser(user);
-                authDeleted=true;
-            }catch(e){
-                authDeleteError=e?.code||e?.message||"auth-delete-failed";
-                console.warn("Automatic Firebase Auth deletion failed; access remains disabled:",e);
-            }
-            return {allowed:false,blocked:true,reason:patch.deactivationReason,gap,authDeleted,authDeleteError};
+            // Do not delete the Firebase Authentication account or any uploaded content.
+            // The profile tombstone blocks this UID until Founder explicitly reactivates it.
+            try{ await update(ref(db,`adminProfiles/${user.uid}`),patch); }
+            catch(e){ console.warn("Automatic Admin deactivation profile update failed:",e?.message||e); }
+            return {allowed:false,blocked:true,reason:patch.deactivationReason,gap,autoDeactivated:true};
         }
-        // Keep a lightweight heartbeat for Founder/admin reporting without changing creation date.
-        try{ await update(ref(db,`adminProfiles/${user.uid}`),{active:true,accountStatus:"active",lastActivityPolicyCheckAt:Date.now(),updatedAt:Date.now()}); }catch(e){}
+        // Update only a heartbeat field. Never overwrite accountStatus/active here.
+        try{ await update(ref(db,`adminProfiles/${user.uid}`),{lastActivityPolicyCheckAt:Date.now()}); }catch(e){}
         return {allowed:true,blocked:false,data};
     }catch(err){
         console.warn("14-day activity check skipped:",err?.message||err);
@@ -4161,10 +4185,10 @@ async function blockDeactivatedAdminSession(user,result){
     loginPage.style.display="flex";
     adminPanel.style.display="none";
     document.body.classList.remove("admin-logged-in");
-    const deleted = !!result?.authDeleted;
-    errorBox.innerHTML=deleted
-      ? `<strong>Admin account permanently deleted.</strong><br>14 consecutive days passed without any upload. Your uploaded News, Blogs and Books are preserved.`
-      : `<strong>Admin access permanently deactivated.</strong><br>14 consecutive days passed without any upload. Your uploaded News, Blogs and Books are preserved.`;
+    const reason=String(result?.reason||"");
+    errorBox.innerHTML=reason.includes("14 consecutive")
+      ? `<strong>Admin account automatically deactivated.</strong><br>14 consecutive completed days passed without any content upload. Your Firebase login account and previously uploaded content are preserved. Contact Founder for reactivation.`
+      : `<strong>Founder ने इस Admin account को deactivate कर दिया है।</strong><br>Admin Panel access बंद है। Reactivation के लिए Founder से संपर्क करें।`;
     return result;
 }
 
@@ -4403,8 +4427,16 @@ onAuthStateChanged(auth, async (user) => {
             Promise.allSettled([
                 ensureAdminProfileAndTeam(user),
                 publishAdminAccessRecord(user)
-            ]).then(() => {
+            ]).then(async () => {
                 if (auth.currentUser?.uid === user.uid) {
+                    // Enforce the 14-day upload policy on every login/session restore,
+                    // then keep checking while the Admin Panel remains open.
+                    const activityResult = await checkAndApplyAdminActivityPolicy(user,{render:true});
+                    if (activityResult.blocked) {
+                        await blockDeactivatedAdminSession(user,activityResult);
+                        return;
+                    }
+                    startAdminActivityWatcher(user);
                     try { loadAdminProfile(); } catch (e) { console.warn("Profile load delayed:", e); }
                     try { loadHomeUploads(); } catch (e) { console.warn("Home uploads delayed:", e); }
                     getAdminIdentityInfo(user.uid, {}).then(info => {
@@ -7515,11 +7547,33 @@ TS("tsModalCancel")?.addEventListener("click",tsCloseConfirm);TS("tsModalConfirm
     box.querySelectorAll("[data-coupon-student]").forEach(btn=>btn.addEventListener("click",()=>openStudent(rows[Number(btn.dataset.couponStudent)])));
   }
   function openStudent(r){const modal=byId("adminCouponStudentModal"),box=byId("adminCouponStudentDetails");if(!modal||!box)return;const name=r.name||r.fullName||r.studentName||"Student",branch=r.branch||r.courseBranch||"-",mobile=r.mobile||r.mobileNumber||r.phone||r.phoneNumber||"-",sid=r.studentId||r.studentID||r.rollNo||r.enrollmentNo||r.enrollmentNumber||r.uid||"-",course=r.courseName||r.courseTitle||r.courseId||"-",pic=r.profilePic||r.photoURL||r.photoUrl||"",email=r.email||"-",date=r.submittedAt||r.createdAt||r.timestamp;const fields=[["Name",name],["Branch",branch],["Mobile Number",mobile],["Student ID / Roll No.",sid],["Email",email],["Course Purchased",course],["Amount",(r.amount!=null?"₹"+r.amount:"-")],["Purchase Status",r.status||"pending"],["Coupon Code",r.couponCode||r.usedCouponCode||r.appliedCouponCode||(typeof r.coupon==="object"?r.coupon?.code:r.coupon)||"-"],["Purchase Date",date?new Date(Number(date)).toLocaleString():"-"]];box.innerHTML=`<div style="text-align:center;margin-bottom:16px">${pic?`<img src="${safe(pic)}" alt="Student profile" style="width:86px;height:86px;object-fit:cover;border-radius:50%;border:3px solid #dbeafe">`:`<div style="width:86px;height:86px;display:grid;place-items:center;margin:auto;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:30px;font-weight:900">${safe((name[0]||"S").toUpperCase())}</div>`}<h3 style="margin:9px 0 0;color:#0f172a">${safe(name)}</h3><p style="margin:4px 0;color:#64748b">${safe(branch)}</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px">${fields.map(([k,v])=>`<div style="padding:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px"><small style="display:block;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase">${safe(k)}</small><b style="display:block;color:#0f172a;font-size:13px;margin-top:5px;overflow-wrap:anywhere">${safe(v)}</b></div>`).join("")}</div>`;modal.style.display="flex";}
-  async function loadProfile(){const user=auth.currentUser;if(!user||founder())return;const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));const profile=profileSnap.exists()?profileSnap.val()||{}:{};const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];ownCouponCode=String(profile.couponCode||makeCode(displayName,user.uid)).toUpperCase();ownCouponQr=String(profile.couponQrUrl||profile.couponQrImage||"");if(!profile.couponCode){await update(ref(db,"adminProfiles/"+user.uid),{couponCode:ownCouponCode,couponQrUrl:ownCouponQr,couponCreatedAt:Date.now()});}byId("adminPersonalCouponCode").textContent=ownCouponCode;const preview=byId("adminCouponQrPreview");if(ownCouponQr){preview.src=ownCouponQr;preview.hidden=false;}else{preview.removeAttribute("src");preview.hidden=true;}status(ownCouponQr?"Your saved QR is ready. Upload a new image to replace it.":"Upload the QR that you want students using your code to pay with.");}
+  async function persistOwnCouponRecord(){
+    const user=auth.currentUser;if(!user||founder()||!ownCouponCode)return;
+    const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));
+    const profile=profileSnap.exists()?profileSnap.val()||{}:{};
+    const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];
+    const record={code:ownCouponCode,couponCode:ownCouponCode,adminUid:user.uid,uid:user.uid,adminName:displayName,name:displayName,qrUrl:ownCouponQr||"",couponQrUrl:ownCouponQr||"",active:true,updatedAt:Date.now()};
+    await set(ref(db,"publicAdminCoupons/"+ownCouponCode),record);
+  }
+  async function loadProfile(){
+    const user=auth.currentUser;if(!user||founder())return;
+    const profileSnap=await get(ref(db,"adminProfiles/"+user.uid));
+    const profile=profileSnap.exists()?profileSnap.val()||{}:{};
+    const displayName=profile.name||user.displayName||(user.email||"Admin").split("@")[0];
+    ownCouponCode=String(profile.couponCode||makeCode(displayName,user.uid)).trim().toUpperCase();
+    ownCouponQr=String(profile.couponQrUrl||profile.couponQrImage||"");
+    const now=Date.now();
+    await update(ref(db,"adminProfiles/"+user.uid),{uid:user.uid,email:user.email||profile.email||"",name:displayName,couponCode:ownCouponCode,couponQrUrl:ownCouponQr,couponQrImage:ownCouponQr,couponCreatedAt:Number(profile.couponCreatedAt||now),updatedAt:now});
+    await persistOwnCouponRecord();
+    byId("adminPersonalCouponCode").textContent=ownCouponCode;
+    const preview=byId("adminCouponQrPreview");
+    if(ownCouponQr){preview.src=ownCouponQr;preview.hidden=false;}else{preview.removeAttribute("src");preview.hidden=true;}
+    status(ownCouponQr?"Your saved QR is ready. Upload a new image to replace it.":"Your personal coupon code is active. Upload your QR image if required.");
+  }
   function listenUsage(){if(usageStop){usageStop();usageStop=null;}if(!studentAuth.currentUser){byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Student purchase database is not signed in for this admin account.</div>';return;}usageStop=onValue(ref(studentDb,"utrPurchases"),snap=>{useRows=matchingUsage(collectPurchases(snap));renderUsage();},err=>{console.error("Coupon usage read failed",err);byId("adminCouponUseList").innerHTML='<div style="grid-column:1/-1;padding:18px;color:#b91c1c;background:#fef2f2;border-radius:12px">Could not load coupon uses: Firebase denied reading /utrPurchases. Check the published rules in diploma-app-9a378 and confirm this Admin UID has an active adminAccess record.</div>';});}
   window.initAdminCouponDashboard=async function(){if(loading||!auth.currentUser)return;loading=true;try{listenUsage();}catch(err){console.error(err);status("Could not load coupon usage: "+(err.message||err),true);}finally{loading=false;}};
   byId("adminCouponQrFile")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const img=byId("adminCouponQrPreview");img.src=URL.createObjectURL(f);img.hidden=false;status("Image selected. Click Save QR Image to upload it.");});
-  byId("adminCouponQrSave")?.addEventListener("click",async()=>{if(!auth.currentUser||founder())return;const file=byId("adminCouponQrFile")?.files?.[0];if(!file&&!ownCouponQr){status("Please select a QR image first.",true);return;}const btn=byId("adminCouponQrSave");btn.disabled=true;try{status("Uploading QR image…");const url=file?await cloudUpload(file):ownCouponQr;await update(ref(db,"adminProfiles/"+auth.currentUser.uid),{couponCode:ownCouponCode,couponQrUrl:url,couponQrImage:url,couponQrUpdatedAt:Date.now()});ownCouponQr=url;byId("adminCouponQrPreview").src=url;byId("adminCouponQrPreview").hidden=false;byId("adminCouponQrFile").value="";status("Coupon QR saved successfully.");}catch(err){console.error(err);status("QR save failed: "+(err.message||err),true);}finally{btn.disabled=false;}});
+  byId("adminCouponQrSave")?.addEventListener("click",async()=>{if(!auth.currentUser||founder())return;const file=byId("adminCouponQrFile")?.files?.[0];if(!file&&!ownCouponQr){status("Please select a QR image first.",true);return;}const btn=byId("adminCouponQrSave");btn.disabled=true;try{status("Uploading QR image…");const url=file?await cloudUpload(file):ownCouponQr;await update(ref(db,"adminProfiles/"+auth.currentUser.uid),{couponCode:ownCouponCode,couponQrUrl:url,couponQrImage:url,couponQrUpdatedAt:Date.now()});ownCouponQr=url;await persistOwnCouponRecord();byId("adminCouponQrPreview").src=url;byId("adminCouponQrPreview").hidden=false;byId("adminCouponQrFile").value="";status("Coupon QR saved successfully.");}catch(err){console.error(err);status("QR save failed: "+(err.message||err),true);}finally{btn.disabled=false;}});
   byId("adminCouponCopy")?.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(ownCouponCode||byId("adminPersonalCouponCode").textContent);const b=byId("adminCouponCopy");b.innerHTML='<i class="fa-solid fa-check"></i> Copied';setTimeout(()=>b.innerHTML='<i class="fa-regular fa-copy"></i> Copy Code',1300);}catch(_){status("Coupon code: "+ownCouponCode);}});
   byId("adminCouponShare")?.addEventListener("click",async()=>{const code=ownCouponCode||byId("adminPersonalCouponCode")?.textContent||"";const text="Use my Diploma Engineers coupon code: "+code;if(navigator.share){try{await navigator.share({title:"Diploma Engineers Coupon",text});}catch(e){if(e?.name!=="AbortError")status("Share failed. Copy the code and share it manually.",true);}}else{try{await navigator.clipboard.writeText(text);status("Coupon sharing text copied. Paste it into WhatsApp or another app.");}catch(_){status(text);}}});
   byId("adminCouponRefresh")?.addEventListener("click",()=>{loadProfile().then(listenUsage).catch(err=>status(err.message||String(err),true));});
@@ -8564,6 +8618,11 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
      // Never merge student-project records or ranking builders into Founder Coupon Control.
      const paths=['adminProfiles','teamProfiles','publicTeamProfiles','adminActivity','adminAccess','adminCoupons','publicAdminCoupons','certificateProfiles','users','admins'];
      const results=await Promise.all(paths.map(path=>fb.get(fb.ref(window.db,path)).then(s=>({path,data:s.val()||{}})).catch(error=>({path,error,data:{}}))));
+     // Founder dashboard also evaluates the inactivity window for every saved
+     // Admin profile, so dormant accounts are marked inactive when Founder opens
+     // Coupon Management even if the Admin has not logged in again.
+     const activityRoots=["news","blogs","books","testSeries","importantQuestions","uploadedNotes","notes"];
+     const activityResults=await Promise.all(activityRoots.map(path=>fb.get(fb.ref(window.db,path)).then(s=>({path,data:s.val()||{}})).catch(error=>({path,error,data:{}}))));
      const merged=new Map();
      const adminFlags=results.find(x=>x.path==='admins')?.data||{};
      const accessMap=results.find(x=>x.path==='adminAccess')?.data||{};
@@ -8571,21 +8630,47 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
      results.forEach(({path,data,error})=>{if(error){console.warn('Cannot read diplomaengineers-869df/'+path,error.message);return;}Object.entries(data||{}).forEach(([uid,raw])=>{if(path==='publicAdminCoupons'&&raw&&(raw.adminUid||raw.uid)){const id=String(raw.adminUid||raw.uid);add(id,{...raw,couponCode:raw.couponCode||raw.code,couponQrUrl:raw.couponQrUrl||raw.qrUrl},path);}else add(uid,raw,path);});});
      const priorFounder=merged.get(FOUNDER_UID)?.p||{};
      merged.set(FOUNDER_UID,{uid:FOUNDER_UID,p:{name:'Anubhav Gangwar',displayName:'Anubhav Gangwar',designation:'FOUNDER',email:'astar22072006@gmail.com',...priorFounder,uid:FOUNDER_UID},sources:[...(merged.get(FOUNDER_UID)?.sources||[]),'Founder']});
-     // Coupon cards are restricted to actual active admins in /admins plus the Founder.
-     // Profiles/users/team records alone never grant coupon eligibility.
+     const todayKey=activityTodayKey();
+     for(const x of merged.values()){
+       if(x.uid===FOUNDER_UID || !(x.sources||[]).includes('adminProfiles'))continue;
+       const p=x.p||{};
+       if(p.manualDeactivated===true || p.deactivationSource==='founder' || p.accountStatus==='deactivated' || p.adminDisabled===true)continue;
+       let latestUpload=0;
+       for(const item of activityResults){
+         if(item.error)continue;
+         Object.values(item.data||{}).forEach(v=>{
+           if(!v || typeof v!=='object' || !activityOwner(v,x.uid,p.email||''))return;
+           const ts=Number(v.timestamp||v.createdAt||v.updatedAt||v.uploadedAt||0);
+           if(ts>latestUpload)latestUpload=ts;
+         });
+       }
+       const baseline=latestUpload || createdAt(p) || Date.now();
+       const lastKey=activityDateKey(baseline);
+       const completedInactive=Math.max(0,activityDayDiff(lastKey,todayKey)-1);
+       if(completedInactive>=14){
+         const now=Date.now();
+         const patch={active:false,accountStatus:'deactivated',adminDisabled:true,manualDeactivated:false,deactivationSource:'auto_inactivity',deactivatedAt:now,deactivationReason:'14 consecutive completed days without any content upload.',inactivityStartDate:activityKeyAddDays(lastKey,1),inactivityEndDate:activityKeyAddDays(todayKey,-1),updatedAt:now};
+         try{await fb.update(fb.ref(window.db,'adminProfiles/'+x.uid),patch);x.p={...p,...patch};}
+         catch(err){console.warn('Could not auto-deactivate inactive Admin '+x.uid,err?.message||err);}
+       }
+     }
+     // Every saved Admin profile is eligible for Founder coupon assignment.
+     // Do not require a duplicate /admins registry entry: manually-created
+     // Firebase Auth accounts must appear as soon as their adminProfiles record exists.
+     // Founder-deactivated and auto-deactivated profiles remain hidden.
      const rows=[...merged.values()].filter(x=>{
        if(String(x.uid).startsWith('custom_')||String(x.uid).startsWith('public_'))return false;
        const isFounder=x.uid===FOUNDER_UID;
-       const flag=adminFlags[x.uid];
-       const isListedAdmin=flag===true||(flag&&typeof flag==='object'&&flag.active!==false&&flag.enabled!==false&&flag.disabled!==true&&String(flag.status||'active').toLowerCase()!=='deactivated');
+       const hasAdminProfile=(x.sources||[]).includes('adminProfiles');
        const access=accessMap[x.uid]||{};
        const accessState=String(access.status||'active').toLowerCase();
-       return (isFounder||isListedAdmin)&&active(x.p)&&accessState!=='deactivated'&&access.enabled!==false&&access.disabled!==true;
+       const profileActive=active(x.p) && x.p.manualDeactivated!==true && x.p.deactivationSource!=='founder';
+       return isFounder || (hasAdminProfile && profileActive && accessState!=='deactivated' && accessState!=='disabled' && access.enabled!==false && access.disabled!==true && access.deactivated!==true);
      }).sort((a,b)=>a.uid===FOUNDER_UID?-1:b.uid===FOUNDER_UID?1:nameOf(a.p,a.uid).localeCompare(nameOf(b.p,b.uid))).map(x=>({...x,code:codeOf(x.p,x.uid)}));
      window.__founderCouponAdminRows=rows;
      const sel=$('founderAdminCouponSelect');if(sel)sel.innerHTML=rows.map(x=>`<option value="${esc(x.uid)}">${esc(nameOf(x.p,x.uid))}${x.uid===FOUNDER_UID?' — FOUNDER':''} — ${esc(x.uid)}</option>`).join('');
      if(cards)cards.innerHTML=rows.length?rows.map(x=>{const p=x.p||{},photo=p.photoURL||p.photoUrl||p.photo||p.profilePhoto||p.image||'',initial=nameOf(p,x.uid).trim().charAt(0).toUpperCase()||'?',code=p.couponCode||'',src=[...new Set(x.sources||[])].join(', ');return `<button type="button" data-founder-admin-card="${esc(x.uid)}" style="flex:0 0 clamp(220px,78vw,255px);min-width:0;max-width:100%;text-align:left;scroll-snap-align:start;border:1px solid ${x.uid===FOUNDER_UID?'#fbbf24':'#dbeafe'};border-radius:15px;padding:14px;background:#fff;cursor:pointer;box-shadow:0 4px 16px #0f172a0a;touch-action:manipulation"><span style="display:flex;align-items:center;gap:10px"><span style="width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:800">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:esc(initial)}</span><span style="min-width:0;overflow-wrap:anywhere"><b style="display:block;color:#0f172a">${esc(nameOf(p,x.uid))}${x.uid===FOUNDER_UID?' 👑':''}</b><small style="display:block;color:#64748b;overflow-wrap:anywhere">UID: ${esc(x.uid)}</small><small style="display:block;color:#64748b;overflow-wrap:anywhere">${esc(p.email||p.designation||p.role||'Firebase profile')}</small></span></span><strong style="display:block;margin-top:12px;color:#1d4ed8;overflow-wrap:anywhere">${code?'✓ '+esc(code):'+ Assign Coupon Code'}</strong><small style="display:block;margin-top:5px;color:#64748b;overflow-wrap:anywhere">${esc(src||'Firebase profile')}${p.couponQrUrl||p.couponQrImage?' · QR uploaded':' · QR not uploaded'}</small></button>`;}).join(''):'<div style="padding:15px;color:#64748b">No active Admin profiles found in diplomaengineers-869df.</div>';
-     adminsLoadedAt=Date.now();status(`${rows.length} eligible active Admin/Founder profiles found. Only their currently assigned codes remain valid; all other coupon codes are invalid.`);
+     adminsLoadedAt=Date.now();status(`${rows.length} active Admin/Founder profiles found. Founder can assign coupon codes to every active saved Admin profile.`);
      try{const cleaned=await syncAdminCouponToApprovedCourses();status(`Eligibility checked: active Founder/Admin coupons synced to ${cleaned} course(s). All other coupon codes were invalidated.`);}catch(syncErr){console.warn('Coupon eligibility cleanup could not complete:',syncErr);status('Active Admin list loaded, but coupon cleanup could not finish: '+(syncErr.message||syncErr),true);} 
     }catch(e){if(cards)cards.innerHTML='<div style="color:#b91c1c;padding:12px">Could not load profiles. Check diplomaengineers-869df Firebase read rules.</div>';status('Could not read diplomaengineers-869df records: '+(e.message||e),true);}
    })();
@@ -8608,15 +8693,14 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
       const owner=String(c.adminUid||c.uid||'');
       if(!code||!owner||owner.startsWith('custom_'))return;
       const isFounder=owner===FOUNDER_UID;
-      const flag=adminFlags[owner];
-      const listed=flag===true||(flag&&typeof flag==='object'&&flag.active!==false&&flag.enabled!==false&&flag.disabled!==true&&String(flag.status||'active').toLowerCase()!=='deactivated');
+      const profile=profiles[owner]||{};
+      const listed=!!profiles[owner] && active(profile) && profile.manualDeactivated!==true && profile.deactivationSource!=='founder';
       const accessRecord=access[owner]||{};
       const accessState=String(accessRecord.status||'active').toLowerCase();
-      const profile=profiles[owner]||{};
-      // A code is valid only while its owner is the Founder or an active /admins member,
+      // A code is valid only while its owner is the Founder or an active Admin profile,
       // their access is not disabled, and the code matches their current Admin profile.
       if(!isFounder&&!listed)return;
-      if(accessState==='deactivated'||accessRecord.enabled===false||accessRecord.disabled===true)return;
+      if(accessState==='deactivated'||accessState==='disabled'||accessRecord.enabled===false||accessRecord.disabled===true||accessRecord.deactivated===true)return;
       if(profile.active===false||profile.enabled===false||profile.disabled===true||profile.deactivated===true)return;
       const profileCode=String(profile.couponCode||'').trim().toUpperCase();
       if(!profileCode||profileCode!==code)return;
@@ -8633,7 +8717,7 @@ const tile=document.getElementById('homeCouponCodesTile');if(tile){tile.setAttri
     const fb=getFb();if(!fb?.get||!fb?.ref||!fb?.update||!window.db)throw Error('Firebase coupon/course sync SDK is unavailable.');
     const [courseSnap,valid,publicSnap]=await Promise.all([fb.get(fb.ref(window.db,'courseCatalog')),getValidFounderCouponMap(),fb.get(fb.ref(window.db,'publicAdminCoupons'))]);
     const courses=courseSnap.val()||{},updates={},invalidUpdates={};let count=0;
-    // Purge every public code that is not owned by the Founder or a currently active /admins member.
+    // Purge every public code that is not owned by the Founder or a currently active Admin profile.
     Object.entries(publicSnap.val()||{}).forEach(([key,c])=>{
       const code=String(c?.code||c?.couponCode||key).trim().toUpperCase();
       if(!code||valid.has(code))return;

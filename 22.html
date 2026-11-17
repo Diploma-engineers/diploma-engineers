@@ -11679,13 +11679,13 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeComingS
 </style>
 
 <style id="de-branch-material-ui">
-#deBranchMaterialPage{width:100%;max-width:none;padding:8px 12px 30px}
+#deBranchMaterialPage{width:100%;max-width:none;padding:2px 12px 30px}
 .de-bm-wrap{max-width:1240px;margin:0 auto}
-.de-bm-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:8px 2px 14px;position:sticky;top:52px;z-index:20;background:#fff}
+.de-bm-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;position:sticky;top:52px;z-index:20;background:#fff;margin-bottom:0}
 .de-bm-tabs::-webkit-scrollbar{display:none}
 .de-bm-tab{flex:0 0 auto;border:1px solid #dce5f2;background:#fff;color:#475569;border-radius:14px;padding:12px 18px;font-size:13px;font-weight:800;box-shadow:0 4px 14px #0f172a08;cursor:pointer;white-space:nowrap}
 .de-bm-tab.active{background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 7px 18px #2563eb30}
-.de-bm-title{text-align:center;font-size:22px;font-weight:900;color:#0f172a;margin:20px 0 16px;letter-spacing:-.5px}
+.de-bm-title{text-align:center;font-size:22px;font-weight:900;color:#0f172a;margin:4px 0 8px;letter-spacing:-.5px}
 .de-bm-title span{color:#2563eb}
 .de-bm-subject-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .de-bm-subject{min-width:0;border:1px solid #e0e8f3;border-radius:18px;background:#fff;padding:14px 11px;box-shadow:0 8px 22px #0f172a0b;text-align:center}
@@ -11714,8 +11714,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeComingS
    <button class="de-bm-tab" type="button" data-de-bm-tab="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
   </div>
   <section class="de-bm-panel active" data-de-bm-panel="semester">
-   <div class="de-bm-title" id="deBmSemesterTitle">Study Material <span>(Branch)</span></div>
-   <div class="de-bm-status" id="deBmStatus">Loading branch materials…</div>
    <div id="deBmSemesterContent"></div>
   </section>
   <section class="de-bm-panel" data-de-bm-panel="syllabus">
@@ -11824,23 +11822,23 @@ function renderSubjects(){
   const subjects=new Map();rows.forEach(o=>{const subject=docTitle(o),key=norm(subject);if(!key)return;if(!subjects.has(key))subjects.set(key,{name:subject,docs:[]});subjects.get(key).docs.push({type:typeKey(field(o,['materialType','materialCategory','material','type','resourceType'])||'Notes'),url:docUrl(o),record:o});});
   const cards=[...subjects.values()].sort((a,b)=>a.name.localeCompare(b.name));
   const content=cards.length?'<div class="de-bm-subject-grid">'+cards.map(sub=>{const types=['Book','Notes','PYQ','Important Questions','Practical File'];const btns=types.filter(t=>sub.docs.some(d=>d.type===t&&d.url)).map(t=>`<button class="de-bm-material-btn" type="button" data-semester="${sem}" data-subject="${esc(sub.name)}" data-type="${esc(t)}"><i class="fas ${t==='Book'?'fa-book':t==='Notes'?'fa-note-sticky':t==='PYQ'?'fa-file-lines':t==='Important Questions'?'fa-circle-question':'fa-flask'}"></i>${typeLabel(t)}</button>`).join('');return `<article class="de-bm-subject"><div class="de-bm-subject-icon"><i class="fas fa-book-open"></i></div><h3>${esc(sub.name)}</h3><div class="de-bm-materials">${btns}</div></article>`;}).join('')+'</div>':`<div class="de-bm-empty"><i class="fas fa-folder-open"></i>No study material uploaded for Semester ${sem} yet.</div>`;
-  return `<div class="de-bm-title">Semester ${sem} <span>(${esc(branch.name)})</span></div>${content}`;
+  return `<div class="de-bm-title">Semester ${sem}</div>${content}`;
  }).join('');
- $('deBmStatus').textContent=`${branch.name} study material`;
+ const status=$('deBmStatus');if(status)status.textContent='';
 }
 function openSubjectType(subject,type,semester){const matches=allMaterials.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&semNo(field(o,['semester','semesterName','sem','yearSemester']))===Number(semester)&&norm(docTitle(o))===norm(subject)&&typeKey(field(o,['materialType','materialCategory','material','type','resourceType'])||'Notes')===type&&docUrl(o));if(matches.length===1){window.open(docUrl(matches[0]),'_blank','noopener,noreferrer');return}if(matches.length>1){const choices=matches.map((o,i)=>`${i+1}. ${field(o,['title','name','fileName'])||docTitle(o)}`).join('\n');const pick=prompt(`Choose a file:\n${choices}\nEnter number`);const item=matches[Number(pick)-1];if(item)window.open(docUrl(item),'_blank','noopener,noreferrer');}}
 function renderSyllabus(){const box=$('deBmSyllabus');const rows=allSyllabus.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&docUrl(o)).sort((a,b)=>Number(a.year||0)-Number(b.year||0));box.innerHTML=rows.length?rows.map(o=>`<button class="de-bm-doc" type="button" data-open-url="${esc(docUrl(o))}"><i class="fas fa-file-pdf"></i><span>${esc(o.yearLabel||('Year '+(o.year||'')))} Syllabus</span></button>`).join(''):'<div class="de-bm-empty"><i class="fas fa-file-circle-xmark"></i>No syllabus uploaded for this branch yet.</div>';}
 function renderWhatsApp(){const box=$('deBmWhatsApp');const rows=allWhatsApp.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&docUrl(o));box.innerHTML=rows.length?rows.map(o=>`<button class="de-bm-doc" type="button" data-open-url="${esc(docUrl(o))}"><i class="fab fa-whatsapp"></i><span>Join ${esc(o.branch||branchMap[activeBranch].name)} WhatsApp Group</span></button>`).join(''):'<div class="de-bm-empty"><i class="fab fa-whatsapp"></i>WhatsApp group link is coming soon.</div>';}
 function activateTab(tab){document.querySelectorAll('.de-bm-tab').forEach(b=>b.classList.toggle('active',b.dataset.deBmTab===tab));document.querySelectorAll('.de-bm-panel').forEach(p=>p.classList.toggle('active',p.dataset.deBmPanel===tab));if(tab==='syllabus')renderSyllabus();if(tab==='whatsapp')renderWhatsApp();}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-de-bm-tab]');if(tab){activateTab(tab.dataset.deBmTab);return}const material=e.target.closest('.de-bm-material-btn');if(material){openSubjectType(material.dataset.subject,material.dataset.type,material.dataset.semester);return}const link=e.target.closest('[data-open-url]');if(link){window.open(link.dataset.openUrl,'_blank','noopener,noreferrer');}});
-function setupBranch(id){if(!branchMap[id])return;activeBranch=id;activateTab('semester');renderSubjects();renderSyllabus();renderWhatsApp();const title=$('deBmSemesterTitle');if(title)title.innerHTML=esc(branchMap[id].name)+' <span>Study Material</span>';}
+function setupBranch(id){if(!branchMap[id])return;activeBranch=id;activateTab('semester');renderSubjects();renderSyllabus();renderWhatsApp();const title=$('deBmSemesterTitle');if(title)title.textContent='';}
 document.querySelector('#notesPage .grid-2')?.addEventListener('click',e=>{
  const card=e.target.closest('.card-box');if(!card)return;
  const call=card.getAttribute('onclick')||'';let key=(call.match(/navigateTo\(['\"]([^'\"]+)['\"]\)/)||[])[1];
  if(!key){const label=card.querySelector('p')?.textContent||'';key=Object.keys(branchMap).find(k=>norm(branchMap[k].name)===norm(label));}
  if(key&&branchMap[key]&&!hasBranchData(key)){e.preventDefault();e.stopImmediatePropagation();window.showComingSoonBranch?.(branchMap[key].name);}
 },true);
-const originalNavigate=window.navigateTo;if(typeof originalNavigate==='function'&&!originalNavigate.__deBmWrapped){const wrapped=function(id,...args){if(branchMap[id]){if(!hasBranchData(id)){window.showComingSoonBranch?.(branchMap[id].name);return false;}const result=originalNavigate.call(this,'deBranchMaterialPage',...args);setTimeout(()=>{setupBranch(id);updateBranchCards();},80);return result}return originalNavigate.call(this,id,...args)};wrapped.__deBmWrapped=true;window.navigateTo=wrapped;}
+const originalNavigate=window.navigateTo;if(typeof originalNavigate==='function'&&!originalNavigate.__deBmWrapped){const wrapped=function(id,...args){if(branchMap[id]){if(!hasBranchData(id)){window.showComingSoonBranch?.(branchMap[id].name);return false;}const result=originalNavigate.call(this,'deBranchMaterialPage',...args);setTimeout(()=>{setupBranch(id);updateBranchCards();window.scrollTo({top:0,left:0,behavior:'instant'});document.documentElement.scrollTop=0;document.body.scrollTop=0;},80);return result}return originalNavigate.call(this,id,...args)};wrapped.__deBmWrapped=true;window.navigateTo=wrapped;}
 window.addEventListener('popstate',()=>{const p=document.querySelector('.page.active-page');if(p&&branchMap[p.id])setupBranch(p.id)});
 function watch(path,cb){const u=onValue(ref(db,path),snap=>{const out=[];if(snap.exists())snap.forEach(ch=>{const v=ch.val();if(v&&typeof v==='object')out.push({id:ch.key,...v})});cb(out)},err=>console.error('Branch data load error '+path,err));unsubs.push(u)}
 watch('branchMaterials',v=>{allMaterials=v;renderSubjects();renderSyllabus();renderWhatsApp();updateBranchCards();});
@@ -11852,5 +11850,91 @@ if(branchGrid&&window.MutationObserver){new MutationObserver(()=>updateBranchCar
 setTimeout(updateBranchCards,250);setTimeout(updateBranchCards,1200);
 </script>
 
+
+
+
+
+
+
+
+
+<style id="de-branch-material-layout-recovery-v4">
+/* Restore the normal app page lifecycle; only the active Branch page is visible. */
+#deBranchMaterialPage.page {
+  display: none !important;
+  margin-top: 0 !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  padding: 4px 10px 24px !important;
+  overflow: visible !important;
+  transform: none !important;
+  animation: none !important;
+  z-index: auto !important;
+}
+#deBranchMaterialPage.page.active-page { display: block !important; }
+#deBranchMaterialPage .de-bm-wrap { width: 100% !important; max-width: 1240px !important; margin: 0 auto !important; padding: 0 !important; }
+#deBranchMaterialPage .de-bm-tabs {
+  position: relative !important; top: auto !important;
+  display: flex !important; visibility: visible !important;
+  margin: 0 0 6px !important; padding: 2px 2px 6px !important;
+  overflow-x: auto !important; overflow-y: hidden !important;
+  flex-wrap: nowrap !important;
+}
+#deBranchMaterialPage .de-bm-panel.active { display: block !important; }
+#deBranchMaterialPage #deBmSemesterContent { display: block !important; min-height: 1px; }
+#deBranchMaterialPage .de-bm-title { margin: 3px 0 6px !important; }
+html, body { overflow-x: hidden; overflow-y: auto !important; }
+body { min-height: 100vh; }
+#app { min-height: 100vh; height: auto !important; overflow: visible !important; }
+@media (max-width: 700px) {
+  #deBranchMaterialPage.page { padding: 2px 8px 20px !important; }
+  #deBranchMaterialPage .de-bm-tab { padding: 11px 15px; }
+}
+</style>
+
+
+<style id="de-branch-header-gap-precise-fix-v6">
+/* Precise fix: keep the Branch page directly below the fixed header. */
+body { align-items: stretch !important; }
+#app { display: block !important; flex: 0 0 auto !important; height: auto !important; min-height: 0 !important; }
+#deBranchMaterialPage.page,
+#deBranchMaterialPage.page.active-page {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  margin: 0 !important;
+  padding: 0 10px 24px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  transform: none !important;
+  align-self: flex-start !important;
+}
+#deBranchMaterialPage .de-bm-wrap { margin: 0 auto !important; padding: 0 !important; }
+#deBranchMaterialPage .de-bm-tabs { margin: 0 0 6px !important; padding: 2px 2px 4px !important; position: relative !important; top: auto !important; }
+@media (max-width:560px) { #deBranchMaterialPage.page, #deBranchMaterialPage.page.active-page { padding-left:8px !important; padding-right:8px !important; } }
+</style>
+
+
+<style id="de-branch-header-gap-micro-adjust-v8">
+/* Small additional reduction to the gap between the app header and Branch tabs. */
+#deBranchMaterialPage.page,
+#deBranchMaterialPage.page.active-page {
+  margin-top: -42px !important;
+}
+</style>
+
+<style id="de-branch-header-gap-safe-v13">
+/* Keep Branch tabs just below the fixed app header without clipping or overlap. */
+#deBranchMaterialPage.page,
+#deBranchMaterialPage.page.active-page {
+  margin-top: -78px !important;
+}
+</style>
 </body>
 </html>

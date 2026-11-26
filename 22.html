@@ -3196,20 +3196,6 @@ html,body{max-width:100%;overflow-x:hidden}
 </div>
 </div>
 </div>
-<!-- FIREBASE-DRIVEN OFFICIAL SYLLABUS + STUDENT WHATSAPP GROUPS -->
-<section class="de-home-live-section" id="deHomeSyllabusSection">
- <div class="de-home-live-heading"><div><h2>📘 Diploma Engineering <span>Syllabus</span></h2><p>Latest branch-wise BTEUP syllabus uploaded by the admin.</p></div></div>
- <div class="de-home-syllabus-search"><i class="fas fa-search"></i><input id="deHomeSyllabusSearch" type="search" placeholder="Search branch or code..." autocomplete="off"></div>
- <div class="de-home-year-tabs" role="tablist" aria-label="Syllabus year">
-  <button type="button" class="active" data-home-syllabus-year="1">First Year</button><button type="button" data-home-syllabus-year="2">Second Year</button><button type="button" data-home-syllabus-year="3">Third Year</button>
- </div>
- <div class="de-home-syllabus-caption"><h3 id="deHomeSyllabusYearTitle">First Year</h3><span id="deHomeSyllabusCount">Loading...</span></div>
- <div class="de-home-syllabus-table-wrap"><table class="de-home-syllabus-table"><thead><tr><th>No.</th><th>Branch Name</th><th>Syllabus</th></tr></thead><tbody id="deHomeSyllabusRows"><tr><td colspan="3">Loading syllabus...</td></tr></tbody></table></div>
-</section>
-<section class="de-home-live-section" id="deHomeGroupsSection">
- <div class="de-home-live-heading"><div><h2>👥 Student <span>Groups</span></h2><p>Join your semester or engineering branch WhatsApp group.</p></div></div>
- <div class="de-home-groups-grid" id="deHomeGroupsGrid"><div class="de-home-live-empty">Loading student groups...</div></div>
-</section>
 <div class="notice">
 <h5>Latest Announcement 📢</h5>
 <p>Welcome to Diploma Engineers App. All Diploma Branch Study Materials are available now.</p>
@@ -11996,31 +11982,30 @@ function openSubjectType(subject,type,semester){const matches=allMaterials.filte
 function renderSyllabus(){
  const box=$('deBmSyllabus');if(!box)return;
  const rows=allSyllabus.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&docUrl(o)).sort((a,b)=>Number(a.year||0)-Number(b.year||0));
- box.innerHTML=rows.length?rows.map(o=>{const label=o.yearLabel||((o.year?String(o.year)+'':'')+' Year').trim();const branchName=norm(field(o,['branch','branchName']))==='common'?'Common First Year Diploma':branchMap[activeBranch].name+' Diploma';return `<button class="de-bm-doc syllabus" type="button" data-open-url="${esc(docUrl(o))}"><span class="de-bm-doc-icon"><i class="fas fa-file-pdf"></i></span><span class="de-bm-doc-title">${esc(label)} Syllabus</span><span class="de-bm-doc-subtitle">${esc(branchName)}</span><span class="de-bm-doc-action"><i class="fas fa-eye"></i> Open PDF</span></button>`;}).join(''):'<div class="de-bm-empty"><i class="fas fa-file-circle-xmark"></i>No syllabus uploaded for this branch yet.</div>';
- renderHomeSyllabus();
+ box.innerHTML=rows.length?rows.map(o=>{
+  const label=o.yearLabel||((o.year?String(o.year)+'':'')+' Year').trim();
+  const branchName=norm(field(o,['branch','branchName']))==='common'?'Common First Year Diploma':branchMap[activeBranch].name+' Diploma';
+  return `<button class="de-bm-doc syllabus" type="button" data-open-url="${esc(docUrl(o))}">
+   <span class="de-bm-doc-icon"><i class="fas fa-file-pdf"></i></span>
+   <span class="de-bm-doc-title">${esc(label)} Syllabus</span>
+   <span class="de-bm-doc-subtitle">${esc(branchName)}</span>
+   <span class="de-bm-doc-action"><i class="fas fa-eye"></i> Open PDF</span>
+  </button>`;
+ }).join(''):'<div class="de-bm-empty"><i class="fas fa-file-circle-xmark"></i>No syllabus uploaded for this branch yet.</div>';
 }
 function renderWhatsApp(){
- const box=$('deBmWhatsApp');if(box){const rows=allWhatsApp.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&docUrl(o));box.innerHTML=rows.length?rows.map(o=>{const branchName=field(o,['groupName','branch','branchName'])||branchMap[activeBranch].name;const img=field(o,['imageUrl','image','thumbnail','thumb']);return `<a class="de-bm-doc whatsapp" href="${esc(docUrl(o))}" target="_blank" rel="noopener noreferrer">${img?`<img src="${esc(img)}" alt="${esc(branchName)}" style="width:58px;height:58px;object-fit:cover;border-radius:15px">`:'<span class="de-bm-doc-icon"><i class="fab fa-whatsapp"></i></span>'}<span class="de-bm-doc-title">${esc(branchName)}</span><span class="de-bm-doc-subtitle">Join the student WhatsApp group.</span><span class="de-bm-doc-action"><i class="fab fa-whatsapp"></i> Join Group</span></a>`;}).join(''):'<div class="de-bm-empty"><i class="fab fa-whatsapp"></i>WhatsApp group link is coming soon.</div>';}
- renderHomeGroups();
+ const box=$('deBmWhatsApp');if(!box)return;
+ const rows=allWhatsApp.filter(o=>o&&o.status!=='deleted'&&branchMatches(o,activeBranch)&&docUrl(o));
+ box.innerHTML=rows.length?rows.map(o=>{
+  const branchName=field(o,['branch','branchName'])||branchMap[activeBranch].name;
+  return `<button class="de-bm-doc whatsapp" type="button" data-open-url="${esc(docUrl(o))}">
+   <span class="de-bm-doc-icon"><i class="fab fa-whatsapp"></i></span>
+   <span class="de-bm-doc-title">WhatsApp Community</span>
+   <span class="de-bm-doc-subtitle">Join the ${esc(branchName)} student community for notes, PYQs, updates and study material.</span>
+   <span class="de-bm-doc-action"><i class="fab fa-whatsapp"></i> Join Group</span>
+  </button>`;
+ }).join(''):'<div class="de-bm-empty"><i class="fab fa-whatsapp"></i>WhatsApp group link is coming soon.</div>';
 }
-let homeSyllabusYear=1;
-function renderHomeSyllabus(){
- const body=$('deHomeSyllabusRows');if(!body)return;
- const search=norm($('deHomeSyllabusSearch')?.value||'');
- let rows=[];
- if(homeSyllabusYear===1){const common=allSyllabus.find(o=>o&&o.status!=='deleted'&&Number(o.year)===1&&branchMatches(o,'civil')&&docUrl(o));if(common){const branches=Object.entries(branchMap).map(([key,b])=>({name:b.name,code:'',link:docUrl(common)}));rows=branches;}}
- else {const yr=homeSyllabusYear;rows=allSyllabus.filter(o=>o&&o.status!=='deleted'&&Number(o.year)===yr&&!['common','all','all branches','all branch'].includes(norm(field(o,['branch','branchName'])))&&docUrl(o)).map(o=>({name:field(o,['branchName','branch']),code:field(o,['code','branchCode']),link:docUrl(o)}));}
- const seen=new Set();rows=rows.filter(r=>{const k=norm(r.name);if(!k||seen.has(k))return false;seen.add(k);return !search||norm(r.name+' '+r.code).includes(search);}).sort((a,b)=>a.name.localeCompare(b.name));
- const title=homeSyllabusYear===1?'First Year':homeSyllabusYear===2?'Second Year':'Third Year';if($('deHomeSyllabusYearTitle'))$('deHomeSyllabusYearTitle').textContent=title;if($('deHomeSyllabusCount'))$('deHomeSyllabusCount').textContent=rows.length+' Branches';
- body.innerHTML=rows.length?rows.map((r,i)=>`<tr><td>${String(i+1).padStart(2,'0')}</td><td>${esc(r.code? r.code+' · ':'')}${esc(r.name)}</td><td><a class="de-home-syllabus-open" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">PDF</a></td></tr>`).join(''):`<tr><td colspan="3">${homeSyllabusYear===1?'Common first-year syllabus has not been uploaded yet.':'No syllabus uploaded for this year yet.'}</td></tr>`;
-}
-function renderHomeGroups(){
- const grid=$('deHomeGroupsGrid');if(!grid)return;
- const rows=allWhatsApp.filter(o=>o&&o.status!=='deleted'&&docUrl(o));
- grid.innerHTML=rows.length?rows.sort((a,b)=>String(field(a,['groupName','branch','branchName'])).localeCompare(String(field(b,['groupName','branch','branchName'])))).map(o=>{const name=field(o,['groupName','branch','branchName','title'])||'Student WhatsApp Group';const link=docUrl(o);const img=field(o,['imageUrl','image','thumbnail','thumb']);return `<a class="de-home-group-card" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${img?`<img class="de-home-group-image" src="${esc(img)}" alt="${esc(name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false">`:' '}<span class="de-home-group-fallback" ${img?'hidden':''}><i class="fab fa-whatsapp"></i></span><b>${esc(name)}</b><span class="de-home-group-join"><i class="fab fa-whatsapp"></i> Join Group</span></a>`;}).join(''):'<div class="de-home-live-empty">No WhatsApp groups uploaded yet.</div>';
-}
-document.querySelectorAll('[data-home-syllabus-year]').forEach(btn=>btn.addEventListener('click',()=>{homeSyllabusYear=Number(btn.dataset.homeSyllabusYear)||1;document.querySelectorAll('[data-home-syllabus-year]').forEach(x=>x.classList.toggle('active',x===btn));renderHomeSyllabus();}));
-$('deHomeSyllabusSearch')?.addEventListener('input',renderHomeSyllabus);
 function activateTab(tab){document.querySelectorAll('.de-bm-tab').forEach(b=>b.classList.toggle('active',b.dataset.deBmTab===tab));document.querySelectorAll('.de-bm-panel').forEach(p=>p.classList.toggle('active',p.dataset.deBmPanel===tab));if(tab==='syllabus')renderSyllabus();if(tab==='whatsapp')renderWhatsApp();}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-de-bm-tab]');if(tab){activateTab(tab.dataset.deBmTab);return}const material=e.target.closest('.de-bm-material-btn');if(material){openSubjectType(material.dataset.subject,material.dataset.type,material.dataset.semester);return}const link=e.target.closest('[data-open-url]');if(link){window.open(link.dataset.openUrl,'_blank','noopener,noreferrer');}});
 function setupBranch(id){if(!branchMap[id])return;window.resetBranchQuickLinks?.();activeBranch=id;window.activeBranchForQuickLinks=id;window.branchNameQuickLinks=branchMap[id].name;activateTab('semester');renderSubjects();renderSyllabus();renderWhatsApp();const title=$('deBmSemesterTitle');if(title)title.textContent='';}
@@ -12034,8 +12019,8 @@ const originalNavigate=window.navigateTo;if(typeof originalNavigate==='function'
 window.addEventListener('popstate',()=>{const p=document.querySelector('.page.active-page');if(p&&branchMap[p.id])setupBranch(p.id)});
 function watch(path,cb){const u=onValue(ref(db,path),snap=>{const out=[];if(snap.exists())snap.forEach(ch=>{const v=ch.val();if(v&&typeof v==='object')out.push({id:ch.key,...v})});cb(out)},err=>console.error('Branch data load error '+path,err));unsubs.push(u)}
 watch('branchMaterials',v=>{allMaterials=v;renderSubjects();renderSyllabus();renderWhatsApp();updateBranchCards();});
-watch('branchSyllabus',v=>{allSyllabus=v;renderSyllabus();renderHomeSyllabus();updateBranchCards();});
-watch('branchWhatsApp',v=>{allWhatsApp=v;renderWhatsApp();renderHomeGroups();updateBranchCards();});
+watch('branchSyllabus',v=>{allSyllabus=v;renderSyllabus();updateBranchCards();});
+watch('branchWhatsApp',v=>{allWhatsApp=v;renderWhatsApp();updateBranchCards();});
 // Keep branch availability badges synchronized even when the branch grid is rendered later.
 const branchGrid=document.querySelector('#notesPage .grid-2');
 if(branchGrid&&window.MutationObserver){new MutationObserver(()=>updateBranchCards()).observe(branchGrid,{childList:true,subtree:true});}
@@ -12050,9 +12035,6 @@ setTimeout(updateBranchCards,250);setTimeout(updateBranchCards,1200);
 
 
 
-<style id="de-home-live-material-styles">
-.de-home-live-section{max-width:1000px;margin:28px auto;padding:0 14px}.de-home-live-heading{display:flex;align-items:center;justify-content:space-between;margin:0 0 13px}.de-home-live-heading h2{font-size:20px;font-weight:900;color:#0f172a;margin:0 0 5px}.de-home-live-heading h2 span{color:#2563eb}.de-home-live-heading p{font-size:12px;color:#64748b;margin:0}.de-home-syllabus-search{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:0 14px;height:48px;margin-bottom:14px;box-shadow:0 5px 18px #0f172a08}.de-home-syllabus-search i{color:#475569}.de-home-syllabus-search input{border:0;outline:0;background:transparent;width:100%;font:inherit;font-size:13px;color:#0f172a}.de-home-year-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:15px}.de-home-year-tabs button{border:0;border-radius:13px;background:#fff;color:#0f172a;padding:13px 7px;font-size:12px;font-weight:900;box-shadow:0 5px 16px #0f172a0b;cursor:pointer}.de-home-year-tabs button.active{background:#2563eb;color:#fff;box-shadow:0 8px 20px #2563eb30}.de-home-syllabus-caption{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}.de-home-syllabus-caption h3{margin:0;font-size:17px;font-weight:900;color:#0f172a}.de-home-syllabus-caption span{background:#eaf1ff;color:#1d4ed8;border-radius:20px;padding:6px 11px;font-size:11px;font-weight:800}.de-home-syllabus-table-wrap{overflow-x:auto;background:#fff;border-radius:16px;box-shadow:0 7px 22px #0f172a0b;border:1px solid #e8edf5}.de-home-syllabus-table{width:100%;border-collapse:collapse;min-width:340px}.de-home-syllabus-table th,.de-home-syllabus-table td{padding:11px 10px;text-align:left;border-bottom:1px solid #edf1f7;font-size:12px}.de-home-syllabus-table th{background:#f1f5ff;color:#334155;font-weight:900}.de-home-syllabus-table td:nth-child(1){width:46px;color:#2563eb;font-weight:900}.de-home-syllabus-table td:nth-child(2){font-weight:800;color:#0f172a}.de-home-syllabus-open{display:inline-flex;align-items:center;justify-content:center;background:#16a34a;color:#fff!important;border-radius:10px;padding:8px 13px;font-size:11px;font-weight:900;text-decoration:none;white-space:nowrap}.de-home-live-empty{grid-column:1/-1;padding:24px;text-align:center;color:#64748b;background:#fff;border:1px dashed #cbd5e1;border-radius:15px;font-size:13px}.de-home-groups-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.de-home-group-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:145px;padding:14px 10px;text-align:center;text-decoration:none;color:#0f172a;background:#fff;border:1px solid #e2e8f0;border-radius:17px;box-shadow:0 6px 18px #0f172a0b;transition:transform .15s ease}.de-home-group-card:active{transform:scale(.98)}.de-home-group-image{width:52px;height:52px;border:1px solid #e2e8f0;border-radius:14px;object-fit:cover;background:#f0fdf4}.de-home-group-fallback{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:#ecfdf5;color:#16a34a;font-size:25px}.de-home-group-card b{font-size:12px;line-height:1.3;font-weight:900}.de-home-group-join{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:#ecfdf5;color:#15803d;font-size:10px;font-weight:900}.de-home-group-card small{font-size:10px;color:#64748b}@media(max-width:700px){.de-home-groups-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.de-home-live-section{padding:0 10px;margin:22px auto}.de-home-group-card{min-height:135px}.de-home-syllabus-table th,.de-home-syllabus-table td{padding:10px 8px;font-size:11px}}@media(min-width:701px) and (max-width:950px){.de-home-groups-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-</style>
 <style id="de-branch-material-layout-recovery-v4">
 /* Restore the normal app page lifecycle; only the active Branch page is visible. */
 #deBranchMaterialPage.page {
